@@ -28,45 +28,45 @@ const Optistats = () => {
       label: 'FC', 
       fullLabel: 'Heart Rate',
       value: 130, 
-      range: '80-120',
-      minRange: 80,
-      maxRange: 120,
+      min: 80,
+      target: 100,
+      max: 120,
       unit: 'bpm'
     },
     { 
       label: 'TAM', 
       fullLabel: 'Blood Pressure',
       value: 70, 
-      range: '78-85',
-      minRange: 78,
-      maxRange: 85,
+      min: 78,
+      target: 81,
+      max: 85,
       unit: 'mmHg'
     },
     { 
       label: 'FR', 
       fullLabel: 'Resp. Rate',
       value: 25, 
-      range: '20-30',
-      minRange: 20,
-      maxRange: 30,
+      min: 20,
+      target: 25,
+      max: 30,
       unit: '/min'
     },
     { 
       label: 'T°', 
       fullLabel: 'Temperature',
       value: 37, 
-      range: '35-37',
-      minRange: 35,
-      maxRange: 37,
+      min: 35,
+      target: 36,
+      max: 37,
       unit: '°C'
     },
     { 
       label: 'SPO2', 
       fullLabel: 'SpO2',
       value: 95, 
-      range: '90-100',
-      minRange: 90,
-      maxRange: 100,
+      min: 90,
+      target: 95,
+      max: 100,
       unit: '%'
     },
   ];
@@ -124,7 +124,7 @@ const Optistats = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
               {vitalSigns.map((vital, index) => {
-                const inRange = isInRange(vital.value, vital.minRange, vital.maxRange);
+                const inRange = isInRange(vital.value, vital.min, vital.max);
                 const valueColor = inRange ? 'text-green-500' : 'text-red-500';
                 
                 return (
@@ -140,9 +140,15 @@ const Optistats = () => {
                         <path d="M8 8L0 0h16L8 8z" />
                       </svg>
                     </div>
-                    <div className="border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-600 flex items-center gap-1">
+                    <div className="border border-gray-300 rounded-full px-4 py-1.5 text-xs text-gray-600 flex items-center gap-1.5">
                       <Activity className="h-3 w-3" />
-                      <span>{vital.range}</span>
+                      <span className="flex items-center gap-1">
+                        <span className="text-gray-500">{vital.min}</span>
+                        <span className="text-gray-400">-</span>
+                        <span className="font-semibold text-gray-900">{vital.target}</span>
+                        <span className="text-gray-400">-</span>
+                        <span className="text-gray-500">{vital.max}</span>
+                      </span>
                     </div>
                   </div>
                 );
