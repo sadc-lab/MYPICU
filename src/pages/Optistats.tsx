@@ -137,13 +137,8 @@ const Optistats = () => {
                     <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
                       {vital.label}
                     </div>
-                    <div className={`text-4xl font-bold ${valueColor} mb-1`}>
+                    <div className={`text-4xl font-bold ${valueColor} mb-3`}>
                       {vital.value}
-                    </div>
-                    <div className="text-gray-400 mb-2">
-                      <svg width="16" height="8" viewBox="0 0 16 8" fill="currentColor">
-                        <path d="M8 8L0 0h16L8 8z" />
-                      </svg>
                     </div>
                     
                     <div className="w-full max-w-[180px]">
