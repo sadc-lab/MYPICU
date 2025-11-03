@@ -142,10 +142,12 @@ const Optistats = () => {
                     </div>
                     <div className="border border-gray-300 rounded-full px-4 py-1.5 text-xs text-gray-600 flex items-center gap-1.5">
                       <Activity className="h-3 w-3" />
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1.5">
                         <span className="text-gray-500">{vital.min}</span>
                         <span className="text-gray-400">-</span>
-                        <span className="font-semibold text-gray-900">{vital.target}</span>
+                        <div className="w-4 h-4 rounded-full bg-gray-300 flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div>
+                        </div>
                         <span className="text-gray-400">-</span>
                         <span className="text-gray-500">{vital.max}</span>
                       </span>
