@@ -1,9 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Heart, Wind, Flower2, MoreHorizontal, ArrowUpDown, Activity } from 'lucide-react';
+import { Brain, Heart, Wind, Flower2, MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { Patient } from '@/utils/patientData';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 
 interface PatientTableProps {
   patients: Patient[];
@@ -91,22 +90,9 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                 <TableCell className="text-gray-700">{patient.age}</TableCell>
                 <TableCell className="text-gray-700">{patient.picuId}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-lg text-gray-900">
-                      {patient.pelodScore}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/optistats?patient=${patient.id}`);
-                      }}
-                    >
-                      <Activity className="h-4 w-4 text-primary" />
-                    </Button>
-                  </div>
+                  <span className="font-semibold text-lg text-gray-900">
+                    {patient.pelodScore}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <span className={`font-medium ${getAdherenceColor(patient.adherence)}`}>
