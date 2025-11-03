@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Bell, HelpCircle, User, Activity, Brain, Heart, Wind } from 'lucide-react';
 import myPicuLogo from '@/assets/mypicu-logo.png';
@@ -19,21 +19,9 @@ import {
 
 export const Header = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { user, signOut } = useAuth();
   
-  const selectedPed = searchParams.get('ped') || 'all';
-  
   const isActive = (path: string) => location.pathname === path;
-  
-  const handlePedChange = (value: string) => {
-    if (value === 'all') {
-      navigate('/');
-    } else {
-      navigate(`/?ped=${value}`);
-    }
-  };
 
   return (
     <header className="border-b bg-white shadow-sm">
@@ -43,18 +31,6 @@ export const Header = () => {
             <Link to="/" className="flex items-center">
               <img src={myPicuLogo} alt="MYPICU" className="h-10" />
             </Link>
-            
-            <Select value={selectedPed} onValueChange={handlePedChange}>
-              <SelectTrigger className="w-[180px] bg-white border-primary text-primary">
-                <SelectValue placeholder="Select patients" />
-              </SelectTrigger>
-              <SelectContent className="bg-white z-50">
-                <SelectItem value="all">All patients</SelectItem>
-                <SelectItem value="A">PED A</SelectItem>
-                <SelectItem value="B">PED B</SelectItem>
-                <SelectItem value="C">PED C</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <nav className="hidden md:flex gap-2">

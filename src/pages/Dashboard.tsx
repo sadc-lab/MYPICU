@@ -2,26 +2,28 @@ import { Header } from '@/components/Header';
 import { PatientTable } from '@/components/PatientTable';
 import { PelodBadges } from '@/components/PelodBadges';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { getAllPatients, getPatientsForPed, pedAPatients, pedBPatients, pedCPatients } from '@/utils/patientData';
 import { ChevronRight } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
 
 const Dashboard = () => {
-  const [searchParams] = useSearchParams();
-  const selectedPed = searchParams.get('ped');
+  const [selectedPed, setSelectedPed] = useState<'A' | 'B' | 'C'>('A');
   
   const allPatients = getAllPatients();
   
-  // Filter patients based on selection
-  const displayedPatients = selectedPed && selectedPed !== 'all' 
-    ? getPatientsForPed(selectedPed as 'A' | 'B' | 'C')
-    : allPatients;
+  // Get patients for selected PED
+  const displayedPatients = getPatientsForPed(selectedPed);
 
   const averagePelod = displayedPatients.length > 0
     ? Math.round(displayedPatients.reduce((sum, p) => sum + p.pelodScore, 0) / displayedPatients.length)
     : 0;
-  
-  const showAllPeds = !selectedPed || selectedPed === 'all';
 
   return (
     <div className="min-h-screen bg-[#EDF2F9]">
@@ -39,47 +41,33 @@ const Dashboard = () => {
             </Button>
           </div>
 
-          <PelodBadges patients={displayedPatients} unitAverage={averagePelod} />
+          <PelodBadges patients={allPatients} unitAverage={averagePelod} />
         </div>
 
         <div className="space-y-6">
-          {showAllPeds ? (
-            <>
-              <PatientTable 
-                patients={pedAPatients}
-                pedName="PED A"
-                averagePelod={averagePelod}
-              />
-
-              {pedBPatients.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-medium text-primary">Patient status PED B</h2>
-                    <Button variant="link" className="text-primary">
-                      See more <ChevronRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {pedCPatients.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-medium text-primary">Patient status PED C</h2>
-                    <Button variant="link" className="text-primary">
-                      See more <ChevronRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-medium text-primary">Patient status</h2>
+                <Select value={selectedPed} onValueChange={(value) => setSelectedPed(value as 'A' | 'B' | 'C')}>
+                  <SelectTrigger className="w-[120px] bg-white border-primary text-primary">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white z-50">
+                    <SelectItem value="A">PED A</SelectItem>
+                    <SelectItem value="B">PED B</SelectItem>
+                    <SelectItem value="C">PED C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
             <PatientTable 
               patients={displayedPatients}
               pedName={`PED ${selectedPed}`}
               averagePelod={averagePelod}
             />
-          )}
+          </div>
         </div>
       </main>
     </div>
