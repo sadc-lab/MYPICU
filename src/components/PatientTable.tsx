@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Heart, Wind, Activity, Thermometer } from 'lucide-react';
+import { Brain, Heart, Wind, Flower2, MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { Patient } from '@/utils/patientData';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,89 +13,118 @@ interface PatientTableProps {
 export const PatientTable = ({ patients, pedName, averagePelod }: PatientTableProps) => {
   const navigate = useNavigate();
 
-  const getPelodColor = (score: number) => {
-    if (score >= 25) return 'text-destructive';
-    if (score >= 15) return 'text-warning';
-    return 'text-success';
-  };
-
   const getAdherenceColor = (adherence: number) => {
-    if (adherence >= 85) return 'text-success';
-    if (adherence >= 70) return 'text-warning';
-    return 'text-destructive';
+    if (adherence >= 85) return 'text-green-600';
+    if (adherence >= 70) return 'text-orange-500';
+    return 'text-red-600';
   };
 
-  const getScoreColor = (score?: number) => {
-    if (!score) return 'text-muted-foreground';
-    if (score >= 3) return 'text-destructive';
-    if (score >= 2) return 'text-warning';
-    return 'text-success';
+  const getOrganIcon = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number) => {
+    const getColor = (score?: number) => {
+      if (!score || score === 0) return 'text-gray-300';
+      if (score === 1) return 'text-orange-400';
+      if (score === 2) return 'text-orange-500';
+      return 'text-red-500';
+    };
+
+    const color = getColor(score);
+    
+    switch (organ) {
+      case 'brain':
+        return <Brain className={`h-6 w-6 ${color}`} />;
+      case 'heart':
+        return <Heart className={`h-6 w-6 ${color} fill-current`} />;
+      case 'lungs':
+        return <Wind className={`h-6 w-6 ${color}`} />;
+      case 'kidney':
+        return <Flower2 className={`h-6 w-6 ${color}`} />;
+    }
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-primary">
-        {pedName} - Patient Status - PELOD: {averagePelod}/70
+    <div className="space-y-3">
+      <h2 className="text-xl font-medium text-primary">
+        Patient Status {pedName}
       </h2>
       
-      <div className="border rounded-lg overflow-hidden bg-card">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="w-[200px]">Patient Info</TableHead>
-              <TableHead>Age</TableHead>
-              <TableHead>#D PICU</TableHead>
-              <TableHead>PELOD</TableHead>
-              <TableHead>Adherence</TableHead>
-              <TableHead>Diagnosis</TableHead>
-              <TableHead>Exams</TableHead>
-              <TableHead>Alarms</TableHead>
-              <TableHead>Tour</TableHead>
-              <TableHead>Visit</TableHead>
+            <TableRow className="bg-gray-50 border-b border-gray-200">
+              <TableHead className="font-medium text-gray-700">Patient Informations</TableHead>
+              <TableHead className="font-medium text-gray-700">Age</TableHead>
+              <TableHead className="font-medium text-gray-700">
+                <div className="flex items-center gap-1">
+                  #D PICU
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
+              </TableHead>
+              <TableHead className="font-medium text-gray-700">
+                <div className="flex items-center gap-1">
+                  PELOD (/70)
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
+              </TableHead>
+              <TableHead className="font-medium text-gray-700">Global Adherence (%)</TableHead>
+              <TableHead className="font-medium text-gray-700">Admission Diagnosis</TableHead>
+              <TableHead className="font-medium text-gray-700">Exams</TableHead>
+              <TableHead className="font-medium text-gray-700">Alarms</TableHead>
+              <TableHead className="font-medium text-gray-700">Tour</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {patients.map((patient) => (
+            {patients.map((patient, index) => (
               <TableRow 
                 key={patient.id}
-                className="cursor-pointer hover:bg-muted/30 transition-colors"
+                className="cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100"
                 onClick={() => navigate(`/optistats?patient=${patient.id}`)}
               >
-                <TableCell>
-                  <div className="font-medium">{patient.name}</div>
-                  <div className="text-sm text-muted-foreground">{patient.weight}</div>
+                <TableCell className="py-4">
+                  <div className="font-medium text-red-500">{patient.id} {patient.name}</div>
+                  <div className="text-sm text-gray-500">{patient.weight}</div>
                 </TableCell>
-                <TableCell>{patient.age}</TableCell>
-                <TableCell>{patient.picuId}</TableCell>
+                <TableCell className="text-gray-700">{patient.age}</TableCell>
+                <TableCell className="text-gray-700">{patient.picuId}</TableCell>
                 <TableCell>
-                  <span className={`font-bold text-lg ${getPelodColor(patient.pelodScore)}`}>
+                  <span className="font-semibold text-lg text-gray-900">
                     {patient.pelodScore}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className={`font-semibold ${getAdherenceColor(patient.adherence)}`}>
+                  <span className={`font-medium ${getAdherenceColor(patient.adherence)}`}>
                     {patient.adherence}%
                   </span>
                 </TableCell>
-                <TableCell className="max-w-[200px]">{patient.diagnosis}</TableCell>
+                <TableCell className="text-gray-700">{patient.diagnosis}</TableCell>
+                <TableCell>
+                  {patient.exam && (
+                    <span className="text-sm text-gray-600">{patient.exam}</span>
+                  )}
+                </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    <Brain className={`h-5 w-5 ${getScoreColor(patient.brainScore)}`} />
-                    <Thermometer className={`h-5 w-5 ${getScoreColor(patient.heartScore)}`} />
-                    <Heart className={`h-5 w-5 ${getScoreColor(patient.heartScore)}`} />
-                    <Activity className={`h-5 w-5 ${getScoreColor(patient.lungsScore)}`} />
-                    <Wind className={`h-5 w-5 ${getScoreColor(patient.lungsScore)}`} />
+                    {getOrganIcon('brain', patient.brainScore)}
+                    {getOrganIcon('heart', patient.heartScore)}
+                    {getOrganIcon('lungs', patient.lungsScore)}
+                    {getOrganIcon('kidney', patient.kidneyScore)}
                   </div>
                 </TableCell>
                 <TableCell>
-                  {patient.exam && (
-                    <Badge variant="outline" className="text-xs">
-                      {patient.exam}
+                  {patient.tour && (
+                    <Badge 
+                      variant={patient.tour === 'Priority' ? 'destructive' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {patient.tour}
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell>—</TableCell>
-                <TableCell>—</TableCell>
+                <TableCell>
+                  <button className="text-gray-400 hover:text-gray-600">
+                    <MoreHorizontal className="h-5 w-5" />
+                  </button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

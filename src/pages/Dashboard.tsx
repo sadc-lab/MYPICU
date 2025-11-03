@@ -1,62 +1,65 @@
-import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { PatientTable } from '@/components/PatientTable';
 import { PelodBadges } from '@/components/PelodBadges';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getPatientsForPed, getAllPatients, pedAPatients, pedBPatients, pedCPatients } from '@/utils/patientData';
+import { getAllPatients, pedAPatients, pedBPatients, pedCPatients } from '@/utils/patientData';
+import { ChevronRight } from 'lucide-react';
 
 const Dashboard = () => {
-  const [selectedPed, setSelectedPed] = useState<'A' | 'B' | 'C'>('A');
-  
-  const patients = getPatientsForPed(selectedPed);
   const allPatients = getAllPatients();
 
-  const averagePelod = patients.length > 0
-    ? Math.round(patients.reduce((sum, p) => sum + p.pelodScore, 0) / patients.length)
+  const averagePelodA = pedAPatients.length > 0
+    ? Math.round(pedAPatients.reduce((sum, p) => sum + p.pelodScore, 0) / pedAPatients.length)
     : 0;
 
-  const getPedName = (ped: 'A' | 'B' | 'C') => {
-    return `PED ${ped}`;
-  };
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#EDF2F9]">
       <Header />
       
-      <main className="container mx-auto px-4 py-6 max-w-[1600px]">
+      <main className="container mx-auto px-6 py-6 max-w-[1600px]">
         <div className="flex items-start justify-between mb-6">
-          <div className="flex gap-4">
-            <Button variant="outline" className="bg-card">
+          <div className="flex gap-3">
+            <Button variant="outline" className="bg-white border-2 border-gray-300">
               TVL Access
             </Button>
             
-            <Button variant="outline" className="text-primary border-primary bg-card">
-              Organize Tour
+            <Button variant="outline" className="bg-white border-2 border-primary text-primary hover:bg-primary/5">
+              Organize Tour <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
 
-          <PelodBadges patients={allPatients} unitAverage={averagePelod} />
+          <PelodBadges patients={allPatients} unitAverage={averagePelodA} />
         </div>
 
-        <div className="mb-6">
-          <Select value={selectedPed} onValueChange={(value: any) => setSelectedPed(value)}>
-            <SelectTrigger className="w-[200px] bg-card">
-              <SelectValue placeholder="Select PED" />
-            </SelectTrigger>
-            <SelectContent className="bg-card">
-              <SelectItem value="A">PED A</SelectItem>
-              <SelectItem value="B">PED B</SelectItem>
-              <SelectItem value="C">PED C</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <div className="space-y-6">
+          <PatientTable 
+            patients={pedAPatients}
+            pedName="PED A"
+            averagePelod={averagePelodA}
+          />
 
-        <PatientTable 
-          patients={patients}
-          pedName={getPedName(selectedPed)}
-          averagePelod={averagePelod}
-        />
+          {pedBPatients.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-medium text-primary">Patient status PED B</h2>
+                <Button variant="link" className="text-primary">
+                  See more <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {pedCPatients.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-medium text-primary">Patient status PED C</h2>
+                <Button variant="link" className="text-primary">
+                  See more <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
