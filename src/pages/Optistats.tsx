@@ -140,15 +140,50 @@ const Optistats = () => {
                         <path d="M8 8L0 0h16L8 8z" />
                       </svg>
                     </div>
-                    <div className="border border-gray-300 rounded-full px-4 py-1.5 text-xs text-gray-600 flex items-center justify-center gap-1.5 min-w-[120px]">
-                      <Activity className="h-3 w-3" />
-                      <div className="flex items-center gap-0.5">
-                        {/* Visual range indicator */}
-                        <div className={`w-2 h-2 rounded-full ${inRange ? 'bg-gray-300' : 'bg-gray-200'}`}></div>
-                        <div className={`w-2 h-2 rounded-full ${inRange ? 'bg-gray-400' : 'bg-gray-200'}`}></div>
-                        <div className={`w-3 h-3 rounded-full ${inRange ? 'bg-gray-500' : 'bg-red-400'} border-2 ${inRange ? 'border-gray-600' : 'border-red-500'}`}></div>
-                        <div className={`w-2 h-2 rounded-full ${inRange ? 'bg-gray-400' : 'bg-gray-200'}`}></div>
-                        <div className={`w-2 h-2 rounded-full ${inRange ? 'bg-gray-300' : 'bg-gray-200'}`}></div>
+                    <div className="w-full max-w-[180px]">
+                      {/* Value indicator positioned on range */}
+                      <div className="relative h-8 mb-1">
+                        <div className={`absolute text-xl font-bold ${valueColor}`}
+                          style={{
+                            left: `${((vital.value - vital.min) / (vital.max - vital.min)) * 100}%`,
+                            transform: 'translateX(-50%)',
+                            top: '-4px'
+                          }}>
+                          {vital.value}
+                        </div>
+                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+                          <svg width="12" height="6" viewBox="0 0 12 6" className={valueColor}>
+                            <path d="M6 6L0 0h12L6 6z" fill="currentColor" />
+                          </svg>
+                        </div>
+                      </div>
+                      
+                      {/* Range bar */}
+                      <div className="border border-gray-300 rounded-full h-2 bg-gray-100 relative overflow-hidden">
+                        {/* Target indicator */}
+                        <div 
+                          className="absolute top-0 bottom-0 w-0.5 bg-gray-400"
+                          style={{
+                            left: `${((vital.target - vital.min) / (vital.max - vital.min)) * 100}%`
+                          }}>
+                        </div>
+                        {/* Current value position on bar */}
+                        <div 
+                          className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 ${
+                            inRange ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600'
+                          }`}
+                          style={{
+                            left: `${((vital.value - vital.min) / (vital.max - vital.min)) * 100}%`,
+                            transform: 'translate(-50%, -50%)'
+                          }}>
+                        </div>
+                      </div>
+                      
+                      {/* Min, Target, Max labels */}
+                      <div className="flex justify-between items-center mt-1 text-xs text-gray-500 px-1">
+                        <span>{vital.min}</span>
+                        <Activity className="h-3 w-3 text-gray-400" />
+                        <span>{vital.max}</span>
                       </div>
                     </div>
                   </div>
