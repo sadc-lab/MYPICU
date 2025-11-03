@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Bell, HelpCircle, User, Activity, Brain, Heart, Wind } from 'lucide-react';
-import myPicuLogo from '@/assets/mypicu-logo.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +28,7 @@ export const Header = () => {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center">
-              <img src={myPicuLogo} alt="MYPICU" className="h-10" />
+              <span className="text-2xl font-bold text-primary">MYPICU</span>
             </Link>
           </div>
 
