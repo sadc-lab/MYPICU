@@ -29,27 +29,29 @@ const Dashboard = () => {
     <div className="min-h-screen bg-[#EDF2F9]">
       <Header />
       
-      <main className="container mx-auto px-6 py-6 max-w-[1600px]">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex gap-3">
-            <Button variant="outline" className="bg-white border-2 border-gray-300">
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-[1600px]">
+        <div className="flex flex-col lg:flex-row items-start justify-between gap-4 lg:gap-0 mb-6">
+          <div className="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
+            <Button variant="outline" className="bg-white border-2 border-gray-300 text-sm sm:text-base">
               TVL Access
             </Button>
             
-            <Button variant="outline" className="bg-white border-2 border-primary text-primary hover:bg-primary/5">
+            <Button variant="outline" className="bg-white border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base">
               Organize Tour <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
 
-          <PelodBadges patients={allPatients} unitAverage={averagePelod} />
+          <div className="hidden lg:block">
+            <PelodBadges patients={allPatients} unitAverage={averagePelod} />
+          </div>
         </div>
 
         <div className="space-y-6">
           <div>
-            <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-xl font-medium text-primary">Patient status</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+              <h2 className="text-lg sm:text-xl font-medium text-primary">Patient status</h2>
               <Select value={selectedPed} onValueChange={(value) => setSelectedPed(value as 'A' | 'B' | 'C')}>
-                <SelectTrigger className="w-[120px] bg-white border-primary text-primary h-8">
+                <SelectTrigger className="w-full sm:w-[120px] bg-white border-primary text-primary h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-50">

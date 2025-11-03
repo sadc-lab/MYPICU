@@ -45,35 +45,36 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
   return (
     <div className="space-y-3">
       {showTitle && (
-        <h2 className="text-xl font-medium text-primary">
+        <h2 className="text-lg sm:text-xl font-medium text-primary">
           Patient Status {pedName}
         </h2>
       )}
       
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow className="bg-gray-50 border-b border-gray-200">
-              <TableHead className="font-medium text-gray-700">Patient Informations</TableHead>
-              <TableHead className="font-medium text-gray-700">Age</TableHead>
-              <TableHead className="font-medium text-gray-700">
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm min-w-[150px]">Patient Informations</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden sm:table-cell">Age</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden md:table-cell">
                 <div className="flex items-center gap-1">
                   #D PICU
                   <ArrowUpDown className="h-3 w-3" />
                 </div>
               </TableHead>
-              <TableHead className="font-medium text-gray-700">
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm">
                 <div className="flex items-center gap-1">
-                  PELOD (/70)
+                  PELOD
                   <ArrowUpDown className="h-3 w-3" />
                 </div>
               </TableHead>
-              <TableHead className="font-medium text-gray-700">Global Adherence (%)</TableHead>
-              <TableHead className="font-medium text-gray-700">Admission Diagnosis</TableHead>
-              <TableHead className="font-medium text-gray-700">Exams</TableHead>
-              <TableHead className="font-medium text-gray-700">Alarms</TableHead>
-              <TableHead className="font-medium text-gray-700">Tour</TableHead>
-              <TableHead></TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden lg:table-cell">Adherence</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden xl:table-cell">Diagnosis</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden xl:table-cell">Exams</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm">Alarms</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden md:table-cell">Tour</TableHead>
+              <TableHead className="hidden sm:table-cell"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -83,37 +84,37 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                 className="cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100"
                 onClick={() => navigate(`/optistats?patient=${patient.id}`)}
               >
-                <TableCell className="py-4">
-                  <div className="font-medium text-red-500">{patient.id} {patient.name}</div>
-                  <div className="text-sm text-gray-500">{patient.weight}</div>
+                <TableCell className="py-3 sm:py-4">
+                  <div className="font-medium text-red-500 text-sm sm:text-base">{patient.id} {patient.name}</div>
+                  <div className="text-xs sm:text-sm text-gray-500">{patient.weight}</div>
                 </TableCell>
-                <TableCell className="text-gray-700">{patient.age}</TableCell>
-                <TableCell className="text-gray-700">{patient.picuId}</TableCell>
+                <TableCell className="text-gray-700 text-sm hidden sm:table-cell">{patient.age}</TableCell>
+                <TableCell className="text-gray-700 text-sm hidden md:table-cell">{patient.picuId}</TableCell>
                 <TableCell>
-                  <span className="font-semibold text-lg text-gray-900">
+                  <span className="font-semibold text-base sm:text-lg text-gray-900">
                     {patient.pelodScore}
                   </span>
                 </TableCell>
-                <TableCell>
-                  <span className={`font-medium ${getAdherenceColor(patient.adherence)}`}>
+                <TableCell className="hidden lg:table-cell">
+                  <span className={`font-medium text-sm ${getAdherenceColor(patient.adherence)}`}>
                     {patient.adherence}%
                   </span>
                 </TableCell>
-                <TableCell className="text-gray-700">{patient.diagnosis}</TableCell>
-                <TableCell>
+                <TableCell className="text-gray-700 text-sm hidden xl:table-cell max-w-[200px] truncate">{patient.diagnosis}</TableCell>
+                <TableCell className="hidden xl:table-cell">
                   {patient.exam && (
-                    <span className="text-sm text-gray-600">{patient.exam}</span>
+                    <span className="text-xs sm:text-sm text-gray-600">{patient.exam}</span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5 sm:gap-1">
                     {getOrganIcon('brain', patient.brainScore)}
                     {getOrganIcon('heart', patient.heartScore)}
                     {getOrganIcon('lungs', patient.lungsScore)}
                     {getOrganIcon('kidney', patient.kidneyScore)}
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden md:table-cell">
                   {patient.tour && (
                     <Badge 
                       variant={patient.tour === 'Priority' ? 'destructive' : 'secondary'}
@@ -123,7 +124,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   <button className="text-gray-400 hover:text-gray-600">
                     <MoreHorizontal className="h-5 w-5" />
                   </button>
@@ -132,6 +133,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   );
