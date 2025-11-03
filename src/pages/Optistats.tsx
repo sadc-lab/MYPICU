@@ -155,7 +155,7 @@ const Optistats = () => {
                         
                         {/* Current value position on bar */}
                         <div 
-                          className={`absolute w-4 h-4 rounded-full border-2 ${
+                          className={`absolute w-3 h-3 rounded-full border-2 ${
                             inRange ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600'
                           } z-10 -top-0.5`}
                           style={{
