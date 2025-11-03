@@ -148,10 +148,10 @@ const Optistats = () => {
                     
                     <div className="w-full max-w-[180px]">
                       {/* Range bar */}
-                      <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="relative h-3 bg-gray-200 rounded-full overflow-visible">
                         {/* Target range (light grey zone) */}
                         <div 
-                          className="absolute top-0 bottom-0 bg-gray-300"
+                          className="absolute top-0 bottom-0 bg-gray-300 rounded-full"
                           style={{
                             left: `${((vital.targetMin - vital.min) / (vital.max - vital.min)) * 100}%`,
                             width: `${((vital.targetMax - vital.targetMin) / (vital.max - vital.min)) * 100}%`
@@ -160,12 +160,12 @@ const Optistats = () => {
                         
                         {/* Current value position on bar */}
                         <div 
-                          className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 ${
+                          className={`absolute w-4 h-4 rounded-full border-2 ${
                             inRange ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600'
-                          } z-10`}
+                          } z-10 -top-0.5`}
                           style={{
                             left: `${Math.max(0, Math.min(100, ((vital.value - vital.min) / (vital.max - vital.min)) * 100))}%`,
-                            transform: 'translate(-50%, -50%)'
+                            transform: 'translateX(-50%)'
                           }}>
                         </div>
                       </div>
