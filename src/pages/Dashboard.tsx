@@ -15,11 +15,21 @@ import { useState } from 'react';
 
 const Dashboard = () => {
   const [selectedPed, setSelectedPed] = useState<'A' | 'B' | 'C'>('A');
+  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
+  const searchQuery = searchParams.get('search')?.toLowerCase() || '';
   
   const allPatients = getAllPatients();
   
   // Get patients for selected PED
-  const displayedPatients = getPatientsForPed(selectedPed);
+  let displayedPatients = getPatientsForPed(selectedPed);
+  
+  // Filter by search query if present
+  if (searchQuery) {
+    displayedPatients = displayedPatients.filter(patient => 
+      patient.name.toLowerCase().includes(searchQuery) ||
+      patient.id.toLowerCase().includes(searchQuery)
+    );
+  }
 
   const averagePelod = displayedPatients.length > 0
     ? Math.round(displayedPatients.reduce((sum, p) => sum + p.pelodScore, 0) / displayedPatients.length)
@@ -46,18 +56,25 @@ const Dashboard = () => {
 
         <div className="space-y-6">
           <div>
-            <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-xl font-medium text-primary">Patient status</h2>
-              <Select value={selectedPed} onValueChange={(value) => setSelectedPed(value as 'A' | 'B' | 'C')}>
-                <SelectTrigger className="w-[120px] bg-white border-primary text-primary h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white z-50">
-                  <SelectItem value="A">PED A</SelectItem>
-                  <SelectItem value="B">PED B</SelectItem>
-                  <SelectItem value="C">PED C</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-medium text-primary">Patient status</h2>
+                <Select value={selectedPed} onValueChange={(value) => setSelectedPed(value as 'A' | 'B' | 'C')}>
+                  <SelectTrigger className="w-[120px] bg-white border-primary text-primary h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white z-50">
+                    <SelectItem value="A">PED A</SelectItem>
+                    <SelectItem value="B">PED B</SelectItem>
+                    <SelectItem value="C">PED C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {searchQuery && (
+                <p className="text-sm text-gray-600">
+                  Found {displayedPatients.length} patient{displayedPatients.length !== 1 ? 's' : ''} matching "{searchQuery}"
+                </p>
+              )}
             </div>
             
             <PatientTable 
