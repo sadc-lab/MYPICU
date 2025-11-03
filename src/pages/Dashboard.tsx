@@ -1,74 +1,62 @@
 import { useState } from 'react';
 import { Header } from '@/components/Header';
-import { PatientCard } from '@/components/PatientCard';
+import { PatientTable } from '@/components/PatientTable';
+import { PelodBadges } from '@/components/PelodBadges';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getPatientsForPed, getAllPatients } from '@/utils/patientData';
+import { getPatientsForPed, getAllPatients, pedAPatients, pedBPatients, pedCPatients } from '@/utils/patientData';
 
 const Dashboard = () => {
-  const [selectedPed, setSelectedPed] = useState<'all' | 'A' | 'B' | 'C'>('all');
+  const [selectedPed, setSelectedPed] = useState<'A' | 'B' | 'C'>('A');
   
-  const patients = selectedPed === 'all' 
-    ? getAllPatients() 
-    : getPatientsForPed(selectedPed);
+  const patients = getPatientsForPed(selectedPed);
+  const allPatients = getAllPatients();
 
   const averagePelod = patients.length > 0
     ? Math.round(patients.reduce((sum, p) => sum + p.pelodScore, 0) / patients.length)
     : 0;
 
-  const topPatients = [...patients]
-    .sort((a, b) => b.pelodScore - a.pelodScore)
-    .slice(0, 5);
+  const getPedName = (ped: 'A' | 'B' | 'C') => {
+    return `PED ${ped}`;
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Patient Overview</h1>
-            <p className="text-muted-foreground">
-              {selectedPed === 'all' ? 'All PEDs' : `PED ${selectedPed}`} - Average PELOD: {averagePelod}
-            </p>
-          </div>
-
+      <main className="container mx-auto px-4 py-6 max-w-[1600px]">
+        <div className="flex items-start justify-between mb-6">
           <div className="flex gap-4">
-            <Select value={selectedPed} onValueChange={(value: any) => setSelectedPed(value)}>
-              <SelectTrigger className="w-[180px] bg-card">
-                <SelectValue placeholder="Select PED" />
-              </SelectTrigger>
-              <SelectContent className="bg-card">
-                <SelectItem value="all">All PEDs</SelectItem>
-                <SelectItem value="A">PED A</SelectItem>
-                <SelectItem value="B">PED B</SelectItem>
-                <SelectItem value="C">PED C</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Button variant="outline">
+            <Button variant="outline" className="bg-card">
               TVL Access
             </Button>
+            
+            <Button variant="outline" className="text-primary border-primary bg-card">
+              Organize Tour
+            </Button>
           </div>
+
+          <PelodBadges patients={allPatients} unitAverage={averagePelod} />
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Top 5 Patients by PELOD Score</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {topPatients.map(patient => (
-              <PatientCard key={patient.id} patient={patient} />
-            ))}
-          </div>
+        <div className="mb-6">
+          <Select value={selectedPed} onValueChange={(value: any) => setSelectedPed(value)}>
+            <SelectTrigger className="w-[200px] bg-card">
+              <SelectValue placeholder="Select PED" />
+            </SelectTrigger>
+            <SelectContent className="bg-card">
+              <SelectItem value="A">PED A</SelectItem>
+              <SelectItem value="B">PED B</SelectItem>
+              <SelectItem value="C">PED C</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">All Patients</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {patients.map(patient => (
-              <PatientCard key={patient.id} patient={patient} />
-            ))}
-          </div>
-        </div>
+        <PatientTable 
+          patients={patients}
+          pedName={getPedName(selectedPed)}
+          averagePelod={averagePelod}
+        />
       </main>
     </div>
   );
