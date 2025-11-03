@@ -173,7 +173,6 @@ const Optistats = () => {
                       {/* Target range labels */}
                       <div className="flex justify-between items-center mt-1.5 text-xs text-gray-500">
                         <span>{vital.targetMin}</span>
-                        <Activity className="h-3 w-3 text-gray-400" />
                         <span>{vital.targetMax}</span>
                       </div>
                     </div>
