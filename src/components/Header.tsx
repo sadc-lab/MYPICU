@@ -2,6 +2,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Bell, HelpCircle, User, Activity, Brain, Heart, Wind, Search } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { getAllPatients, Patient } from '@/utils/patientData';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,20 +22,40 @@ import {
 export const Header = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   
   const isActive = (path: string) => location.pathname === path;
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const searchQuery = formData.get('search') as string;
-    // Search functionality will be handled by the Dashboard component via URL params
-    if (searchQuery.trim()) {
-      const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set('search', searchQuery.trim());
-      window.location.href = currentUrl.toString();
-    }
-  };
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter patients based on search
+  const allPatients = getAllPatients();
+  const filteredPatients = searchQuery.trim() 
+    ? allPatients.filter(patient => 
+        patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        patient.id.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
+  // Group patients by PED
+  const patientsByPed = filteredPatients.reduce((acc, patient) => {
+    const ped = patient.id.startsWith('#1') ? 'A' : patient.id.startsWith('#2') ? 'B' : 'C';
+    if (!acc[ped]) acc[ped] = [];
+    acc[ped].push(patient);
+    return acc;
+  }, {} as Record<string, Patient[]>);
 
   return (
     <header className="border-b bg-white shadow-sm">
@@ -44,15 +66,59 @@ export const Header = () => {
               <span className="text-2xl font-bold text-primary">MYPICU</span>
             </Link>
             
-            <form onSubmit={handleSearch} className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div ref={searchRef} className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
               <Input 
                 type="text"
-                name="search"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowDropdown(true);
+                }}
+                onFocus={() => searchQuery && setShowDropdown(true)}
                 placeholder="Search patient by name or ID..."
                 className="pl-10 w-[300px] bg-white border-gray-300"
               />
-            </form>
+              
+              {showDropdown && searchQuery && filteredPatients.length > 0 && (
+                <div className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-[400px] overflow-y-auto">
+                  {Object.entries(patientsByPed).sort().map(([ped, patients]) => (
+                    <div key={ped}>
+                      <div className="px-4 py-2 bg-gray-100 text-sm font-semibold text-gray-700 border-b">
+                        PED {ped}
+                      </div>
+                      {patients.map((patient) => (
+                        <Link
+                          key={patient.id}
+                          to={`/optistats?patient=${encodeURIComponent(patient.id)}`}
+                          className="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                          onClick={() => {
+                            setShowDropdown(false);
+                            setSearchQuery('');
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-gray-900">{patient.name}</div>
+                              <div className="text-sm text-gray-500">{patient.id}</div>
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              PELOD: {patient.pelodScore}
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {showDropdown && searchQuery && filteredPatients.length === 0 && (
+                <div className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-50 p-4 text-center text-gray-500 text-sm">
+                  No patients found
+                </div>
+              )}
+            </div>
           </div>
 
           <nav className="hidden md:flex gap-2">
