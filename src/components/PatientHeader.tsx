@@ -89,16 +89,6 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               <div className="text-3xl font-bold text-gray-900">{patient.pelodScore}</div>
             </div>
 
-            <Button
-              variant={isActivePage('optistats') ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => navigate(`/optistats?patient=${patientId}`)}
-              className="gap-2"
-            >
-              <Activity className="h-4 w-4" />
-              Stats
-            </Button>
-
             <div className="flex gap-1">
               <button
                 onClick={() => navigate(`/optibrain?patient=${patientId}`)}
