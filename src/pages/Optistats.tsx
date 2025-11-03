@@ -24,12 +24,56 @@ const Optistats = () => {
   }
 
   const vitalSigns = [
-    { icon: Heart, label: 'Heart Rate', value: '98', unit: 'bpm', color: 'text-red-500' },
-    { icon: Thermometer, label: 'Temperature', value: '37.2', unit: '°C', color: 'text-orange-500' },
-    { icon: Activity, label: 'Resp. Rate', value: '22', unit: '/min', color: 'text-blue-500' },
-    { icon: Droplet, label: 'SpO2', value: '98', unit: '%', color: 'text-green-500' },
-    { icon: Gauge, label: 'BP', value: '110/70', unit: 'mmHg', color: 'text-purple-500' },
+    { 
+      label: 'FC', 
+      fullLabel: 'Heart Rate',
+      value: 130, 
+      range: '80-120',
+      minRange: 80,
+      maxRange: 120,
+      unit: 'bpm'
+    },
+    { 
+      label: 'TAM', 
+      fullLabel: 'Blood Pressure',
+      value: 70, 
+      range: '78-85',
+      minRange: 78,
+      maxRange: 85,
+      unit: 'mmHg'
+    },
+    { 
+      label: 'FR', 
+      fullLabel: 'Resp. Rate',
+      value: 25, 
+      range: '20-30',
+      minRange: 20,
+      maxRange: 30,
+      unit: '/min'
+    },
+    { 
+      label: 'T°', 
+      fullLabel: 'Temperature',
+      value: 37, 
+      range: '35-37',
+      minRange: 35,
+      maxRange: 37,
+      unit: '°C'
+    },
+    { 
+      label: 'SPO2', 
+      fullLabel: 'SpO2',
+      value: 95, 
+      range: '90-100',
+      minRange: 90,
+      maxRange: 100,
+      unit: '%'
+    },
   ];
+
+  const isInRange = (value: number, min: number, max: number) => {
+    return value >= min && value <= max;
+  };
 
   const therapeuticTabs = [
     { icon: Pill, label: 'Prescriptions', active: true },
@@ -73,22 +117,39 @@ const Optistats = () => {
       <PatientHeader currentPage="optistats" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-          {vitalSigns.map((vital, index) => (
-            <Card key={index} className="bg-white shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <vital.icon className={`h-5 w-5 ${vital.color}`} />
-                  {vital.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900">{vital.value}</div>
-                <p className="text-xs text-gray-500 mt-1">{vital.unit}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="bg-white shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-gray-900">Vital Signs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+              {vitalSigns.map((vital, index) => {
+                const inRange = isInRange(vital.value, vital.minRange, vital.maxRange);
+                const valueColor = inRange ? 'text-green-500' : 'text-red-500';
+                
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                      {vital.label}
+                    </div>
+                    <div className={`text-4xl font-bold ${valueColor} mb-1`}>
+                      {vital.value}
+                    </div>
+                    <div className="text-gray-400 mb-2">
+                      <svg width="16" height="8" viewBox="0 0 16 8" fill="currentColor">
+                        <path d="M8 8L0 0h16L8 8z" />
+                      </svg>
+                    </div>
+                    <div className="border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-600 flex items-center gap-1">
+                      <Activity className="h-3 w-3" />
+                      <span>{vital.range}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         <Card className="bg-white shadow-sm">
           <CardHeader className="border-b">
