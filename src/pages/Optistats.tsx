@@ -140,17 +140,16 @@ const Optistats = () => {
                         <path d="M8 8L0 0h16L8 8z" />
                       </svg>
                     </div>
-                    <div className="border border-gray-300 rounded-full px-4 py-1.5 text-xs text-gray-600 flex items-center gap-1.5">
+                    <div className="border border-gray-300 rounded-full px-4 py-1.5 text-xs text-gray-600 flex items-center justify-center gap-1.5 min-w-[120px]">
                       <Activity className="h-3 w-3" />
-                      <span className="flex items-center gap-1.5">
-                        <span className="text-gray-500">{vital.min}</span>
-                        <span className="text-gray-400">-</span>
-                        <div className="w-4 h-4 rounded-full bg-gray-300 flex items-center justify-center">
-                          <div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div>
-                        </div>
-                        <span className="text-gray-400">-</span>
-                        <span className="text-gray-500">{vital.max}</span>
-                      </span>
+                      <div className="flex items-center gap-0.5">
+                        {/* Visual range indicator */}
+                        <div className={`w-2 h-2 rounded-full ${inRange ? 'bg-gray-300' : 'bg-gray-200'}`}></div>
+                        <div className={`w-2 h-2 rounded-full ${inRange ? 'bg-gray-400' : 'bg-gray-200'}`}></div>
+                        <div className={`w-3 h-3 rounded-full ${inRange ? 'bg-gray-500' : 'bg-red-400'} border-2 ${inRange ? 'border-gray-600' : 'border-red-500'}`}></div>
+                        <div className={`w-2 h-2 rounded-full ${inRange ? 'bg-gray-400' : 'bg-gray-200'}`}></div>
+                        <div className={`w-2 h-2 rounded-full ${inRange ? 'bg-gray-300' : 'bg-gray-200'}`}></div>
+                      </div>
                     </div>
                   </div>
                 );
