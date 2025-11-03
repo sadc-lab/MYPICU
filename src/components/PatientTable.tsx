@@ -8,9 +8,10 @@ interface PatientTableProps {
   patients: Patient[];
   pedName: string;
   averagePelod: number;
+  showTitle?: boolean;
 }
 
-export const PatientTable = ({ patients, pedName, averagePelod }: PatientTableProps) => {
+export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true }: PatientTableProps) => {
   const navigate = useNavigate();
 
   const getAdherenceColor = (adherence: number) => {
@@ -43,9 +44,11 @@ export const PatientTable = ({ patients, pedName, averagePelod }: PatientTablePr
 
   return (
     <div className="space-y-3">
-      <h2 className="text-xl font-medium text-primary">
-        Patient Status {pedName}
-      </h2>
+      {showTitle && (
+        <h2 className="text-xl font-medium text-primary">
+          Patient Status {pedName}
+        </h2>
+      )}
       
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <Table>

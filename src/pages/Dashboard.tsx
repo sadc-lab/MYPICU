@@ -45,27 +45,26 @@ const Dashboard = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between p-6 border-b">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-medium text-primary">Patient status</h2>
-                <Select value={selectedPed} onValueChange={(value) => setSelectedPed(value as 'A' | 'B' | 'C')}>
-                  <SelectTrigger className="w-[120px] bg-white border-primary text-primary">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
-                    <SelectItem value="A">PED A</SelectItem>
-                    <SelectItem value="B">PED B</SelectItem>
-                    <SelectItem value="C">PED C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <h2 className="text-xl font-medium text-primary">Patient status</h2>
+              <Select value={selectedPed} onValueChange={(value) => setSelectedPed(value as 'A' | 'B' | 'C')}>
+                <SelectTrigger className="w-[120px] bg-white border-primary text-primary h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white z-50">
+                  <SelectItem value="A">PED A</SelectItem>
+                  <SelectItem value="B">PED B</SelectItem>
+                  <SelectItem value="C">PED C</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <PatientTable 
               patients={displayedPatients}
               pedName={`PED ${selectedPed}`}
               averagePelod={averagePelod}
+              showTitle={false}
             />
           </div>
         </div>
