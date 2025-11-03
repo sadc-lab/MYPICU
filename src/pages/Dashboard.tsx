@@ -2,15 +2,26 @@ import { Header } from '@/components/Header';
 import { PatientTable } from '@/components/PatientTable';
 import { PelodBadges } from '@/components/PelodBadges';
 import { Button } from '@/components/ui/button';
-import { getAllPatients, pedAPatients, pedBPatients, pedCPatients } from '@/utils/patientData';
+import { getAllPatients, getPatientsForPed, pedAPatients, pedBPatients, pedCPatients } from '@/utils/patientData';
 import { ChevronRight } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 const Dashboard = () => {
+  const [searchParams] = useSearchParams();
+  const selectedPed = searchParams.get('ped');
+  
   const allPatients = getAllPatients();
+  
+  // Filter patients based on selection
+  const displayedPatients = selectedPed && selectedPed !== 'all' 
+    ? getPatientsForPed(selectedPed as 'A' | 'B' | 'C')
+    : allPatients;
 
-  const averagePelodA = pedAPatients.length > 0
-    ? Math.round(pedAPatients.reduce((sum, p) => sum + p.pelodScore, 0) / pedAPatients.length)
+  const averagePelod = displayedPatients.length > 0
+    ? Math.round(displayedPatients.reduce((sum, p) => sum + p.pelodScore, 0) / displayedPatients.length)
     : 0;
+  
+  const showAllPeds = !selectedPed || selectedPed === 'all';
 
   return (
     <div className="min-h-screen bg-[#EDF2F9]">
@@ -28,36 +39,46 @@ const Dashboard = () => {
             </Button>
           </div>
 
-          <PelodBadges patients={allPatients} unitAverage={averagePelodA} />
+          <PelodBadges patients={displayedPatients} unitAverage={averagePelod} />
         </div>
 
         <div className="space-y-6">
-          <PatientTable 
-            patients={pedAPatients}
-            pedName="PED A"
-            averagePelod={averagePelodA}
-          />
+          {showAllPeds ? (
+            <>
+              <PatientTable 
+                patients={pedAPatients}
+                pedName="PED A"
+                averagePelod={averagePelod}
+              />
 
-          {pedBPatients.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-medium text-primary">Patient status PED B</h2>
-                <Button variant="link" className="text-primary">
-                  See more <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+              {pedBPatients.length > 0 && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-medium text-primary">Patient status PED B</h2>
+                    <Button variant="link" className="text-primary">
+                      See more <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
 
-          {pedCPatients.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-medium text-primary">Patient status PED C</h2>
-                <Button variant="link" className="text-primary">
-                  See more <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+              {pedCPatients.length > 0 && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-medium text-primary">Patient status PED C</h2>
+                    <Button variant="link" className="text-primary">
+                      See more <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <PatientTable 
+              patients={displayedPatients}
+              pedName={`PED ${selectedPed}`}
+              averagePelod={averagePelod}
+            />
           )}
         </div>
       </main>
