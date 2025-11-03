@@ -149,9 +149,9 @@ const Optistats = () => {
                     <div className="w-full max-w-[180px]">
                       {/* Range bar */}
                       <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden">
-                        {/* Target range (dark grey zone) */}
+                        {/* Target range (light grey zone) */}
                         <div 
-                          className="absolute top-0 bottom-0 bg-gray-400"
+                          className="absolute top-0 bottom-0 bg-gray-300"
                           style={{
                             left: `${((vital.targetMin - vital.min) / (vital.max - vital.min)) * 100}%`,
                             width: `${((vital.targetMax - vital.targetMin) / (vital.max - vital.min)) * 100}%`
