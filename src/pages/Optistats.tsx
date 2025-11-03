@@ -28,51 +28,56 @@ const Optistats = () => {
       label: 'FC', 
       fullLabel: 'Heart Rate',
       value: 130, 
-      min: 80,
-      target: 100,
-      max: 120,
+      min: 60,
+      targetMin: 80,
+      targetMax: 120,
+      max: 140,
       unit: 'bpm'
     },
     { 
       label: 'TAM', 
       fullLabel: 'Blood Pressure',
       value: 70, 
-      min: 78,
-      target: 81,
-      max: 85,
+      min: 60,
+      targetMin: 78,
+      targetMax: 85,
+      max: 100,
       unit: 'mmHg'
     },
     { 
       label: 'FR', 
       fullLabel: 'Resp. Rate',
       value: 25, 
-      min: 20,
-      target: 25,
-      max: 30,
+      min: 15,
+      targetMin: 20,
+      targetMax: 30,
+      max: 35,
       unit: '/min'
     },
     { 
       label: 'T°', 
       fullLabel: 'Temperature',
       value: 37, 
-      min: 35,
-      target: 36,
-      max: 37,
+      min: 34,
+      targetMin: 35,
+      targetMax: 37,
+      max: 39,
       unit: '°C'
     },
     { 
       label: 'SPO2', 
       fullLabel: 'SpO2',
       value: 95, 
-      min: 90,
-      target: 95,
+      min: 80,
+      targetMin: 90,
+      targetMax: 100,
       max: 100,
       unit: '%'
     },
   ];
 
-  const isInRange = (value: number, min: number, max: number) => {
-    return value >= min && value <= max;
+  const isInRange = (value: number, targetMin: number, targetMax: number) => {
+    return value >= targetMin && value <= targetMax;
   };
 
   const therapeuticTabs = [
@@ -124,7 +129,7 @@ const Optistats = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
               {vitalSigns.map((vital, index) => {
-                const inRange = isInRange(vital.value, vital.min, vital.max);
+                const inRange = isInRange(vital.value, vital.targetMin, vital.targetMax);
                 const valueColor = inRange ? 'text-green-500' : 'text-red-500';
                 
                 return (
@@ -140,50 +145,36 @@ const Optistats = () => {
                         <path d="M8 8L0 0h16L8 8z" />
                       </svg>
                     </div>
+                    
                     <div className="w-full max-w-[180px]">
-                      {/* Value indicator positioned on range */}
-                      <div className="relative h-8 mb-1">
-                        <div className={`absolute text-xl font-bold ${valueColor}`}
-                          style={{
-                            left: `${((vital.value - vital.min) / (vital.max - vital.min)) * 100}%`,
-                            transform: 'translateX(-50%)',
-                            top: '-4px'
-                          }}>
-                          {vital.value}
-                        </div>
-                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
-                          <svg width="12" height="6" viewBox="0 0 12 6" className={valueColor}>
-                            <path d="M6 6L0 0h12L6 6z" fill="currentColor" />
-                          </svg>
-                        </div>
-                      </div>
-                      
                       {/* Range bar */}
-                      <div className="border border-gray-300 rounded-full h-2 bg-gray-100 relative overflow-hidden">
-                        {/* Target indicator */}
+                      <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden">
+                        {/* Target range (green zone) */}
                         <div 
-                          className="absolute top-0 bottom-0 w-0.5 bg-gray-400"
+                          className="absolute top-0 bottom-0 bg-green-200"
                           style={{
-                            left: `${((vital.target - vital.min) / (vital.max - vital.min)) * 100}%`
+                            left: `${((vital.targetMin - vital.min) / (vital.max - vital.min)) * 100}%`,
+                            width: `${((vital.targetMax - vital.targetMin) / (vital.max - vital.min)) * 100}%`
                           }}>
                         </div>
+                        
                         {/* Current value position on bar */}
                         <div 
-                          className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 ${
+                          className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 ${
                             inRange ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600'
-                          }`}
+                          } z-10`}
                           style={{
-                            left: `${((vital.value - vital.min) / (vital.max - vital.min)) * 100}%`,
+                            left: `${Math.max(0, Math.min(100, ((vital.value - vital.min) / (vital.max - vital.min)) * 100))}%`,
                             transform: 'translate(-50%, -50%)'
                           }}>
                         </div>
                       </div>
                       
-                      {/* Min, Target, Max labels */}
-                      <div className="flex justify-between items-center mt-1 text-xs text-gray-500 px-1">
-                        <span>{vital.min}</span>
+                      {/* Target range labels */}
+                      <div className="flex justify-between items-center mt-1.5 text-xs text-gray-500">
+                        <span>{vital.targetMin}</span>
                         <Activity className="h-3 w-3 text-gray-400" />
-                        <span>{vital.max}</span>
+                        <span>{vital.targetMax}</span>
                       </div>
                     </div>
                   </div>
