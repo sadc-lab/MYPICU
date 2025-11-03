@@ -43,10 +43,18 @@ export const Header = () => {
   // Filter patients based on search
   const allPatients = getAllPatients();
   const filteredPatients = searchQuery.trim() 
-    ? allPatients.filter(patient => 
-        patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        patient.id.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? allPatients.filter(patient => {
+        const query = searchQuery.toLowerCase();
+        const ped = patient.id.startsWith('#1') ? 'a' : patient.id.startsWith('#2') ? 'b' : 'c';
+        
+        return (
+          patient.name.toLowerCase().includes(query) ||
+          patient.id.toLowerCase().includes(query) ||
+          patient.pelodScore.toString().includes(query) ||
+          ped === query ||
+          `ped ${ped}`.includes(query)
+        );
+      })
     : [];
 
   // Group patients by PED
@@ -76,8 +84,8 @@ export const Header = () => {
                   setShowDropdown(true);
                 }}
                 onFocus={() => searchQuery && setShowDropdown(true)}
-                placeholder="Search patient by name or ID..."
-                className="pl-10 w-[300px] bg-white border-gray-300"
+                placeholder="Search by PED, name, ID, or PELOD..."
+                className="pl-10 w-[320px] bg-white border-gray-300"
               />
               
               {showDropdown && searchQuery && filteredPatients.length > 0 && (
