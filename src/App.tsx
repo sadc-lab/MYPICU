@@ -4,7 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Optistats from "./pages/Optistats";
+import Optibrain from "./pages/Optibrain";
+import Optiheart from "./pages/Optiheart";
+import Optilungs from "./pages/Optilungs";
+import Feedback from "./pages/Feedback";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ManagerSignup from "./pages/auth/ManagerSignup";
@@ -24,7 +29,12 @@ const App = () => (
           <Route path="/auth/signup" element={<Signup />} />
           <Route path="/auth/manager-signup" element={<ManagerSignup />} />
           <Route path="/auth/worker-signup" element={<WorkerSignup />} />
-          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/optistats" element={<ProtectedRoute><Optistats /></ProtectedRoute>} />
+          <Route path="/optibrain" element={<ProtectedRoute><Optibrain /></ProtectedRoute>} />
+          <Route path="/optiheart" element={<ProtectedRoute><Optiheart /></ProtectedRoute>} />
+          <Route path="/optilungs" element={<ProtectedRoute><Optilungs /></ProtectedRoute>} />
+          <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
