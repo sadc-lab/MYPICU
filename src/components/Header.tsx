@@ -1,11 +1,11 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, User, Search, ChevronLeft, ChevronRight, X, List } from 'lucide-react';
+import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, Patient } from '@/utils/patientData';
-import { useTourNavigation } from '@/hooks/useTourNavigation';
+import { useTourNavigation, VisitStatus } from '@/hooks/useTourNavigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +39,8 @@ export const Header = () => {
   // Tour navigation
   const {
     activeTour,
-    endTour,
+    confirmVisit,
+    getVisitStatus,
     getCurrentPatientIndex,
     getNextPatient,
     getPreviousPatient,
@@ -221,15 +222,45 @@ export const Header = () => {
               </Button>
             </div>
 
-            {isOnTourPatient && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={endTour}
-                className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+            {isOnTourPatient && currentPatientId && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant={getVisitStatus(currentPatientId) ? "default" : "ghost"}
+                    size="sm"
+                    className={`h-7 px-3 gap-1.5 ${
+                      getVisitStatus(currentPatientId)
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <Check className="h-4 w-4" />
+                    <span className="text-xs">
+                      {getVisitStatus(currentPatientId) || 'Confirm Visit'}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40 bg-white z-50">
+                  <DropdownMenuItem
+                    onClick={() => confirmVisit(currentPatientId, 'Priority')}
+                    className="cursor-pointer"
+                  >
+                    Priority
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => confirmVisit(currentPatientId, 'Leaving')}
+                    className="cursor-pointer"
+                  >
+                    Leaving
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => confirmVisit(currentPatientId, 'To Check')}
+                    className="cursor-pointer"
+                  >
+                    To Check
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </nav>
 
