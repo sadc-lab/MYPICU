@@ -28,6 +28,12 @@ export const Header = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   
   const isActive = (path: string) => location.pathname === path;
+  const isOnMainDashboard = location.pathname === '/';
+  
+  // Get patient ID from URL to determine if we're viewing a patient
+  const searchParams = new URLSearchParams(location.search);
+  const patientId = searchParams.get('patient');
+  const showOrganNav = !isOnMainDashboard && patientId;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -130,44 +136,46 @@ export const Header = () => {
             </div>
           </div>
 
-          <nav className="hidden md:flex gap-2">
-            <Link to="/optistats">
-              <Button 
-                variant={isActive('/optistats') ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 ${!isActive('/optistats') ? 'text-gray-500 hover:text-gray-700' : ''}`}
-              >
-                <Activity className="h-4 w-4" />
-                Optistats
-              </Button>
-            </Link>
-            <Link to="/optibrain">
-              <Button 
-                variant={isActive('/optibrain') ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 ${!isActive('/optibrain') ? 'text-gray-500 hover:text-gray-700' : ''}`}
-              >
-                <Brain className="h-4 w-4" />
-                Optibrain
-              </Button>
-            </Link>
-            <Link to="/optilungs">
-              <Button 
-                variant={isActive('/optilungs') ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 ${!isActive('/optilungs') ? 'text-gray-500 hover:text-gray-700' : ''}`}
-              >
-                <Wind className="h-4 w-4" />
-                Optilungs
-              </Button>
-            </Link>
-            <Link to="/optiheart">
-              <Button 
-                variant={isActive('/optiheart') ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 ${!isActive('/optiheart') ? 'text-gray-500 hover:text-gray-700' : ''}`}
-              >
-                <HeartIcon className="h-4 w-4" size={16} />
-                Optiheart
-              </Button>
-            </Link>
-          </nav>
+          {showOrganNav && (
+            <nav className="hidden md:flex gap-2">
+              <Link to={`/optistats?patient=${patientId}`}>
+                <Button 
+                  variant={isActive('/optistats') ? 'default' : 'ghost'}
+                  className={`flex items-center gap-2 ${!isActive('/optistats') ? 'text-gray-500 hover:text-gray-700' : ''}`}
+                >
+                  <Activity className="h-4 w-4" />
+                  Optistats
+                </Button>
+              </Link>
+              <Link to={`/optibrain?patient=${patientId}`}>
+                <Button 
+                  variant={isActive('/optibrain') ? 'default' : 'ghost'}
+                  className={`flex items-center gap-2 ${!isActive('/optibrain') ? 'text-gray-500 hover:text-gray-700' : ''}`}
+                >
+                  <Brain className="h-4 w-4" />
+                  Optibrain
+                </Button>
+              </Link>
+              <Link to={`/optilungs?patient=${patientId}`}>
+                <Button 
+                  variant={isActive('/optilungs') ? 'default' : 'ghost'}
+                  className={`flex items-center gap-2 ${!isActive('/optilungs') ? 'text-gray-500 hover:text-gray-700' : ''}`}
+                >
+                  <Wind className="h-4 w-4" />
+                  Optilungs
+                </Button>
+              </Link>
+              <Link to={`/optiheart?patient=${patientId}`}>
+                <Button 
+                  variant={isActive('/optiheart') ? 'default' : 'ghost'}
+                  className={`flex items-center gap-2 ${!isActive('/optiheart') ? 'text-gray-500 hover:text-gray-700' : ''}`}
+                >
+                  <HeartIcon className="h-4 w-4" size={16} />
+                  Optiheart
+                </Button>
+              </Link>
+            </nav>
+          )}
 
           <div className="flex items-center gap-4">
             <DropdownMenu>
