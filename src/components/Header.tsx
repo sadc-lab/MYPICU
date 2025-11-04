@@ -134,7 +134,7 @@ export const Header = () => {
             <Link to="/optistats">
               <Button 
                 variant={isActive('/optistats') ? 'default' : 'ghost'}
-                className="flex items-center gap-2"
+                className={`flex items-center gap-2 ${!isActive('/optistats') ? 'text-gray-400 hover:text-gray-600' : ''}`}
               >
                 <Activity className="h-4 w-4" />
                 Optistats
@@ -143,7 +143,7 @@ export const Header = () => {
             <Link to="/optibrain">
               <Button 
                 variant={isActive('/optibrain') ? 'default' : 'ghost'}
-                className="flex items-center gap-2"
+                className={`flex items-center gap-2 ${!isActive('/optibrain') ? 'text-gray-400 hover:text-gray-600' : ''}`}
               >
                 <Brain className="h-4 w-4" />
                 Optibrain
@@ -152,7 +152,7 @@ export const Header = () => {
             <Link to="/optilungs">
               <Button 
                 variant={isActive('/optilungs') ? 'default' : 'ghost'}
-                className="flex items-center gap-2"
+                className={`flex items-center gap-2 ${!isActive('/optilungs') ? 'text-gray-400 hover:text-gray-600' : ''}`}
               >
                 <Wind className="h-4 w-4" />
                 Optilungs
@@ -161,7 +161,7 @@ export const Header = () => {
             <Link to="/optiheart">
               <Button 
                 variant={isActive('/optiheart') ? 'default' : 'ghost'}
-                className="flex items-center gap-2"
+                className={`flex items-center gap-2 ${!isActive('/optiheart') ? 'text-gray-400 hover:text-gray-600' : ''}`}
               >
                 <HeartIcon className="h-4 w-4" size={16} />
                 Optiheart
