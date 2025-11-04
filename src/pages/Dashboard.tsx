@@ -1,6 +1,7 @@
 import { Header } from '@/components/Header';
 import { PatientTable } from '@/components/PatientTable';
 import { PelodBadges } from '@/components/PelodBadges';
+import { TourOrganizer } from '@/components/TourOrganizer';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -15,6 +16,7 @@ import { useState } from 'react';
 
 const Dashboard = () => {
   const [selectedPed, setSelectedPed] = useState<'A' | 'B' | 'C'>('A');
+  const [showTourOrganizer, setShowTourOrganizer] = useState(false);
   
   const allPatients = getAllPatients();
   
@@ -36,7 +38,11 @@ const Dashboard = () => {
               TVL Access
             </Button>
             
-            <Button variant="outline" className="bg-white border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base">
+            <Button 
+              variant="outline" 
+              className="bg-white border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base"
+              onClick={() => setShowTourOrganizer(true)}
+            >
               Organize Tour <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
@@ -71,6 +77,13 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
+
+      <TourOrganizer
+        open={showTourOrganizer}
+        onOpenChange={setShowTourOrganizer}
+        patients={displayedPatients}
+        pedName={`PED ${selectedPed}`}
+      />
     </div>
   );
 };
