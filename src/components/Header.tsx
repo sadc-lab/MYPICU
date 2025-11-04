@@ -167,100 +167,102 @@ export const Header = () => {
           </div>
 
           <nav className="hidden md:flex gap-2 items-center">
-            <Badge variant={hasActiveTour ? "default" : "outline"} className={hasActiveTour ? "bg-primary text-white text-xs" : "text-xs"}>
-              {hasActiveTour
-                ? (isOnTourPatient ? `Tour ${currentIndex + 1}/${activeTour!.length}` : `Active Tour (${activeTour!.length})`)
-                : 'No Active Tour'}
-            </Badge>
-            
-            <div className="flex items-center gap-1 bg-gray-50 rounded-lg border border-gray-200 p-0.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => previousPatient && handleNavigateToPatient(previousPatient.id)}
-                disabled={!previousPatient}
-                className="h-7 px-2"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 px-2" disabled={!hasActiveTour}>
-                    <List className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-64 max-h-[400px] overflow-y-auto bg-white z-50">
-                  {activeTour?.map((patient, index) => (
-                    <DropdownMenuItem
-                      key={patient.id}
-                      onClick={() => handleNavigateToPatient(patient.id)}
-                      className={`cursor-pointer ${
-                        patient.id === currentPatientId ? 'bg-primary/10 font-semibold' : ''
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">{index + 1}.</span>
-                          <span className="text-red-500 font-semibold text-sm">{patient.id}</span>
-                          <span className="text-sm truncate">{patient.name}</span>
-                        </div>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => nextPatient && handleNavigateToPatient(nextPatient.id)}
-                disabled={!nextPatient}
-                className="h-7 px-2"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {isOnTourPatient && currentPatientId && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+            {hasActiveTour && (
+              <>
+                <Badge variant="default" className="bg-primary text-white text-xs">
+                  {isOnTourPatient ? `${currentIndex + 1}/${activeTour!.length}` : `${activeTour!.length} patients`}
+                </Badge>
+                
+                <div className="flex items-center gap-1 bg-gray-50 rounded-lg border border-gray-200 p-0.5">
                   <Button
-                    variant={getVisitStatus(currentPatientId) ? "default" : "ghost"}
+                    variant="ghost"
                     size="sm"
-                    className={`h-7 px-3 gap-1.5 ${
-                      getVisitStatus(currentPatientId)
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : 'hover:bg-gray-100'
-                    }`}
+                    onClick={() => previousPatient && handleNavigateToPatient(previousPatient.id)}
+                    disabled={!previousPatient}
+                    className="h-7 px-2"
                   >
-                    <Check className="h-4 w-4" />
-                    <span className="text-xs">
-                      {getVisitStatus(currentPatientId) || 'Confirm Visit'}
-                    </span>
+                    <ChevronLeft className="h-4 w-4" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 bg-white z-50">
-                  <DropdownMenuItem
-                    onClick={() => confirmVisit(currentPatientId, 'Priority')}
-                    className="cursor-pointer"
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 px-2">
+                        <List className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="center" className="w-64 max-h-[400px] overflow-y-auto bg-white z-50">
+                      {activeTour?.map((patient, index) => (
+                        <DropdownMenuItem
+                          key={patient.id}
+                          onClick={() => handleNavigateToPatient(patient.id)}
+                          className={`cursor-pointer ${
+                            patient.id === currentPatientId ? 'bg-primary/10 font-semibold' : ''
+                          }`}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">{index + 1}.</span>
+                              <span className="text-red-500 font-semibold text-sm">{patient.id}</span>
+                              <span className="text-sm truncate">{patient.name}</span>
+                            </div>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => nextPatient && handleNavigateToPatient(nextPatient.id)}
+                    disabled={!nextPatient}
+                    className="h-7 px-2"
                   >
-                    Priority
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => confirmVisit(currentPatientId, 'Leaving')}
-                    className="cursor-pointer"
-                  >
-                    Leaving
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => confirmVisit(currentPatientId, 'To Check')}
-                    className="cursor-pointer"
-                  >
-                    To Check
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {isOnTourPatient && currentPatientId && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant={getVisitStatus(currentPatientId) ? "default" : "ghost"}
+                        size="sm"
+                        className={`h-7 px-3 gap-1.5 ${
+                          getVisitStatus(currentPatientId)
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <Check className="h-4 w-4" />
+                        <span className="text-xs">
+                          {getVisitStatus(currentPatientId) || 'Confirm Visit'}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40 bg-white z-50">
+                      <DropdownMenuItem
+                        onClick={() => confirmVisit(currentPatientId, 'Priority')}
+                        className="cursor-pointer"
+                      >
+                        Priority
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => confirmVisit(currentPatientId, 'Leaving')}
+                        className="cursor-pointer"
+                      >
+                        Leaving
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => confirmVisit(currentPatientId, 'To Check')}
+                        className="cursor-pointer"
+                      >
+                        To Check
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </>
             )}
           </nav>
 
