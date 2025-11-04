@@ -81,11 +81,11 @@ export const Header = () => {
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
-                  setShowDropdown(true);
                 }}
-                onFocus={() => searchQuery && setShowDropdown(true)}
-                placeholder="Search by PED, name, ID, or PELOD..."
-                className="pl-10 w-[320px] bg-white border-gray-300"
+                onFocus={() => setShowDropdown(true)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                placeholder="Search patients..."
+                className="pl-10 w-[200px] bg-white border-gray-300"
               />
               
               {showDropdown && searchQuery && filteredPatients.length > 0 && (
