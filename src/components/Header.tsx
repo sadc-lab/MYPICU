@@ -172,7 +172,7 @@ export const Header = () => {
           <div className="flex items-center gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
+                <Button variant="ghost" className="flex items-center gap-2 text-gray-400 hover:text-gray-600">
                   <User className="h-5 w-5" />
                   <span className="hidden md:inline">
                     {user?.user_metadata?.full_name || 'Philippe Jouvet'}
@@ -192,7 +192,7 @@ export const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
               <Bell className="h-5 w-5" />
             </Button>
           </div>
