@@ -94,14 +94,16 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             <div className="flex gap-1 flex-wrap">
               <button
                 onClick={() => navigate(`/optistats?patient=${patientId}`)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg transition-colors text-xs font-semibold ${
+                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                   isActivePage('optistats')
                     ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'hover:bg-gray-100'
                 }`}
               >
-                <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Stats</span>
+                <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 text-xs">
+                  <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="ml-1 font-semibold">Stats</span>
+                </Badge>
               </button>
 
               <button
