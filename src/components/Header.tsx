@@ -154,69 +154,73 @@ export const Header = () => {
             </div>
           </div>
 
-          {!isOnMainDashboard && isInActiveTour && (
+          {!isOnMainDashboard && currentPatientId && (
             <nav className="hidden md:flex gap-2 items-center">
-              <Badge variant="default" className="bg-primary text-white text-xs">
-                Tour {currentIndex + 1}/{activeTour?.length}
-              </Badge>
-              
-              <div className="flex items-center gap-1 bg-gray-50 rounded-lg border border-gray-200 p-0.5">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => previousPatient && handleNavigateToPatient(previousPatient.id)}
-                  disabled={!previousPatient}
-                  className="h-7 px-2"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 px-2">
-                      <List className="h-4 w-4" />
+              {isInActiveTour && (
+                <>
+                  <Badge variant="default" className="bg-primary text-white text-xs">
+                    Tour {currentIndex + 1}/{activeTour?.length}
+                  </Badge>
+                  
+                  <div className="flex items-center gap-1 bg-gray-50 rounded-lg border border-gray-200 p-0.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => previousPatient && handleNavigateToPatient(previousPatient.id)}
+                      disabled={!previousPatient}
+                      className="h-7 px-2"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-64 max-h-[400px] overflow-y-auto bg-white z-50">
-                    {activeTour?.map((patient, index) => (
-                      <DropdownMenuItem
-                        key={patient.id}
-                        onClick={() => handleNavigateToPatient(patient.id)}
-                        className={`cursor-pointer ${
-                          patient.id === currentPatientId ? 'bg-primary/10 font-semibold' : ''
-                        }`}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">{index + 1}.</span>
-                            <span className="text-red-500 font-semibold text-sm">{patient.id}</span>
-                            <span className="text-sm truncate">{patient.name}</span>
-                          </div>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => nextPatient && handleNavigateToPatient(nextPatient.id)}
-                  disabled={!nextPatient}
-                  className="h-7 px-2"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-7 px-2">
+                          <List className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="center" className="w-64 max-h-[400px] overflow-y-auto bg-white z-50">
+                        {activeTour?.map((patient, index) => (
+                          <DropdownMenuItem
+                            key={patient.id}
+                            onClick={() => handleNavigateToPatient(patient.id)}
+                            className={`cursor-pointer ${
+                              patient.id === currentPatientId ? 'bg-primary/10 font-semibold' : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500">{index + 1}.</span>
+                                <span className="text-red-500 font-semibold text-sm">{patient.id}</span>
+                                <span className="text-sm truncate">{patient.name}</span>
+                              </div>
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => nextPatient && handleNavigateToPatient(nextPatient.id)}
+                      disabled={!nextPatient}
+                      className="h-7 px-2"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={endTour}
-                className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={endTour}
+                    className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </nav>
           )}
 
