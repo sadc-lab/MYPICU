@@ -134,7 +134,7 @@ export const Header = () => {
             <Link to="/optistats">
               <Button 
                 variant={isActive('/optistats') ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 ${!isActive('/optistats') ? 'text-gray-400 hover:text-gray-600' : ''}`}
+                className={`flex items-center gap-2 ${!isActive('/optistats') ? 'text-gray-500 hover:text-gray-700' : ''}`}
               >
                 <Activity className="h-4 w-4" />
                 Optistats
@@ -143,7 +143,7 @@ export const Header = () => {
             <Link to="/optibrain">
               <Button 
                 variant={isActive('/optibrain') ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 ${!isActive('/optibrain') ? 'text-gray-400 hover:text-gray-600' : ''}`}
+                className={`flex items-center gap-2 ${!isActive('/optibrain') ? 'text-gray-500 hover:text-gray-700' : ''}`}
               >
                 <Brain className="h-4 w-4" />
                 Optibrain
@@ -152,7 +152,7 @@ export const Header = () => {
             <Link to="/optilungs">
               <Button 
                 variant={isActive('/optilungs') ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 ${!isActive('/optilungs') ? 'text-gray-400 hover:text-gray-600' : ''}`}
+                className={`flex items-center gap-2 ${!isActive('/optilungs') ? 'text-gray-500 hover:text-gray-700' : ''}`}
               >
                 <Wind className="h-4 w-4" />
                 Optilungs
@@ -161,7 +161,7 @@ export const Header = () => {
             <Link to="/optiheart">
               <Button 
                 variant={isActive('/optiheart') ? 'default' : 'ghost'}
-                className={`flex items-center gap-2 ${!isActive('/optiheart') ? 'text-gray-400 hover:text-gray-600' : ''}`}
+                className={`flex items-center gap-2 ${!isActive('/optiheart') ? 'text-gray-500 hover:text-gray-700' : ''}`}
               >
                 <HeartIcon className="h-4 w-4" size={16} />
                 Optiheart
@@ -172,7 +172,7 @@ export const Header = () => {
           <div className="flex items-center gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 text-gray-400 hover:text-gray-600">
+                <Button variant="ghost" className="flex items-center gap-2 text-gray-500 hover:text-gray-700">
                   <User className="h-5 w-5" />
                   <span className="hidden md:inline">
                     {user?.user_metadata?.full_name || 'Philippe Jouvet'}
@@ -192,7 +192,7 @@ export const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
+            <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
               <Bell className="h-5 w-5" />
             </Button>
           </div>
