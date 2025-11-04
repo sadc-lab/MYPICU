@@ -4,7 +4,8 @@ import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getPatientById } from '@/utils/patientData';
-import { Heart, Activity } from 'lucide-react';
+import { Activity } from 'lucide-react';
+import { HeartIcon } from '@/components/icons/HeartIcon';
 
 const Optiheart = () => {
   const [searchParams] = useSearchParams();
@@ -68,7 +69,7 @@ const Optiheart = () => {
           <Card className="lg:col-span-2 bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Heart className="h-5 w-5 text-red-500 fill-current" />
+                <HeartIcon className="h-5 w-5 text-red-500" size={20} />
                 Hemodynamic Trends
               </CardTitle>
             </CardHeader>

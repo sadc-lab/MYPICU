@@ -1,7 +1,8 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Heart, Wind, Activity, ChevronLeft, ExternalLink } from 'lucide-react';
+import { Brain, Wind, Activity, ChevronLeft, ExternalLink } from 'lucide-react';
+import { HeartIcon } from '@/components/icons/HeartIcon';
 import { Patient, getPatientById } from '@/utils/patientData';
 import {
   Select,
@@ -114,7 +115,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.heartScore)} text-xs`}>
-                  <Heart className="h-3 w-3 sm:h-4 sm:w-4 fill-current" />
+                  <HeartIcon className="h-3 w-3 sm:h-4 sm:w-4" size={14} />
                   <span className="ml-1 font-semibold">{patient.heartScore || 0}</span>
                 </Badge>
               </button>

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getPatientById } from '@/utils/patientData';
-import { Heart, Thermometer, Activity, Droplet, Gauge, Pill, Check, FileText, Users, Brain, ChevronRight } from 'lucide-react';
+import { Thermometer, Activity, Droplet, Gauge, Pill, Check, FileText, Users, Brain, ChevronRight } from 'lucide-react';
+import { HeartIcon } from '@/components/icons/HeartIcon';
 
 const Optistats = () => {
   const [searchParams] = useSearchParams();
@@ -108,7 +109,7 @@ const Optistats = () => {
     },
     {
       module: 'heart',
-      icon: Heart,
+      icon: HeartIcon,
       color: 'text-orange-500',
       indicators: [
         { label: 'RM : 150 bpm', target: '86-123 bpm', trend: '-49.4%', trendColor: 'bg-red-100 text-red-600', status: 'orange' },

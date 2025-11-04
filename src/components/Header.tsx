@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, HelpCircle, User, Activity, Brain, Heart, Wind, Search } from 'lucide-react';
+import { Bell, HelpCircle, User, Activity, Brain, Wind, Search } from 'lucide-react';
+import { HeartIcon } from '@/components/icons/HeartIcon';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, Patient } from '@/utils/patientData';
 import {
@@ -162,7 +163,7 @@ export const Header = () => {
                 variant={isActive('/optiheart') ? 'default' : 'ghost'}
                 className="flex items-center gap-2"
               >
-                <Heart className="h-4 w-4" />
+                <HeartIcon className="h-4 w-4" size={16} />
                 Optiheart
               </Button>
             </Link>
