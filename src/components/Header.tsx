@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, HelpCircle, User, Activity, Brain, Wind, Search } from 'lucide-react';
+import { Bell, User, Activity, Brain, Wind, Search } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, Patient } from '@/utils/patientData';
@@ -170,10 +170,6 @@ export const Header = () => {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="rounded-full border-2 border-dashed border-primary">
-              <HelpCircle className="h-5 w-5 text-primary" />
-            </Button>
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
@@ -183,9 +179,12 @@ export const Header = () => {
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white">
+              <DropdownMenuContent align="end" className="w-56 bg-white z-50">
                 <DropdownMenuItem asChild>
                   <Link to="/feedback">Feedback</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  Help
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={signOut}>
                   Log out
