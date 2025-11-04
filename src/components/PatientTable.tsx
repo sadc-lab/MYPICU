@@ -106,7 +106,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                   </span>
                 </TableCell>
                 <TableCell className="hidden lg:table-cell">
-                  <span className={`font-medium text-sm ${getAdherenceColor(patient.adherence)}`}>
+                  <span className="font-medium text-sm text-gray-700">
                     {patient.adherence}%
                   </span>
                 </TableCell>
