@@ -1,10 +1,12 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, User, Activity, Brain, Wind, Search } from 'lucide-react';
+import { Bell, User, Activity, Brain, Wind, Search, ChevronLeft, ChevronRight, X, List } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
+import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, Patient } from '@/utils/patientData';
+import { useTourNavigation } from '@/hooks/useTourNavigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,14 +28,33 @@ export const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const [searchParams] = useSearchParams();
   
   const isActive = (path: string) => location.pathname === path;
   const isOnMainDashboard = location.pathname === '/';
   
   // Get patient ID from URL to determine if we're viewing a patient
-  const searchParams = new URLSearchParams(location.search);
-  const patientId = searchParams.get('patient');
-  const showOrganNav = !isOnMainDashboard && patientId;
+  const currentPatientId = searchParams.get('patient');
+  const showOrganNav = !isOnMainDashboard && currentPatientId;
+
+  // Tour navigation
+  const {
+    activeTour,
+    endTour,
+    getCurrentPatientIndex,
+    getNextPatient,
+    getPreviousPatient,
+    isInTour,
+  } = useTourNavigation();
+
+  const isInActiveTour = currentPatientId && activeTour && isInTour(currentPatientId);
+  const currentIndex = isInActiveTour ? getCurrentPatientIndex(currentPatientId) : -1;
+  const nextPatient = isInActiveTour ? getNextPatient(currentPatientId) : null;
+  const previousPatient = isInActiveTour ? getPreviousPatient(currentPatientId) : null;
+
+  const handleNavigateToPatient = (patientId: string) => {
+    window.location.href = `/optistats?patient=${patientId}`;
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -137,38 +158,110 @@ export const Header = () => {
           </div>
 
           {showOrganNav && (
-            <nav className="hidden md:flex gap-2">
-              <Link to={`/optistats?patient=${patientId}`}>
+            <nav className="hidden md:flex gap-2 items-center">
+              {isInActiveTour && (
+                <>
+                  <Badge variant="default" className="bg-primary text-white text-xs">
+                    Tour {currentIndex + 1}/{activeTour?.length}
+                  </Badge>
+                  
+                  <div className="flex items-center gap-1 bg-gray-50 rounded-lg border border-gray-200 p-0.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => previousPatient && handleNavigateToPatient(previousPatient.id)}
+                      disabled={!previousPatient}
+                      className="h-7 px-2"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-7 px-2">
+                          <List className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="center" className="w-64 max-h-[400px] overflow-y-auto bg-white z-50">
+                        {activeTour?.map((patient, index) => (
+                          <DropdownMenuItem
+                            key={patient.id}
+                            onClick={() => handleNavigateToPatient(patient.id)}
+                            className={`cursor-pointer ${
+                              patient.id === currentPatientId ? 'bg-primary/10 font-semibold' : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500">{index + 1}.</span>
+                                <span className="text-red-500 font-semibold text-sm">{patient.id}</span>
+                                <span className="text-sm truncate">{patient.name}</span>
+                              </div>
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => nextPatient && handleNavigateToPatient(nextPatient.id)}
+                      disabled={!nextPatient}
+                      className="h-7 px-2"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={endTour}
+                    className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+
+                  <div className="h-6 w-px bg-gray-300 mx-1" />
+                </>
+              )}
+
+              <Link to={`/optistats?patient=${currentPatientId}`}>
                 <Button 
                   variant={isActive('/optistats') ? 'default' : 'ghost'}
                   className={`flex items-center gap-2 ${!isActive('/optistats') ? 'text-gray-500 hover:text-gray-700' : ''}`}
+                  size="sm"
                 >
                   <Activity className="h-4 w-4" />
                   Optistats
                 </Button>
               </Link>
-              <Link to={`/optibrain?patient=${patientId}`}>
+              <Link to={`/optibrain?patient=${currentPatientId}`}>
                 <Button 
                   variant={isActive('/optibrain') ? 'default' : 'ghost'}
                   className={`flex items-center gap-2 ${!isActive('/optibrain') ? 'text-gray-500 hover:text-gray-700' : ''}`}
+                  size="sm"
                 >
                   <Brain className="h-4 w-4" />
                   Optibrain
                 </Button>
               </Link>
-              <Link to={`/optilungs?patient=${patientId}`}>
+              <Link to={`/optilungs?patient=${currentPatientId}`}>
                 <Button 
                   variant={isActive('/optilungs') ? 'default' : 'ghost'}
                   className={`flex items-center gap-2 ${!isActive('/optilungs') ? 'text-gray-500 hover:text-gray-700' : ''}`}
+                  size="sm"
                 >
                   <Wind className="h-4 w-4" />
                   Optilungs
                 </Button>
               </Link>
-              <Link to={`/optiheart?patient=${patientId}`}>
+              <Link to={`/optiheart?patient=${currentPatientId}`}>
                 <Button 
                   variant={isActive('/optiheart') ? 'default' : 'ghost'}
                   className={`flex items-center gap-2 ${!isActive('/optiheart') ? 'text-gray-500 hover:text-gray-700' : ''}`}
+                  size="sm"
                 >
                   <HeartIcon className="h-4 w-4" size={16} />
                   Optiheart

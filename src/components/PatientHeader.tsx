@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Brain, Wind, Activity, ChevronLeft, ExternalLink } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { Patient, getPatientById } from '@/utils/patientData';
-import { TourNavigation } from '@/components/TourNavigation';
 import {
   Select,
   SelectContent,
@@ -35,9 +34,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const isActivePage = (page: string) => currentPage === page;
 
   return (
-    <>
-      <TourNavigation />
-      <div className="bg-white border-b border-gray-200 mb-4 sm:mb-6">
+    <div className="bg-white border-b border-gray-200 mb-4 sm:mb-6">
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
           <Button
@@ -155,6 +152,5 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
         </div>
       </div>
     </div>
-    </>
   );
 };
