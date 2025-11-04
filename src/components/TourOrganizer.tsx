@@ -9,8 +9,25 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, ArrowUp, ArrowDown, Play } from 'lucide-react';
+import { GripVertical, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TourOrganizerProps {
   open: boolean;
@@ -19,17 +36,90 @@ interface TourOrganizerProps {
   pedName: string;
 }
 
+interface SortablePatientItemProps {
+  patient: Patient;
+  getPelodColor: (score: number) => string;
+}
+
+const SortablePatientItem = ({ patient, getPelodColor }: SortablePatientItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: patient.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors ${
+        isDragging ? 'opacity-50 shadow-lg' : ''
+      }`}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing touch-none"
+      >
+        <GripVertical className="h-5 w-5 text-gray-400 flex-shrink-0" />
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="font-semibold text-red-500">{patient.id}</span>
+          <span className="font-medium text-gray-900">{patient.name}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+          <span>{patient.age}</span>
+          <span>•</span>
+          <span>{patient.weight}</span>
+          <span>•</span>
+          <span className="truncate">{patient.diagnosis}</span>
+        </div>
+      </div>
+
+      <Badge className={`${getPelodColor(patient.pelodScore)} font-bold min-w-[60px] justify-center`}>
+        PELOD: {patient.pelodScore}
+      </Badge>
+
+      {patient.tour && (
+        <Badge variant={patient.tour === 'Priority' ? 'destructive' : 'secondary'} className="text-xs">
+          {patient.tour}
+        </Badge>
+      )}
+    </div>
+  );
+};
+
 export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrganizerProps) => {
   const [orderedPatients, setOrderedPatients] = useState<Patient[]>(patients);
   const navigate = useNavigate();
 
-  const movePatient = (index: number, direction: 'up' | 'down') => {
-    const newOrder = [...orderedPatients];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    
-    if (targetIndex >= 0 && targetIndex < newOrder.length) {
-      [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
-      setOrderedPatients(newOrder);
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setOrderedPatients((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
     }
   };
 
@@ -55,65 +145,30 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Organize Tour - {pedName}</DialogTitle>
           <DialogDescription>
-            Reorder patients to plan your tour sequence. Click "Start Tour" when ready.
+            Drag and drop patients to reorder your tour sequence. Click "Start Tour" when ready.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
-          {orderedPatients.map((patient, index) => (
-            <div
-              key={patient.id}
-              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+            <SortableContext
+              items={orderedPatients.map(p => p.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <GripVertical className="h-5 w-5 text-gray-400 flex-shrink-0" />
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-red-500">{patient.id}</span>
-                  <span className="font-medium text-gray-900">{patient.name}</span>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                  <span>{patient.age}</span>
-                  <span>•</span>
-                  <span>{patient.weight}</span>
-                  <span>•</span>
-                  <span className="truncate">{patient.diagnosis}</span>
-                </div>
-              </div>
-
-              <Badge className={`${getPelodColor(patient.pelodScore)} font-bold min-w-[60px] justify-center`}>
-                PELOD: {patient.pelodScore}
-              </Badge>
-
-              {patient.tour && (
-                <Badge variant={patient.tour === 'Priority' ? 'destructive' : 'secondary'} className="text-xs">
-                  {patient.tour}
-                </Badge>
-              )}
-
-              <div className="flex flex-col gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => movePatient(index, 'up')}
-                  disabled={index === 0}
-                  className="h-7 px-2"
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => movePatient(index, 'down')}
-                  disabled={index === orderedPatients.length - 1}
-                  className="h-7 px-2"
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+              {orderedPatients.map((patient) => (
+                <SortablePatientItem
+                  key={patient.id}
+                  patient={patient}
+                  getPelodColor={getPelodColor}
+                />
+              ))}
+            </SortableContext>
+          </div>
+        </DndContext>
 
         <div className="flex justify-between items-center pt-4 border-t">
           <p className="text-sm text-gray-600">
