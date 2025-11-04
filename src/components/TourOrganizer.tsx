@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GripVertical, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTourNavigation } from '@/hooks/useTourNavigation';
 import {
   DndContext,
   closestCenter,
@@ -102,6 +103,7 @@ const SortablePatientItem = ({ patient, getPelodColor }: SortablePatientItemProp
 export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrganizerProps) => {
   const [orderedPatients, setOrderedPatients] = useState<Patient[]>(patients);
   const navigate = useNavigate();
+  const { startTour } = useTourNavigation();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -123,9 +125,10 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
     }
   };
 
-  const startTour = () => {
-    // Navigate to first patient in the tour
+  const handleStartTour = () => {
+    // Save tour order and navigate to first patient
     if (orderedPatients.length > 0) {
+      startTour(orderedPatients);
       navigate(`/optistats?patient=${orderedPatients[0].id}`);
       onOpenChange(false);
     }
@@ -178,7 +181,7 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={startTour} className="gap-2">
+            <Button onClick={handleStartTour} className="gap-2">
               <Play className="h-4 w-4" />
               Start Tour
             </Button>
