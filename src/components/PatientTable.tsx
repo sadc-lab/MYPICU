@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Wind, Flower2, MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { Brain, Wind, Droplets, MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { Patient } from '@/utils/patientData';
 import { useNavigate } from 'react-router-dom';
@@ -39,7 +39,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
       case 'lungs':
         return <Wind className={`h-6 w-6 ${color}`} />;
       case 'kidney':
-        return <Flower2 className={`h-6 w-6 ${color}`} />;
+        return <Droplets className={`h-6 w-6 ${color}`} />;
     }
   };
 

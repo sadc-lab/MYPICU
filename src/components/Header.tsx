@@ -32,7 +32,9 @@ export const Header = () => {
   const isOnMainDashboard = location.pathname === '/';
   
   // Get patient ID from URL to determine if we're viewing a patient
-  const currentPatientId = searchParams.get('patient');
+  const rawPatientParam = searchParams.get('patient');
+  const hashId = location.hash ? decodeURIComponent(location.hash) : '';
+  const currentPatientId = rawPatientParam && rawPatientParam.trim() !== '' ? rawPatientParam : (hashId || undefined);
 
   // Tour navigation
   const {
@@ -44,13 +46,22 @@ export const Header = () => {
     isInTour,
   } = useTourNavigation();
 
-  const isInActiveTour = currentPatientId && activeTour && isInTour(currentPatientId);
-  const currentIndex = isInActiveTour ? getCurrentPatientIndex(currentPatientId) : -1;
-  const nextPatient = isInActiveTour ? getNextPatient(currentPatientId) : null;
-  const previousPatient = isInActiveTour ? getPreviousPatient(currentPatientId) : null;
+  const hasActiveTour = Boolean(activeTour?.length);
+  const isOnTourPatient = hasActiveTour && currentPatientId ? isInTour(currentPatientId) : false;
+
+  const currentIndex = isOnTourPatient ? getCurrentPatientIndex(currentPatientId!) : -1;
+  const nextPatient = isOnTourPatient ? getNextPatient(currentPatientId!) : null;
+  const previousPatient = isOnTourPatient ? getPreviousPatient(currentPatientId!) : null;
 
   const handleNavigateToPatient = (patientId: string) => {
-    window.location.href = `/optistats?patient=${patientId}`;
+    const basePath = location.pathname.startsWith('/optibrain')
+      ? '/optibrain'
+      : location.pathname.startsWith('/optiheart')
+      ? '/optiheart'
+      : location.pathname.startsWith('/optilungs')
+      ? '/optilungs'
+      : '/optistats';
+    window.location.href = `${basePath}?patient=${encodeURIComponent(patientId)}`;
   };
 
   // Close dropdown when clicking outside
@@ -154,73 +165,73 @@ export const Header = () => {
             </div>
           </div>
 
-          {!isOnMainDashboard && currentPatientId && (
-            <nav className="hidden md:flex gap-2 items-center">
-              <Badge variant={isInActiveTour ? "default" : "outline"} className={isInActiveTour ? "bg-primary text-white text-xs" : "text-xs"}>
-                {isInActiveTour ? `Tour ${currentIndex + 1}/${activeTour?.length}` : 'No Active Tour'}
-              </Badge>
+          <nav className="hidden md:flex gap-2 items-center">
+            <Badge variant={hasActiveTour ? "default" : "outline"} className={hasActiveTour ? "bg-primary text-white text-xs" : "text-xs"}>
+              {hasActiveTour
+                ? (isOnTourPatient ? `Tour ${currentIndex + 1}/${activeTour!.length}` : `Active Tour (${activeTour!.length})`)
+                : 'No Active Tour'}
+            </Badge>
+            
+            <div className="flex items-center gap-1 bg-gray-50 rounded-lg border border-gray-200 p-0.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => previousPatient && handleNavigateToPatient(previousPatient.id)}
+                disabled={!previousPatient}
+                className="h-7 px-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
               
-              <div className="flex items-center gap-1 bg-gray-50 rounded-lg border border-gray-200 p-0.5">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => previousPatient && handleNavigateToPatient(previousPatient.id)}
-                  disabled={!previousPatient}
-                  className="h-7 px-2"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 px-2" disabled={!isInActiveTour}>
-                      <List className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-64 max-h-[400px] overflow-y-auto bg-white z-50">
-                    {activeTour?.map((patient, index) => (
-                      <DropdownMenuItem
-                        key={patient.id}
-                        onClick={() => handleNavigateToPatient(patient.id)}
-                        className={`cursor-pointer ${
-                          patient.id === currentPatientId ? 'bg-primary/10 font-semibold' : ''
-                        }`}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">{index + 1}.</span>
-                            <span className="text-red-500 font-semibold text-sm">{patient.id}</span>
-                            <span className="text-sm truncate">{patient.name}</span>
-                          </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 px-2" disabled={!hasActiveTour}>
+                    <List className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-64 max-h-[400px] overflow-y-auto bg-white z-50">
+                  {activeTour?.map((patient, index) => (
+                    <DropdownMenuItem
+                      key={patient.id}
+                      onClick={() => handleNavigateToPatient(patient.id)}
+                      className={`cursor-pointer ${
+                        patient.id === currentPatientId ? 'bg-primary/10 font-semibold' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">{index + 1}.</span>
+                          <span className="text-red-500 font-semibold text-sm">{patient.id}</span>
+                          <span className="text-sm truncate">{patient.name}</span>
                         </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => nextPatient && handleNavigateToPatient(nextPatient.id)}
-                  disabled={!nextPatient}
-                  className="h-7 px-2"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => nextPatient && handleNavigateToPatient(nextPatient.id)}
+                disabled={!nextPatient}
+                className="h-7 px-2"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
 
-              {isInActiveTour && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={endTour}
-                  className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </nav>
-          )}
+            {isOnTourPatient && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={endTour}
+                className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </nav>
 
           <div className="flex items-center gap-4">
             <DropdownMenu>
