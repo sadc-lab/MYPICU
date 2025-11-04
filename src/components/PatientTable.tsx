@@ -21,6 +21,13 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
     return 'text-red-600';
   };
 
+  const hasAlarms = (patient: Patient) => {
+    return (patient.brainScore && patient.brainScore > 0) ||
+           (patient.heartScore && patient.heartScore > 0) ||
+           (patient.lungsScore && patient.lungsScore > 0) ||
+           (patient.kidneyScore && patient.kidneyScore > 0);
+  };
+
   const getOrganIcon = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number) => {
     const getColor = (score?: number) => {
       if (!score || score === 0) return 'text-gray-300';
@@ -86,7 +93,9 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                 onClick={() => navigate(`/optistats?patient=${patient.id}`)}
               >
                 <TableCell className="py-3 sm:py-4">
-                  <div className="font-medium text-red-500 text-sm sm:text-base">{patient.id} {patient.name}</div>
+                  <div className={`font-medium text-sm sm:text-base ${hasAlarms(patient) ? 'text-red-500' : 'text-gray-700'}`}>
+                    {patient.id} {patient.name}
+                  </div>
                   <div className="text-xs sm:text-sm text-gray-500">{patient.weight}</div>
                 </TableCell>
                 <TableCell className="text-gray-700 text-sm hidden sm:table-cell">{patient.age}</TableCell>
