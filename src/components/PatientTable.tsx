@@ -101,7 +101,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                 <TableCell className="text-gray-700 text-sm hidden sm:table-cell">{patient.age}</TableCell>
                 <TableCell className="text-gray-700 text-sm hidden md:table-cell">{patient.picuId}</TableCell>
                 <TableCell>
-                  <span className="font-semibold text-base sm:text-lg text-gray-900">
+                  <span className="text-gray-700 text-sm">
                     {patient.pelodScore}
                   </span>
                 </TableCell>
