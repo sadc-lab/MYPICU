@@ -101,7 +101,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 text-xs">
-                  <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Activity className="h-5 w-5 sm:h-6 sm:w-6" />
                   <span className="ml-1 font-semibold">Stats</span>
                 </Badge>
               </button>
@@ -115,7 +115,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.brainScore)} text-xs`}>
-                  <Brain className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Brain className="h-5 w-5 sm:h-6 sm:w-6" />
                   <span className="ml-1 font-semibold">{patient.brainScore || 0}</span>
                 </Badge>
               </button>
@@ -129,7 +129,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.heartScore)} text-xs`}>
-                  <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5" size={20} />
+                  <HeartIcon className="h-5 w-5 sm:h-6 sm:w-6" size={24} />
                   <span className="ml-1 font-semibold">{patient.heartScore || 0}</span>
                 </Badge>
               </button>
@@ -143,7 +143,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.lungsScore)} text-xs`}>
-                  <Wind className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Wind className="h-5 w-5 sm:h-6 sm:w-6" />
                   <span className="ml-1 font-semibold">{patient.lungsScore || 0}</span>
                 </Badge>
               </button>
