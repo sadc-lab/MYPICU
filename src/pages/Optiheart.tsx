@@ -69,7 +69,7 @@ const Optiheart = () => {
           <Card className="lg:col-span-2 bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <HeartIcon className="h-5 w-5 text-red-500" size={20} />
+                <HeartIcon className="h-7 w-7 text-red-600" size={28} />
                 Hemodynamic Trends
               </CardTitle>
             </CardHeader>
