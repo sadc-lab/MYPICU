@@ -137,7 +137,7 @@ const Optibrain = () => {
               <CollapsibleTrigger className="w-full">
                 <CardHeader className="flex flex-row items-center justify-between pb-4">
                   <div className="flex-1">
-                    <CardTitle className="text-lg flex items-center gap-2 mb-2">Neurological   
+                    <CardTitle className="text-lg flex items-center gap-2 mb-2">Neurological State                                                
                     </CardTitle>
                     <p className="text-sm text-gray-600">
                       <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : 3am
