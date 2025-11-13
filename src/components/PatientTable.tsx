@@ -145,9 +145,9 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                    {getOrganIconWithScore('brain', patient.brainScore)}
-                    {getOrganIconWithScore('heart', patient.heartScore)}
-                    {getOrganIconWithScore('lungs', patient.lungsScore)}
+                    {patient.brainScore && patient.brainScore > 0 && getOrganIconWithScore('brain', patient.brainScore)}
+                    {patient.heartScore && patient.heartScore > 0 && getOrganIconWithScore('heart', patient.heartScore)}
+                    {patient.lungsScore && patient.lungsScore > 0 && getOrganIconWithScore('lungs', patient.lungsScore)}
                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
