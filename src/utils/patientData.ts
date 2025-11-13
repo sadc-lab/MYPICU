@@ -1,20 +1,8 @@
-export interface Patient {
-  id: string;
-  name: string;
-  age: string;
-  weight: string;
-  picuId: string;
-  pelodScore: number;
-  adherence: number;
-  diagnosis: string;
-  exam: string;
-  priority: string;
-  tour?: string;
-  brainScore?: number;
-  heartScore?: number;
-  lungsScore?: number;
-  kidneyScore?: number;
-}
+// Import centralized Patient type
+import { Patient } from '@/types/patient.types';
+
+// Re-export Patient type for backward compatibility
+export type { Patient };
 
 export const pedAPatients: Patient[] = [
   {

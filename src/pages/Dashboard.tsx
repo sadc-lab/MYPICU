@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getAllPatients, getPatientsForPed, pedAPatients, pedBPatients, pedCPatients } from '@/utils/patientData';
+import { getAllPatients, getPatientsForPed } from '@/utils/patientData';
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
