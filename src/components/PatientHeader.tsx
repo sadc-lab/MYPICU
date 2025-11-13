@@ -29,17 +29,24 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   if (!patient) return null;
 
   const getOrganBadgeClass = (score?: number) => {
-    if (!score || score === 0) return 'bg-gray-200 text-gray-600';
+    if (!score || score === 0) return 'bg-gray-100 text-gray-500 border border-gray-300';
     if (score === 1) return 'bg-orange-100 text-orange-600 border border-orange-300';
     if (score === 2) return 'bg-orange-200 text-orange-700 border border-orange-400';
     return 'bg-red-200 text-red-700 border border-red-400';
   };
 
   const getColorFilter = (score?: number) => {
-    if (!score || score === 0) return 'invert(58%) sepia(0%) saturate(0%) hue-rotate(158deg) brightness(92%) contrast(91%)'; // gray
+    if (!score || score === 0) return 'invert(64%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(92%) contrast(88%)'; // grey
     if (score === 1) return 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)'; // orange
     if (score === 2) return 'invert(52%) sepia(94%) saturate(635%) hue-rotate(339deg) brightness(101%) contrast(101%)'; // darker orange
     return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)'; // red
+  };
+
+  const getTextColor = (score?: number) => {
+    if (!score || score === 0) return 'text-gray-500';
+    if (score === 1) return 'text-orange-600';
+    if (score === 2) return 'text-orange-700';
+    return 'text-red-700';
   };
 
   const isActivePage = (page: string) => currentPage === page;
@@ -150,7 +157,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.heartScore)} text-xs`}>
-                  <HeartIcon className="h-6 w-6 sm:h-7 sm:w-7" />
+                  <HeartIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${getTextColor(patient.heartScore)}`} />
                   <span className="ml-1 font-semibold">{patient.heartScore || 0}</span>
                 </Badge>
               </button>
