@@ -15,6 +15,7 @@ const Optibrain = () => {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(false);
+  const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
   const [checkedTasks, setCheckedTasks] = useState({
     pupils: false,
     etco2: false,
@@ -402,8 +403,36 @@ const Optibrain = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-              <p className="text-gray-400">ICP trend chart will be displayed here</p>
+            <div className="h-[300px] border-2 border-dashed border-gray-300 rounded-lg p-4">
+              {selectedIndicators.length === 0 ? (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-gray-400">Sélectionnez des indicateurs ci-dessous pour afficher leurs tendances</p>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col">
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {selectedIndicators.map((label) => {
+                      const indicator = clinicalIndicators.find(i => i.label === label);
+                      if (!indicator) return null;
+                      
+                      const statusColor = 
+                        indicator.status === 'critical' ? 'bg-red-500' :
+                        indicator.status === 'warning' ? 'bg-orange-400' :
+                        'bg-gray-400';
+                      
+                      return (
+                        <div key={label} className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-200">
+                          <div className={`w-2 h-2 rounded-full ${statusColor}`}></div>
+                          <span className="text-sm text-gray-700">{label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex-1 flex items-center justify-center border-t border-gray-200 pt-4">
+                    <p className="text-gray-400">Graphique de tendance pour les indicateurs sélectionnés</p>
+                  </div>
+                </div>
+              )}
             </div>
 
               {/* Clinical Indicators Adherence */}
@@ -443,14 +472,27 @@ const Optibrain = () => {
                   <CardContent className="pt-0">
                     <div className="grid grid-cols-3 gap-4 pt-4">
                       {clinicalIndicators.map((indicator, index) => {
+                        const isSelected = selectedIndicators.includes(indicator.label);
                         const statusColor = 
                           indicator.status === 'critical' ? 'bg-red-500' :
                           indicator.status === 'warning' ? 'bg-orange-400' :
                           'bg-gray-400';
                         
                         return (
-                          <div key={index} className="flex items-start gap-2">
-                            <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
+                          <div 
+                            key={index} 
+                            className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+                              isSelected ? 'bg-blue-50 border-2 border-blue-400' : 'hover:bg-gray-50'
+                            }`}
+                            onClick={() => {
+                              setSelectedIndicators(prev => 
+                                prev.includes(indicator.label)
+                                  ? prev.filter(label => label !== indicator.label)
+                                  : [...prev, indicator.label]
+                              );
+                            }}
+                          >
+                            <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}></div>
                             <div>
                               <p className="text-sm font-medium text-gray-700">
                                 {indicator.label} : {indicator.value}{indicator.unit}
@@ -461,6 +503,9 @@ const Optibrain = () => {
                         );
                       })}
                     </div>
+                    <p className="text-xs text-gray-500 mt-4 text-center">
+                      Cliquez sur un indicateur pour l'afficher dans le graphique
+                    </p>
                   </CardContent>
                 )}
               </Card>
