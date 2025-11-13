@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { getPatientById } from '@/utils/patientData';
 import { Brain, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
@@ -171,6 +172,40 @@ const Optibrain = () => {
   const normalIndicators = clinicalIndicators.filter(i => i.status === 'normal').length;
   const clinicalAdherence = Math.round((normalIndicators / totalIndicators) * 100);
   const outOfRangeCount = clinicalIndicators.filter(i => i.status !== 'normal').length;
+
+  // Generate mock chart data for the last 24 hours
+  const chartData = useMemo(() => {
+    const data = [];
+    const now = new Date();
+    
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const timeStr = `${time.getHours().toString().padStart(2, '0')}:00`;
+      
+      const dataPoint: any = { time: timeStr };
+      
+      clinicalIndicators.forEach(indicator => {
+        const baseValue = indicator.value;
+        // Add some random variation to make it look realistic
+        const variation = (Math.random() - 0.5) * (baseValue * 0.2);
+        dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
+      });
+      
+      data.push(dataPoint);
+    }
+    
+    return data;
+  }, []);
+
+  // Color mapping for chart lines based on status
+  const getIndicatorColor = (label: string) => {
+    const indicator = clinicalIndicators.find(i => i.label === label);
+    if (!indicator) return '#9ca3af';
+    
+    return indicator.status === 'critical' ? '#ef4444' :
+           indicator.status === 'warning' ? '#fb923c' :
+           '#9ca3af';
+  };
   return <div className="min-h-screen bg-[#EDF2F9]">
       <Header />
       <PatientHeader currentPage="optibrain" />
@@ -403,14 +438,14 @@ const Optibrain = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="h-[300px] border-2 border-dashed border-gray-300 rounded-lg p-4">
+            <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
               {selectedIndicators.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
                   <p className="text-gray-400">Sélectionnez des indicateurs ci-dessous pour afficher leurs tendances</p>
                 </div>
               ) : (
                 <div className="h-full flex flex-col">
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap gap-2 mb-2">
                     {selectedIndicators.map((label) => {
                       const indicator = clinicalIndicators.find(i => i.label === label);
                       if (!indicator) return null;
@@ -423,13 +458,48 @@ const Optibrain = () => {
                       return (
                         <div key={label} className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-200">
                           <div className={`w-2 h-2 rounded-full ${statusColor}`}></div>
-                          <span className="text-sm text-gray-700">{label}</span>
+                          <span className="text-xs text-gray-700">{label}</span>
                         </div>
                       );
                     })}
                   </div>
-                  <div className="flex-1 flex items-center justify-center border-t border-gray-200 pt-4">
-                    <p className="text-gray-400">Graphique de tendance pour les indicateurs sélectionnés</p>
+                  <div className="flex-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis 
+                          dataKey="time" 
+                          tick={{ fontSize: 12 }}
+                          stroke="#9ca3af"
+                        />
+                        <YAxis 
+                          tick={{ fontSize: 12 }}
+                          stroke="#9ca3af"
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'white', 
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '6px',
+                            fontSize: '12px'
+                          }}
+                        />
+                        <Legend 
+                          wrapperStyle={{ fontSize: '12px' }}
+                        />
+                        {selectedIndicators.map((label) => (
+                          <Line
+                            key={label}
+                            type="monotone"
+                            dataKey={label}
+                            stroke={getIndicatorColor(label)}
+                            strokeWidth={2}
+                            dot={false}
+                            activeDot={{ r: 4 }}
+                          />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               )}
