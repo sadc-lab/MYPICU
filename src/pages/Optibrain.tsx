@@ -234,7 +234,6 @@ const Optibrain = () => {
                     </div>)}
                   <div className="pt-3 border-t text-sm text-gray-600">
                     Intensité actuelle : <span className="text-orange-500 font-semibold">26 mmHg</span>
-                    <span className="ml-4">Intensité moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span></span>
                     <span className="ml-2 text-gray-400">Rappel {'>'}</span>
                   </div>
                 </CardContent>
