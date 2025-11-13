@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getPatientById } from '@/utils/patientData';
-import { Thermometer, Activity, Droplet, Gauge, Pill, Check, FileText, Users, Brain, ChevronRight } from 'lucide-react';
+import { Thermometer, Activity, Droplet, Gauge, Pill, Check, FileText, Users, ChevronRight } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
+import { BrainIcon } from '@/components/icons/BrainIcon';
 
 const Optistats = () => {
   const [searchParams] = useSearchParams();
@@ -91,7 +92,7 @@ const Optistats = () => {
   const problematicIndicators = [
     {
       module: 'brain',
-      icon: Brain,
+      icon: BrainIcon,
       color: 'text-red-500',
       indicators: [
         { label: 'PIC : 27mmHg', target: '< 20mmHg', trend: '-10.4%', trendColor: 'bg-orange-100 text-orange-600', status: 'red' },
