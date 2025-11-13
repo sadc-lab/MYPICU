@@ -443,16 +443,7 @@ const Optibrain = () => {
                   <CardContent className="pt-0">
                     <div className="flex items-start gap-6 pt-4">
                       <div className="flex flex-col items-center">
-                        <div className={`w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold border-[6px] ${
-                          clinicalAdherence >= 90 
-                            ? 'border-green-500 text-green-600' 
-                            : clinicalAdherence >= 80 
-                            ? 'border-orange-400 text-orange-600' 
-                            : 'border-red-400 text-red-600'
-                        }`}>
-                          {clinicalAdherence}%
-                        </div>
-                        <div className="mt-4 space-y-2 text-xs">
+                        <div className="space-y-2 text-xs">
                           <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full bg-green-500"></div>
                             <span className="text-gray-600">90-100%</span>
