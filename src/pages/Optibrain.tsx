@@ -139,8 +139,7 @@ const Optibrain = () => {
                   <div className="flex-1">
                     <CardTitle className="text-lg flex items-center gap-2 mb-2">Neurological State                                                
                     </CardTitle>
-                    <p className="text-sm text-gray-600">
-                      <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : 3am
+                    <p className="text-sm text-gray-600">Hyperhémie     <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : 3am
                     </p>
                   </div>
                   <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180 flex-shrink-0" />
@@ -196,7 +195,7 @@ const Optibrain = () => {
                       
                     </CardTitle>
                     <p className="text-sm text-gray-600">
-                      Actuelle : <span className="text-orange-500 font-semibold">26 mmHg</span> | Moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span>
+                      Now : 26 mmHg | Moyenne : 28 mmHg <span className="text-orange-500 font-semibold">26 mmHg</span> | Moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span>
                     </p>
                   </div>
                   <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180 flex-shrink-0" />
@@ -253,7 +252,7 @@ const Optibrain = () => {
                       
                     </CardTitle>
                     <p className="text-sm text-gray-600">
-                      Actuelle : 65 mmHg | Optimal PPC : 63 mmHg <span className="text-gray-600 font-semibold">65 mmHg</span> | Moyenne : <span className="text-gray-600 font-semibold">63 mmHg</span>
+                           Now : 65 mmHg | Optimal PPC : 63 mmHg     | Moyenne : <span className="text-gray-600 font-semibold">63 mmHg</span>
                     </p>
                   </div>
                   <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180 flex-shrink-0" />
