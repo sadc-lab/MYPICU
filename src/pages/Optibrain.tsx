@@ -23,11 +23,15 @@ const Optibrain = () => {
   }
 
   const brainMetrics = [
-    { label: 'ICP (Intracranial Pressure)', value: '15', unit: 'mmHg', normal: '7-15', status: 'normal' },
-    { label: 'CPP (Cerebral Perfusion Pressure)', value: '65', unit: 'mmHg', normal: '50-70', status: 'normal' },
-    { label: 'GCS (Glasgow Coma Scale)', value: '12', unit: '', normal: '15', status: 'warning' },
-    { label: 'PaCO2', value: '38', unit: 'mmHg', normal: '35-45', status: 'normal' },
+    { label: 'ICP', value: 15, unit: 'mmHg', min: 0, max: 30, targetMin: 7, targetMax: 15 },
+    { label: 'CPP', value: 65, unit: 'mmHg', min: 30, max: 90, targetMin: 50, targetMax: 70 },
+    { label: 'GCS', value: 12, unit: '', min: 3, max: 15, targetMin: 13, targetMax: 15 },
+    { label: 'PaCO2', value: 38, unit: 'mmHg', min: 25, max: 55, targetMin: 35, targetMax: 45 },
   ];
+
+  const isInRange = (value: number, min: number, max: number) => {
+    return value >= min && value <= max;
+  };
 
   const clinicalIndicators = [
     { label: 'Head Position', value: '30°', status: 'normal' },
@@ -38,38 +42,68 @@ const Optibrain = () => {
     { label: 'INR', value: '1.1', status: 'normal' },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'critical': return 'border-red-500 bg-red-50';
-      case 'warning': return 'border-orange-500 bg-orange-50';
-      default: return 'border-gray-400 bg-gray-50';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#EDF2F9]">
       <Header />
       <PatientHeader currentPage="optibrain" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {brainMetrics.map((metric, index) => (
-            <Card key={index} className={`bg-white shadow-sm border-l-4 ${getStatusColor(metric.status)}`}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  {metric.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900 mb-1">
-                  {metric.value}
-                  {metric.unit && <span className="text-lg ml-1 text-gray-600">{metric.unit}</span>}
-                </div>
-                <p className="text-xs text-gray-500">Normal: {metric.normal}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="bg-white shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-gray-900">Brain Metrics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {brainMetrics.map((metric, index) => {
+                const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
+                const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
+                
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                      {metric.label}
+                    </div>
+                    <div className={`text-4xl font-bold ${valueColor} mb-3`}>
+                      {metric.value}
+                      {metric.unit && <span className="text-lg ml-1">{metric.unit}</span>}
+                    </div>
+                    
+                    <div className="w-full max-w-[180px]">
+                      {/* Range bar */}
+                      <div className="relative h-3 bg-gray-200 rounded-full overflow-visible">
+                        {/* Target range (light grey zone) */}
+                        <div 
+                          className="absolute top-0 bottom-0 bg-gray-300 rounded-full"
+                          style={{
+                            left: `${((metric.targetMin - metric.min) / (metric.max - metric.min)) * 100}%`,
+                            width: `${((metric.targetMax - metric.targetMin) / (metric.max - metric.min)) * 100}%`
+                          }}>
+                        </div>
+                        
+                        {/* Current value position on bar */}
+                        <div 
+                          className={`absolute w-3 h-3 rounded-full border-2 ${
+                            inRange ? 'bg-gray-500 border-gray-600' : 'bg-red-500 border-red-600'
+                          } z-10 top-0`}
+                          style={{
+                            left: `${Math.max(0, Math.min(100, ((metric.value - metric.min) / (metric.max - metric.min)) * 100))}%`,
+                            transform: 'translateX(-50%)'
+                          }}>
+                        </div>
+                      </div>
+                      
+                      {/* Target range labels */}
+                      <div className="flex justify-between items-center mt-1.5 text-xs text-gray-500">
+                        <span>{metric.targetMin}</span>
+                        <span>{metric.targetMax}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <Card className="bg-white shadow-sm">
