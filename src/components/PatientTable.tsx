@@ -31,7 +31,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
            (patient.kidneyScore && patient.kidneyScore > 0);
   };
 
-  const getOrganIconWithScore = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number) => {
+  const getOrganIconWithScore = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number, patientId?: string) => {
     const getColor = (score?: number) => {
       if (!score || score === 0) return 'text-gray-500';
       if (score === 1) return 'text-orange-600';
@@ -66,8 +66,34 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
       return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)'; // red
     };
 
+    const getOrganRoute = (organ: 'brain' | 'heart' | 'lungs' | 'kidney') => {
+      switch (organ) {
+        case 'brain':
+          return 'optibrain';
+        case 'heart':
+          return 'optiheart';
+        case 'lungs':
+          return 'optilungs';
+        case 'kidney':
+          return 'optistats'; // Default to stats for kidney
+        default:
+          return 'optistats';
+      }
+    };
+
+    const handleClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent row click
+      if (patientId) {
+        navigate(`/${getOrganRoute(organ)}?patient=${patientId}`);
+      }
+    };
+
     return (
-      <div className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor}`}>
+      <div 
+        className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor} cursor-pointer hover:opacity-80 transition-opacity`}
+        onClick={handleClick}
+        title={`View ${organ} details`}
+      >
         {organ === 'brain' ? (
           <img src={brainIcon} alt="brain" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(score) }} />
         ) : organ === 'lungs' ? (
@@ -152,9 +178,9 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                    {getOrganIconWithScore('brain', patient.brainScore)}
-                    {getOrganIconWithScore('heart', patient.heartScore)}
-                    {getOrganIconWithScore('lungs', patient.lungsScore)}
+                    {getOrganIconWithScore('brain', patient.brainScore, patient.id)}
+                    {getOrganIconWithScore('heart', patient.heartScore, patient.id)}
+                    {getOrganIconWithScore('lungs', patient.lungsScore, patient.id)}
                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
