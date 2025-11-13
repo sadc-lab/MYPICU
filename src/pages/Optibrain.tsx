@@ -18,7 +18,7 @@ const Optibrain = () => {
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
   const [checkedTasks, setCheckedTasks] = useState({
     pupils: false,
-    etco2: false,
+    etco2: [false, false, false],
     pam: false,
     pvc: false,
     nutrition: false,
@@ -26,8 +26,14 @@ const Optibrain = () => {
     fentanyl: false,
     propofol: false
   });
-  const totalTasks = Object.keys(checkedTasks).length;
-  const completedTasks = Object.values(checkedTasks).filter(Boolean).length;
+  
+  const totalTasks = Object.keys(checkedTasks).length + 2; // +2 because etco2 has 3 checks instead of 1
+  const completedTasks = Object.entries(checkedTasks).reduce((count, [key, value]) => {
+    if (key === 'etco2') {
+      return count + (value as boolean[]).filter(Boolean).length;
+    }
+    return count + (value ? 1 : 0);
+  }, 0);
   const completionPercentage = Math.round(completedTasks / totalTasks * 100);
   if (!patient) {
     return <div className="min-h-screen bg-[#EDF2F9]">
@@ -538,22 +544,31 @@ const Optibrain = () => {
                           Pupilles : N/A
                         </label>
                       </div>
-                      <div 
-                        className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ ...prev, etco2: !prev.etco2 }))}
-                      >
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.etco2 
-                            ? 'border-blue-500 bg-blue-500' 
-                            : 'border-gray-300 bg-white group-hover:border-gray-400'
-                        }`}>
-                          {checkedTasks.etco2 && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <label className="text-sm text-gray-700 cursor-pointer">
+                      <div className="flex items-center space-x-2">
+                        <label className="text-sm text-gray-700 mr-2">
                           ETCO2
                         </label>
+                        {[0, 1, 2].map((index) => (
+                          <div
+                            key={index}
+                            className="cursor-pointer group"
+                            onClick={() => setCheckedTasks(prev => {
+                              const newEtco2 = [...prev.etco2];
+                              newEtco2[index] = !newEtco2[index];
+                              return { ...prev, etco2: newEtco2 };
+                            })}
+                          >
+                            <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                              checkedTasks.etco2[index]
+                                ? 'border-blue-500 bg-blue-500' 
+                                : 'border-gray-300 bg-white group-hover:border-gray-400'
+                            }`}>
+                              {checkedTasks.etco2[index] && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                       <div 
                         className="flex items-center space-x-2 cursor-pointer group"
