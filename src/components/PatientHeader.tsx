@@ -1,9 +1,12 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Wind, Activity, ChevronLeft, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ExternalLink } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getPatientById } from '@/utils/patientData';
+import brainIcon from '@/assets/brain-icon.svg';
+import lungsIcon from '@/assets/lungs-icon.svg';
+import statsIcon from '@/assets/stats-icon.svg';
 import { Patient } from '@/types/patient.types';
 import {
   Select,
@@ -30,6 +33,13 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
     if (score === 1) return 'bg-orange-100 text-orange-600 border border-orange-300';
     if (score === 2) return 'bg-orange-200 text-orange-700 border border-orange-400';
     return 'bg-red-200 text-red-700 border border-red-400';
+  };
+
+  const getColorFilter = (score?: number) => {
+    if (!score || score === 0) return 'invert(58%) sepia(0%) saturate(0%) hue-rotate(158deg) brightness(92%) contrast(91%)'; // gray
+    if (score === 1) return 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)'; // orange
+    if (score === 2) return 'invert(52%) sepia(94%) saturate(635%) hue-rotate(339deg) brightness(101%) contrast(101%)'; // darker orange
+    return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)'; // red
   };
 
   const isActivePage = (page: string) => currentPage === page;
@@ -101,8 +111,13 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                     : 'hover:bg-gray-100'
                 }`}
               >
-                <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 text-xs">
-                  <Activity className="h-5 w-5 sm:h-6 sm:w-6" />
+                <Badge variant="outline" className={`${getOrganBadgeClass(patient.pelodScore)} text-xs`}>
+                  <img 
+                    src={statsIcon} 
+                    alt="stats" 
+                    className="h-6 w-6 sm:h-7 sm:w-7" 
+                    style={{ filter: getColorFilter(patient.pelodScore) }} 
+                  />
                   <span className="ml-1 font-semibold">Stats</span>
                 </Badge>
               </button>
@@ -116,7 +131,12 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.brainScore)} text-xs`}>
-                  <Brain className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <img 
+                    src={brainIcon} 
+                    alt="brain" 
+                    className="h-6 w-6 sm:h-7 sm:w-7" 
+                    style={{ filter: getColorFilter(patient.brainScore) }} 
+                  />
                   <span className="ml-1 font-semibold">{patient.brainScore || 0}</span>
                 </Badge>
               </button>
@@ -130,7 +150,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.heartScore)} text-xs`}>
-                  <HeartIcon className="h-5 w-5 sm:h-6 sm:w-6" size={24} />
+                  <HeartIcon className="h-6 w-6 sm:h-7 sm:w-7" />
                   <span className="ml-1 font-semibold">{patient.heartScore || 0}</span>
                 </Badge>
               </button>
@@ -144,7 +164,12 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.lungsScore)} text-xs`}>
-                  <Wind className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <img 
+                    src={lungsIcon} 
+                    alt="lungs" 
+                    className="h-6 w-6 sm:h-7 sm:w-7" 
+                    style={{ filter: getColorFilter(patient.lungsScore) }} 
+                  />
                   <span className="ml-1 font-semibold">{patient.lungsScore || 0}</span>
                 </Badge>
               </button>
