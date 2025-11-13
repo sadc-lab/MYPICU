@@ -24,20 +24,16 @@ const Optiheart = () => {
   }
 
   const heartMetrics = [
-    { label: 'Cardiac Output', value: '4.5', unit: 'L/min', normal: '4-8', status: 'normal' },
-    { label: 'Cardiac Index', value: '3.2', unit: 'L/min/m²', normal: '2.5-4.0', status: 'normal' },
-    { label: 'CVP', value: '8', unit: 'mmHg', normal: '2-8', status: 'normal' },
-    { label: 'SVR', value: '1200', unit: 'dynes/sec/cm⁻⁵', normal: '800-1200', status: 'normal' },
-    { label: 'Lactate', value: '1.2', unit: 'mmol/L', normal: '<2', status: 'normal' },
-    { label: 'ScvO2', value: '72', unit: '%', normal: '65-75', status: 'normal' },
+    { label: 'Cardiac Output', value: 4.5, unit: 'L/min', min: 2, max: 10, targetMin: 4, targetMax: 8 },
+    { label: 'Cardiac Index', value: 3.2, unit: 'L/min/m²', min: 1.5, max: 5, targetMin: 2.5, targetMax: 4.0 },
+    { label: 'CVP', value: 8, unit: 'mmHg', min: 0, max: 15, targetMin: 2, targetMax: 8 },
+    { label: 'SVR', value: 1200, unit: 'dynes/sec/cm⁻⁵', min: 500, max: 1600, targetMin: 800, targetMax: 1200 },
+    { label: 'Lactate', value: 1.2, unit: 'mmol/L', min: 0, max: 4, targetMin: 0, targetMax: 2 },
+    { label: 'ScvO2', value: 72, unit: '%', min: 50, max: 85, targetMin: 65, targetMax: 75 },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'critical': return 'border-red-500 bg-red-50';
-      case 'warning': return 'border-orange-500 bg-orange-50';
-      default: return 'border-gray-400 bg-gray-50';
-    }
+  const isInRange = (value: number, min: number, max: number) => {
+    return value >= min && value <= max;
   };
 
   return (
@@ -46,24 +42,62 @@ const Optiheart = () => {
       <PatientHeader currentPage="optiheart" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {heartMetrics.map((metric, index) => (
-            <Card key={index} className={`bg-white shadow-sm border-l-4 ${getStatusColor(metric.status)}`}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  {metric.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900 mb-1">
-                  {metric.value}
-                  {metric.unit && <span className="text-lg ml-1 text-gray-600">{metric.unit}</span>}
-                </div>
-                <p className="text-xs text-gray-500">Normal: {metric.normal}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="bg-white shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-gray-900">Heart Metrics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {heartMetrics.map((metric, index) => {
+                const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
+                const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
+                
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                      {metric.label}
+                    </div>
+                    <div className={`text-4xl font-bold ${valueColor} mb-3`}>
+                      {metric.value}
+                      {metric.unit && <span className="text-lg ml-1">{metric.unit}</span>}
+                    </div>
+                    
+                    <div className="w-full max-w-[180px]">
+                      {/* Range bar */}
+                      <div className="relative h-3 bg-gray-200 rounded-full overflow-visible">
+                        {/* Target range (light grey zone) */}
+                        <div 
+                          className="absolute top-0 bottom-0 bg-gray-300 rounded-full"
+                          style={{
+                            left: `${((metric.targetMin - metric.min) / (metric.max - metric.min)) * 100}%`,
+                            width: `${((metric.targetMax - metric.targetMin) / (metric.max - metric.min)) * 100}%`
+                          }}>
+                        </div>
+                        
+                        {/* Current value position on bar */}
+                        <div 
+                          className={`absolute w-3 h-3 rounded-full border-2 ${
+                            inRange ? 'bg-gray-500 border-gray-600' : 'bg-red-500 border-red-600'
+                          } z-10 top-0`}
+                          style={{
+                            left: `${Math.max(0, Math.min(100, ((metric.value - metric.min) / (metric.max - metric.min)) * 100))}%`,
+                            transform: 'translateX(-50%)'
+                          }}>
+                        </div>
+                      </div>
+                      
+                      {/* Target range labels */}
+                      <div className="flex justify-between items-center mt-1.5 text-xs text-gray-500">
+                        <span>{metric.targetMin}</span>
+                        <span>{metric.targetMax}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <Card className="lg:col-span-2 bg-white shadow-sm">

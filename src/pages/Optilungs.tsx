@@ -23,13 +23,17 @@ const Optilungs = () => {
   }
 
   const lungMetrics = [
-    { label: 'PaO2', value: '95', unit: 'mmHg', normal: '80-100', status: 'normal' },
-    { label: 'PaCO2', value: '38', unit: 'mmHg', normal: '35-45', status: 'normal' },
-    { label: 'pH', value: '7.38', unit: '', normal: '7.35-7.45', status: 'normal' },
-    { label: 'FiO2', value: '40', unit: '%', normal: '21', status: 'warning' },
-    { label: 'P/F Ratio', value: '238', unit: '', normal: '>300', status: 'warning' },
-    { label: 'SpO2', value: '98', unit: '%', normal: '>94', status: 'normal' },
+    { label: 'PaO2', value: 95, unit: 'mmHg', min: 60, max: 120, targetMin: 80, targetMax: 100 },
+    { label: 'PaCO2', value: 38, unit: 'mmHg', min: 25, max: 55, targetMin: 35, targetMax: 45 },
+    { label: 'pH', value: 7.38, unit: '', min: 7.2, max: 7.6, targetMin: 7.35, targetMax: 7.45 },
+    { label: 'FiO2', value: 40, unit: '%', min: 21, max: 100, targetMin: 21, targetMax: 30 },
+    { label: 'P/F Ratio', value: 238, unit: '', min: 100, max: 500, targetMin: 300, targetMax: 500 },
+    { label: 'SpO2', value: 98, unit: '%', min: 85, max: 100, targetMin: 94, targetMax: 100 },
   ];
+
+  const isInRange = (value: number, min: number, max: number) => {
+    return value >= min && value <= max;
+  };
 
   const ventilatorSettings = [
     { label: 'Mode', value: 'SIMV' },
@@ -40,13 +44,6 @@ const Optilungs = () => {
     { label: 'Compliance', value: '45 mL/cmH2O' },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'critical': return 'border-red-500 bg-red-50';
-      case 'warning': return 'border-orange-500 bg-orange-50';
-      default: return 'border-gray-400 bg-gray-50';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#EDF2F9]">
@@ -54,24 +51,62 @@ const Optilungs = () => {
       <PatientHeader currentPage="optilungs" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {lungMetrics.map((metric, index) => (
-            <Card key={index} className={`bg-white shadow-sm border-l-4 ${getStatusColor(metric.status)}`}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  {metric.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900 mb-1">
-                  {metric.value}
-                  {metric.unit && <span className="text-lg ml-1 text-gray-600">{metric.unit}</span>}
-                </div>
-                <p className="text-xs text-gray-500">Normal: {metric.normal}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="bg-white shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-gray-900">Lung Metrics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {lungMetrics.map((metric, index) => {
+                const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
+                const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
+                
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                      {metric.label}
+                    </div>
+                    <div className={`text-4xl font-bold ${valueColor} mb-3`}>
+                      {metric.value}
+                      {metric.unit && <span className="text-lg ml-1">{metric.unit}</span>}
+                    </div>
+                    
+                    <div className="w-full max-w-[180px]">
+                      {/* Range bar */}
+                      <div className="relative h-3 bg-gray-200 rounded-full overflow-visible">
+                        {/* Target range (light grey zone) */}
+                        <div 
+                          className="absolute top-0 bottom-0 bg-gray-300 rounded-full"
+                          style={{
+                            left: `${((metric.targetMin - metric.min) / (metric.max - metric.min)) * 100}%`,
+                            width: `${((metric.targetMax - metric.targetMin) / (metric.max - metric.min)) * 100}%`
+                          }}>
+                        </div>
+                        
+                        {/* Current value position on bar */}
+                        <div 
+                          className={`absolute w-3 h-3 rounded-full border-2 ${
+                            inRange ? 'bg-gray-500 border-gray-600' : 'bg-red-500 border-red-600'
+                          } z-10 top-0`}
+                          style={{
+                            left: `${Math.max(0, Math.min(100, ((metric.value - metric.min) / (metric.max - metric.min)) * 100))}%`,
+                            transform: 'translateX(-50%)'
+                          }}>
+                        </div>
+                      </div>
+                      
+                      {/* Target range labels */}
+                      <div className="flex justify-between items-center mt-1.5 text-xs text-gray-500">
+                        <span>{metric.targetMin}</span>
+                        <span>{metric.targetMax}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <Card className="lg:col-span-2 bg-white shadow-sm">
