@@ -139,7 +139,7 @@ const Optibrain = () => {
                   <div className="flex-1">
                     <CardTitle className="text-lg flex items-center gap-2 mb-2">Neurological State                                                
                     </CardTitle>
-                    <p className="text-sm text-gray-600">Hyperhémie     <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : 3am
+                    <p className="text-sm text-gray-600">                              Hyperhémie depuis : 3am     <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : 3am
                     </p>
                   </div>
                   <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180 flex-shrink-0" />
