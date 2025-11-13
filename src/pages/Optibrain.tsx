@@ -110,11 +110,16 @@ const Optibrain = () => {
             <Card className="bg-white shadow-sm">
               <CollapsibleTrigger className="w-full">
                 <CardHeader className="flex flex-row items-center justify-between pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    États neurologiques
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  </CardTitle>
-                  <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180" />
+                  <div className="flex-1">
+                    <CardTitle className="text-lg flex items-center gap-2 mb-2">
+                      États neurologiques
+                      <Eye className="h-4 w-4 text-gray-400" />
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : 3am
+                    </p>
+                  </div>
+                  <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180 flex-shrink-0" />
                 </CardHeader>
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -153,11 +158,16 @@ const Optibrain = () => {
             <Card className="bg-white shadow-sm">
               <CollapsibleTrigger className="w-full">
                 <CardHeader className="flex flex-row items-center justify-between pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    Niveaux de PIC
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  </CardTitle>
-                  <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180" />
+                  <div className="flex-1">
+                    <CardTitle className="text-lg flex items-center gap-2 mb-2">
+                      Niveaux de PIC
+                      <Eye className="h-4 w-4 text-gray-400" />
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      Actuelle : <span className="text-orange-500 font-semibold">26 mmHg</span> | Moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span>
+                    </p>
+                  </div>
+                  <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180 flex-shrink-0" />
                 </CardHeader>
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -205,11 +215,16 @@ const Optibrain = () => {
             <Card className="bg-white shadow-sm">
               <CollapsibleTrigger className="w-full">
                 <CardHeader className="flex flex-row items-center justify-between pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    PPC Optimale
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  </CardTitle>
-                  <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180" />
+                  <div className="flex-1">
+                    <CardTitle className="text-lg flex items-center gap-2 mb-2">
+                      PPC Optimale
+                      <Eye className="h-4 w-4 text-gray-400" />
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      Actuelle : <span className="text-gray-600 font-semibold">65 mmHg</span> | Moyenne : <span className="text-gray-600 font-semibold">63 mmHg</span>
+                    </p>
+                  </div>
+                  <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180 flex-shrink-0" />
                 </CardHeader>
               </CollapsibleTrigger>
               <CollapsibleContent>
