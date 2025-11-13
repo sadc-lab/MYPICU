@@ -322,69 +322,67 @@ const Optibrain = () => {
               <DialogTitle>État Neurologique</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
-              {/* Prediction Card */}
+              {/* État Neurologique Card */}
               <div className="border rounded-lg p-6 bg-white shadow-sm">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-6">
                   <h3 className="text-base font-semibold text-gray-700">
-                    État actuel : <span className="font-normal text-orange-500">Hyperhémie</span>
+                    <span className="text-red-500">Hyperhémie</span> depuis : 3am
                   </h3>
                 </div>
                 
-                {/* Percentage Badge */}
-                <div className="flex justify-center mb-4">
-                  <div className="inline-block px-4 py-1 border-2 border-orange-300 rounded-full">
-                    <span className="text-xl font-semibold text-orange-500">Hyperhémie (40%)</span>
+                {/* Individual Bars */}
+                <div className="space-y-6">
+                  {/* Hyperhémie */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Hyperhémie</span>
+                      <span className="text-xl font-semibold text-red-500">40%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-red-400 h-3 rounded-full" style={{ width: '40%' }}></div>
+                    </div>
+                  </div>
+
+                  {/* HTIC / Hyp. */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">HTIC / Hyp.</span>
+                      <span className="text-xl font-semibold text-orange-500">30%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: '30%' }}></div>
+                    </div>
+                  </div>
+
+                  {/* Ischémie */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Ischémie</span>
+                      <span className="text-xl font-semibold text-orange-500">10%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: '10%' }}></div>
+                    </div>
+                  </div>
+
+                  {/* Contrôlé */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Contrôlé</span>
+                      <span className="text-xl font-semibold text-gray-500">20%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-gray-400 h-3 rounded-full" style={{ width: '20%' }}></div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Gradient Bar */}
-                <div className="mb-6">
-                  <div className="relative h-8 rounded-full overflow-hidden flex">
-                    <div className="flex-[40] bg-orange-400"></div>
-                    <div className="flex-[30] bg-yellow-400"></div>
-                    <div className="flex-[10] bg-red-400"></div>
-                    <div className="flex-[20] bg-gray-400"></div>
-                  </div>
-                  
-                  {/* Legend */}
-                  <div className="grid grid-cols-4 gap-2 mt-4">
-                    <div className="text-xs text-center">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <div className="w-3 h-3 rounded-full bg-orange-400"></div>
-                        <span className="font-semibold text-orange-500">40%</span>
-                      </div>
-                      <span className="text-gray-600">Hyperhémie</span>
-                    </div>
-                    <div className="text-xs text-center">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                        <span className="font-semibold text-yellow-600">30%</span>
-                      </div>
-                      <span className="text-gray-600">HTIC / Hyp.</span>
-                    </div>
-                    <div className="text-xs text-center">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                        <span className="font-semibold text-red-500">10%</span>
-                      </div>
-                      <span className="text-gray-600">Ischémie</span>
-                    </div>
-                    <div className="text-xs text-center">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                        <span className="font-semibold text-gray-600">20%</span>
-                      </div>
-                      <span className="text-gray-600">Contrôlé</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Metrics */}
-                <div className="border-t pt-4">
+                {/* Metrics Footer */}
+                <div className="border-t mt-6 pt-4">
                   <div className="text-sm text-gray-600">
-                    <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : <span className="font-semibold">3am</span>
+                    PPC actuel : <span className="font-semibold">65 mmHg</span>
                     <span className="mx-2">|</span>
-                    <span>Risque de HTIC + ischémie</span>
+                    PPC moyen : <span className="font-semibold">68 mmHg</span>
                   </div>
                 </div>
               </div>
@@ -399,69 +397,67 @@ const Optibrain = () => {
               <DialogTitle>PIC (Pression Intracrânienne)</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
-              {/* Prediction Card */}
+              {/* PIC Card */}
               <div className="border rounded-lg p-6 bg-white shadow-sm">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-6">
                   <h3 className="text-base font-semibold text-gray-700">
-                    Répartition du temps par niveau de PIC
+                    <span className="text-orange-500">Répartition du temps</span> par niveau de PIC
                   </h3>
                 </div>
                 
-                {/* Current Value Badge */}
-                <div className="flex justify-center mb-4">
-                  <div className="inline-block px-4 py-1 border-2 border-orange-300 rounded-full">
-                    <span className="text-xl font-semibold text-orange-500">26 mmHg</span>
+                {/* Individual Bars */}
+                <div className="space-y-6">
+                  {/* 25 - 30 mmHg */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">25 - 30 mmHg</span>
+                      <span className="text-xl font-semibold text-orange-500">128 min</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: '71%' }}></div>
+                    </div>
+                  </div>
+
+                  {/* 20 - 25 mmHg */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">20 - 25 mmHg</span>
+                      <span className="text-xl font-semibold text-orange-500">30 min</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: '17%' }}></div>
+                    </div>
+                  </div>
+
+                  {/* > 30 mmHg */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">&gt; 30 mmHg</span>
+                      <span className="text-xl font-semibold text-red-500">2 min</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-red-400 h-3 rounded-full" style={{ width: '1%' }}></div>
+                    </div>
+                  </div>
+
+                  {/* < 20 mmHg */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">&lt; 20 mmHg</span>
+                      <span className="text-xl font-semibold text-gray-500">20 min</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-gray-400 h-3 rounded-full" style={{ width: '11%' }}></div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Gradient Bar showing time distribution */}
-                <div className="mb-6">
-                  <div className="relative h-8 rounded-full overflow-hidden flex">
-                    <div className="flex-[128] bg-orange-400"></div>
-                    <div className="flex-[30] bg-yellow-400"></div>
-                    <div className="flex-[2] bg-red-500"></div>
-                    <div className="flex-[20] bg-gray-400"></div>
-                  </div>
-                  
-                  {/* Legend with time distribution */}
-                  <div className="grid grid-cols-4 gap-2 mt-4">
-                    <div className="text-xs text-center">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <div className="w-3 h-3 rounded-full bg-orange-400"></div>
-                        <span className="font-semibold text-orange-500">128 min</span>
-                      </div>
-                      <span className="text-gray-600">25 - 30 mmHg</span>
-                    </div>
-                    <div className="text-xs text-center">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                        <span className="font-semibold text-yellow-600">30 min</span>
-                      </div>
-                      <span className="text-gray-600">20 - 25 mmHg</span>
-                    </div>
-                    <div className="text-xs text-center">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <span className="font-semibold text-red-500">2 min</span>
-                      </div>
-                      <span className="text-gray-600">&gt; 30 mmHg</span>
-                    </div>
-                    <div className="text-xs text-center">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                        <span className="font-semibold text-gray-600">20 min</span>
-                      </div>
-                      <span className="text-gray-600">&lt; 20 mmHg</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Metrics */}
-                <div className="border-t pt-4">
+                {/* Metrics Footer */}
+                <div className="border-t mt-6 pt-4">
                   <div className="text-sm text-gray-600">
-                    Intensité actuelle : <span className="text-orange-500 font-semibold">26 mmHg</span>
+                    Intensité actuelle : <span className="font-semibold">26 mmHg</span>
                     <span className="mx-2">|</span>
-                    Intensité moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span>
+                    Intensité moyenne : <span className="font-semibold">28 mmHg</span>
                   </div>
                 </div>
               </div>
