@@ -18,7 +18,7 @@ const Optibrain = () => {
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(false);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
-  const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h'>('24h');
+  const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h' | 'stay'>('24h');
   const [objectives, setObjectives] = useState<string[]>([
     'Maintain ICP < 20 mmHg',
     'Maintain CPP 50-70 mmHg',
@@ -211,8 +211,15 @@ const Optibrain = () => {
         intervalMinutes = 30;
         break;
       case '24h':
-      default:
         dataPoints = 24; // One point every hour
+        intervalMinutes = 60;
+        break;
+      case 'stay':
+        dataPoints = 48; // One point every 2 hours for a typical ICU stay
+        intervalMinutes = 120;
+        break;
+      default:
+        dataPoints = 24;
         intervalMinutes = 60;
         break;
     }
@@ -519,10 +526,10 @@ const Optibrain = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">
-                {timeRange === 'now' ? 'Monitoring (Current)' : `Monitoring Last ${timeRange.toUpperCase()}`}
+                {timeRange === 'now' ? 'Monitoring (Current)' : timeRange === 'stay' ? 'Monitoring (Séjour complet)' : `Monitoring Last ${timeRange.toUpperCase()}`}
               </CardTitle>
               <div className="flex gap-2">
-                {(['now', '3h', '6h', '12h', '24h'] as const).map((range) => (
+                {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
                   <button
                     key={range}
                     onClick={() => setTimeRange(range)}
@@ -532,7 +539,7 @@ const Optibrain = () => {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {range === 'now' ? 'Now' : range.toUpperCase()}
+                    {range === 'now' ? 'Now' : range === 'stay' ? 'Séjour complet' : range.toUpperCase()}
                   </button>
                 ))}
               </div>
