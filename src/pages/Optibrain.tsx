@@ -545,9 +545,6 @@ const Optibrain = () => {
                         </label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <label className="text-sm text-gray-700 mr-2">
-                          ETCO2
-                        </label>
                         {[0, 1, 2].map((index) => (
                           <div
                             key={index}
@@ -569,6 +566,9 @@ const Optibrain = () => {
                             </div>
                           </div>
                         ))}
+                        <label className="text-sm text-gray-700 ml-1">
+                          ETCO2
+                        </label>
                       </div>
                       <div 
                         className="flex items-center space-x-2 cursor-pointer group"
