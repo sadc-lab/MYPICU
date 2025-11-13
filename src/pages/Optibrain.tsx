@@ -4,14 +4,30 @@ import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { getPatientById } from '@/utils/patientData';
-import { Brain, Info } from 'lucide-react';
+import { Brain, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const [checklistExpanded, setChecklistExpanded] = useState(false);
+  const [checkedTasks, setCheckedTasks] = useState({
+    pupils: false,
+    etco2: false,
+    pam: false,
+    pvc: false,
+    nutrition: false,
+    epilepsy: false,
+    fentanyl: false,
+    propofol: false
+  });
+
+  const totalTasks = Object.keys(checkedTasks).length;
+  const completedTasks = Object.values(checkedTasks).filter(Boolean).length;
+  const completionPercentage = Math.round((completedTasks / totalTasks) * 100);
   if (!patient) {
     return <div className="min-h-screen bg-[#EDF2F9]">
         <Header />
@@ -339,10 +355,147 @@ const Optibrain = () => {
                 ICP Monitoring
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
                 <p className="text-gray-400">ICP trend chart will be displayed here</p>
               </div>
+
+              {/* Monitoring Tasks Checklist */}
+              <Card className="border-2 border-gray-200">
+                <CardHeader 
+                  className="cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setChecklistExpanded(!checklistExpanded)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
+                        completionPercentage === 100 
+                          ? 'border-green-500 text-green-600 bg-green-50' 
+                          : completionPercentage >= 50 
+                          ? 'border-blue-400 text-blue-600 bg-blue-50' 
+                          : 'border-red-400 text-red-600 bg-red-50'
+                      }`}>
+                        {completionPercentage}%
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-700">
+                          Adhérence globale des cibles de monitorage : faire pupilles et ETCO2
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {completedTasks} tâches sur {totalTasks} à faire
+                        </p>
+                      </div>
+                    </div>
+                    {checklistExpanded ? (
+                      <ChevronUp className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    )}
+                  </div>
+                </CardHeader>
+                {checklistExpanded && (
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="pupils" 
+                          checked={checkedTasks.pupils}
+                          onCheckedChange={(checked) => 
+                            setCheckedTasks(prev => ({ ...prev, pupils: checked as boolean }))
+                          }
+                        />
+                        <label htmlFor="pupils" className="text-sm text-gray-700 cursor-pointer">
+                          Pupilles : N/A
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="etco2" 
+                          checked={checkedTasks.etco2}
+                          onCheckedChange={(checked) => 
+                            setCheckedTasks(prev => ({ ...prev, etco2: checked as boolean }))
+                          }
+                        />
+                        <label htmlFor="etco2" className="text-sm text-gray-700 cursor-pointer">
+                          ETCO2
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="pam" 
+                          checked={checkedTasks.pam}
+                          onCheckedChange={(checked) => 
+                            setCheckedTasks(prev => ({ ...prev, pam: checked as boolean }))
+                          }
+                        />
+                        <label htmlFor="pam" className="text-sm text-gray-700 cursor-pointer">
+                          PAM
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="pvc" 
+                          checked={checkedTasks.pvc}
+                          onCheckedChange={(checked) => 
+                            setCheckedTasks(prev => ({ ...prev, pvc: checked as boolean }))
+                          }
+                        />
+                        <label htmlFor="pvc" className="text-sm text-gray-700 cursor-pointer">
+                          PVC
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="nutrition" 
+                          checked={checkedTasks.nutrition}
+                          onCheckedChange={(checked) => 
+                            setCheckedTasks(prev => ({ ...prev, nutrition: checked as boolean }))
+                          }
+                        />
+                        <label htmlFor="nutrition" className="text-sm text-gray-700 cursor-pointer">
+                          Nutrition
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="epilepsy" 
+                          checked={checkedTasks.epilepsy}
+                          onCheckedChange={(checked) => 
+                            setCheckedTasks(prev => ({ ...prev, epilepsy: checked as boolean }))
+                          }
+                        />
+                        <label htmlFor="epilepsy" className="text-sm text-gray-700 cursor-pointer">
+                          Epilepsie
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="fentanyl" 
+                          checked={checkedTasks.fentanyl}
+                          onCheckedChange={(checked) => 
+                            setCheckedTasks(prev => ({ ...prev, fentanyl: checked as boolean }))
+                          }
+                        />
+                        <label htmlFor="fentanyl" className="text-sm text-gray-700 cursor-pointer">
+                          Fentanyl
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="propofol" 
+                          checked={checkedTasks.propofol}
+                          onCheckedChange={(checked) => 
+                            setCheckedTasks(prev => ({ ...prev, propofol: checked as boolean }))
+                          }
+                        />
+                        <label htmlFor="propofol" className="text-sm text-gray-700 cursor-pointer">
+                          Propofol
+                        </label>
+                      </div>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
             </CardContent>
           </Card>
 
