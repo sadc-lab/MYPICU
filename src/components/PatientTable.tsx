@@ -30,25 +30,24 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
   };
 
   const getOrganIconWithScore = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number) => {
-    // Don't render if score is 0 or undefined
-    if (!score || score === 0) return null;
+    // Normalize and skip non-positive values (handles 0 and "0")
+    const n = Number(score ?? 0);
+    if (!Number.isFinite(n) || n <= 0) return null;
     
-    const getColor = (score?: number) => {
-      if (!score || score === 0) return 'text-gray-300';
-      if (score === 1) return 'text-orange-400';
-      if (score === 2) return 'text-orange-500';
+    const getColor = (s: number) => {
+      if (s === 1) return 'text-orange-400';
+      if (s === 2) return 'text-orange-500';
       return 'text-red-500';
     };
 
-    const getBgColor = (score?: number) => {
-      if (!score || score === 0) return 'bg-gray-100';
-      if (score === 1) return 'bg-orange-50';
-      if (score === 2) return 'bg-orange-100';
+    const getBgColor = (s: number) => {
+      if (s === 1) return 'bg-orange-50';
+      if (s === 2) return 'bg-orange-100';
       return 'bg-red-50';
     };
 
-    const color = getColor(score);
-    const bgColor = getBgColor(score);
+    const color = getColor(n);
+    const bgColor = getBgColor(n);
     
     let IconComponent;
     switch (organ) {
@@ -74,7 +73,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
           <IconComponent className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} />
         )}
         <span className={`text-xs sm:text-sm font-semibold ${color}`}>
-          {score}
+          {n}
         </span>
       </div>
     );
