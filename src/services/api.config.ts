@@ -3,13 +3,21 @@
  * 
  * This file contains the base configuration for API calls.
  * When connecting to a backend, update the BASE_URL to point to your API endpoint.
+ * 
+ * Docker Support:
+ * - In Docker, the frontend can access Supabase Cloud directly (external service)
+ * - No special configuration needed for Supabase URLs
+ * - If you add a custom backend, update BASE_URL to the Docker service name
  */
 
+// Determine if we're running in Docker (environment-based)
+const isDocker = import.meta.env.VITE_DOCKER === 'true';
+
 export const API_CONFIG = {
-  // TODO: Update this when backend is connected
-  BASE_URL: process.env.NODE_ENV === 'production' 
-    ? '/api'  // Production API endpoint
-    : '/api', // Development API endpoint
+  // For custom backend APIs (not Supabase)
+  // In Docker, this could be 'http://backend:3001/api'
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || 
+    (process.env.NODE_ENV === 'production' ? '/api' : '/api'),
   
   TIMEOUT: 30000, // 30 seconds
   

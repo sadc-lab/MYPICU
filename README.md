@@ -1,5 +1,33 @@
 # Welcome to your Lovable project
 
+This project is built with Lovable and integrates with Supabase for backend functionality including authentication and data storage.
+
+## 🐳 Docker Deployment
+
+For containerized deployment, see [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md)
+
+**Quick Start with Docker:**
+```bash
+# Linux/Mac
+chmod +x docker-start.sh
+./docker-start.sh
+
+# Windows
+docker-start.bat
+```
+
+## Project Structure
+
+```
+src/
+├── types/          # TypeScript type definitions
+├── services/       # API and service layer
+├── hooks/          # React Query hooks and custom hooks
+├── components/     # React components
+├── pages/          # Page components
+└── utils/          # Utility functions
+```
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/15064a93-82ea-4c74-af68-7d14aff48032
