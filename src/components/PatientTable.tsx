@@ -33,10 +33,10 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
 
   const getOrganIconWithScore = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number) => {
     const getColor = (score?: number) => {
-      if (!score || score === 0) return 'text-gray-300';
-      if (score === 1) return 'text-orange-400';
-      if (score === 2) return 'text-orange-500';
-      return 'text-red-500';
+      if (!score || score === 0) return 'text-gray-500';
+      if (score === 1) return 'text-orange-600';
+      if (score === 2) return 'text-orange-700';
+      return 'text-red-700';
     };
 
     const getBgColor = (score?: number) => {
@@ -60,10 +60,10 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
     }
 
     const getColorFilter = (score?: number) => {
-      if (!score || score === 0) return 'invert(80%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(95%) contrast(90%)';
-      if (score === 1) return 'invert(69%) sepia(55%) saturate(1645%) hue-rotate(336deg) brightness(106%) contrast(95%)';
-      if (score === 2) return 'invert(56%) sepia(62%) saturate(2929%) hue-rotate(360deg) brightness(101%) contrast(103%)';
-      return 'invert(27%) sepia(89%) saturate(6934%) hue-rotate(357deg) brightness(95%) contrast(117%)';
+      if (!score || score === 0) return 'invert(64%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(92%) contrast(88%)'; // grey
+      if (score === 1) return 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)'; // orange
+      if (score === 2) return 'invert(52%) sepia(94%) saturate(635%) hue-rotate(339deg) brightness(101%) contrast(101%)'; // darker orange
+      return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)'; // red
     };
 
     return (
