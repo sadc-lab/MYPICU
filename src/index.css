@@ -35,6 +35,23 @@ All colors MUST be HSL.
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
     
+    /* System status colors for organ scores */
+    --status-critical: 0 84% 60%;
+    --status-critical-foreground: 0 0% 100%;
+    --status-critical-bg: 0 100% 97%;
+    
+    --status-warning-high: 25 95% 53%;
+    --status-warning-high-foreground: 0 0% 100%;
+    --status-warning-high-bg: 25 100% 95%;
+    
+    --status-warning: 33 100% 50%;
+    --status-warning-foreground: 0 0% 100%;
+    --status-warning-bg: 33 100% 96%;
+    
+    --status-normal: 0 0% 60%;
+    --status-normal-foreground: 0 0% 100%;
+    --status-normal-bg: 0 0% 96%;
+    
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -91,6 +108,23 @@ All colors MUST be HSL.
 
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
+    
+    /* System status colors for organ scores */
+    --status-critical: 0 84% 60%;
+    --status-critical-foreground: 0 0% 100%;
+    --status-critical-bg: 0 84% 15%;
+    
+    --status-warning-high: 25 95% 53%;
+    --status-warning-high-foreground: 0 0% 100%;
+    --status-warning-high-bg: 25 95% 20%;
+    
+    --status-warning: 33 100% 50%;
+    --status-warning-foreground: 0 0% 100%;
+    --status-warning-bg: 33 100% 18%;
+    
+    --status-normal: 0 0% 60%;
+    --status-normal-foreground: 0 0% 100%;
+    --status-normal-bg: 0 0% 20%;
     
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
