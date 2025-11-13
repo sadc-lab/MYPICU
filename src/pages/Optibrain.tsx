@@ -4,7 +4,6 @@ import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { getPatientById } from '@/utils/patientData';
 import { Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -526,13 +525,13 @@ const Optibrain = () => {
                         className="flex items-center space-x-2 cursor-pointer group"
                         onClick={() => setCheckedTasks(prev => ({ ...prev, pupils: !prev.pupils }))}
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
                           checkedTasks.pupils 
                             ? 'border-blue-500 bg-blue-500' 
                             : 'border-gray-300 bg-white group-hover:border-gray-400'
                         }`}>
                           {checkedTasks.pupils && (
-                            <div className="w-2 h-2 rounded-full bg-white"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                           )}
                         </div>
                         <label className="text-sm text-gray-700 cursor-pointer">
@@ -543,70 +542,118 @@ const Optibrain = () => {
                         className="flex items-center space-x-2 cursor-pointer group"
                         onClick={() => setCheckedTasks(prev => ({ ...prev, etco2: !prev.etco2 }))}
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
                           checkedTasks.etco2 
                             ? 'border-blue-500 bg-blue-500' 
                             : 'border-gray-300 bg-white group-hover:border-gray-400'
                         }`}>
                           {checkedTasks.etco2 && (
-                            <div className="w-2 h-2 rounded-full bg-white"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                           )}
                         </div>
                         <label className="text-sm text-gray-700 cursor-pointer">
                           ETCO2
                         </label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="pam" checked={checkedTasks.pam} onCheckedChange={checked => setCheckedTasks(prev => ({
-                    ...prev,
-                    pam: checked as boolean
-                  }))} />
-                        <label htmlFor="pam" className="text-sm text-gray-700 cursor-pointer">
+                      <div 
+                        className="flex items-center space-x-2 cursor-pointer group"
+                        onClick={() => setCheckedTasks(prev => ({ ...prev, pam: !prev.pam }))}
+                      >
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                          checkedTasks.pam 
+                            ? 'border-blue-500 bg-blue-500' 
+                            : 'border-gray-300 bg-white group-hover:border-gray-400'
+                        }`}>
+                          {checkedTasks.pam && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <label className="text-sm text-gray-700 cursor-pointer">
                           PAM
                         </label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="pvc" checked={checkedTasks.pvc} onCheckedChange={checked => setCheckedTasks(prev => ({
-                    ...prev,
-                    pvc: checked as boolean
-                  }))} />
-                        <label htmlFor="pvc" className="text-sm text-gray-700 cursor-pointer">
+                      <div 
+                        className="flex items-center space-x-2 cursor-pointer group"
+                        onClick={() => setCheckedTasks(prev => ({ ...prev, pvc: !prev.pvc }))}
+                      >
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                          checkedTasks.pvc 
+                            ? 'border-blue-500 bg-blue-500' 
+                            : 'border-gray-300 bg-white group-hover:border-gray-400'
+                        }`}>
+                          {checkedTasks.pvc && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <label className="text-sm text-gray-700 cursor-pointer">
                           PVC
                         </label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="nutrition" checked={checkedTasks.nutrition} onCheckedChange={checked => setCheckedTasks(prev => ({
-                    ...prev,
-                    nutrition: checked as boolean
-                  }))} />
-                        <label htmlFor="nutrition" className="text-sm text-gray-700 cursor-pointer">
+                      <div 
+                        className="flex items-center space-x-2 cursor-pointer group"
+                        onClick={() => setCheckedTasks(prev => ({ ...prev, nutrition: !prev.nutrition }))}
+                      >
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                          checkedTasks.nutrition 
+                            ? 'border-blue-500 bg-blue-500' 
+                            : 'border-gray-300 bg-white group-hover:border-gray-400'
+                        }`}>
+                          {checkedTasks.nutrition && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <label className="text-sm text-gray-700 cursor-pointer">
                           Nutrition
                         </label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="epilepsy" checked={checkedTasks.epilepsy} onCheckedChange={checked => setCheckedTasks(prev => ({
-                    ...prev,
-                    epilepsy: checked as boolean
-                  }))} />
-                        <label htmlFor="epilepsy" className="text-sm text-gray-700 cursor-pointer">
+                      <div 
+                        className="flex items-center space-x-2 cursor-pointer group"
+                        onClick={() => setCheckedTasks(prev => ({ ...prev, epilepsy: !prev.epilepsy }))}
+                      >
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                          checkedTasks.epilepsy 
+                            ? 'border-blue-500 bg-blue-500' 
+                            : 'border-gray-300 bg-white group-hover:border-gray-400'
+                        }`}>
+                          {checkedTasks.epilepsy && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <label className="text-sm text-gray-700 cursor-pointer">
                           Epilepsie
                         </label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="fentanyl" checked={checkedTasks.fentanyl} onCheckedChange={checked => setCheckedTasks(prev => ({
-                    ...prev,
-                    fentanyl: checked as boolean
-                  }))} />
-                        <label htmlFor="fentanyl" className="text-sm text-gray-700 cursor-pointer">
+                      <div 
+                        className="flex items-center space-x-2 cursor-pointer group"
+                        onClick={() => setCheckedTasks(prev => ({ ...prev, fentanyl: !prev.fentanyl }))}
+                      >
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                          checkedTasks.fentanyl 
+                            ? 'border-blue-500 bg-blue-500' 
+                            : 'border-gray-300 bg-white group-hover:border-gray-400'
+                        }`}>
+                          {checkedTasks.fentanyl && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <label className="text-sm text-gray-700 cursor-pointer">
                           Fentanyl
                         </label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="propofol" checked={checkedTasks.propofol} onCheckedChange={checked => setCheckedTasks(prev => ({
-                    ...prev,
-                    propofol: checked as boolean
-                  }))} />
-                        <label htmlFor="propofol" className="text-sm text-gray-700 cursor-pointer">
+                      <div 
+                        className="flex items-center space-x-2 cursor-pointer group"
+                        onClick={() => setCheckedTasks(prev => ({ ...prev, propofol: !prev.propofol }))}
+                      >
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                          checkedTasks.propofol 
+                            ? 'border-blue-500 bg-blue-500' 
+                            : 'border-gray-300 bg-white group-hover:border-gray-400'
+                        }`}>
+                          {checkedTasks.propofol && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <label className="text-sm text-gray-700 cursor-pointer">
                           Propofol
                         </label>
                       </div>
