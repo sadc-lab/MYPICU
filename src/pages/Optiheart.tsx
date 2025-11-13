@@ -699,28 +699,27 @@ const Optiheart = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Objectives & Interventions</CardTitle>
-              <div className="flex gap-2">
-                {!isEditingObjectives && !isEditingInterventions && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setIsEditingObjectives(true);
-                      setEditedObjectives([...objectives]);
-                    }}
-                  >
-                    <Edit2 className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                )}
-              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Objectives Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-semibold text-sm text-gray-700">Current Objectives:</h4>
-                {isEditingObjectives && (
+                {!isEditingObjectives ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setEditedObjectives([...objectives]);
+                      setIsEditingObjectives(true);
+                    }}
+                    className="h-8 gap-1"
+                  >
+                    <Edit2 className="h-3 w-3" />
+                    Edit
+                  </Button>
+                ) : (
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
@@ -729,8 +728,9 @@ const Optiheart = () => {
                         setObjectives(editedObjectives);
                         setIsEditingObjectives(false);
                       }}
+                      className="h-8 gap-1 text-green-600 hover:text-green-700"
                     >
-                      <Check className="h-4 w-4 mr-1" />
+                      <Check className="h-3 w-3" />
                       Save
                     </Button>
                     <Button
@@ -740,34 +740,45 @@ const Optiheart = () => {
                         setIsEditingObjectives(false);
                         setEditedObjectives([]);
                       }}
+                      className="h-8 gap-1 text-red-600 hover:text-red-700"
                     >
-                      <X className="h-4 w-4 mr-1" />
+                      <X className="h-3 w-3" />
                       Cancel
                     </Button>
                   </div>
                 )}
               </div>
-              {isEditingObjectives ? (
+              
+              {!isEditingObjectives ? (
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  {objectives.map((objective, index) => (
+                    <li key={index}>{objective}</li>
+                  ))}
+                </ul>
+              ) : (
                 <div className="space-y-2">
-                  {editedObjectives.map((obj, index) => (
-                    <div key={index} className="flex gap-2">
+                  {editedObjectives.map((objective, index) => (
+                    <div key={index} className="flex gap-2 items-center">
                       <Input
-                        value={obj}
+                        value={objective}
                         onChange={(e) => {
                           const newObjectives = [...editedObjectives];
                           newObjectives[index] = e.target.value;
                           setEditedObjectives(newObjectives);
                         }}
                         className="text-sm"
+                        placeholder="Enter objective..."
                       />
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          setEditedObjectives(editedObjectives.filter((_, i) => i !== index));
+                          const newObjectives = editedObjectives.filter((_, i) => i !== index);
+                          setEditedObjectives(newObjectives);
                         }}
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
@@ -775,24 +786,33 @@ const Optiheart = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setEditedObjectives([...editedObjectives, ''])}
-                    className="w-full"
+                    className="h-8 gap-1 text-sm"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-3 w-3" />
                     Add Objective
                   </Button>
                 </div>
-              ) : (
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  {objectives.map((obj, index) => (
-                    <li key={index}>{obj}</li>
-                  ))}
-                </ul>
               )}
             </div>
+
+            {/* Interventions Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-semibold text-sm text-gray-700">Recent Interventions:</h4>
-                {isEditingInterventions && (
+                {!isEditingInterventions ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setEditedInterventions([...interventions]);
+                      setIsEditingInterventions(true);
+                    }}
+                    className="h-8 gap-1"
+                  >
+                    <Edit2 className="h-3 w-3" />
+                    Edit
+                  </Button>
+                ) : (
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
@@ -801,8 +821,9 @@ const Optiheart = () => {
                         setInterventions(editedInterventions);
                         setIsEditingInterventions(false);
                       }}
+                      className="h-8 gap-1 text-green-600 hover:text-green-700"
                     >
-                      <Check className="h-4 w-4 mr-1" />
+                      <Check className="h-3 w-3" />
                       Save
                     </Button>
                     <Button
@@ -812,34 +833,45 @@ const Optiheart = () => {
                         setIsEditingInterventions(false);
                         setEditedInterventions([]);
                       }}
+                      className="h-8 gap-1 text-red-600 hover:text-red-700"
                     >
-                      <X className="h-4 w-4 mr-1" />
+                      <X className="h-3 w-3" />
                       Cancel
                     </Button>
                   </div>
                 )}
               </div>
-              {isEditingInterventions ? (
+              
+              {!isEditingInterventions ? (
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  {interventions.map((intervention, index) => (
+                    <li key={index}>{intervention}</li>
+                  ))}
+                </ul>
+              ) : (
                 <div className="space-y-2">
-                  {editedInterventions.map((int, index) => (
-                    <div key={index} className="flex gap-2">
+                  {editedInterventions.map((intervention, index) => (
+                    <div key={index} className="flex gap-2 items-center">
                       <Input
-                        value={int}
+                        value={intervention}
                         onChange={(e) => {
                           const newInterventions = [...editedInterventions];
                           newInterventions[index] = e.target.value;
                           setEditedInterventions(newInterventions);
                         }}
                         className="text-sm"
+                        placeholder="Enter intervention..."
                       />
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          setEditedInterventions(editedInterventions.filter((_, i) => i !== index));
+                          const newInterventions = editedInterventions.filter((_, i) => i !== index);
+                          setEditedInterventions(newInterventions);
                         }}
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
@@ -847,18 +879,12 @@ const Optiheart = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setEditedInterventions([...editedInterventions, ''])}
-                    className="w-full"
+                    className="h-8 gap-1 text-sm"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-3 w-3" />
                     Add Intervention
                   </Button>
                 </div>
-              ) : (
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  {interventions.map((int, index) => (
-                    <li key={index}>{int}</li>
-                  ))}
-                </ul>
               )}
             </div>
           </CardContent>
