@@ -16,6 +16,7 @@ const Optibrain = () => {
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(false);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
+  const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h'>('24h');
   const [checkedTasks, setCheckedTasks] = useState({
     pupils: false,
     etco2: [false, false, false],
@@ -166,26 +167,61 @@ const Optibrain = () => {
   const clinicalAdherence = Math.round(normalIndicators / totalIndicators * 100);
   const outOfRangeCount = clinicalIndicators.filter(i => i.status !== 'normal').length;
 
-  // Generate mock chart data for the last 24 hours
+  // Generate mock chart data based on selected time range
   const chartData = useMemo(() => {
     const data = [];
     const now = new Date();
-    for (let i = 23; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-      const timeStr = `${time.getHours().toString().padStart(2, '0')}:00`;
+    
+    // Determine number of data points and time intervals based on time range
+    let dataPoints: number;
+    let intervalMinutes: number;
+    
+    switch (timeRange) {
+      case 'now':
+        dataPoints = 1;
+        intervalMinutes = 0;
+        break;
+      case '3h':
+        dataPoints = 18; // One point every 10 minutes
+        intervalMinutes = 10;
+        break;
+      case '6h':
+        dataPoints = 24; // One point every 15 minutes
+        intervalMinutes = 15;
+        break;
+      case '12h':
+        dataPoints = 24; // One point every 30 minutes
+        intervalMinutes = 30;
+        break;
+      case '24h':
+      default:
+        dataPoints = 24; // One point every hour
+        intervalMinutes = 60;
+        break;
+    }
+    
+    for (let i = dataPoints - 1; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
+      const timeStr = timeRange === 'now' 
+        ? 'Now'
+        : `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+      
       const dataPoint: any = {
         time: timeStr
       };
+      
       clinicalIndicators.forEach(indicator => {
         const baseValue = indicator.value;
         // Add some random variation to make it look realistic
         const variation = (Math.random() - 0.5) * (baseValue * 0.2);
         dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
       });
+      
       data.push(dataPoint);
     }
+    
     return data;
-  }, []);
+  }, [timeRange]);
 
   // Color mapping for chart lines based on status
   const getIndicatorColor = (label: string) => {
@@ -412,10 +448,26 @@ const Optibrain = () => {
 
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">Monitoring   
-              
-
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">
+                {timeRange === 'now' ? 'Monitoring (Current)' : `Monitoring Last ${timeRange.toUpperCase()}`}
+              </CardTitle>
+              <div className="flex gap-2">
+                {(['now', '3h', '6h', '12h', '24h'] as const).map((range) => (
+                  <button
+                    key={range}
+                    onClick={() => setTimeRange(range)}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      timeRange === range
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {range === 'now' ? 'Now' : range.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
