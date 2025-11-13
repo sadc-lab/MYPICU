@@ -436,7 +436,74 @@ const Optiheart = () => {
         </div>
 
         <Card className="bg-white shadow-sm mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">
+                {timeRange === 'now' ? 'Hemodynamic Trends (Current)' : `Hemodynamic Trends Last ${timeRange.toUpperCase()}`}
+              </CardTitle>
+              <div className="flex gap-2">
+                {(['now', '3h', '6h', '12h', '24h'] as const).map((range) => (
+                  <button
+                    key={range}
+                    onClick={() => setTimeRange(range)}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      timeRange === range
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {range === 'now' ? 'Now' : range.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
           <CardContent className="space-y-4">
+            <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
+              {selectedIndicators.length === 0 ? (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-gray-400">Select clinical indicators below to display their trends</p>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col">
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {selectedIndicators.map(label => {
+                      const indicator = clinicalIndicators.find(i => i.label === label);
+                      if (!indicator) return null;
+                      const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
+                      return (
+                        <Badge key={label} className={`${statusColor} text-white`}>
+                          {label}: {indicator.value}{indicator.unit}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                  <div className="flex-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="time" style={{ fontSize: '12px' }} />
+                        <YAxis style={{ fontSize: '12px' }} />
+                        <Tooltip />
+                        <Legend wrapperStyle={{ fontSize: '12px' }} />
+                        {selectedIndicators.map(label => (
+                          <Line 
+                            key={label} 
+                            type="monotone" 
+                            dataKey={label} 
+                            stroke={getIndicatorColor(label)} 
+                            strokeWidth={2} 
+                            dot={false}
+                            activeDot={{ r: 4 }}
+                          />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Clinical Indicators Adherence */}
             <Card className="border-2 border-gray-200">
               <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setClinicalExpanded(!clinicalExpanded)}>
