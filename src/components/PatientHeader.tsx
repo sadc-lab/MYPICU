@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Brain, Wind, Activity, ChevronLeft, ExternalLink } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
-import { Patient, getPatientById } from '@/utils/patientData';
+import { getPatientById } from '@/utils/patientData';
+import { Patient } from '@/types/patient.types';
 import {
   Select,
   SelectContent,
