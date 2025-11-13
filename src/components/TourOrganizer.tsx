@@ -12,6 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { GripVertical, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTourNavigation } from '@/hooks/useTourNavigation';
+import { HeartIcon } from '@/components/icons/HeartIcon';
+import brainIcon from '@/assets/brain-icon.svg';
+import lungsIcon from '@/assets/lungs-icon.svg';
 import {
   DndContext,
   closestCenter,
@@ -40,9 +43,10 @@ interface TourOrganizerProps {
 interface SortablePatientItemProps {
   patient: Patient;
   getPelodColor: (score: number) => string;
+  navigate: (path: string) => void;
 }
 
-const SortablePatientItem = ({ patient, getPelodColor }: SortablePatientItemProps) => {
+const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatientItemProps) => {
   const {
     attributes,
     listeners,
@@ -55,6 +59,45 @@ const SortablePatientItem = ({ patient, getPelodColor }: SortablePatientItemProp
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+  };
+
+  const getColorFilter = (score?: number) => {
+    if (!score || score === 0) return 'invert(64%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(92%) contrast(88%)';
+    if (score === 1) return 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)';
+    if (score === 2) return 'invert(52%) sepia(94%) saturate(635%) hue-rotate(339deg) brightness(101%) contrast(101%)';
+    return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)';
+  };
+
+  const getColor = (score?: number) => {
+    if (!score || score === 0) return 'text-gray-500';
+    if (score === 1) return 'text-orange-600';
+    if (score === 2) return 'text-orange-700';
+    return 'text-red-700';
+  };
+
+  const getBgColor = (score?: number) => {
+    if (!score || score === 0) return 'bg-gray-100';
+    if (score === 1) return 'bg-orange-50';
+    if (score === 2) return 'bg-orange-100';
+    return 'bg-red-50';
+  };
+
+  const getOrganRoute = (organ: 'brain' | 'heart' | 'lungs') => {
+    switch (organ) {
+      case 'brain':
+        return 'optibrain';
+      case 'heart':
+        return 'optiheart';
+      case 'lungs':
+        return 'optilungs';
+      default:
+        return 'optistats';
+    }
+  };
+
+  const handleOrganClick = (e: React.MouseEvent, organ: 'brain' | 'heart' | 'lungs') => {
+    e.stopPropagation();
+    navigate(`/${getOrganRoute(organ)}?patient=${patient.id}`);
   };
 
   return (
@@ -84,6 +127,41 @@ const SortablePatientItem = ({ patient, getPelodColor }: SortablePatientItemProp
           <span>{patient.weight}</span>
           <span>•</span>
           <span className="truncate">{patient.diagnosis}</span>
+        </div>
+      </div>
+
+      <div className="flex gap-1 flex-wrap">
+        <div 
+          className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.brainScore)} cursor-pointer hover:opacity-80 transition-opacity`}
+          onClick={(e) => handleOrganClick(e, 'brain')}
+          title="View brain details"
+        >
+          <img src={brainIcon} alt="brain" className="h-5 w-5" style={{ filter: getColorFilter(patient.brainScore) }} />
+          <span className={`text-xs font-semibold ${getColor(patient.brainScore)}`}>
+            {patient.brainScore || 0}
+          </span>
+        </div>
+
+        <div 
+          className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.heartScore)} cursor-pointer hover:opacity-80 transition-opacity`}
+          onClick={(e) => handleOrganClick(e, 'heart')}
+          title="View heart details"
+        >
+          <HeartIcon className={`h-5 w-5 ${getColor(patient.heartScore)}`} />
+          <span className={`text-xs font-semibold ${getColor(patient.heartScore)}`}>
+            {patient.heartScore || 0}
+          </span>
+        </div>
+
+        <div 
+          className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.lungsScore)} cursor-pointer hover:opacity-80 transition-opacity`}
+          onClick={(e) => handleOrganClick(e, 'lungs')}
+          title="View lungs details"
+        >
+          <img src={lungsIcon} alt="lungs" className="h-5 w-5" style={{ filter: getColorFilter(patient.lungsScore) }} />
+          <span className={`text-xs font-semibold ${getColor(patient.lungsScore)}`}>
+            {patient.lungsScore || 0}
+          </span>
         </div>
       </div>
 
@@ -167,6 +245,7 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
                   key={patient.id}
                   patient={patient}
                   getPelodColor={getPelodColor}
+                  navigate={navigate}
                 />
               ))}
             </SortableContext>
