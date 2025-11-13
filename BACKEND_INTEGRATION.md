@@ -2,6 +2,8 @@
 
 This application is structured with a clean separation between the frontend UI and data layer, making it easy to integrate with a backend when ready.
 
+> **Docker Deployment**: See [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md) for containerization and deployment instructions.
+
 ## Current Architecture
 
 ### 📁 Directory Structure
