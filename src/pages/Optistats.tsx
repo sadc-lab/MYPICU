@@ -131,7 +131,7 @@ const Optistats = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
               {vitalSigns.map((vital, index) => {
                 const inRange = isInRange(vital.value, vital.targetMin, vital.targetMax);
-                const valueColor = inRange ? 'text-green-500' : 'text-red-500';
+                const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
                 
                 return (
                   <div key={index} className="flex flex-col items-center">
@@ -157,7 +157,7 @@ const Optistats = () => {
                         {/* Current value position on bar */}
                         <div 
                           className={`absolute w-3 h-3 rounded-full border-2 ${
-                            inRange ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600'
+                            inRange ? 'bg-gray-500 border-gray-600' : 'bg-red-500 border-red-600'
                           } z-10 top-0`}
                           style={{
                             left: `${Math.max(0, Math.min(100, ((vital.value - vital.min) / (vital.max - vital.min)) * 100))}%`,

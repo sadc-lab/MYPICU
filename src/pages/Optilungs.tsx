@@ -44,7 +44,7 @@ const Optilungs = () => {
     switch (status) {
       case 'critical': return 'border-red-500 bg-red-50';
       case 'warning': return 'border-orange-500 bg-orange-50';
-      default: return 'border-green-500 bg-green-50';
+      default: return 'border-gray-400 bg-gray-50';
     }
   };
 
@@ -142,10 +142,10 @@ const Optilungs = () => {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-gray-600">Oxygenation Index</span>
-                    <Badge className="bg-green-100 text-green-700">5.5</Badge>
+                    <Badge className="bg-gray-100 text-gray-600">5.5</Badge>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500" style={{ width: '65%' }}></div>
+                    <div className="h-full bg-gray-500" style={{ width: '65%' }}></div>
                   </div>
                 </div>
                 <div>

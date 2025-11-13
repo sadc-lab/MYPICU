@@ -36,7 +36,7 @@ const Optiheart = () => {
     switch (status) {
       case 'critical': return 'border-red-500 bg-red-50';
       case 'warning': return 'border-orange-500 bg-orange-50';
-      default: return 'border-green-500 bg-green-50';
+      default: return 'border-gray-400 bg-gray-50';
     }
   };
 
@@ -90,7 +90,7 @@ const Optiheart = () => {
             <CardContent className="space-y-4">
               <div>
                 <h4 className="font-semibold text-sm text-gray-700 mb-2">Current Rhythm</h4>
-                <Badge className="bg-green-100 text-green-700">Sinus Rhythm</Badge>
+                <Badge className="bg-gray-100 text-gray-600">Sinus Rhythm</Badge>
               </div>
               <div>
                 <h4 className="font-semibold text-sm text-gray-700 mb-2">Heart Rate</h4>

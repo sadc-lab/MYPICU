@@ -19,7 +19,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
   const navigate = useNavigate();
 
   const getAdherenceColor = (adherence: number) => {
-    if (adherence >= 85) return 'text-green-600';
+    if (adherence >= 85) return 'text-gray-600';
     if (adherence >= 70) return 'text-orange-500';
     return 'text-red-600';
   };

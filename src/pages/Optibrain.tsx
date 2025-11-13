@@ -42,7 +42,7 @@ const Optibrain = () => {
     switch (status) {
       case 'critical': return 'border-red-500 bg-red-50';
       case 'warning': return 'border-orange-500 bg-orange-50';
-      default: return 'border-green-500 bg-green-50';
+      default: return 'border-gray-400 bg-gray-50';
     }
   };
 
@@ -98,14 +98,14 @@ const Optibrain = () => {
                 <h4 className="font-semibold text-sm text-gray-700 mb-2">Left Pupil</h4>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Size: 3mm</span>
-                  <Badge className="bg-green-100 text-green-700">Reactive</Badge>
+                  <Badge className="bg-gray-100 text-gray-600">Reactive</Badge>
                 </div>
               </div>
               <div>
                 <h4 className="font-semibold text-sm text-gray-700 mb-2">Right Pupil</h4>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Size: 3mm</span>
-                  <Badge className="bg-green-100 text-green-700">Reactive</Badge>
+                  <Badge className="bg-gray-100 text-gray-600">Reactive</Badge>
                 </div>
               </div>
               <div className="pt-4 border-t">
