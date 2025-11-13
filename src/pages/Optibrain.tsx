@@ -1,5 +1,4 @@
 import { useSearchParams } from 'react-router-dom';
-import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,13 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { getPatientById } from '@/utils/patientData';
 import { Brain, Eye, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
-  const [timeRange, setTimeRange] = useState('3h');
 
   if (!patient) {
     return (
@@ -52,22 +49,6 @@ const Optibrain = () => {
       <PatientHeader currentPage="optibrain" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Time Range</h2>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select time range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="now">Now</SelectItem>
-              <SelectItem value="3h">Last 3 hours</SelectItem>
-              <SelectItem value="6h">Last 6 hours</SelectItem>
-              <SelectItem value="12h">Last 12 hours</SelectItem>
-              <SelectItem value="24h">Last 24 hours</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="text-base font-semibold text-gray-900">Brain Metrics</CardTitle>
