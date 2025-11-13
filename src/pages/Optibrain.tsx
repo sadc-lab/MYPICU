@@ -195,7 +195,7 @@ const Optibrain = () => {
                       
                     </CardTitle>
                     <p className="text-sm text-gray-600">
-                      Now : 26 mmHg | Moyenne : 28 mmHg <span className="text-orange-500 font-semibold">26 mmHg</span> | Moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span>
+                      Now : 26 mmHg | Mean : 26 mmHg | Moyenne : 28 mmHg <span className="text-orange-500 font-semibold">26 mmHg</span> | Moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span>
                     </p>
                   </div>
                   <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180 flex-shrink-0" />
