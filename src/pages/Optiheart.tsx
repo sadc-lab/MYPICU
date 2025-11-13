@@ -328,21 +328,66 @@ const Optiheart = () => {
 
         {/* VAP Prediction 1 Dialog */}
         <Dialog open={openDialog === 'vap1'} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>VAP Prediction 1 - Risk Assessment</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Current Risk Level</p>
-                  <p className="text-2xl font-bold text-orange-500">75%</p>
+            <div className="space-y-6">
+              {/* Prediction Card */}
+              <div className="border rounded-lg p-6 bg-white shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-gray-700">
+                    Prédictions VAP module 1 : <span className="font-normal text-gray-500">dernières 48 heures</span>
+                  </h3>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Target Risk Level</p>
-                  <p className="text-2xl font-bold text-gray-600">&lt; 50%</p>
+                
+                {/* Percentage Badge */}
+                <div className="flex justify-center mb-4">
+                  <div className="inline-block px-4 py-1 border-2 border-gray-300 rounded-full">
+                    <span className="text-xl font-semibold text-gray-700">77.9%</span>
+                  </div>
+                </div>
+
+                {/* Gradient Bar */}
+                <div className="mb-6">
+                  <div className="relative h-8 rounded-full overflow-hidden flex">
+                    <div className="w-[10%] bg-red-500"></div>
+                    <div className="w-[10%] bg-red-400"></div>
+                    <div className="w-[10%] bg-orange-400"></div>
+                    <div className="w-[10%] bg-orange-300"></div>
+                    <div className="w-[10%] bg-yellow-300"></div>
+                    <div className="w-[10%] bg-yellow-200"></div>
+                    <div className="w-[10%] bg-lime-300"></div>
+                    <div className="w-[10%] bg-lime-400"></div>
+                    <div className="w-[10%] bg-green-400"></div>
+                    <div className="w-[10%] bg-green-500"></div>
+                  </div>
+                  
+                  {/* Scale markers */}
+                  <div className="flex justify-between mt-2 text-xs text-gray-500">
+                    <span>10</span>
+                    <span>20</span>
+                    <span>30</span>
+                    <span>40</span>
+                    <span>50</span>
+                    <span>60</span>
+                    <span>70</span>
+                    <span>80</span>
+                    <span>90</span>
+                  </div>
+                </div>
+
+                {/* Metrics */}
+                <div className="border-t pt-4">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>FiO2 : <span className="font-semibold">N/A</span></span>
+                    <span>PEEP : <span className="font-semibold">N/A</span></span>
+                    <span>Fiabilité : <span className="font-semibold text-orange-500">77.9%</span></span>
+                  </div>
                 </div>
               </div>
+
+              {/* Recommendations */}
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-gray-700">Recommendations:</p>
                 <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
@@ -352,30 +397,72 @@ const Optiheart = () => {
                   <li>Monitor ventilator settings</li>
                 </ul>
               </div>
-              <div className="pt-3 border-t text-sm text-gray-600">
-                Assessment based on: <span className="text-gray-600 font-semibold">Ventilation duration, sedation, and clinical parameters</span>
-              </div>
             </div>
           </DialogContent>
         </Dialog>
 
         {/* VAP Prediction 2 Dialog */}
         <Dialog open={openDialog === 'vap2'} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>VAP Prediction 2 - Alternative Model</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Current Risk Level</p>
-                  <p className="text-2xl font-bold text-gray-600">62%</p>
+            <div className="space-y-6">
+              {/* Prediction Card */}
+              <div className="border rounded-lg p-6 bg-white shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-gray-700">
+                    Prédictions VAP module 2 : <span className="font-normal text-gray-500">dernières 48 heures</span>
+                  </h3>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Target Risk Level</p>
-                  <p className="text-2xl font-bold text-gray-600">&lt; 50%</p>
+                
+                {/* Percentage Badge */}
+                <div className="flex justify-center mb-4">
+                  <div className="inline-block px-4 py-1 border-2 border-gray-300 rounded-full">
+                    <span className="text-xl font-semibold text-gray-700">80.1%</span>
+                  </div>
+                </div>
+
+                {/* Gradient Bar */}
+                <div className="mb-6">
+                  <div className="relative h-8 rounded-full overflow-hidden flex">
+                    <div className="w-[10%] bg-red-500"></div>
+                    <div className="w-[10%] bg-red-400"></div>
+                    <div className="w-[10%] bg-orange-500"></div>
+                    <div className="w-[10%] bg-orange-400"></div>
+                    <div className="w-[10%] bg-yellow-400"></div>
+                    <div className="w-[10%] bg-yellow-300"></div>
+                    <div className="w-[10%] bg-lime-400"></div>
+                    <div className="w-[10%] bg-lime-300"></div>
+                    <div className="w-[10%] bg-green-400"></div>
+                    <div className="w-[10%] bg-green-500"></div>
+                  </div>
+                  
+                  {/* Scale markers */}
+                  <div className="flex justify-between mt-2 text-xs text-gray-500">
+                    <span>10</span>
+                    <span>20</span>
+                    <span>30</span>
+                    <span>40</span>
+                    <span>50</span>
+                    <span>60</span>
+                    <span>70</span>
+                    <span>80</span>
+                    <span>90</span>
+                  </div>
+                </div>
+
+                {/* Metrics */}
+                <div className="border-t pt-4">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>FiO2 : <span className="font-semibold">N/A</span></span>
+                    <span>PEEP : <span className="font-semibold">N/A</span></span>
+                    <span>Fiabilité : <span className="font-semibold text-green-500">80.1%</span></span>
+                  </div>
                 </div>
               </div>
+
+              {/* Recommendations */}
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-gray-700">Preventive Measures:</p>
                 <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
@@ -384,9 +471,6 @@ const Optiheart = () => {
                   <li>Oral hygiene with chlorhexidine</li>
                   <li>Regular endotracheal cuff pressure check</li>
                 </ul>
-              </div>
-              <div className="pt-3 border-t text-sm text-gray-600">
-                Model incorporates: <span className="text-gray-600 font-semibold">Clinical scores, lab values, and ventilation parameters</span>
               </div>
             </div>
           </DialogContent>
