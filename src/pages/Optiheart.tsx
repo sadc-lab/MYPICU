@@ -539,10 +539,10 @@ const Optiheart = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700">
-                        Checklist de surveillance hémodynamique
+                        Checklist hémodynamique
                       </h3>
                       <p className="text-xs text-gray-500 mt-1">
-                        {completedTasks} sur {totalTasks} tâches complétées
+                        {completedTasks} tâches sur {totalTasks} à faire
                       </p>
                     </div>
                   </div>
@@ -551,30 +551,143 @@ const Optiheart = () => {
               </CardHeader>
               {checklistExpanded && (
                 <CardContent className="pt-0">
-                  <div className="space-y-3 pt-4">
-                    {[
-                      { key: 'map', label: 'Vérifier PAM > 65 mmHg' },
-                      { key: 'cardiacOutput', label: 'Contrôler débit cardiaque' },
-                      { key: 'lactate', label: 'Surveiller lactates' },
-                      { key: 'scvo2', label: 'Vérifier ScvO2' },
-                      { key: 'fluidBalance', label: 'Évaluer bilan hydrique' },
-                      { key: 'inotropes', label: 'Ajuster support inotrope' },
-                      { key: 'vasopressors', label: 'Optimiser vasopresseurs' },
-                      { key: 'echocardiography', label: 'Échocardiographie de contrôle' }
-                    ].map(task => (
-                      <label key={task.key} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={checkedTasks[task.key as keyof typeof checkedTasks]}
-                          onChange={(e) => setCheckedTasks(prev => ({
-                            ...prev,
-                            [task.key]: e.target.checked
-                          }))}
-                          className="w-4 h-4 rounded border-gray-300"
-                        />
-                        <span className="text-sm text-gray-700">{task.label}</span>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                    <div 
+                      className="flex items-center space-x-2 cursor-pointer group"
+                      onClick={() => setCheckedTasks(prev => ({ ...prev, map: !prev.map }))}
+                    >
+                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                        checkedTasks.map 
+                          ? 'border-blue-500 bg-blue-500' 
+                          : 'border-gray-300 bg-white group-hover:border-gray-400'
+                      }`}>
+                        {checkedTasks.map && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                      <label className="text-sm text-gray-700 cursor-pointer">
+                        PAM
                       </label>
-                    ))}
+                    </div>
+                    <div 
+                      className="flex items-center space-x-2 cursor-pointer group"
+                      onClick={() => setCheckedTasks(prev => ({ ...prev, cardiacOutput: !prev.cardiacOutput }))}
+                    >
+                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                        checkedTasks.cardiacOutput 
+                          ? 'border-blue-500 bg-blue-500' 
+                          : 'border-gray-300 bg-white group-hover:border-gray-400'
+                      }`}>
+                        {checkedTasks.cardiacOutput && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                      <label className="text-sm text-gray-700 cursor-pointer">
+                        Débit cardiaque
+                      </label>
+                    </div>
+                    <div 
+                      className="flex items-center space-x-2 cursor-pointer group"
+                      onClick={() => setCheckedTasks(prev => ({ ...prev, lactate: !prev.lactate }))}
+                    >
+                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                        checkedTasks.lactate 
+                          ? 'border-blue-500 bg-blue-500' 
+                          : 'border-gray-300 bg-white group-hover:border-gray-400'
+                      }`}>
+                        {checkedTasks.lactate && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                      <label className="text-sm text-gray-700 cursor-pointer">
+                        Lactates
+                      </label>
+                    </div>
+                    <div 
+                      className="flex items-center space-x-2 cursor-pointer group"
+                      onClick={() => setCheckedTasks(prev => ({ ...prev, scvo2: !prev.scvo2 }))}
+                    >
+                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                        checkedTasks.scvo2 
+                          ? 'border-blue-500 bg-blue-500' 
+                          : 'border-gray-300 bg-white group-hover:border-gray-400'
+                      }`}>
+                        {checkedTasks.scvo2 && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                      <label className="text-sm text-gray-700 cursor-pointer">
+                        ScvO2
+                      </label>
+                    </div>
+                    <div 
+                      className="flex items-center space-x-2 cursor-pointer group"
+                      onClick={() => setCheckedTasks(prev => ({ ...prev, fluidBalance: !prev.fluidBalance }))}
+                    >
+                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                        checkedTasks.fluidBalance 
+                          ? 'border-blue-500 bg-blue-500' 
+                          : 'border-gray-300 bg-white group-hover:border-gray-400'
+                      }`}>
+                        {checkedTasks.fluidBalance && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                      <label className="text-sm text-gray-700 cursor-pointer">
+                        Bilan hydrique
+                      </label>
+                    </div>
+                    <div 
+                      className="flex items-center space-x-2 cursor-pointer group"
+                      onClick={() => setCheckedTasks(prev => ({ ...prev, inotropes: !prev.inotropes }))}
+                    >
+                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                        checkedTasks.inotropes 
+                          ? 'border-blue-500 bg-blue-500' 
+                          : 'border-gray-300 bg-white group-hover:border-gray-400'
+                      }`}>
+                        {checkedTasks.inotropes && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                      <label className="text-sm text-gray-700 cursor-pointer">
+                        Support inotrope
+                      </label>
+                    </div>
+                    <div 
+                      className="flex items-center space-x-2 cursor-pointer group"
+                      onClick={() => setCheckedTasks(prev => ({ ...prev, vasopressors: !prev.vasopressors }))}
+                    >
+                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                        checkedTasks.vasopressors 
+                          ? 'border-blue-500 bg-blue-500' 
+                          : 'border-gray-300 bg-white group-hover:border-gray-400'
+                      }`}>
+                        {checkedTasks.vasopressors && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                      <label className="text-sm text-gray-700 cursor-pointer">
+                        Vasopresseurs
+                      </label>
+                    </div>
+                    <div 
+                      className="flex items-center space-x-2 cursor-pointer group"
+                      onClick={() => setCheckedTasks(prev => ({ ...prev, echocardiography: !prev.echocardiography }))}
+                    >
+                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
+                        checkedTasks.echocardiography 
+                          ? 'border-blue-500 bg-blue-500' 
+                          : 'border-gray-300 bg-white group-hover:border-gray-400'
+                      }`}>
+                        {checkedTasks.echocardiography && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                      <label className="text-sm text-gray-700 cursor-pointer">
+                        Échocardiographie
+                      </label>
+                    </div>
                   </div>
                 </CardContent>
               )}
