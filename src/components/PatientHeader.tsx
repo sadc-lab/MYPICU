@@ -1,7 +1,9 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ExternalLink, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useState } from 'react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getPatientById } from '@/utils/patientData';
 import brainIcon from '@/assets/brain-icon.svg';
@@ -25,6 +27,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
+  const [showVitals, setShowVitals] = useState(false);
 
   if (!patient) return null;
 
@@ -101,6 +104,37 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             <p className="text-xs sm:text-sm text-gray-700 mt-2">
               <strong>Diagnosis:</strong> {patient.diagnosis}
             </p>
+            
+            <Collapsible open={showVitals} onOpenChange={setShowVitals} className="mt-3">
+              <CollapsibleTrigger className="flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors">
+                <span className="font-medium">Signes vitaux</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${showVitals ? 'rotate-180' : ''}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-2 border-t border-gray-200">
+                  <div className="text-xs">
+                    <span className="text-gray-500 block">FC</span>
+                    <span className="font-semibold text-gray-900">85 bpm</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-gray-500 block">TA</span>
+                    <span className="font-semibold text-gray-900">120/80 mmHg</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-gray-500 block">Temp</span>
+                    <span className="font-semibold text-gray-900">37.2°C</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-gray-500 block">FR</span>
+                    <span className="font-semibold text-gray-900">18/min</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-gray-500 block">SpO2</span>
+                    <span className="font-semibold text-gray-900">98%</span>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-2 w-full lg:w-auto">
