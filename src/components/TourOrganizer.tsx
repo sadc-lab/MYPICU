@@ -97,7 +97,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
 
   const handleOrganClick = (e: React.MouseEvent, organ: 'brain' | 'heart' | 'lungs') => {
     e.stopPropagation();
-    navigate(`/${getOrganRoute(organ)}?patient=${patient.id}`);
+    navigate(`/${getOrganRoute(organ)}?patient=${encodeURIComponent(patient.id)}`);
   };
 
   return (
