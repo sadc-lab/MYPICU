@@ -1,11 +1,12 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Wind, Droplets, MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { Droplets, MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { Patient } from '@/types/patient.types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import brainIcon from '@/assets/brain-icon.svg';
+import lungsIcon from '@/assets/lungs-icon.svg';
 
 interface PatientTableProps {
   patients: Patient[];
@@ -53,18 +54,24 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
       case 'heart':
         IconComponent = HeartIcon;
         break;
-      case 'lungs':
-        IconComponent = Wind;
-        break;
       case 'kidney':
         IconComponent = Droplets;
         break;
     }
 
+    const getColorFilter = (score?: number) => {
+      if (!score || score === 0) return 'invert(80%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(95%) contrast(90%)';
+      if (score === 1) return 'invert(69%) sepia(55%) saturate(1645%) hue-rotate(336deg) brightness(106%) contrast(95%)';
+      if (score === 2) return 'invert(56%) sepia(62%) saturate(2929%) hue-rotate(360deg) brightness(101%) contrast(103%)';
+      return 'invert(27%) sepia(89%) saturate(6934%) hue-rotate(357deg) brightness(95%) contrast(117%)';
+    };
+
     return (
       <div className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor}`}>
         {organ === 'brain' ? (
-          <img src={brainIcon} alt="brain" className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} style={{ filter: score && score > 0 ? (score >= 3 ? 'invert(27%) sepia(89%) saturate(6934%) hue-rotate(357deg) brightness(95%) contrast(117%)' : score === 2 ? 'invert(56%) sepia(62%) saturate(2929%) hue-rotate(360deg) brightness(101%) contrast(103%)' : 'invert(69%) sepia(55%) saturate(1645%) hue-rotate(336deg) brightness(106%) contrast(95%)') : 'invert(80%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(95%) contrast(90%)' }} />
+          <img src={brainIcon} alt="brain" className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} style={{ filter: getColorFilter(score) }} />
+        ) : organ === 'lungs' ? (
+          <img src={lungsIcon} alt="lungs" className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} style={{ filter: getColorFilter(score) }} />
         ) : organ === 'heart' ? (
           <HeartIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} size={20} />
         ) : (
