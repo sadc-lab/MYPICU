@@ -10,13 +10,6 @@ import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import statsIcon from '@/assets/stats-icon.svg';
 import { Patient } from '@/types/patient.types';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 interface PatientHeaderProps {
   currentPage: 'optistats' | 'optibrain' | 'optiheart' | 'optilungs';
@@ -69,19 +62,6 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
           </Button>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <Select defaultValue="now">
-              <SelectTrigger className="w-[100px] sm:w-[120px] bg-white text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white z-50">
-                <SelectItem value="now">Now</SelectItem>
-                <SelectItem value="3h">3h</SelectItem>
-                <SelectItem value="6h">6h</SelectItem>
-                <SelectItem value="12h">12h</SelectItem>
-                <SelectItem value="24h">24h</SelectItem>
-              </SelectContent>
-            </Select>
-
             <Button variant="outline" size="sm" className="gap-2 text-xs sm:text-sm">
               <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">UpToDate</span>
