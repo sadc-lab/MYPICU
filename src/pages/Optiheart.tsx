@@ -1,16 +1,19 @@
 import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getPatientById } from '@/utils/patientData';
-import { Activity } from 'lucide-react';
+import { Activity, Info } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const Optiheart = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
+  const [openDialog, setOpenDialog] = useState<string | null>(null);
 
   if (!patient) {
     return (
@@ -30,6 +33,36 @@ const Optiheart = () => {
     { label: 'SVR', value: 1200, unit: 'dynes/sec/cm⁻⁵', min: 500, max: 1600, targetMin: 800, targetMax: 1200 },
     { label: 'Lactate', value: 1.2, unit: 'mmol/L', min: 0, max: 4, targetMin: 0, targetMax: 2 },
     { label: 'ScvO2', value: 72, unit: '%', min: 50, max: 85, targetMin: 65, targetMax: 75 },
+  ];
+
+  const heartOptimisationMetrics = [
+    {
+      label: 'État Cardiaque',
+      value: 'Choc cardiogénique',
+      displayValue: 'Choc cardiogénique',
+      unit: '',
+      status: 'critical',
+      hasDetails: true,
+      dialogKey: 'cardiac'
+    },
+    {
+      label: 'Débit Cardiaque',
+      value: '3.2 L/min',
+      displayValue: '3.2',
+      unit: 'L/min',
+      status: 'warning',
+      hasDetails: true,
+      dialogKey: 'output'
+    },
+    {
+      label: 'RVS Opt',
+      value: '1450 dynes/s/cm⁻⁵',
+      displayValue: '1450',
+      unit: 'dynes/s/cm⁻⁵',
+      status: 'warning',
+      hasDetails: true,
+      dialogKey: 'svr'
+    }
   ];
 
   const isInRange = (value: number, min: number, max: number) => {
@@ -97,6 +130,156 @@ const Optiheart = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="bg-white shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-gray-900">Heart Optimisation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-8">
+              {heartOptimisationMetrics.map((metric, index) => {
+                const statusColor = metric.status === 'critical' ? 'text-red-500' : metric.status === 'warning' ? 'text-orange-500' : 'text-gray-600';
+                return (
+                  <div 
+                    key={index} 
+                    className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                    onClick={() => metric.hasDetails && setOpenDialog(metric.dialogKey || null)}
+                  >
+                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                      {metric.label}
+                    </div>
+                    <div className={`text-4xl font-bold ${statusColor} mb-2`}>
+                      {metric.displayValue}
+                    </div>
+                    {metric.hasDetails && (
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
+                        <Info className="h-3 w-3" />
+                        <span>Voir détails</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cardiac State Dialog */}
+        <Dialog open={openDialog === 'cardiac'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>État Cardiaque</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                <span className="text-red-500 font-semibold">Choc cardiogénique</span> depuis : 2am
+              </p>
+              <div className="space-y-3">
+                {[
+                  { label: 'Choc cardiogénique', percent: 45, status: 'critical' },
+                  { label: 'Insuffisance cardiaque', percent: 25, status: 'warning' },
+                  { label: 'Arythmie', percent: 15, status: 'warning' },
+                  { label: 'Stable', percent: 15, status: 'normal' }
+                ].map((state, index) => (
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-700">{state.label}</span>
+                      <span className={
+                        state.status === 'critical' ? 'text-red-500 font-semibold' :
+                        state.status === 'warning' ? 'text-orange-500 font-semibold' :
+                        'text-gray-600 font-semibold'
+                      }>
+                        {state.percent}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className={`h-2 rounded-full transition-all ${
+                          state.status === 'critical' ? 'bg-red-500' :
+                          state.status === 'warning' ? 'bg-orange-400' :
+                          'bg-gray-400'
+                        }`}
+                        style={{ width: `${state.percent}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="pt-3 border-t text-sm text-gray-600">
+                Débit cardiaque actuel : <span className="text-gray-600 font-semibold">3.2 L/min</span>
+                <span className="ml-4">Débit moyen : <span className="text-gray-600 font-semibold">3.5 L/min</span></span>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Cardiac Output Dialog */}
+        <Dialog open={openDialog === 'output'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Débit Cardiaque Optimal</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Débit actuel</p>
+                  <p className="text-2xl font-bold text-orange-500">3.2 L/min</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Débit cible</p>
+                  <p className="text-2xl font-bold text-gray-600">4.5-6.0 L/min</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-gray-700">Recommandations:</p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  <li>Augmenter le support inotrope (Dobutamine)</li>
+                  <li>Optimiser la précharge (bolus liquidien)</li>
+                  <li>Surveillance continue de l'index cardiaque</li>
+                  <li>Échocardiographie de contrôle</li>
+                </ul>
+              </div>
+              <div className="pt-3 border-t text-sm text-gray-600">
+                Index cardiaque actuel : <span className="text-gray-600 font-semibold">2.1 L/min/m²</span>
+                <span className="ml-4">Cible : <span className="text-gray-600 font-semibold">2.5-4.0 L/min/m²</span></span>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* SVR Dialog */}
+        <Dialog open={openDialog === 'svr'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Résistances Vasculaires Systémiques Optimales</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">RVS actuelles</p>
+                  <p className="text-2xl font-bold text-orange-500">1450 dynes/s/cm⁻⁵</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">RVS cibles</p>
+                  <p className="text-2xl font-bold text-gray-600">800-1200 dynes/s/cm⁻⁵</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-gray-700">Interventions suggérées:</p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  <li>Réduire les vasopresseurs progressivement</li>
+                  <li>Optimiser la volémie</li>
+                  <li>Considérer vasodilatateur si persistance</li>
+                  <li>Surveillance de la PAM et lactates</li>
+                </ul>
+              </div>
+              <div className="pt-3 border-t text-sm text-gray-600">
+                PAM actuelle : <span className="text-gray-600 font-semibold">72 mmHg</span>
+                <span className="ml-4">PAM moyenne : <span className="text-gray-600 font-semibold">70 mmHg</span></span>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <Card className="lg:col-span-2 bg-white shadow-sm">
