@@ -77,7 +77,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
     const handleClick = (e: React.MouseEvent) => {
       e.stopPropagation(); // Prevent row click
       if (patientId) {
-        navigate(`/${getOrganRoute(organ)}?patient=${patientId}`);
+        navigate(`/${getOrganRoute(organ)}?patient=${encodeURIComponent(patientId)}`);
       }
     };
 
@@ -143,7 +143,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
               <TableRow 
                 key={patient.id}
                 className="cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100"
-                onClick={() => navigate(`/optistats?patient=${patient.id}`)}
+                onClick={() => navigate(`/optistats?patient=${encodeURIComponent(patient.id)}`)}
               >
                 <TableCell className="py-3 sm:py-4">
                   <div className="font-medium text-sm sm:text-base text-gray-700">

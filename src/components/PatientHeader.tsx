@@ -125,7 +125,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
 
             <div className="flex gap-1 flex-wrap">
               <button
-                onClick={() => navigate(`/optistats?patient=${patientId}`)}
+                onClick={() => navigate(`/optistats?patient=${encodeURIComponent(patientId)}`)}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                   isActivePage('optistats')
                     ? 'bg-primary text-white'
@@ -144,7 +144,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               </button>
 
               <button
-                onClick={() => navigate(`/optibrain?patient=${patientId}`)}
+                onClick={() => navigate(`/optibrain?patient=${encodeURIComponent(patientId)}`)}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                   isActivePage('optibrain')
                     ? 'bg-primary text-white'
@@ -163,7 +163,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               </button>
 
               <button
-                onClick={() => navigate(`/optiheart?patient=${patientId}`)}
+                onClick={() => navigate(`/optiheart?patient=${encodeURIComponent(patientId)}`)}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                   isActivePage('optiheart')
                     ? 'bg-primary text-white'
@@ -177,7 +177,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               </button>
 
               <button
-                onClick={() => navigate(`/optilungs?patient=${patientId}`)}
+                onClick={() => navigate(`/optilungs?patient=${encodeURIComponent(patientId)}`)}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                   isActivePage('optilungs')
                     ? 'bg-primary text-white'
