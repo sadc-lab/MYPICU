@@ -54,10 +54,10 @@ const Dashboard = () => {
 
         <div className="space-y-6">
           <div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
-              <h2 className="text-lg sm:text-xl font-medium text-primary">Patient status</h2>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-lg sm:text-xl font-medium text-primary">Patient status -</h2>
               <Select value={selectedPed} onValueChange={(value) => setSelectedPed(value as 'A' | 'B' | 'C')}>
-                <SelectTrigger className="w-full sm:w-[120px] bg-white border-primary text-primary h-8">
+                <SelectTrigger className="w-[100px] sm:w-[120px] bg-white border-primary text-primary h-8 text-lg sm:text-xl font-medium">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-50">
