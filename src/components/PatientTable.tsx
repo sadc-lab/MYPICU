@@ -69,13 +69,13 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
     return (
       <div className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor}`}>
         {organ === 'brain' ? (
-          <img src={brainIcon} alt="brain" className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} style={{ filter: getColorFilter(score) }} />
+          <img src={brainIcon} alt="brain" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(score) }} />
         ) : organ === 'lungs' ? (
-          <img src={lungsIcon} alt="lungs" className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} style={{ filter: getColorFilter(score) }} />
+          <img src={lungsIcon} alt="lungs" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(score) }} />
         ) : organ === 'heart' ? (
-          <HeartIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} size={20} />
+          <HeartIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${color}`} />
         ) : (
-          <IconComponent className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} />
+          <IconComponent className={`h-6 w-6 sm:h-7 sm:w-7 ${color}`} />
         )}
         <span className={`text-xs sm:text-sm font-semibold ${color}`}>
           {score || 0}
