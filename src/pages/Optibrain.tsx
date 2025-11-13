@@ -1,15 +1,19 @@
 import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getPatientById } from '@/utils/patientData';
-import { Brain, Eye } from 'lucide-react';
+import { Brain, Eye, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
+  const [timeRange, setTimeRange] = useState('3h');
 
   if (!patient) {
     return (
@@ -48,6 +52,22 @@ const Optibrain = () => {
       <PatientHeader currentPage="optibrain" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">Time Range</h2>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select time range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="now">Now</SelectItem>
+              <SelectItem value="3h">Last 3 hours</SelectItem>
+              <SelectItem value="6h">Last 6 hours</SelectItem>
+              <SelectItem value="12h">Last 12 hours</SelectItem>
+              <SelectItem value="24h">Last 24 hours</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="text-base font-semibold text-gray-900">Brain Metrics</CardTitle>
@@ -104,88 +124,100 @@ const Optibrain = () => {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card className="bg-white shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg flex items-center gap-2">
-                États neurologiques
-                <Eye className="h-4 w-4 text-gray-400" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[
-                { label: 'Hyperhémie', percent: 40, status: 'warning' },
-                { label: 'HTIC / Hyp.', percent: 30, status: 'warning' },
-                { label: 'Ischémie', percent: 10, status: 'warning' },
-                { label: 'Contrôlé', percent: 20, status: 'normal' },
-              ].map((state, index) => (
-                <div key={index} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-700">{state.label}</span>
-                    <span className={state.status === 'normal' ? 'text-gray-600 font-semibold' : 'text-orange-500 font-semibold'}>
-                      {state.percent}%
-                    </span>
+        <Collapsible defaultOpen={false}>
+          <Card className="bg-white shadow-sm mb-6">
+            <CollapsibleTrigger className="w-full">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  États neurologiques
+                  <Eye className="h-4 w-4 text-gray-400" />
+                </CardTitle>
+                <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180" />
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="space-y-3">
+                {[
+                  { label: 'Hyperhémie', percent: 40, status: 'warning' },
+                  { label: 'HTIC / Hyp.', percent: 30, status: 'warning' },
+                  { label: 'Ischémie', percent: 10, status: 'warning' },
+                  { label: 'Contrôlé', percent: 20, status: 'normal' },
+                ].map((state, index) => (
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-700">{state.label}</span>
+                      <span className={state.status === 'normal' ? 'text-gray-600 font-semibold' : 'text-orange-500 font-semibold'}>
+                        {state.percent}%
+                      </span>
+                    </div>
+                    <div className="h-8 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={state.status === 'normal' ? 'h-full bg-gray-400' : 'h-full bg-blue-400'}
+                        style={{ width: `${state.percent}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="h-8 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className={state.status === 'normal' ? 'h-full bg-gray-400' : 'h-full bg-blue-400'}
-                      style={{ width: `${state.percent}%` }}
-                    ></div>
-                  </div>
+                ))}
+                <div className="pt-3 border-t text-sm text-gray-600">
+                  <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : 3am. Risque de HTIC + ischémie
+                  <span className="ml-2 text-gray-400">Rappel {'>'}</span>
                 </div>
-              ))}
-              <div className="pt-3 border-t text-sm text-gray-600">
-                <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : 3am. Risque de HTIC + ischémie
-                <span className="ml-2 text-gray-400">Rappel {'>'}</span>
-              </div>
-            </CardContent>
+              </CardContent>
+            </CollapsibleContent>
           </Card>
+        </Collapsible>
 
-          <Card className="bg-white shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg flex items-center gap-2">
-                Niveaux de PIC
-                <Eye className="h-4 w-4 text-gray-400" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[
-                { label: '25 - 30 mmHg', time: 128, status: 'warning' },
-                { label: '20 - 25 mmHg', time: 30, status: 'warning' },
-                { label: '> 30 mmHg', time: 2, status: 'critical' },
-                { label: '< 20 mmHg', time: 20, status: 'normal' },
-              ].map((level, index) => (
-                <div key={index} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-700">{level.label}</span>
-                    <span className={
-                      level.status === 'critical' ? 'text-red-500 font-semibold' :
-                      level.status === 'warning' ? 'text-orange-500 font-semibold' : 
-                      'text-gray-600 font-semibold'
-                    }>
-                      {level.time} min
-                    </span>
+        <Collapsible defaultOpen={false}>
+          <Card className="bg-white shadow-sm mb-6">
+            <CollapsibleTrigger className="w-full">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  Niveaux de PIC
+                  <Eye className="h-4 w-4 text-gray-400" />
+                </CardTitle>
+                <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180" />
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="space-y-3">
+                {[
+                  { label: '25 - 30 mmHg', time: 128, status: 'warning' },
+                  { label: '20 - 25 mmHg', time: 30, status: 'warning' },
+                  { label: '> 30 mmHg', time: 2, status: 'critical' },
+                  { label: '< 20 mmHg', time: 20, status: 'normal' },
+                ].map((level, index) => (
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-700">{level.label}</span>
+                      <span className={
+                        level.status === 'critical' ? 'text-red-500 font-semibold' :
+                        level.status === 'warning' ? 'text-orange-500 font-semibold' : 
+                        'text-gray-600 font-semibold'
+                      }>
+                        {level.time} min
+                      </span>
+                    </div>
+                    <div className="h-8 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={
+                          level.status === 'critical' ? 'h-full bg-red-400' :
+                          level.status === 'warning' ? 'h-full bg-blue-400' : 
+                          'h-full bg-gray-400'
+                        }
+                        style={{ width: `${(level.time / 180) * 100}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="h-8 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className={
-                        level.status === 'critical' ? 'h-full bg-red-400' :
-                        level.status === 'warning' ? 'h-full bg-blue-400' : 
-                        'h-full bg-gray-400'
-                      }
-                      style={{ width: `${(level.time / 180) * 100}%` }}
-                    ></div>
-                  </div>
+                ))}
+                <div className="pt-3 border-t text-sm text-gray-600">
+                  Intensité actuelle : <span className="text-orange-500 font-semibold">26 mmHg</span>
+                  <span className="ml-4">Intensité moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span></span>
+                  <span className="ml-2 text-gray-400">Rappel {'>'}</span>
                 </div>
-              ))}
-              <div className="pt-3 border-t text-sm text-gray-600">
-                Intensité actuelle : <span className="text-orange-500 font-semibold">26 mmHg</span>
-                <span className="ml-4">Intensité moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span></span>
-                <span className="ml-2 text-gray-400">Rappel {'>'}</span>
-              </div>
-            </CardContent>
+              </CardContent>
+            </CollapsibleContent>
           </Card>
-        </div>
+        </Collapsible>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <Card className="lg:col-span-2 bg-white shadow-sm">
