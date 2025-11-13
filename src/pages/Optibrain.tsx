@@ -416,7 +416,7 @@ const Optibrain = () => {
                     <div className="flex items-center gap-4">
                       <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
                         clinicalAdherence >= 90 
-                          ? 'border-green-500 text-green-600 bg-green-50' 
+                          ? 'border-gray-400 text-gray-600 bg-gray-50' 
                           : clinicalAdherence >= 80 
                           ? 'border-orange-400 text-orange-600 bg-orange-50' 
                           : 'border-red-400 text-red-600 bg-red-50'
@@ -441,43 +441,25 @@ const Optibrain = () => {
                 </CardHeader>
                 {clinicalExpanded && (
                   <CardContent className="pt-0">
-                    <div className="flex items-start gap-6 pt-4">
-                      <div className="flex flex-col items-center">
-                        <div className="space-y-2 text-xs">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                            <span className="text-gray-600">90-100%</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-orange-400"></div>
-                            <span className="text-gray-600">80-90%</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                            <span className="text-gray-600">0-80%</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-1 grid grid-cols-3 gap-4">
-                        {clinicalIndicators.map((indicator, index) => {
-                          const statusColor = 
-                            indicator.status === 'critical' ? 'bg-red-500' :
-                            indicator.status === 'warning' ? 'bg-orange-400' :
-                            'bg-green-500';
-                          
-                          return (
-                            <div key={index} className="flex items-start gap-2">
-                              <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-700">
-                                  {indicator.label} : {indicator.value}{indicator.unit}
-                                </p>
-                                <p className="text-xs text-gray-500">{indicator.target}</p>
-                              </div>
+                    <div className="grid grid-cols-3 gap-4 pt-4">
+                      {clinicalIndicators.map((indicator, index) => {
+                        const statusColor = 
+                          indicator.status === 'critical' ? 'bg-red-500' :
+                          indicator.status === 'warning' ? 'bg-orange-400' :
+                          'bg-gray-400';
+                        
+                        return (
+                          <div key={index} className="flex items-start gap-2">
+                            <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-700">
+                                {indicator.label} : {indicator.value}{indicator.unit}
+                              </p>
+                              <p className="text-xs text-gray-500">{indicator.target}</p>
                             </div>
-                          );
-                        })}
-                      </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 )}
