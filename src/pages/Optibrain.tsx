@@ -522,21 +522,37 @@ const Optibrain = () => {
                 </CardHeader>
                 {checklistExpanded && <CardContent className="pt-0">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="pupils" checked={checkedTasks.pupils} onCheckedChange={checked => setCheckedTasks(prev => ({
-                    ...prev,
-                    pupils: checked as boolean
-                  }))} />
-                        <label htmlFor="pupils" className="text-sm text-gray-700 cursor-pointer">
+                      <div 
+                        className="flex items-center space-x-2 cursor-pointer group"
+                        onClick={() => setCheckedTasks(prev => ({ ...prev, pupils: !prev.pupils }))}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          checkedTasks.pupils 
+                            ? 'border-blue-500 bg-blue-500' 
+                            : 'border-gray-300 bg-white group-hover:border-gray-400'
+                        }`}>
+                          {checkedTasks.pupils && (
+                            <div className="w-2 h-2 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <label className="text-sm text-gray-700 cursor-pointer">
                           Pupilles : N/A
                         </label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="etco2" checked={checkedTasks.etco2} onCheckedChange={checked => setCheckedTasks(prev => ({
-                    ...prev,
-                    etco2: checked as boolean
-                  }))} />
-                        <label htmlFor="etco2" className="text-sm text-gray-700 cursor-pointer">
+                      <div 
+                        className="flex items-center space-x-2 cursor-pointer group"
+                        onClick={() => setCheckedTasks(prev => ({ ...prev, etco2: !prev.etco2 }))}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          checkedTasks.etco2 
+                            ? 'border-blue-500 bg-blue-500' 
+                            : 'border-gray-300 bg-white group-hover:border-gray-400'
+                        }`}>
+                          {checkedTasks.etco2 && (
+                            <div className="w-2 h-2 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <label className="text-sm text-gray-700 cursor-pointer">
                           ETCO2
                         </label>
                       </div>
