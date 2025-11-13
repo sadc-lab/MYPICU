@@ -71,7 +71,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
           <IconComponent className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} />
         )}
         <span className={`text-xs sm:text-sm font-semibold ${color}`}>
-          {score || 0}
+          {score}
         </span>
       </div>
     );
