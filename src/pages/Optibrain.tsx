@@ -14,6 +14,7 @@ const Optibrain = () => {
   const patient = getPatientById(patientId);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
+  const [clinicalExpanded, setClinicalExpanded] = useState(false);
   const [checkedTasks, setCheckedTasks] = useState({
     pupils: false,
     etco2: false,
@@ -98,31 +99,77 @@ const Optibrain = () => {
   const isInRange = (value: number, min: number, max: number) => {
     return value >= min && value <= max;
   };
-  const clinicalIndicators = [{
-    label: 'Head Position',
-    value: '30°',
-    status: 'normal'
-  }, {
-    label: 'Temperature',
-    value: '37.2°C',
-    status: 'normal'
-  }, {
-    label: 'Hemoglobin',
-    value: '12.5 g/dL',
-    status: 'normal'
-  }, {
-    label: 'Platelets',
-    value: '180 K/µL',
-    status: 'normal'
-  }, {
-    label: 'Glycemia',
-    value: '5.8 mmol/L',
-    status: 'normal'
-  }, {
-    label: 'INR',
-    value: '1.1',
-    status: 'normal'
-  }];
+  const clinicalIndicators = [
+    {
+      label: 'PaCO2',
+      value: 38,
+      unit: 'mmHg',
+      target: '35-45mmHg',
+      status: 'normal'
+    },
+    {
+      label: 'PIC',
+      value: 27,
+      unit: 'mmHg',
+      target: '< 20mmHg',
+      status: 'critical'
+    },
+    {
+      label: 'PPC',
+      value: 73,
+      unit: 'mmHg',
+      target: '60-70 mmHg',
+      status: 'warning'
+    },
+    {
+      label: 'INR',
+      value: 1.54,
+      unit: '',
+      target: '< 1.2',
+      status: 'critical'
+    },
+    {
+      label: 'Tête',
+      value: 32,
+      unit: '°',
+      target: '0-30°',
+      status: 'warning'
+    },
+    {
+      label: 'Hb',
+      value: 8,
+      unit: 'g/dL',
+      target: '> 7g/dl',
+      status: 'normal'
+    },
+    {
+      label: 'Temp.',
+      value: 35.8,
+      unit: '°C',
+      target: '35-38°C',
+      status: 'normal'
+    },
+    {
+      label: 'Plaquettes',
+      value: 179,
+      unit: 'g/L',
+      target: '> 100 g/L',
+      status: 'normal'
+    },
+    {
+      label: 'Glycémie',
+      value: 5.9,
+      unit: 'mmol/L',
+      target: '5-11 mmol/L',
+      status: 'normal'
+    }
+  ];
+
+  // Calculate clinical adherence
+  const totalIndicators = clinicalIndicators.length;
+  const normalIndicators = clinicalIndicators.filter(i => i.status === 'normal').length;
+  const clinicalAdherence = Math.round((normalIndicators / totalIndicators) * 100);
+  const outOfRangeCount = clinicalIndicators.filter(i => i.status !== 'normal').length;
   return <div className="min-h-screen bg-[#EDF2F9]">
       <Header />
       <PatientHeader currentPage="optibrain" />
@@ -360,6 +407,92 @@ const Optibrain = () => {
                 <p className="text-gray-400">ICP trend chart will be displayed here</p>
               </div>
 
+              {/* Clinical Indicators Adherence */}
+              <Card className="border-2 border-gray-200">
+                <CardHeader 
+                  className="cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setClinicalExpanded(!clinicalExpanded)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
+                        clinicalAdherence >= 90 
+                          ? 'border-green-500 text-green-600 bg-green-50' 
+                          : clinicalAdherence >= 80 
+                          ? 'border-orange-400 text-orange-600 bg-orange-50' 
+                          : 'border-red-400 text-red-600 bg-red-50'
+                      }`}>
+                        {clinicalAdherence}%
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-700">
+                          Adhérence globale des indicateurs cliniques : surveiller PIC, PPC, INR et tête
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {outOfRangeCount} indicateurs à surveiller
+                        </p>
+                      </div>
+                    </div>
+                    {clinicalExpanded ? (
+                      <ChevronUp className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    )}
+                  </div>
+                </CardHeader>
+                {clinicalExpanded && (
+                  <CardContent className="pt-0">
+                    <div className="flex items-start gap-6 pt-4">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold border-[6px] ${
+                          clinicalAdherence >= 90 
+                            ? 'border-green-500 text-green-600' 
+                            : clinicalAdherence >= 80 
+                            ? 'border-orange-400 text-orange-600' 
+                            : 'border-red-400 text-red-600'
+                        }`}>
+                          {clinicalAdherence}%
+                        </div>
+                        <div className="mt-4 space-y-2 text-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span className="text-gray-600">90-100%</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-orange-400"></div>
+                            <span className="text-gray-600">80-90%</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                            <span className="text-gray-600">0-80%</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-1 grid grid-cols-3 gap-4">
+                        {clinicalIndicators.map((indicator, index) => {
+                          const statusColor = 
+                            indicator.status === 'critical' ? 'bg-red-500' :
+                            indicator.status === 'warning' ? 'bg-orange-400' :
+                            'bg-green-500';
+                          
+                          return (
+                            <div key={index} className="flex items-start gap-2">
+                              <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-700">
+                                  {indicator.label} : {indicator.value}{indicator.unit}
+                                </p>
+                                <p className="text-xs text-gray-500">{indicator.target}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+
               {/* Monitoring Tasks Checklist */}
               <Card className="border-2 border-gray-200">
                 <CardHeader 
@@ -496,20 +629,6 @@ const Optibrain = () => {
                   </CardContent>
                 )}
               </Card>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Clinical Indicators</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                {clinicalIndicators.map((indicator, index) => <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-600 mb-1">{indicator.label}</p>
-                    <p className="font-semibold text-sm text-gray-900">{indicator.value}</p>
-                  </div>)}
-              </div>
             </CardContent>
           </Card>
         </div>
