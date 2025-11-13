@@ -182,6 +182,22 @@ const Optibrain = () => {
     return data;
   }, []);
 
+  // Group selected indicators by unit
+  const groupedIndicators = useMemo(() => {
+    const groups: Record<string, string[]> = {};
+    selectedIndicators.forEach(label => {
+      const indicator = clinicalIndicators.find(i => i.label === label);
+      if (indicator) {
+        const unit = indicator.unit || 'sans unité';
+        if (!groups[unit]) {
+          groups[unit] = [];
+        }
+        groups[unit].push(label);
+      }
+    });
+    return groups;
+  }, [selectedIndicators]);
+
   // Color mapping for chart lines based on status
   const getIndicatorColor = (label: string) => {
     const indicator = clinicalIndicators.find(i => i.label === label);
@@ -428,30 +444,43 @@ const Optibrain = () => {
                         </div>;
                 })}
                   </div>
-                  <div className="flex-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="time" tick={{
-                      fontSize: 12
-                    }} stroke="#9ca3af" />
-                        <YAxis tick={{
-                      fontSize: 12
-                    }} stroke="#9ca3af" />
-                        <Tooltip contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '6px',
-                      fontSize: '12px'
-                    }} />
-                        <Legend wrapperStyle={{
-                      fontSize: '12px'
-                    }} />
-                        {selectedIndicators.map(label => <Line key={label} type="monotone" dataKey={label} stroke={getIndicatorColor(label)} strokeWidth={2} dot={false} activeDot={{
-                      r: 4
-                    }} />)}
-                      </LineChart>
-                    </ResponsiveContainer>
+                  <div className="flex-1 flex gap-4">
+                    {Object.entries(groupedIndicators).map(([unit, indicators]) => <div key={unit} className="flex-1 min-w-0">
+                        <div className="text-xs font-medium text-gray-500 mb-2 text-center">
+                          {unit && unit !== 'sans unité' ? `Unité: ${unit}` : 'Sans unité'}
+                        </div>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                            <XAxis dataKey="time" tick={{
+                          fontSize: 12
+                        }} stroke="#9ca3af" />
+                            <YAxis tick={{
+                          fontSize: 12
+                        }} stroke="#9ca3af" label={{
+                          value: unit !== 'sans unité' ? unit : '',
+                          angle: -90,
+                          position: 'insideLeft',
+                          style: {
+                            fontSize: 12,
+                            fill: '#9ca3af'
+                          }
+                        }} />
+                            <Tooltip contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '6px',
+                          fontSize: '12px'
+                        }} />
+                            <Legend wrapperStyle={{
+                          fontSize: '12px'
+                        }} />
+                            {indicators.map(label => <Line key={label} type="monotone" dataKey={label} stroke={getIndicatorColor(label)} strokeWidth={2} dot={false} activeDot={{
+                          r: 4
+                        }} />)}
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>)}
                   </div>
                 </div>}
             </div>
