@@ -317,48 +317,76 @@ const Optibrain = () => {
 
         {/* Neurological State Dialog */}
         <Dialog open={openDialog === 'neuro'} onOpenChange={open => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>État Neurologique</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : 3am
-              </p>
-              <div className="space-y-3">
-                {[{
-                label: 'Hyperhémie',
-                percent: 40,
-                status: 'warning'
-              }, {
-                label: 'HTIC / Hyp.',
-                percent: 30,
-                status: 'warning'
-              }, {
-                label: 'Ischémie',
-                percent: 10,
-                status: 'warning'
-              }, {
-                label: 'Contrôlé',
-                percent: 20,
-                status: 'normal'
-              }].map((state, index) => <div key={index} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">{state.label}</span>
-                      <span className={state.status === 'normal' ? 'text-gray-600 font-semibold' : 'text-orange-500 font-semibold'}>
-                        {state.percent}%
-                      </span>
-                    </div>
-                    <div className="h-8 bg-gray-200 rounded-full overflow-hidden">
-                      <div className={state.status === 'normal' ? 'h-full bg-gray-400' : 'h-full bg-blue-400'} style={{
-                    width: `${state.percent}%`
-                  }}>
+            <div className="space-y-6">
+              {/* Prediction Card */}
+              <div className="border rounded-lg p-6 bg-white shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-gray-700">
+                    État actuel : <span className="font-normal text-orange-500">Hyperhémie</span>
+                  </h3>
+                </div>
+                
+                {/* Percentage Badge */}
+                <div className="flex justify-center mb-4">
+                  <div className="inline-block px-4 py-1 border-2 border-orange-300 rounded-full">
+                    <span className="text-xl font-semibold text-orange-500">Hyperhémie (40%)</span>
+                  </div>
+                </div>
+
+                {/* Gradient Bar */}
+                <div className="mb-6">
+                  <div className="relative h-8 rounded-full overflow-hidden flex">
+                    <div className="flex-[40] bg-orange-400"></div>
+                    <div className="flex-[30] bg-yellow-400"></div>
+                    <div className="flex-[10] bg-red-400"></div>
+                    <div className="flex-[20] bg-gray-400"></div>
+                  </div>
+                  
+                  {/* Legend */}
+                  <div className="grid grid-cols-4 gap-2 mt-4">
+                    <div className="text-xs text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-3 h-3 rounded-full bg-orange-400"></div>
+                        <span className="font-semibold text-orange-500">40%</span>
                       </div>
+                      <span className="text-gray-600">Hyperhémie</span>
                     </div>
-                  </div>)}
-              </div>
-              <div className="pt-3 border-t text-sm text-gray-600">
-                <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : 3am. Risque de HTIC + ischémie
+                    <div className="text-xs text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                        <span className="font-semibold text-yellow-600">30%</span>
+                      </div>
+                      <span className="text-gray-600">HTIC / Hyp.</span>
+                    </div>
+                    <div className="text-xs text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                        <span className="font-semibold text-red-500">10%</span>
+                      </div>
+                      <span className="text-gray-600">Ischémie</span>
+                    </div>
+                    <div className="text-xs text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                        <span className="font-semibold text-gray-600">20%</span>
+                      </div>
+                      <span className="text-gray-600">Contrôlé</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Metrics */}
+                <div className="border-t pt-4">
+                  <div className="text-sm text-gray-600">
+                    <span className="text-orange-500 font-semibold">Hyperhémie</span> depuis : <span className="font-semibold">3am</span>
+                    <span className="mx-2">|</span>
+                    <span>Risque de HTIC + ischémie</span>
+                  </div>
+                </div>
               </div>
             </div>
           </DialogContent>
@@ -366,48 +394,76 @@ const Optibrain = () => {
 
         {/* PIC Dialog */}
         <Dialog open={openDialog === 'pic'} onOpenChange={open => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>PIC (Pression Intracrânienne)</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Intensité actuelle : <span className="text-orange-500 font-semibold">26 mmHg</span> | Intensité moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span>
-              </p>
-              <div className="space-y-3">
-                {[{
-                label: '25 - 30 mmHg',
-                time: 128,
-                status: 'warning'
-              }, {
-                label: '20 - 25 mmHg',
-                time: 30,
-                status: 'warning'
-              }, {
-                label: '> 30 mmHg',
-                time: 2,
-                status: 'critical'
-              }, {
-                label: '< 20 mmHg',
-                time: 20,
-                status: 'normal'
-              }].map((level, index) => <div key={index} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">{level.label}</span>
-                      <span className={level.status === 'critical' ? 'text-red-500 font-semibold' : level.status === 'warning' ? 'text-orange-500 font-semibold' : 'text-gray-600 font-semibold'}>
-                        {level.time} min
-                      </span>
-                    </div>
-                    <div className="h-8 bg-gray-200 rounded-full overflow-hidden">
-                      <div className={level.status === 'critical' ? 'h-full bg-red-400' : level.status === 'warning' ? 'h-full bg-blue-400' : 'h-full bg-gray-400'} style={{
-                    width: `${level.time / 180 * 100}%`
-                  }}>
+            <div className="space-y-6">
+              {/* Prediction Card */}
+              <div className="border rounded-lg p-6 bg-white shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-gray-700">
+                    Répartition du temps par niveau de PIC
+                  </h3>
+                </div>
+                
+                {/* Current Value Badge */}
+                <div className="flex justify-center mb-4">
+                  <div className="inline-block px-4 py-1 border-2 border-orange-300 rounded-full">
+                    <span className="text-xl font-semibold text-orange-500">26 mmHg</span>
+                  </div>
+                </div>
+
+                {/* Gradient Bar showing time distribution */}
+                <div className="mb-6">
+                  <div className="relative h-8 rounded-full overflow-hidden flex">
+                    <div className="flex-[128] bg-orange-400"></div>
+                    <div className="flex-[30] bg-yellow-400"></div>
+                    <div className="flex-[2] bg-red-500"></div>
+                    <div className="flex-[20] bg-gray-400"></div>
+                  </div>
+                  
+                  {/* Legend with time distribution */}
+                  <div className="grid grid-cols-4 gap-2 mt-4">
+                    <div className="text-xs text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-3 h-3 rounded-full bg-orange-400"></div>
+                        <span className="font-semibold text-orange-500">128 min</span>
                       </div>
+                      <span className="text-gray-600">25 - 30 mmHg</span>
                     </div>
-                  </div>)}
-              </div>
-              <div className="pt-3 border-t text-sm text-gray-600">
-                Intensité actuelle : <span className="text-orange-500 font-semibold">26 mmHg</span>
+                    <div className="text-xs text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                        <span className="font-semibold text-yellow-600">30 min</span>
+                      </div>
+                      <span className="text-gray-600">20 - 25 mmHg</span>
+                    </div>
+                    <div className="text-xs text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span className="font-semibold text-red-500">2 min</span>
+                      </div>
+                      <span className="text-gray-600">&gt; 30 mmHg</span>
+                    </div>
+                    <div className="text-xs text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                        <span className="font-semibold text-gray-600">20 min</span>
+                      </div>
+                      <span className="text-gray-600">&lt; 20 mmHg</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Metrics */}
+                <div className="border-t pt-4">
+                  <div className="text-sm text-gray-600">
+                    Intensité actuelle : <span className="text-orange-500 font-semibold">26 mmHg</span>
+                    <span className="mx-2">|</span>
+                    Intensité moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span>
+                  </div>
+                </div>
               </div>
             </div>
           </DialogContent>
