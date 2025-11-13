@@ -125,7 +125,7 @@ const Optistats = () => {
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">Vital Signs</CardTitle>
+            <CardTitle className="text-base font-semibold text-gray-900">Signes Vitaux</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
@@ -182,13 +182,13 @@ const Optistats = () => {
         <Card className="bg-white shadow-sm">
           <CardHeader className="border-b">
             <CardTitle className="text-lg font-semibold text-gray-900">
-              Therapeutic Actions and Problematic Indicators
+              Actions Thérapeutiques et Indicateurs Problématiques
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             {/* Therapeutic actions section */}
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">Therapeutic actions</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-4">Actions thérapeutiques</h3>
               
               {/* Tabs */}
               <div className="flex gap-4 mb-4">

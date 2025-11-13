@@ -71,7 +71,7 @@ const Optilungs = () => {
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">Lung Metrics</CardTitle>
+            <CardTitle className="text-base font-semibold text-gray-900">Métriques Pulmonaires</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -217,14 +217,14 @@ const Optilungs = () => {
         <Card className="bg-white shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Objectives & Interventions</CardTitle>
+              <CardTitle className="text-lg">Objectifs & Interventions</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Objectives Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-sm text-gray-700">Current Objectives:</h4>
+                <h4 className="font-semibold text-sm text-gray-700">Objectifs Actuels:</h4>
                 {!isEditingObjectives ? (
                   <Button
                     variant="ghost"
@@ -317,7 +317,7 @@ const Optilungs = () => {
             {/* Interventions Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-sm text-gray-700">Recent Interventions:</h4>
+                <h4 className="font-semibold text-sm text-gray-700">Interventions Récentes:</h4>
                 {!isEditingInterventions ? (
                   <Button
                     variant="ghost"

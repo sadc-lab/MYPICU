@@ -15,7 +15,7 @@ const Feedback = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Thank you for your feedback!');
+    toast.success('Merci pour votre retour !');
     setName('');
     setEmail('');
     setMessage('');
@@ -29,17 +29,17 @@ const Feedback = () => {
       <main className="container mx-auto px-4 py-8">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle className="text-2xl">Send Us Feedback</CardTitle>
+            <CardTitle className="text-2xl">Envoyez-nous vos commentaires</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Nom</Label>
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
+                  placeholder="Votre nom"
                   required
                 />
               </div>
@@ -51,13 +51,13 @@ const Feedback = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder="votre@email.com"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="rating">Rating</Label>
+                <Label htmlFor="rating">Évaluation</Label>
                 <Input
                   id="rating"
                   type="number"
@@ -75,14 +75,14 @@ const Feedback = () => {
                   id="message"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Share your thoughts..."
+                  placeholder="Partagez vos réflexions..."
                   rows={5}
                   required
                 />
               </div>
 
               <Button type="submit" className="w-full">
-                Submit Feedback
+                Envoyer
               </Button>
             </form>
           </CardContent>

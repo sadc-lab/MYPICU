@@ -22,11 +22,11 @@ const Dashboard = () => {
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 lg:gap-0 mb-6">
           <div className="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
             <Button variant="outline" className="bg-white border-2 border-gray-300 text-sm sm:text-base">
-              TVL Access
+              Accès TVL
             </Button>
             
             <Button variant="outline" className="bg-white border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)}>
-              Organize Tour <ChevronRight className="ml-2 h-4 w-4" />
+              Organiser tournée <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
 
@@ -38,7 +38,7 @@ const Dashboard = () => {
         <div className="space-y-6">
           <div>
             <div className="flex items-center gap-1 mb-3">
-              <h2 className="text-lg sm:text-xl font-medium text-primary">Patient List -</h2>
+              <h2 className="text-lg sm:text-xl font-medium text-primary">Liste des patients -</h2>
               <Select value={selectedPed} onValueChange={value => setSelectedPed(value as 'A' | 'B' | 'C')}>
                 <SelectTrigger className="w-auto border-0 bg-transparent text-primary h-auto p-0 text-lg sm:text-xl font-medium hover:opacity-80 focus:ring-0 gap-1">
                   <SelectValue />
