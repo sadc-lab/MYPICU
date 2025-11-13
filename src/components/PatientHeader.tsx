@@ -58,7 +58,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             size="sm"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
-            Back to patients
+            Retour aux patients
           </Button>
 
           <div className="flex items-center gap-2 sm:gap-4">
@@ -82,7 +82,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               <span>PICU: {patient.picuId}</span>
             </div>
             <p className="text-xs sm:text-sm text-gray-700 mt-2">
-              <strong>Diagnosis:</strong> {patient.diagnosis}
+              <strong>Diagnostic:</strong> {patient.diagnosis}
             </p>
             
             <Collapsible open={showVitals} onOpenChange={setShowVitals} className="mt-3">

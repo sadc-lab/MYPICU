@@ -85,7 +85,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
       <div 
         className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor} cursor-pointer hover:opacity-80 transition-opacity`}
         onClick={handleClick}
-        title={`View ${organ} details`}
+        title="Voir détails ${organ}"
       >
         {organ === 'brain' ? (
           <img src={brainIcon} alt="brain" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(score) }} />
@@ -116,8 +116,8 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
           <Table>
           <TableHeader>
             <TableRow className="bg-gray-50 border-b border-gray-200">
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm min-w-[150px]">Patient Informations</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden sm:table-cell">Age</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm min-w-[150px]">Informations Patient</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden sm:table-cell">Âge</TableHead>
               <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden md:table-cell">
                 <div className="flex items-center gap-1">
                   #D PICU
@@ -130,11 +130,11 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                   <ArrowUpDown className="h-3 w-3" />
                 </div>
               </TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden lg:table-cell">Adherence</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden xl:table-cell">Diagnosis</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden xl:table-cell">Exams</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm">Alarms</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden md:table-cell">Tour</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden lg:table-cell">Adhérence</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden xl:table-cell">Diagnostic</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden xl:table-cell">Examens</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm">Alarmes</TableHead>
+              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden md:table-cell">Tournée</TableHead>
               <TableHead className="hidden sm:table-cell"></TableHead>
             </TableRow>
           </TableHeader>

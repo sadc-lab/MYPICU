@@ -134,7 +134,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         <div 
           className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.brainScore)} cursor-pointer hover:opacity-80 transition-opacity`}
           onClick={(e) => handleOrganClick(e, 'brain')}
-          title="View brain details"
+          title="Voir détails du cerveau"
         >
           <img src={brainIcon} alt="brain" className="h-5 w-5" style={{ filter: getColorFilter(patient.brainScore) }} />
           <span className={`text-xs font-semibold ${getColor(patient.brainScore)}`}>
@@ -145,7 +145,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         <div 
           className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.heartScore)} cursor-pointer hover:opacity-80 transition-opacity`}
           onClick={(e) => handleOrganClick(e, 'heart')}
-          title="View heart details"
+          title="Voir détails du cœur"
         >
           <HeartIcon className={`h-5 w-5 ${getColor(patient.heartScore)}`} />
           <span className={`text-xs font-semibold ${getColor(patient.heartScore)}`}>
@@ -156,7 +156,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         <div 
           className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.lungsScore)} cursor-pointer hover:opacity-80 transition-opacity`}
           onClick={(e) => handleOrganClick(e, 'lungs')}
-          title="View lungs details"
+          title="Voir détails des poumons"
         >
           <img src={lungsIcon} alt="lungs" className="h-5 w-5" style={{ filter: getColorFilter(patient.lungsScore) }} />
           <span className={`text-xs font-semibold ${getColor(patient.lungsScore)}`}>

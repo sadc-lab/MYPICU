@@ -30,9 +30,9 @@ const Login = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Bienvenue</CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access your account
+            Entrez vos identifiants pour accéder à votre compte
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -42,14 +42,14 @@ const Login = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="vous@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mot de passe</Label>
               <Input
                 id="password"
                 type="password"
@@ -59,13 +59,13 @@ const Login = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Log in'}
+              {isLoading ? 'Connexion...' : 'Se connecter'}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Don't have an account?{' '}
+            Vous n'avez pas de compte?{' '}
             <Link to="/auth/signup" className="text-primary hover:underline">
-              Sign up
+              S'inscrire
             </Link>
           </div>
         </CardContent>

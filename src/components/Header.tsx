@@ -121,7 +121,7 @@ export const Header = () => {
                 }}
                 onFocus={() => setShowDropdown(true)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                placeholder="Search patients..."
+                placeholder="Rechercher patients..."
                 className="pl-10 w-[200px] bg-white border-gray-300"
               />
               
@@ -160,7 +160,7 @@ export const Header = () => {
               
               {showDropdown && searchQuery && filteredPatients.length === 0 && (
                 <div className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-50 p-4 text-center text-gray-500 text-sm">
-                  No patients found
+                  Aucun patient trouvé
                 </div>
               )}
             </div>
@@ -236,7 +236,7 @@ export const Header = () => {
                       >
                         <Check className="h-4 w-4" />
                         <span className="text-xs">
-                          {getVisitStatus(currentPatientId) || 'Confirm Visit'}
+                          {getVisitStatus(currentPatientId) || 'Confirmer visite'}
                         </span>
                       </Button>
                     </DropdownMenuTrigger>
@@ -245,19 +245,19 @@ export const Header = () => {
                         onClick={() => confirmVisit(currentPatientId, 'Priority')}
                         className="cursor-pointer"
                       >
-                        Priority
+                        Prioritaire
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => confirmVisit(currentPatientId, 'Leaving')}
                         className="cursor-pointer"
                       >
-                        Leaving
+                        Sortant
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => confirmVisit(currentPatientId, 'To Check')}
                         className="cursor-pointer"
                       >
-                        To Check
+                        À vérifier
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -278,13 +278,13 @@ export const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-white z-50">
                 <DropdownMenuItem asChild>
-                  <Link to="/feedback">Feedback</Link>
+                  <Link to="/feedback">Commentaires</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  Help
+                  Aide
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={signOut}>
-                  Log out
+                  Déconnexion
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
