@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,10 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getPatientById } from '@/utils/patientData';
-import { Activity, Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2 } from 'lucide-react';
-import { HeartIcon } from '@/components/icons/HeartIcon';
+import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Optiheart = () => {
   const [searchParams] = useSearchParams();
@@ -19,8 +17,6 @@ const Optiheart = () => {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(false);
-  const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
-  const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h'>('24h');
   const [objectives, setObjectives] = useState<string[]>([
     'Maintain MAP > 65 mmHg',
     'Cardiac index > 2.5 L/min/m²',
@@ -118,66 +114,6 @@ const Optiheart = () => {
   const normalIndicators = clinicalIndicators.filter(i => i.status === 'normal').length;
   const clinicalAdherence = Math.round(normalIndicators / totalIndicators * 100);
   const outOfRangeCount = clinicalIndicators.filter(i => i.status !== 'normal').length;
-
-  // Generate mock chart data based on selected time range
-  const chartData = useMemo(() => {
-    const data = [];
-    const now = new Date();
-    
-    let dataPoints: number;
-    let intervalMinutes: number;
-    
-    switch (timeRange) {
-      case 'now':
-        dataPoints = 1;
-        intervalMinutes = 0;
-        break;
-      case '3h':
-        dataPoints = 18;
-        intervalMinutes = 10;
-        break;
-      case '6h':
-        dataPoints = 24;
-        intervalMinutes = 15;
-        break;
-      case '12h':
-        dataPoints = 24;
-        intervalMinutes = 30;
-        break;
-      case '24h':
-      default:
-        dataPoints = 24;
-        intervalMinutes = 60;
-        break;
-    }
-    
-    for (let i = dataPoints - 1; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
-      const timeStr = timeRange === 'now' 
-        ? 'Now'
-        : `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
-      
-      const dataPoint: any = {
-        time: timeStr
-      };
-      
-      clinicalIndicators.forEach(indicator => {
-        const baseValue = indicator.value;
-        const variation = (Math.random() - 0.5) * (baseValue * 0.2);
-        dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
-      });
-      
-      data.push(dataPoint);
-    }
-    
-    return data;
-  }, [timeRange]);
-
-  const getIndicatorColor = (label: string) => {
-    const indicator = clinicalIndicators.find(i => i.label === label);
-    if (!indicator) return '#9ca3af';
-    return indicator.status === 'critical' ? '#ef4444' : indicator.status === 'warning' ? '#fb923c' : '#9ca3af';
-  };
 
   const isInRange = (value: number, min: number, max: number) => {
     return value >= min && value <= max;
@@ -395,115 +331,8 @@ const Optiheart = () => {
           </DialogContent>
         </Dialog>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <Card className="lg:col-span-2 bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <HeartIcon className="h-7 w-7 text-red-600" size={28} />
-                Hemodynamic Trends
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-                <p className="text-gray-400">Hemodynamic chart will be displayed here</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
-                ECG Rhythm
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2">Current Rhythm</h4>
-                <Badge className="bg-gray-100 text-gray-600">Sinus Rhythm</Badge>
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2">Heart Rate</h4>
-                <p className="text-2xl font-bold text-gray-900">98 bpm</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2">Blood Pressure</h4>
-                <p className="text-2xl font-bold text-gray-900">110/70</p>
-                <p className="text-xs text-gray-500">MAP: 83 mmHg</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         <Card className="bg-white shadow-sm mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">
-                {timeRange === 'now' ? 'Hemodynamic Trends (Current)' : `Hemodynamic Trends Last ${timeRange.toUpperCase()}`}
-              </CardTitle>
-              <div className="flex gap-2">
-                {(['now', '3h', '6h', '12h', '24h'] as const).map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                      timeRange === range
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {range === 'now' ? 'Now' : range.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </CardHeader>
           <CardContent className="space-y-4">
-            <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
-              {selectedIndicators.length === 0 ? (
-                <div className="h-full flex items-center justify-center">
-                  <p className="text-gray-400">Select clinical indicators below to display their trends</p>
-                </div>
-              ) : (
-                <div className="h-full flex flex-col">
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {selectedIndicators.map(label => {
-                      const indicator = clinicalIndicators.find(i => i.label === label);
-                      if (!indicator) return null;
-                      const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
-                      return (
-                        <Badge key={label} className={`${statusColor} text-white`}>
-                          {label}: {indicator.value}{indicator.unit}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                  <div className="flex-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" style={{ fontSize: '12px' }} />
-                        <YAxis style={{ fontSize: '12px' }} />
-                        <Tooltip />
-                        <Legend wrapperStyle={{ fontSize: '12px' }} />
-                        {selectedIndicators.map(label => (
-                          <Line 
-                            key={label} 
-                            type="monotone" 
-                            dataKey={label} 
-                            stroke={getIndicatorColor(label)} 
-                            strokeWidth={2} 
-                            dot={false}
-                            activeDot={{ r: 4 }}
-                          />
-                        ))}
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Clinical Indicators Adherence */}
             <Card className="border-2 border-gray-200">
               <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setClinicalExpanded(!clinicalExpanded)}>
@@ -532,23 +361,13 @@ const Optiheart = () => {
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-3 gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
-                      const isSelected = selectedIndicators.includes(indicator.label);
                       const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
                       return (
                         <div 
                           key={index}
-                          className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${
-                            isSelected ? 'bg-blue-50 border-2 border-blue-400' : 'hover:bg-gray-50'
-                          }`}
-                          onClick={() => {
-                            setSelectedIndicators(prev =>
-                              prev.includes(indicator.label)
-                                ? prev.filter(label => label !== indicator.label)
-                                : [...prev, indicator.label]
-                            );
-                          }}
+                          className="flex items-start gap-2 p-2 rounded-lg"
                         >
-                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}></div>
+                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
                           <div>
                             <p className="text-sm font-medium text-gray-700">
                               {indicator.label} : {indicator.value}{indicator.unit}
@@ -559,9 +378,6 @@ const Optiheart = () => {
                       );
                     })}
                   </div>
-                  <p className="text-xs text-gray-500 mt-4 text-center">
-                    Cliquez sur un indicateur pour l'afficher dans le graphique
-                  </p>
                 </CardContent>
               )}
             </Card>
