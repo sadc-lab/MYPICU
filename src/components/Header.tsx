@@ -82,7 +82,7 @@ export const Header = () => {
   const filteredPatients = searchQuery.trim() 
     ? allPatients.filter(patient => {
         const query = searchQuery.toLowerCase();
-        const ped = patient.id.startsWith('#1') ? 'a' : patient.id.startsWith('#2') ? 'b' : 'c';
+        const ped = patient.picuId.startsWith('D') ? 'a' : patient.picuId.startsWith('B') ? 'b' : 'c';
         
         return (
           patient.name.toLowerCase().includes(query) ||
@@ -96,7 +96,7 @@ export const Header = () => {
 
   // Group patients by PED
   const patientsByPed = filteredPatients.reduce((acc, patient) => {
-    const ped = patient.id.startsWith('#1') ? 'A' : patient.id.startsWith('#2') ? 'B' : 'C';
+    const ped = patient.picuId.startsWith('D') ? 'A' : patient.picuId.startsWith('B') ? 'B' : 'C';
     if (!acc[ped]) acc[ped] = [];
     acc[ped].push(patient);
     return acc;
