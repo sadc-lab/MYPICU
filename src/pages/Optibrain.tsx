@@ -394,18 +394,17 @@ const Optibrain = () => {
           </DialogContent>
         </Dialog>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <Card className="lg:col-span-2 bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Brain className="h-5 w-5 text-primary" />
-                ICP Monitoring
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-                <p className="text-gray-400">ICP trend chart will be displayed here</p>
-              </div>
+        <Card className="bg-white shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              ICP Monitoring
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
+              <p className="text-gray-400">ICP trend chart will be displayed here</p>
+            </div>
 
               {/* Clinical Indicators Adherence */}
               <Card className="border-2 border-gray-200">
@@ -629,9 +628,8 @@ const Optibrain = () => {
                   </CardContent>
                 )}
               </Card>
-            </CardContent>
-          </Card>
-        </div>
+          </CardContent>
+        </Card>
 
         <Card className="mt-6 bg-white shadow-sm">
           <CardHeader>
