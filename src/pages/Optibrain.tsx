@@ -27,8 +27,7 @@ const Optibrain = () => {
     min: 0,
     max: 30,
     targetMin: 7,
-    targetMax: 15,
-    hasDetails: false
+    targetMax: 15
   }, {
     label: 'CPP',
     value: 65,
@@ -36,8 +35,7 @@ const Optibrain = () => {
     min: 30,
     max: 90,
     targetMin: 50,
-    targetMax: 70,
-    hasDetails: false
+    targetMax: 70
   }, {
     label: 'GCS',
     value: 12,
@@ -45,8 +43,7 @@ const Optibrain = () => {
     min: 3,
     max: 15,
     targetMin: 13,
-    targetMax: 15,
-    hasDetails: false
+    targetMax: 15
   }, {
     label: 'PaCO2',
     value: 38,
@@ -54,9 +51,10 @@ const Optibrain = () => {
     min: 25,
     max: 55,
     targetMin: 35,
-    targetMax: 45,
-    hasDetails: false
-  }, {
+    targetMax: 45
+  }];
+
+  const brainOptimisationMetrics = [{
     label: 'État Neuro',
     value: 'Hyperhémie',
     displayValue: 'Hyperhémie',
@@ -119,11 +117,9 @@ const Optibrain = () => {
             <CardTitle className="text-base font-semibold text-gray-900">Brain Metrics</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {brainMetrics.map((metric, index) => {
-              // Check if this is a traditional metric with range
-              if ('targetMin' in metric && 'targetMax' in metric) {
-                const inRange = isInRange(metric.value as number, metric.targetMin, metric.targetMax);
+                const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
                 const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
                 return <div key={index} className="flex flex-col items-center">
                       <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
@@ -140,7 +136,7 @@ const Optibrain = () => {
                         width: `${(metric.targetMax - metric.targetMin) / (metric.max - metric.min) * 100}%`
                       }}></div>
                           <div className={`absolute w-3 h-3 rounded-full border-2 ${inRange ? 'bg-gray-500 border-gray-600' : 'bg-red-500 border-red-600'} z-10 top-0`} style={{
-                        left: `${Math.max(0, Math.min(100, ((metric.value as number) - metric.min) / (metric.max - metric.min) * 100))}%`,
+                        left: `${Math.max(0, Math.min(100, (metric.value - metric.min) / (metric.max - metric.min) * 100))}%`,
                         transform: 'translateX(-50%)'
                       }}></div>
                         </div>
@@ -150,26 +146,35 @@ const Optibrain = () => {
                         </div>
                       </div>
                     </div>;
-              } else {
-                // New metrics with details
+            })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-gray-900">Brain Optimisation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-8">
+              {brainOptimisationMetrics.map((metric, index) => {
                 const statusColor = metric.status === 'warning' ? 'text-orange-500' : 'text-gray-600';
                 return <div key={index} 
-                      className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                      className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
                       onClick={() => metric.hasDetails && setOpenDialog(metric.dialogKey || null)}>
                       <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
                         {metric.label}
                       </div>
-                      <div className={`text-3xl font-bold ${statusColor} mb-2`}>
+                      <div className={`text-4xl font-bold ${statusColor} mb-2`}>
                         {metric.displayValue}
                       </div>
                       {metric.hasDetails && (
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
                           <Info className="h-3 w-3" />
-                          <span>Détails</span>
+                          <span>Voir détails</span>
                         </div>
                       )}
                     </div>;
-              }
             })}
             </div>
           </CardContent>
