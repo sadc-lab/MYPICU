@@ -4,7 +4,8 @@ import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getPatientById } from '@/utils/patientData';
-import { Brain, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
+import { BrainIcon } from '@/components/icons/BrainIcon';
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -75,7 +76,7 @@ const Optibrain = () => {
           <Card className="lg:col-span-2 bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Brain className="h-5 w-5 text-primary" />
+                <BrainIcon className="h-5 w-5 text-primary" size={20} />
                 ICP Monitoring
               </CardTitle>
             </CardHeader>

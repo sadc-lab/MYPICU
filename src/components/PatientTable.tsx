@@ -1,7 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Wind, Droplets, MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { Wind, Droplets, MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
+import { BrainIcon } from '@/components/icons/BrainIcon';
 import { Patient } from '@/types/patient.types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
@@ -52,7 +53,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
     let IconComponent;
     switch (organ) {
       case 'brain':
-        IconComponent = Brain;
+        IconComponent = BrainIcon;
         break;
       case 'heart':
         IconComponent = HeartIcon;
@@ -67,8 +68,12 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
 
     return (
       <div className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor}`}>
-        {organ === 'heart' ? (
-          <HeartIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} size={20} />
+        {organ === 'heart' || organ === 'brain' ? (
+          organ === 'heart' ? (
+            <HeartIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} size={20} />
+          ) : (
+            <BrainIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} size={20} />
+          )
         ) : (
           <IconComponent className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} />
         )}

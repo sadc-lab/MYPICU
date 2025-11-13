@@ -1,8 +1,9 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Wind, Activity, ChevronLeft, ExternalLink } from 'lucide-react';
+import { Wind, Activity, ChevronLeft, ExternalLink } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
+import { BrainIcon } from '@/components/icons/BrainIcon';
 import { getPatientById } from '@/utils/patientData';
 import { Patient } from '@/types/patient.types';
 import {
@@ -116,7 +117,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.brainScore)} text-xs`}>
-                  <Brain className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <BrainIcon className="h-5 w-5 sm:h-6 sm:w-6" size={24} />
                   <span className="ml-1 font-semibold">{patient.brainScore || 0}</span>
                 </Badge>
               </button>
