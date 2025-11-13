@@ -30,6 +30,9 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
   };
 
   const getOrganIconWithScore = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number) => {
+    // Don't render if score is 0 or undefined
+    if (!score || score === 0) return null;
+    
     const getColor = (score?: number) => {
       if (!score || score === 0) return 'text-gray-300';
       if (score === 1) return 'text-orange-400';
