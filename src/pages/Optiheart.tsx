@@ -59,7 +59,6 @@ const Optiheart = () => {
                     </div>
                     <div className={`text-4xl font-bold ${valueColor} mb-3`}>
                       {metric.value}
-                      {metric.unit && <span className="text-lg ml-1">{metric.unit}</span>}
                     </div>
                     
                     <div className="w-full max-w-[180px]">
