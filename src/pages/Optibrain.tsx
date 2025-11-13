@@ -105,7 +105,7 @@ const Optibrain = () => {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <Collapsible defaultOpen={false}>
             <Card className="bg-white shadow-sm">
               <CollapsibleTrigger className="w-full">
@@ -194,6 +194,58 @@ const Optibrain = () => {
                   <div className="pt-3 border-t text-sm text-gray-600">
                     Intensité actuelle : <span className="text-orange-500 font-semibold">26 mmHg</span>
                     <span className="ml-4">Intensité moyenne : <span className="text-orange-500 font-semibold">28 mmHg</span></span>
+                    <span className="ml-2 text-gray-400">Rappel {'>'}</span>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          <Collapsible defaultOpen={false}>
+            <Card className="bg-white shadow-sm">
+              <CollapsibleTrigger className="w-full">
+                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    PPC Optimale
+                    <Eye className="h-4 w-4 text-gray-400" />
+                  </CardTitle>
+                  <ChevronDown className="h-5 w-5 text-gray-400 transition-transform data-[state=open]:rotate-180" />
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-3">
+                  {[
+                    { label: '60 - 70 mmHg', time: 145, status: 'normal' },
+                    { label: '50 - 60 mmHg', time: 25, status: 'warning' },
+                    { label: '> 70 mmHg', time: 8, status: 'warning' },
+                    { label: '< 50 mmHg', time: 2, status: 'critical' },
+                  ].map((level, index) => (
+                    <div key={index} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700">{level.label}</span>
+                        <span className={
+                          level.status === 'critical' ? 'text-red-500 font-semibold' :
+                          level.status === 'warning' ? 'text-orange-500 font-semibold' : 
+                          'text-gray-600 font-semibold'
+                        }>
+                          {level.time} min
+                        </span>
+                      </div>
+                      <div className="h-8 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className={
+                            level.status === 'critical' ? 'h-full bg-red-400' :
+                            level.status === 'warning' ? 'h-full bg-blue-400' : 
+                            'h-full bg-gray-400'
+                          }
+                          style={{ width: `${(level.time / 180) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-3 border-t text-sm text-gray-600">
+                    PPC actuelle : <span className="text-gray-600 font-semibold">65 mmHg</span>
+                    <span className="ml-4">PPC moyenne : <span className="text-gray-600 font-semibold">63 mmHg</span></span>
                     <span className="ml-2 text-gray-400">Rappel {'>'}</span>
                   </div>
                 </CardContent>
