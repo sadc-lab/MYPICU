@@ -249,7 +249,7 @@ const Optibrain = () => {
                 <CardHeader className="flex flex-row items-center justify-between pb-4">
                   <div className="flex-1">
                     <CardTitle className="text-lg flex items-center gap-2 mb-2">
-                      Optimal   
+                      Optimal PPC                  
                       
                     </CardTitle>
                     <p className="text-sm text-gray-600">
