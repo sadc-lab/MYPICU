@@ -81,22 +81,22 @@ const Optiheart = () => {
       dialogKey: 'cardiac'
     },
     {
-      label: 'Débit Cardiaque',
-      value: '3.2 L/min',
-      displayValue: '3.2',
-      unit: 'L/min',
+      label: 'VAP Prediction 1',
+      value: '75%',
+      displayValue: '75',
+      unit: '%',
       status: 'warning',
       hasDetails: true,
-      dialogKey: 'output'
+      dialogKey: 'vap1'
     },
     {
-      label: 'RVS Opt',
-      value: '1450 dynes/s/cm⁻⁵',
-      displayValue: '1450',
-      unit: 'dynes/s/cm⁻⁵',
-      status: 'warning',
+      label: 'VAP Prediction 2',
+      value: '62%',
+      displayValue: '62',
+      unit: '%',
+      status: 'normal',
       hasDetails: true,
-      dialogKey: 'svr'
+      dialogKey: 'vap2'
     }
   ];
 
@@ -326,69 +326,67 @@ const Optiheart = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Cardiac Output Dialog */}
-        <Dialog open={openDialog === 'output'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+        {/* VAP Prediction 1 Dialog */}
+        <Dialog open={openDialog === 'vap1'} onOpenChange={(open) => !open && setOpenDialog(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Débit Cardiaque Optimal</DialogTitle>
+              <DialogTitle>VAP Prediction 1 - Risk Assessment</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Débit actuel</p>
-                  <p className="text-2xl font-bold text-orange-500">3.2 L/min</p>
+                  <p className="text-xs text-gray-500 mb-1">Current Risk Level</p>
+                  <p className="text-2xl font-bold text-orange-500">75%</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Débit cible</p>
-                  <p className="text-2xl font-bold text-gray-600">4.5-6.0 L/min</p>
+                  <p className="text-xs text-gray-500 mb-1">Target Risk Level</p>
+                  <p className="text-2xl font-bold text-gray-600">&lt; 50%</p>
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-gray-700">Recommandations:</p>
+                <p className="text-sm font-semibold text-gray-700">Recommendations:</p>
                 <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  <li>Augmenter le support inotrope (Dobutamine)</li>
-                  <li>Optimiser la précharge (bolus liquidien)</li>
-                  <li>Surveillance continue de l'index cardiaque</li>
-                  <li>Échocardiographie de contrôle</li>
+                  <li>Enhance respiratory hygiene protocols</li>
+                  <li>Review sedation levels</li>
+                  <li>Consider probiotic prophylaxis</li>
+                  <li>Monitor ventilator settings</li>
                 </ul>
               </div>
               <div className="pt-3 border-t text-sm text-gray-600">
-                Index cardiaque actuel : <span className="text-gray-600 font-semibold">2.1 L/min/m²</span>
-                <span className="ml-4">Cible : <span className="text-gray-600 font-semibold">2.5-4.0 L/min/m²</span></span>
+                Assessment based on: <span className="text-gray-600 font-semibold">Ventilation duration, sedation, and clinical parameters</span>
               </div>
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* SVR Dialog */}
-        <Dialog open={openDialog === 'svr'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+        {/* VAP Prediction 2 Dialog */}
+        <Dialog open={openDialog === 'vap2'} onOpenChange={(open) => !open && setOpenDialog(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Résistances Vasculaires Systémiques Optimales</DialogTitle>
+              <DialogTitle>VAP Prediction 2 - Alternative Model</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">RVS actuelles</p>
-                  <p className="text-2xl font-bold text-orange-500">1450 dynes/s/cm⁻⁵</p>
+                  <p className="text-xs text-gray-500 mb-1">Current Risk Level</p>
+                  <p className="text-2xl font-bold text-gray-600">62%</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">RVS cibles</p>
-                  <p className="text-2xl font-bold text-gray-600">800-1200 dynes/s/cm⁻⁵</p>
+                  <p className="text-xs text-gray-500 mb-1">Target Risk Level</p>
+                  <p className="text-2xl font-bold text-gray-600">&lt; 50%</p>
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-gray-700">Interventions suggérées:</p>
+                <p className="text-sm font-semibold text-gray-700">Preventive Measures:</p>
                 <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  <li>Réduire les vasopresseurs progressivement</li>
-                  <li>Optimiser la volémie</li>
-                  <li>Considérer vasodilatateur si persistance</li>
-                  <li>Surveillance de la PAM et lactates</li>
+                  <li>Maintain head-of-bed elevation 30-45°</li>
+                  <li>Implement daily sedation interruption</li>
+                  <li>Oral hygiene with chlorhexidine</li>
+                  <li>Regular endotracheal cuff pressure check</li>
                 </ul>
               </div>
               <div className="pt-3 border-t text-sm text-gray-600">
-                PAM actuelle : <span className="text-gray-600 font-semibold">72 mmHg</span>
-                <span className="ml-4">PAM moyenne : <span className="text-gray-600 font-semibold">70 mmHg</span></span>
+                Model incorporates: <span className="text-gray-600 font-semibold">Clinical scores, lab values, and ventilation parameters</span>
               </div>
             </div>
           </DialogContent>
