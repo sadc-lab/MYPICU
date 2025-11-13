@@ -1,8 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Wind, Droplets, MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { Brain, Wind, Droplets, MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
-import { BrainIcon } from '@/components/icons/BrainIcon';
 import { Patient } from '@/types/patient.types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
@@ -31,29 +30,27 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
   };
 
   const getOrganIconWithScore = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number) => {
-    // Normalize and skip non-positive values (handles 0 and "0")
-    const n = Number(score ?? 0);
-    if (!Number.isFinite(n) || n <= 0) return null;
-    
-    const getColor = (s: number) => {
-      if (s === 1) return 'text-orange-400';
-      if (s === 2) return 'text-orange-500';
+    const getColor = (score?: number) => {
+      if (!score || score === 0) return 'text-gray-300';
+      if (score === 1) return 'text-orange-400';
+      if (score === 2) return 'text-orange-500';
       return 'text-red-500';
     };
 
-    const getBgColor = (s: number) => {
-      if (s === 1) return 'bg-orange-50';
-      if (s === 2) return 'bg-orange-100';
+    const getBgColor = (score?: number) => {
+      if (!score || score === 0) return 'bg-gray-100';
+      if (score === 1) return 'bg-orange-50';
+      if (score === 2) return 'bg-orange-100';
       return 'bg-red-50';
     };
 
-    const color = getColor(n);
-    const bgColor = getBgColor(n);
+    const color = getColor(score);
+    const bgColor = getBgColor(score);
     
     let IconComponent;
     switch (organ) {
       case 'brain':
-        IconComponent = BrainIcon;
+        IconComponent = Brain;
         break;
       case 'heart':
         IconComponent = HeartIcon;
@@ -68,17 +65,13 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
 
     return (
       <div className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor}`}>
-        {organ === 'heart' || organ === 'brain' ? (
-          organ === 'heart' ? (
-            <HeartIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} size={20} />
-          ) : (
-            <BrainIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} size={20} />
-          )
+        {organ === 'heart' ? (
+          <HeartIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} size={20} />
         ) : (
           <IconComponent className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} />
         )}
         <span className={`text-xs sm:text-sm font-semibold ${color}`}>
-          {n}
+          {score || 0}
         </span>
       </div>
     );
@@ -152,9 +145,9 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1 sm:gap-1.5">
-                    {patient.brainScore && patient.brainScore > 0 && getOrganIconWithScore('brain', patient.brainScore)}
-                    {patient.heartScore && patient.heartScore > 0 && getOrganIconWithScore('heart', patient.heartScore)}
-                    {patient.lungsScore && patient.lungsScore > 0 && getOrganIconWithScore('lungs', patient.lungsScore)}
+                    {getOrganIconWithScore('brain', patient.brainScore)}
+                    {getOrganIconWithScore('heart', patient.heartScore)}
+                    {getOrganIconWithScore('lungs', patient.lungsScore)}
                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
