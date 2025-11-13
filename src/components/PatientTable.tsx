@@ -29,7 +29,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
            (patient.kidneyScore && patient.kidneyScore > 0);
   };
 
-  const getOrganIcon = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number) => {
+  const getOrganIconWithScore = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number) => {
     const getColor = (score?: number) => {
       if (!score || score === 0) return 'text-gray-300';
       if (score === 1) return 'text-orange-400';
@@ -37,18 +37,44 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
       return 'text-red-500';
     };
 
+    const getBgColor = (score?: number) => {
+      if (!score || score === 0) return 'bg-gray-100';
+      if (score === 1) return 'bg-orange-50';
+      if (score === 2) return 'bg-orange-100';
+      return 'bg-red-50';
+    };
+
     const color = getColor(score);
+    const bgColor = getBgColor(score);
     
+    let IconComponent;
     switch (organ) {
       case 'brain':
-        return <Brain className={`h-6 w-6 ${color}`} />;
+        IconComponent = Brain;
+        break;
       case 'heart':
-        return <HeartIcon className={`h-6 w-6 ${color}`} size={24} />;
+        IconComponent = HeartIcon;
+        break;
       case 'lungs':
-        return <Wind className={`h-6 w-6 ${color}`} />;
+        IconComponent = Wind;
+        break;
       case 'kidney':
-        return <Droplets className={`h-6 w-6 ${color}`} />;
+        IconComponent = Droplets;
+        break;
     }
+
+    return (
+      <div className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor}`}>
+        {organ === 'heart' ? (
+          <HeartIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} size={20} />
+        ) : (
+          <IconComponent className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} />
+        )}
+        <span className={`text-xs sm:text-sm font-semibold ${color}`}>
+          {score || 0}
+        </span>
+      </div>
+    );
   };
 
   return (
@@ -118,11 +144,10 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-0.5 sm:gap-1">
-                    {getOrganIcon('brain', patient.brainScore)}
-                    {getOrganIcon('heart', patient.heartScore)}
-                    {getOrganIcon('lungs', patient.lungsScore)}
-                    {getOrganIcon('kidney', patient.kidneyScore)}
+                  <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                    {getOrganIconWithScore('brain', patient.brainScore)}
+                    {getOrganIconWithScore('heart', patient.heartScore)}
+                    {getOrganIconWithScore('lungs', patient.lungsScore)}
                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
