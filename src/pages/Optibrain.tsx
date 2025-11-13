@@ -5,7 +5,7 @@ import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getPatientById } from '@/utils/patientData';
-import { Brain, Eye, Info } from 'lucide-react';
+import { Brain, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -348,48 +348,18 @@ const Optibrain = () => {
 
           <Card className="bg-white shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Eye className="h-5 w-5 text-primary" />
-                Pupil Assessment
-              </CardTitle>
+              <CardTitle className="text-lg">Clinical Indicators</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2">Left Pupil</h4>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Size: 3mm</span>
-                  <Badge className="bg-gray-100 text-gray-600">Reactive</Badge>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2">Right Pupil</h4>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Size: 3mm</span>
-                  <Badge className="bg-gray-100 text-gray-600">Reactive</Badge>
-                </div>
-              </div>
-              <div className="pt-4 border-t">
-                <p className="text-xs text-gray-500">
-                  Both pupils equal, round, and reactive to light
-                </p>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                {clinicalIndicators.map((indicator, index) => <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">{indicator.label}</p>
+                    <p className="font-semibold text-sm text-gray-900">{indicator.value}</p>
+                  </div>)}
               </div>
             </CardContent>
           </Card>
         </div>
-
-        <Card className="bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Clinical Indicators</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {clinicalIndicators.map((indicator, index) => <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">{indicator.label}</p>
-                  <p className="font-semibold text-sm text-gray-900">{indicator.value}</p>
-                </div>)}
-            </div>
-          </CardContent>
-        </Card>
 
         <Card className="mt-6 bg-white shadow-sm">
           <CardHeader>
