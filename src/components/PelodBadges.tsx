@@ -32,14 +32,7 @@ export const PelodBadges = ({
 
       <div className="text-center w-full sm:w-auto">
         <div className="text-xs text-gray-600 mb-2">Score des Patients</div>
-        <div className="flex gap-1.5 sm:gap-2 flex-wrap justify-center sm:justify-start">
-          {topPatients.map(patient => <div key={patient.id} className="text-center">
-              <div className={`${getPelodBgColor(patient.pelodScore)} text-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 min-w-[40px] sm:min-w-[50px] font-bold text-base sm:text-lg`}>
-                {patient.pelodScore}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">{patient.id}</div>
-            </div>)}
-        </div>
+        
       </div>
     </div>;
 };
