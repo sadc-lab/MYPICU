@@ -1,5 +1,8 @@
-import { Badge } from '@/components/ui/badge';
 import { Patient } from '@/utils/patientData';
+import brainIcon from '@/assets/brain-icon.svg';
+import lungsIcon from '@/assets/lungs-icon.svg';
+import { HeartIcon } from '@/components/icons/HeartIcon';
+import statsIcon from '@/assets/stats-icon.svg';
 
 interface PelodBadgesProps {
   patients: Patient[];
@@ -7,41 +10,66 @@ interface PelodBadgesProps {
 }
 
 export const PelodBadges = ({ patients, unitAverage }: PelodBadgesProps) => {
-  const topPatients = [...patients]
-    .sort((a, b) => b.pelodScore - a.pelodScore)
-    .slice(0, 5);
+  // Calculate average organ scores
+  const avgBrainScore = patients.length > 0 
+    ? Math.round(patients.reduce((sum, p) => sum + (p.brainScore || 0), 0) / patients.length) 
+    : 0;
+  const avgHeartScore = patients.length > 0 
+    ? Math.round(patients.reduce((sum, p) => sum + (p.heartScore || 0), 0) / patients.length) 
+    : 0;
+  const avgLungsScore = patients.length > 0 
+    ? Math.round(patients.reduce((sum, p) => sum + (p.lungsScore || 0), 0) / patients.length) 
+    : 0;
 
-  const getPelodBgColor = (score: number) => {
-    if (score >= 25) return 'bg-red-500';
-    if (score >= 20) return 'bg-red-400';
-    if (score >= 15) return 'bg-orange-500';
-    if (score >= 12) return 'bg-orange-400';
-    return 'bg-green-500';
+  const getColorFilter = (score: number) => {
+    if (score === 0) return 'invert(64%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(92%) contrast(88%)';
+    if (score === 1) return 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)';
+    if (score === 2) return 'invert(52%) sepia(94%) saturate(635%) hue-rotate(339deg) brightness(101%) contrast(101%)';
+    return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)';
+  };
+
+  const getBgColor = (score: number) => {
+    if (score === 0) return 'bg-gray-200';
+    if (score === 1) return 'bg-red-200';
+    if (score === 2) return 'bg-orange-300';
+    return 'bg-red-400';
+  };
+
+  const getTextColor = (score: number) => {
+    if (score === 0) return 'text-gray-600';
+    if (score === 1) return 'text-red-700';
+    if (score === 2) return 'text-orange-800';
+    return 'text-red-900';
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
-      <div className="text-center">
-        <div className="flex items-center justify-center mb-2">
-          <svg className="h-6 w-6 sm:h-8 sm:w-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-          </svg>
-        </div>
-        <div className="text-xs text-gray-600 mb-1">{unitAverage}/70</div>
-        <div className="text-xs text-gray-500">Unit&apos;s PELOD</div>
+    <div className="flex items-center gap-3">
+      <div className="text-left">
+        <div className="text-sm text-gray-500 mb-1">PELOD Score</div>
+        <div className="text-4xl font-bold text-gray-900">{unitAverage}</div>
       </div>
 
-      <div className="text-center w-full sm:w-auto">
-        <div className="text-xs text-gray-600 mb-2">Patient&apos;s Score</div>
-        <div className="flex gap-1.5 sm:gap-2 flex-wrap justify-center sm:justify-start">
-          {topPatients.map((patient) => (
-            <div key={patient.id} className="text-center">
-              <div className={`${getPelodBgColor(patient.pelodScore)} text-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 min-w-[40px] sm:min-w-[50px] font-bold text-base sm:text-lg`}>
-                {patient.pelodScore}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">{patient.id}</div>
-            </div>
-          ))}
+      <div className="flex gap-2">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-200">
+            <img src={statsIcon} alt="stats" className="h-5 w-5" style={{ filter: 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)' }} />
+            <span className="text-sm font-semibold text-red-700">Stats</span>
+          </div>
+        </div>
+
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${getBgColor(avgBrainScore)}`}>
+          <img src={brainIcon} alt="brain" className="h-5 w-5" style={{ filter: getColorFilter(avgBrainScore) }} />
+          <span className={`text-lg font-bold ${getTextColor(avgBrainScore)}`}>{avgBrainScore}</span>
+        </div>
+
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${getBgColor(avgHeartScore)}`}>
+          <HeartIcon className={`h-5 w-5 ${getTextColor(avgHeartScore)}`} />
+          <span className={`text-lg font-bold ${getTextColor(avgHeartScore)}`}>{avgHeartScore}</span>
+        </div>
+
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${getBgColor(avgLungsScore)}`}>
+          <img src={lungsIcon} alt="lungs" className="h-5 w-5" style={{ filter: getColorFilter(avgLungsScore) }} />
+          <span className={`text-lg font-bold ${getTextColor(avgLungsScore)}`}>{avgLungsScore}</span>
         </div>
       </div>
     </div>
