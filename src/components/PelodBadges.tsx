@@ -38,7 +38,6 @@ export const PelodBadges = ({
               <div className={`border-2 ${getPelodBorderColor(patient.pelodScore)} bg-background text-foreground rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 min-w-[40px] sm:min-w-[50px] font-bold text-base sm:text-lg text-center`}>
                 {patient.pelodScore}
               </div>
-              <div className="text-xs text-gray-500">/70</div>
               <div className="text-xs font-medium text-foreground">{patient.id}</div>
             </div>
           ))}
