@@ -20,12 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { InteractiveGuide } from '@/components/InteractiveGuide';
 
 export const Header = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
   
@@ -103,15 +105,17 @@ export const Header = () => {
   }, {} as Record<string, Patient[]>);
 
   return (
-    <header className="border-b bg-white shadow-sm">
-      <div className="container mx-auto px-6">
+    <>
+      <InteractiveGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />
+      <header className="border-b bg-white shadow-sm">
+        <div className="container mx-auto px-6">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center">
               <span className="text-2xl font-bold text-primary">MYPICU</span>
             </Link>
             
-            <div ref={searchRef} className="relative">
+            <div ref={searchRef} className="relative" data-guide="search">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
               <Input 
                 type="text"
@@ -166,10 +170,10 @@ export const Header = () => {
             </div>
           </div>
 
-          <nav className="hidden md:flex gap-2 items-center">
+          <nav className="hidden md:flex gap-2 items-center" data-guide="patient-nav">
             {hasActiveTour && (
               <>
-                <Badge variant="default" className="bg-primary text-white text-xs">
+                <Badge variant="default" className="bg-primary text-white text-xs" data-guide="tour-info">
                   {isOnTourPatient ? `${currentIndex + 1}/${activeTour!.length}` : `${activeTour!.length} patients`}
                 </Badge>
                 
@@ -269,7 +273,7 @@ export const Header = () => {
           <div className="flex items-center gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 text-gray-500 hover:text-gray-700">
+                <Button variant="ghost" className="flex items-center gap-2 text-gray-500 hover:text-gray-700" data-guide="user-menu">
                   <User className="h-5 w-5" />
                   <span className="hidden md:inline">
                     {user?.user_metadata?.full_name || 'Philippe Jouvet'}
@@ -280,7 +284,7 @@ export const Header = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/feedback">Commentaires</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowGuide(true)}>
                   Aide
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={signOut}>
@@ -296,5 +300,6 @@ export const Header = () => {
         </div>
       </div>
     </header>
+    </>
   );
 };

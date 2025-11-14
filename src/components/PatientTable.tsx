@@ -111,7 +111,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
         </h2>
       )}
       
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" data-guide="patient-table">
         <div className="overflow-x-auto">
           <Table>
           <TableHeader>
