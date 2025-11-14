@@ -170,10 +170,18 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                  <div className="flex flex-wrap gap-1 sm:gap-1.5 items-center">
                     {getOrganIconWithScore('brain', patient.brainScore, patient.id)}
                     {getOrganIconWithScore('heart', patient.heartScore, patient.id)}
                     {getOrganIconWithScore('lungs', patient.lungsScore, patient.id)}
+                    {(() => {
+                      const totalAlarms = (patient.brainScore || 0) + (patient.heartScore || 0) + (patient.lungsScore || 0) + (patient.kidneyScore || 0);
+                      return totalAlarms > 5 ? (
+                        <Badge variant="destructive" className="text-xs ml-1">
+                          Priorité
+                        </Badge>
+                      ) : null;
+                    })()}
                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
