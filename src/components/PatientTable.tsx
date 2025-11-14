@@ -170,29 +170,34 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-1 sm:gap-1.5 items-center">
+                  <div className="flex flex-wrap gap-1 sm:gap-1.5">
                     {getOrganIconWithScore('brain', patient.brainScore, patient.id)}
                     {getOrganIconWithScore('heart', patient.heartScore, patient.id)}
                     {getOrganIconWithScore('lungs', patient.lungsScore, patient.id)}
-                    {(() => {
-                      const totalAlarms = (patient.brainScore || 0) + (patient.heartScore || 0) + (patient.lungsScore || 0) + (patient.kidneyScore || 0);
-                      return totalAlarms > 5 ? (
-                        <Badge variant="destructive" className="text-xs ml-1">
-                          Priorité
-                        </Badge>
-                      ) : null;
-                    })()}
                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  {patient.tour && (
-                    <Badge 
-                      variant={patient.tour === 'Priority' ? 'destructive' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {patient.tour}
-                    </Badge>
-                  )}
+                  {(() => {
+                    const totalAlarms = (patient.brainScore || 0) + (patient.heartScore || 0) + (patient.lungsScore || 0) + (patient.kidneyScore || 0);
+                    if (totalAlarms > 5) {
+                      return (
+                        <Badge variant="destructive" className="text-xs">
+                          Priorité
+                        </Badge>
+                      );
+                    }
+                    if (patient.tour) {
+                      return (
+                        <Badge 
+                          variant={patient.tour === 'Priority' ? 'destructive' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {patient.tour}
+                        </Badge>
+                      );
+                    }
+                    return null;
+                  })()}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
                   <button className="text-gray-400 hover:text-gray-600">
