@@ -31,7 +31,7 @@ const Dashboard = () => {
           </div>
 
           <div className="hidden lg:block">
-            <PelodBadges patients={allPatients} unitAverage={averagePelod} />
+            <PelodBadges patients={displayedPatients} unitAverage={averagePelod} />
           </div>
         </div>
 
