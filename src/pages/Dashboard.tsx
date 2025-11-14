@@ -14,7 +14,16 @@ const Dashboard = () => {
 
   // Get patients for selected PED
   const displayedPatients = getPatientsForPed(selectedPed);
-  const averagePelod = displayedPatients.length > 0 ? Math.round(displayedPatients.reduce((sum, p) => sum + p.pelodScore, 0) / displayedPatients.length) : 0;
+  
+  // Calculate unit average from ALL patients (all 3 PEDs)
+  const unitAveragePelod = allPatients.length > 0 
+    ? Math.round(allPatients.reduce((sum, p) => sum + p.pelodScore, 0) / allPatients.length) 
+    : 0;
+  
+  // Calculate selected PED average
+  const averagePelod = displayedPatients.length > 0 
+    ? Math.round(displayedPatients.reduce((sum, p) => sum + p.pelodScore, 0) / displayedPatients.length) 
+    : 0;
   return <div className="min-h-screen bg-[#EDF2F9]">
       <Header />
       
@@ -31,7 +40,7 @@ const Dashboard = () => {
           </div>
 
           <div className="hidden lg:block">
-            <PelodBadges patients={displayedPatients} unitAverage={averagePelod} />
+            <PelodBadges patients={displayedPatients} unitAverage={unitAveragePelod} />
           </div>
         </div>
 
