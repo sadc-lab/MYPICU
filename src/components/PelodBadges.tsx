@@ -39,6 +39,7 @@ export const PelodBadges = ({
                 {patient.pelodScore}
               </div>
               <div className="text-xs text-gray-500">/70</div>
+              <div className="text-xs font-medium text-foreground">{patient.picuId}</div>
             </div>
           ))}
         </div>
