@@ -25,7 +25,7 @@ const Dashboard = () => {
               Accès TVL
             </Button>
             
-            <Button variant="outline" className="bg-white border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)}>
+            <Button variant="outline" className="bg-white border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)} data-guide="organize-tour">
               Organiser tournée <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

@@ -1,0 +1,150 @@
+import { useState, useEffect } from 'react';
+import Joyride, { Step, CallBackProps, STATUS } from 'react-joyride';
+
+interface InteractiveGuideProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => {
+  const [run, setRun] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setRun(true);
+    }
+  }, [isOpen]);
+
+  const steps: Step[] = [
+    {
+      target: 'body',
+      content: (
+        <div>
+          <h2 className="text-lg font-bold mb-2">Bienvenue dans myPICU!</h2>
+          <p>Ce guide interactif vous aidera à naviguer dans l'interface. Cliquez sur "Suivant" pour commencer.</p>
+        </div>
+      ),
+      placement: 'center',
+      disableBeacon: true,
+    },
+    {
+      target: '[data-guide="search"]',
+      content: (
+        <div>
+          <h3 className="font-semibold mb-2">Recherche de patients</h3>
+          <p>Utilisez cette barre pour rechercher rapidement un patient par nom, identifiant ou PED.</p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '[data-guide="patient-nav"]',
+      content: (
+        <div>
+          <h3 className="font-semibold mb-2">Navigation des patients</h3>
+          <p>Accédez aux différentes vues de monitoring : Statistiques, Cerveau, Cœur et Poumons.</p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '[data-guide="tour-info"]',
+      content: (
+        <div>
+          <h3 className="font-semibold mb-2">Tournée active</h3>
+          <p>Lorsqu'une tournée est active, vous pouvez naviguer entre les patients et confirmer vos visites.</p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '[data-guide="user-menu"]',
+      content: (
+        <div>
+          <h3 className="font-semibold mb-2">Menu utilisateur</h3>
+          <p>Accédez à vos commentaires, à l'aide et déconnectez-vous ici.</p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      target: '[data-guide="organize-tour"]',
+      content: (
+        <div>
+          <h3 className="font-semibold mb-2">Organiser une tournée</h3>
+          <p>Créez et organisez vos tournées de patients par glisser-déposer selon vos priorités.</p>
+        </div>
+      ),
+      placement: 'left',
+    },
+    {
+      target: '[data-guide="patient-table"]',
+      content: (
+        <div>
+          <h3 className="font-semibold mb-2">Liste des patients</h3>
+          <p>Visualisez tous vos patients avec leurs informations clés, alarmes et scores PELOD.</p>
+        </div>
+      ),
+      placement: 'top',
+    },
+    {
+      target: 'body',
+      content: (
+        <div>
+          <h2 className="text-lg font-bold mb-2">Guide terminé!</h2>
+          <p>Vous êtes maintenant prêt à utiliser myPICU. Vous pouvez relancer ce guide à tout moment depuis le menu Aide.</p>
+        </div>
+      ),
+      placement: 'center',
+    },
+  ];
+
+  const handleJoyrideCallback = (data: CallBackProps) => {
+    const { status } = data;
+    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(status)) {
+      setRun(false);
+      onClose();
+    }
+  };
+
+  return (
+    <Joyride
+      steps={steps}
+      run={run}
+      continuous
+      showProgress
+      showSkipButton
+      callback={handleJoyrideCallback}
+      styles={{
+        options: {
+          primaryColor: '#2563eb',
+          zIndex: 10000,
+        },
+        tooltip: {
+          borderRadius: 8,
+        },
+        buttonNext: {
+          backgroundColor: '#2563eb',
+          borderRadius: 6,
+          padding: '8px 16px',
+        },
+        buttonBack: {
+          color: '#6b7280',
+          marginRight: 8,
+        },
+        buttonSkip: {
+          color: '#6b7280',
+        },
+      }}
+      locale={{
+        back: 'Retour',
+        close: 'Fermer',
+        last: 'Terminer',
+        next: 'Suivant',
+        skip: 'Passer',
+      }}
+    />
+  );
+};
