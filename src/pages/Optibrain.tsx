@@ -605,70 +605,9 @@ const Optibrain = () => {
 
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">
-                {timeRange === 'now' ? 'Monitoring (Current)' : timeRange === 'stay' ? 'Monitoring (Séjour complet)' : `Monitoring Last ${timeRange.toUpperCase()}`}
-              </CardTitle>
-              <div className="flex gap-2">
-                {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                      timeRange === range
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {range === 'now' ? 'Now' : range === 'stay' ? 'Séjour complet' : range.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <CardTitle className="text-lg">Adhérence & Monitoring</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
-              {selectedIndicators.length === 0 ? <div className="h-full flex items-center justify-center">
-                  <p className="text-gray-400">Sélectionnez des indicateurs ci-dessous pour afficher leurs tendances</p>
-                </div> : <div className="h-full flex flex-col">
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {selectedIndicators.map(label => {
-                  const indicator = clinicalIndicators.find(i => i.label === label);
-                  if (!indicator) return null;
-                  const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
-                  return <div key={label} className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-200">
-                          <div className={`w-2 h-2 rounded-full ${statusColor}`}></div>
-                          <span className="text-xs text-gray-700">{label}</span>
-                        </div>;
-                })}
-                  </div>
-                  <div className="flex-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="time" tick={{
-                      fontSize: 12
-                    }} stroke="#9ca3af" />
-                        <YAxis tick={{
-                      fontSize: 12
-                    }} stroke="#9ca3af" />
-                        <Tooltip contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '6px',
-                      fontSize: '12px'
-                    }} />
-                        <Legend wrapperStyle={{
-                      fontSize: '12px'
-                    }} />
-                        {selectedIndicators.map(label => <Line key={label} type="monotone" dataKey={label} stroke={getIndicatorColor(label)} strokeWidth={2} dot={false} activeDot={{
-                      r: 4
-                    }} />)}
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>}
-            </div>
 
               {/* Clinical Indicators Adherence */}
               <Card className="border-2 border-gray-200">
@@ -954,6 +893,76 @@ const Optibrain = () => {
                       </div>
                     </div>
                   </CardContent>}
+              </Card>
+
+              {/* Monitoring Chart */}
+              <Card className="border-2 border-gray-200">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">
+                      {timeRange === 'now' ? 'Monitoring (Current)' : timeRange === 'stay' ? 'Monitoring (Séjour complet)' : `Monitoring Last ${timeRange.toUpperCase()}`}
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
+                        <button
+                          key={range}
+                          onClick={() => setTimeRange(range)}
+                          className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                            timeRange === range
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {range === 'now' ? 'Now' : range === 'stay' ? 'Séjour complet' : range.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
+                    {selectedIndicators.length === 0 ? <div className="h-full flex items-center justify-center">
+                        <p className="text-gray-400">Sélectionnez des indicateurs ci-dessous pour afficher leurs tendances</p>
+                      </div> : <div className="h-full flex flex-col">
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {selectedIndicators.map(label => {
+                        const indicator = clinicalIndicators.find(i => i.label === label);
+                        if (!indicator) return null;
+                        const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
+                        return <div key={label} className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-200">
+                                <div className={`w-2 h-2 rounded-full ${statusColor}`}></div>
+                                <span className="text-xs text-gray-700">{label}</span>
+                              </div>;
+                      })}
+                        </div>
+                        <div className="flex-1">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                              <XAxis dataKey="time" tick={{
+                            fontSize: 12
+                          }} stroke="#9ca3af" />
+                              <YAxis tick={{
+                            fontSize: 12
+                          }} stroke="#9ca3af" />
+                              <Tooltip contentStyle={{
+                            backgroundColor: 'white',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '6px',
+                            fontSize: '12px'
+                          }} />
+                              <Legend wrapperStyle={{
+                            fontSize: '12px'
+                          }} />
+                              {selectedIndicators.map(label => <Line key={label} type="monotone" dataKey={label} stroke={getIndicatorColor(label)} strokeWidth={2} dot={false} activeDot={{
+                            r: 4
+                          }} />)}
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>}
+                  </div>
+                </CardContent>
               </Card>
           </CardContent>
         </Card>
