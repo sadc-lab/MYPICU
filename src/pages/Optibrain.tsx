@@ -474,49 +474,121 @@ const Optibrain = () => {
 
         {/* PPC Optimal Dialog */}
         <Dialog open={openDialog === 'ppc'} onOpenChange={open => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle>PPC Optimale</DialogTitle>
+              <DialogTitle>PPC Optimale - Étude sur 6 heures</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Actuelle : <span className="text-gray-600 font-semibold">65 mmHg</span> | Moyenne : <span className="text-gray-600 font-semibold">63 mmHg</span>
-              </p>
-              <div className="space-y-3">
-                {[{
-                label: '60 - 70 mmHg',
-                time: 145,
-                status: 'normal'
-              }, {
-                label: '50 - 60 mmHg',
-                time: 25,
-                status: 'warning'
-              }, {
-                label: '> 70 mmHg',
-                time: 8,
-                status: 'warning'
-              }, {
-                label: '< 50 mmHg',
-                time: 2,
-                status: 'critical'
-              }].map((level, index) => <div key={index} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">{level.label}</span>
-                      <span className={level.status === 'critical' ? 'text-red-500 font-semibold' : level.status === 'warning' ? 'text-orange-500 font-semibold' : 'text-gray-600 font-semibold'}>
-                        {level.time} min
-                      </span>
-                    </div>
-                    <div className="h-8 bg-gray-200 rounded-full overflow-hidden">
-                      <div className={level.status === 'critical' ? 'h-full bg-red-400' : level.status === 'warning' ? 'h-full bg-blue-400' : 'h-full bg-gray-400'} style={{
-                    width: `${level.time / 180 * 100}%`
-                  }}>
-                      </div>
-                    </div>
-                  </div>)}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <div>
+                  PPC actuelle : <span className="text-gray-900 font-semibold">65 mmHg</span>
+                </div>
+                <div>
+                  PPC visée : <span className="text-gray-900 font-semibold">60 mmHg</span>
+                </div>
+                <div>
+                  Zone acceptable : <span className="text-gray-900 font-semibold">50-70 mmHg</span>
+                </div>
               </div>
-              <div className="pt-3 border-t text-sm text-gray-600">
-                PPC actuelle : <span className="text-gray-600 font-semibold">65 mmHg</span>
-                <span className="ml-4">PPC moyenne : <span className="text-gray-600 font-semibold">63 mmHg</span></span>
+              
+              <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={(() => {
+                      const data = [];
+                      const now = new Date();
+                      for (let i = 0; i <= 72; i++) {
+                        const time = new Date(now.getTime() - (72 - i) * 5 * 60000);
+                        const hours = time.getHours().toString().padStart(2, '0');
+                        const minutes = time.getMinutes().toString().padStart(2, '0');
+                        
+                        // Generate realistic PPC values with some variation
+                        const baseValue = 60;
+                        const variation = Math.sin(i / 10) * 8 + Math.random() * 6 - 3;
+                        const ppcValue = Math.max(48, Math.min(72, baseValue + variation));
+                        
+                        data.push({
+                          time: `${hours}:${minutes}`,
+                          ppc: Math.round(ppcValue * 10) / 10,
+                          target: 60,
+                          upperBound: 70,
+                          lowerBound: 50,
+                          current: i === 72 ? 65 : null
+                        });
+                      }
+                      return data;
+                    })()}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis 
+                      dataKey="time" 
+                      stroke="#666"
+                      interval={11}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis 
+                      domain={[45, 75]} 
+                      stroke="#666"
+                      label={{ value: 'PPC (mmHg)', angle: -90, position: 'insideLeft' }}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                        border: '1px solid #ccc',
+                        borderRadius: '4px'
+                      }}
+                    />
+                    <Legend />
+                    
+                    {/* Zone acceptable (upper bound) */}
+                    <Line
+                      type="monotone"
+                      dataKey="upperBound"
+                      stroke="#999"
+                      strokeWidth={1.5}
+                      strokeDasharray="5 5"
+                      dot={false}
+                      name="Limite supérieure (70 mmHg)"
+                    />
+                    
+                    {/* Zone acceptable (lower bound) */}
+                    <Line
+                      type="monotone"
+                      dataKey="lowerBound"
+                      stroke="#999"
+                      strokeWidth={1.5}
+                      strokeDasharray="5 5"
+                      dot={false}
+                      name="Limite inférieure (50 mmHg)"
+                    />
+                    
+                    {/* Target PPC */}
+                    <Line
+                      type="monotone"
+                      dataKey="target"
+                      stroke="#444"
+                      strokeWidth={2}
+                      dot={false}
+                      name="PPC visée (60 mmHg)"
+                    />
+                    
+                    {/* Actual PPC values */}
+                    <Line
+                      type="monotone"
+                      dataKey="ppc"
+                      stroke="#ef4444"
+                      strokeWidth={2.5}
+                      dot={false}
+                      name="PPC actuelle"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <div className="text-sm text-gray-600 border-t pt-4">
+                <span className="font-semibold">Période affichée :</span> 6 dernières heures
               </div>
             </div>
           </DialogContent>
