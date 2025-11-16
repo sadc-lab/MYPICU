@@ -34,23 +34,32 @@ const Optibrain = () => {
   const [editedObjectives, setEditedObjectives] = useState<string[]>([]);
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
-  const [checkedTasks, setCheckedTasks] = useState({
-    pupils: false,
-    etco2: [false, false, false],
-    pam: false,
-    pvc: false,
-    nutrition: false,
-    epilepsy: false,
-    fentanyl: false,
-    propofol: false
+  const [checkedTasks, setCheckedTasks] = useState<{
+    pupils: { completed: boolean; completedAt?: string };
+    etco2: Array<{ completed: boolean; completedAt?: string }>;
+    pam: { completed: boolean; completedAt?: string };
+    pvc: { completed: boolean; completedAt?: string };
+    nutrition: { completed: boolean; completedAt?: string };
+    epilepsy: { completed: boolean; completedAt?: string };
+    fentanyl: { completed: boolean; completedAt?: string };
+    propofol: { completed: boolean; completedAt?: string };
+  }>({
+    pupils: { completed: false },
+    etco2: [{ completed: false }, { completed: false }, { completed: false }],
+    pam: { completed: false },
+    pvc: { completed: false },
+    nutrition: { completed: false },
+    epilepsy: { completed: false },
+    fentanyl: { completed: false },
+    propofol: { completed: false }
   });
   
   const totalTasks = Object.keys(checkedTasks).length + 2; // +2 because etco2 has 3 checks instead of 1
   const completedTasks = Object.entries(checkedTasks).reduce((count, [key, value]) => {
     if (key === 'etco2') {
-      return count + (value as boolean[]).filter(Boolean).length;
+      return count + (value as Array<{ completed: boolean; completedAt?: string }>).filter(item => item.completed).length;
     }
-    return count + (value ? 1 : 0);
+    return count + ((value as { completed: boolean; completedAt?: string }).completed ? 1 : 0);
   }, 0);
   const completionPercentage = Math.round(completedTasks / totalTasks * 100);
   if (!patient) {
@@ -729,19 +738,28 @@ const Optibrain = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
                       <div 
                         className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ ...prev, pupils: !prev.pupils }))}
+                        onClick={() => setCheckedTasks(prev => ({ 
+                          ...prev, 
+                          pupils: { 
+                            completed: !prev.pupils.completed,
+                            completedAt: !prev.pupils.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
+                          }
+                        }))}
                       >
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.pupils 
+                          checkedTasks.pupils.completed 
                             ? 'border-blue-500 bg-blue-500' 
                             : 'border-gray-300 bg-white group-hover:border-gray-400'
                         }`}>
-                          {checkedTasks.pupils && (
+                          {checkedTasks.pupils.completed && (
                             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                           )}
                         </div>
                         <label className="text-sm text-gray-700 cursor-pointer">
                           Pupilles : N/A
+                          {checkedTasks.pupils.completed && checkedTasks.pupils.completedAt && (
+                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.pupils.completedAt})</span>
+                          )}
                         </label>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -751,16 +769,19 @@ const Optibrain = () => {
                             className="cursor-pointer group"
                             onClick={() => setCheckedTasks(prev => {
                               const newEtco2 = [...prev.etco2];
-                              newEtco2[index] = !newEtco2[index];
+                              newEtco2[index] = {
+                                completed: !newEtco2[index].completed,
+                                completedAt: !newEtco2[index].completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
+                              };
                               return { ...prev, etco2: newEtco2 };
                             })}
                           >
                             <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                              checkedTasks.etco2[index]
+                              checkedTasks.etco2[index].completed
                                 ? 'border-blue-500 bg-blue-500' 
                                 : 'border-gray-300 bg-white group-hover:border-gray-400'
                             }`}>
-                              {checkedTasks.etco2[index] && (
+                              {checkedTasks.etco2[index].completed && (
                                 <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                               )}
                             </div>
@@ -768,108 +789,167 @@ const Optibrain = () => {
                         ))}
                         <label className="text-sm text-gray-700 ml-1">
                           ETCO2
+                          {checkedTasks.etco2.some(item => item.completed) && (
+                            <span className="ml-2 text-xs text-gray-500">
+                              ({checkedTasks.etco2.filter(item => item.completed).map(item => item.completedAt).join(', ')})
+                            </span>
+                          )}
                         </label>
                       </div>
                       <div 
                         className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ ...prev, pam: !prev.pam }))}
+                        onClick={() => setCheckedTasks(prev => ({ 
+                          ...prev, 
+                          pam: { 
+                            completed: !prev.pam.completed,
+                            completedAt: !prev.pam.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
+                          }
+                        }))}
                       >
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.pam 
+                          checkedTasks.pam.completed 
                             ? 'border-blue-500 bg-blue-500' 
                             : 'border-gray-300 bg-white group-hover:border-gray-400'
                         }`}>
-                          {checkedTasks.pam && (
+                          {checkedTasks.pam.completed && (
                             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                           )}
                         </div>
                         <label className="text-sm text-gray-700 cursor-pointer">
                           PAM
+                          {checkedTasks.pam.completed && checkedTasks.pam.completedAt && (
+                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.pam.completedAt})</span>
+                          )}
                         </label>
                       </div>
                       <div 
                         className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ ...prev, pvc: !prev.pvc }))}
+                        onClick={() => setCheckedTasks(prev => ({ 
+                          ...prev, 
+                          pvc: { 
+                            completed: !prev.pvc.completed,
+                            completedAt: !prev.pvc.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
+                          }
+                        }))}
                       >
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.pvc 
+                          checkedTasks.pvc.completed 
                             ? 'border-blue-500 bg-blue-500' 
                             : 'border-gray-300 bg-white group-hover:border-gray-400'
                         }`}>
-                          {checkedTasks.pvc && (
+                          {checkedTasks.pvc.completed && (
                             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                           )}
                         </div>
                         <label className="text-sm text-gray-700 cursor-pointer">
                           PVC
+                          {checkedTasks.pvc.completed && checkedTasks.pvc.completedAt && (
+                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.pvc.completedAt})</span>
+                          )}
                         </label>
                       </div>
                       <div 
                         className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ ...prev, nutrition: !prev.nutrition }))}
+                        onClick={() => setCheckedTasks(prev => ({ 
+                          ...prev, 
+                          nutrition: { 
+                            completed: !prev.nutrition.completed,
+                            completedAt: !prev.nutrition.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
+                          }
+                        }))}
                       >
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.nutrition 
+                          checkedTasks.nutrition.completed 
                             ? 'border-blue-500 bg-blue-500' 
                             : 'border-gray-300 bg-white group-hover:border-gray-400'
                         }`}>
-                          {checkedTasks.nutrition && (
+                          {checkedTasks.nutrition.completed && (
                             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                           )}
                         </div>
                         <label className="text-sm text-gray-700 cursor-pointer">
                           Nutrition
+                          {checkedTasks.nutrition.completed && checkedTasks.nutrition.completedAt && (
+                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.nutrition.completedAt})</span>
+                          )}
                         </label>
                       </div>
                       <div 
                         className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ ...prev, epilepsy: !prev.epilepsy }))}
+                        onClick={() => setCheckedTasks(prev => ({ 
+                          ...prev, 
+                          epilepsy: { 
+                            completed: !prev.epilepsy.completed,
+                            completedAt: !prev.epilepsy.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
+                          }
+                        }))}
                       >
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.epilepsy 
+                          checkedTasks.epilepsy.completed 
                             ? 'border-blue-500 bg-blue-500' 
                             : 'border-gray-300 bg-white group-hover:border-gray-400'
                         }`}>
-                          {checkedTasks.epilepsy && (
+                          {checkedTasks.epilepsy.completed && (
                             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                           )}
                         </div>
                         <label className="text-sm text-gray-700 cursor-pointer">
                           Epilepsie
+                          {checkedTasks.epilepsy.completed && checkedTasks.epilepsy.completedAt && (
+                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.epilepsy.completedAt})</span>
+                          )}
                         </label>
                       </div>
                       <div 
                         className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ ...prev, fentanyl: !prev.fentanyl }))}
+                        onClick={() => setCheckedTasks(prev => ({ 
+                          ...prev, 
+                          fentanyl: { 
+                            completed: !prev.fentanyl.completed,
+                            completedAt: !prev.fentanyl.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
+                          }
+                        }))}
                       >
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.fentanyl 
+                          checkedTasks.fentanyl.completed 
                             ? 'border-blue-500 bg-blue-500' 
                             : 'border-gray-300 bg-white group-hover:border-gray-400'
                         }`}>
-                          {checkedTasks.fentanyl && (
+                          {checkedTasks.fentanyl.completed && (
                             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                           )}
                         </div>
                         <label className="text-sm text-gray-700 cursor-pointer">
                           Fentanyl
+                          {checkedTasks.fentanyl.completed && checkedTasks.fentanyl.completedAt && (
+                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.fentanyl.completedAt})</span>
+                          )}
                         </label>
                       </div>
                       <div 
                         className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ ...prev, propofol: !prev.propofol }))}
+                        onClick={() => setCheckedTasks(prev => ({ 
+                          ...prev, 
+                          propofol: { 
+                            completed: !prev.propofol.completed,
+                            completedAt: !prev.propofol.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
+                          }
+                        }))}
                       >
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.propofol 
+                          checkedTasks.propofol.completed 
                             ? 'border-blue-500 bg-blue-500' 
                             : 'border-gray-300 bg-white group-hover:border-gray-400'
                         }`}>
-                          {checkedTasks.propofol && (
+                          {checkedTasks.propofol.completed && (
                             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                           )}
                         </div>
                         <label className="text-sm text-gray-700 cursor-pointer">
                           Propofol
+                          {checkedTasks.propofol.completed && checkedTasks.propofol.completedAt && (
+                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.propofol.completedAt})</span>
+                          )}
                         </label>
                       </div>
                     </div>
