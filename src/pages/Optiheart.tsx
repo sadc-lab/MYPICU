@@ -210,12 +210,6 @@ const Optiheart = () => {
               {heartMetrics.map((metric, index) => {
                 const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
                 const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
-                const getTrendIcon = () => {
-                  if (metric.trend === 'up') return <TrendingUp className="h-5 w-5 text-green-500" />;
-                  if (metric.trend === 'down') return <TrendingDown className="h-5 w-5 text-red-500" />;
-                  return <Minus className="h-5 w-5 text-gray-400" />;
-                };
-                
                 return (
                   <div key={index} className="flex flex-col items-center">
                     <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
@@ -225,7 +219,6 @@ const Optiheart = () => {
                       <div className={`text-4xl font-bold ${valueColor}`}>
                         {metric.value}
                       </div>
-                      {getTrendIcon()}
                     </div>
                     
                     <div className="w-full max-w-[180px]">
@@ -273,11 +266,6 @@ const Optiheart = () => {
             <div className="grid grid-cols-3 gap-8">
               {heartOptimisationMetrics.map((metric, index) => {
                 const statusColor = metric.status === 'critical' ? 'text-red-500' : metric.status === 'warning' ? 'text-orange-500' : 'text-gray-600';
-                const getTrendIcon = () => {
-                  if (metric.trend === 'up') return <TrendingUp className="h-5 w-5 text-green-500" />;
-                  if (metric.trend === 'down') return <TrendingDown className="h-5 w-5 text-red-500" />;
-                  return <Minus className="h-5 w-5 text-gray-400" />;
-                };
                 return (
                   <div 
                     key={index} 
@@ -291,7 +279,6 @@ const Optiheart = () => {
                       <div className={`text-4xl font-bold ${statusColor}`}>
                         {metric.displayValue}
                       </div>
-                      {metric.trend !== 'stable' && getTrendIcon()}
                     </div>
                     {metric.change !== undefined && metric.trend !== 'stable' && (
                       <div className={`text-xs ${metric.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
@@ -563,11 +550,6 @@ const Optiheart = () => {
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
                       const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
-                      const getTrendIcon = () => {
-                        if (indicator.trend === 'up') return <TrendingUp className="h-3 w-3 text-green-500" />;
-                        if (indicator.trend === 'down') return <TrendingDown className="h-3 w-3 text-red-500" />;
-                        return <Minus className="h-3 w-3 text-gray-400" />;
-                      };
                       return (
                         <div 
                           key={index}
@@ -588,7 +570,6 @@ const Optiheart = () => {
                               <p className="text-sm font-medium text-gray-700">
                                 {indicator.label} : {indicator.value}{indicator.unit}
                               </p>
-                              {getTrendIcon()}
                             </div>
                             <p className="text-xs text-gray-500">{indicator.target}</p>
                             {indicator.trend !== 'stable' && (
@@ -637,11 +618,6 @@ const Optiheart = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
                       const statusColor = target.status === 'critical' ? 'bg-red-500' : target.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
-                      const getTrendIcon = () => {
-                        if (target.trend === 'up') return <TrendingUp className="h-3 w-3 text-green-500" />;
-                        if (target.trend === 'down') return <TrendingDown className="h-3 w-3 text-red-500" />;
-                        return <Minus className="h-3 w-3 text-gray-400" />;
-                      };
                       return (
                         <div 
                           key={index}
@@ -653,7 +629,6 @@ const Optiheart = () => {
                               <p className="text-sm font-medium text-gray-700">
                                 {target.label} : {target.value}{target.unit || ''}
                               </p>
-                              {getTrendIcon()}
                             </div>
                             <p className="text-xs text-gray-500">{target.target}</p>
                             {target.change !== undefined && target.trend !== 'stable' && (
