@@ -34,34 +34,21 @@ const Optibrain = () => {
   const [editedObjectives, setEditedObjectives] = useState<string[]>([]);
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
-  const [checkedTasks, setCheckedTasks] = useState<{
-    pupils: { completed: boolean; completedAt?: string };
-    etco2: Array<{ completed: boolean; completedAt?: string }>;
-    pam: { completed: boolean; completedAt?: string };
-    pvc: { completed: boolean; completedAt?: string };
-    nutrition: { completed: boolean; completedAt?: string };
-    epilepsy: { completed: boolean; completedAt?: string };
-    fentanyl: { completed: boolean; completedAt?: string };
-    propofol: { completed: boolean; completedAt?: string };
-  }>({
-    pupils: { completed: false },
-    etco2: [{ completed: false }, { completed: false }, { completed: false }],
-    pam: { completed: false },
-    pvc: { completed: false },
-    nutrition: { completed: false },
-    epilepsy: { completed: false },
-    fentanyl: { completed: false },
-    propofol: { completed: false }
-  });
+  const monitoringTargets = [
+    { label: 'Pupilles', value: 'N/A', target: 'Symétrique', status: 'warning', trend: 'stable' },
+    { label: 'ETCO2', value: 38, unit: 'mmHg', target: '35-45 mmHg', status: 'normal', trend: 'stable', change: 0 },
+    { label: 'PAM', value: 85, unit: 'mmHg', target: '> 65 mmHg', status: 'normal', trend: 'up', change: 2 },
+    { label: 'PVC', value: 8, unit: 'mmHg', target: '2-8 mmHg', status: 'normal', trend: 'stable', change: 0 },
+    { label: 'Nutrition', value: 'Entérale', target: 'Entérale/Parentérale', status: 'normal', trend: 'stable' },
+    { label: 'Épilepsie', value: 'Non', target: 'Aucune', status: 'normal', trend: 'stable' },
+    { label: 'Fentanyl', value: 150, unit: 'mcg/h', target: '100-200 mcg/h', status: 'normal', trend: 'stable', change: 0 },
+    { label: 'Propofol', value: 220, unit: 'mg/h', target: '150-250 mg/h', status: 'normal', trend: 'down', change: -10 }
+  ];
   
-  const totalTasks = Object.keys(checkedTasks).length + 2; // +2 because etco2 has 3 checks instead of 1
-  const completedTasks = Object.entries(checkedTasks).reduce((count, [key, value]) => {
-    if (key === 'etco2') {
-      return count + (value as Array<{ completed: boolean; completedAt?: string }>).filter(item => item.completed).length;
-    }
-    return count + ((value as { completed: boolean; completedAt?: string }).completed ? 1 : 0);
-  }, 0);
-  const completionPercentage = Math.round(completedTasks / totalTasks * 100);
+  const totalTargets = monitoringTargets.length;
+  const normalTargets = monitoringTargets.filter(t => t.status === 'normal').length;
+  const monitoringAdherence = Math.round(normalTargets / totalTargets * 100);
+  const targetOutOfRangeCount = monitoringTargets.filter(t => t.status !== 'normal').length;
   if (!patient) {
     return <div className="min-h-screen bg-[#EDF2F9]">
         <Header />
@@ -735,20 +722,24 @@ const Optibrain = () => {
                   </CardContent>}
               </Card>
 
-              {/* Monitoring Tasks Checklist */}
+              {/* Monitoring Targets */}
               <Card className="border-2 border-gray-200">
                 <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setChecklistExpanded(!checklistExpanded)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${completionPercentage === 100 ? 'border-green-500 text-green-600 bg-green-50' : completionPercentage >= 50 ? 'border-blue-400 text-blue-600 bg-blue-50' : 'border-red-400 text-red-600 bg-red-50'}`}>
-                        {completionPercentage}%
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
+                        monitoringAdherence >= 90 ? 'border-gray-400 text-gray-600 bg-gray-50' : 
+                        monitoringAdherence >= 80 ? 'border-orange-400 text-orange-600 bg-orange-50' : 
+                        'border-red-400 text-red-600 bg-red-50'
+                      }`}>
+                        {monitoringAdherence}%
                       </div>
                       <div>
                         <h3 className="text-sm font-semibold text-gray-700">
-                          Adhérence globale des cibles de monitorage : faire pupilles et ETCO2
+                          Adhérence globale des cibles de monitorage
                         </h3>
                         <p className="text-xs text-gray-500 mt-1">
-                          {completedTasks} tâches sur {totalTasks} à faire
+                          {targetOutOfRangeCount} cibles à surveiller
                         </p>
                       </div>
                     </div>
@@ -757,222 +748,36 @@ const Optibrain = () => {
                 </CardHeader>
                 {checklistExpanded && <CardContent className="pt-0">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
-                      <div 
-                        className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ 
-                          ...prev, 
-                          pupils: { 
-                            completed: !prev.pupils.completed,
-                            completedAt: !prev.pupils.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-                          }
-                        }))}
-                      >
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.pupils.completed 
-                            ? 'border-blue-500 bg-blue-500' 
-                            : 'border-gray-300 bg-white group-hover:border-gray-400'
-                        }`}>
-                          {checkedTasks.pupils.completed && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <label className="text-sm text-gray-700 cursor-pointer">
-                          Pupilles : N/A
-                          {checkedTasks.pupils.completed && checkedTasks.pupils.completedAt && (
-                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.pupils.completedAt})</span>
-                          )}
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {[0, 1, 2].map((index) => (
-                          <div
+                      {monitoringTargets.map((target, index) => {
+                        const statusColor = target.status === 'critical' ? 'bg-red-500' : target.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
+                        const getTrendIcon = () => {
+                          if (target.trend === 'up') return <TrendingUp className="h-3 w-3 text-green-500" />;
+                          if (target.trend === 'down') return <TrendingDown className="h-3 w-3 text-red-500" />;
+                          return <Minus className="h-3 w-3 text-gray-400" />;
+                        };
+                        return (
+                          <div 
                             key={index}
-                            className="cursor-pointer group"
-                            onClick={() => setCheckedTasks(prev => {
-                              const newEtco2 = [...prev.etco2];
-                              newEtco2[index] = {
-                                completed: !newEtco2[index].completed,
-                                completedAt: !newEtco2[index].completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-                              };
-                              return { ...prev, etco2: newEtco2 };
-                            })}
+                            className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
                           >
-                            <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                              checkedTasks.etco2[index].completed
-                                ? 'border-blue-500 bg-blue-500' 
-                                : 'border-gray-300 bg-white group-hover:border-gray-400'
-                            }`}>
-                              {checkedTasks.etco2[index].completed && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                            <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-1">
+                                <p className="text-sm font-medium text-gray-700">
+                                  {target.label} : {target.value}{target.unit || ''}
+                                </p>
+                                {getTrendIcon()}
+                              </div>
+                              <p className="text-xs text-gray-500">{target.target}</p>
+                              {target.change !== undefined && target.trend !== 'stable' && (
+                                <p className={`text-xs ${target.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                  {target.change > 0 ? '+' : ''}{target.change} {target.unit}
+                                </p>
                               )}
                             </div>
                           </div>
-                        ))}
-                        <label className="text-sm text-gray-700 ml-1">
-                          ETCO2
-                          {checkedTasks.etco2.some(item => item.completed) && (
-                            <span className="ml-2 text-xs text-gray-500">
-                              ({checkedTasks.etco2.filter(item => item.completed).map(item => item.completedAt).join(', ')})
-                            </span>
-                          )}
-                        </label>
-                      </div>
-                      <div 
-                        className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ 
-                          ...prev, 
-                          pam: { 
-                            completed: !prev.pam.completed,
-                            completedAt: !prev.pam.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-                          }
-                        }))}
-                      >
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.pam.completed 
-                            ? 'border-blue-500 bg-blue-500' 
-                            : 'border-gray-300 bg-white group-hover:border-gray-400'
-                        }`}>
-                          {checkedTasks.pam.completed && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <label className="text-sm text-gray-700 cursor-pointer">
-                          PAM
-                          {checkedTasks.pam.completed && checkedTasks.pam.completedAt && (
-                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.pam.completedAt})</span>
-                          )}
-                        </label>
-                      </div>
-                      <div 
-                        className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ 
-                          ...prev, 
-                          pvc: { 
-                            completed: !prev.pvc.completed,
-                            completedAt: !prev.pvc.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-                          }
-                        }))}
-                      >
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.pvc.completed 
-                            ? 'border-blue-500 bg-blue-500' 
-                            : 'border-gray-300 bg-white group-hover:border-gray-400'
-                        }`}>
-                          {checkedTasks.pvc.completed && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <label className="text-sm text-gray-700 cursor-pointer">
-                          PVC
-                          {checkedTasks.pvc.completed && checkedTasks.pvc.completedAt && (
-                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.pvc.completedAt})</span>
-                          )}
-                        </label>
-                      </div>
-                      <div 
-                        className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ 
-                          ...prev, 
-                          nutrition: { 
-                            completed: !prev.nutrition.completed,
-                            completedAt: !prev.nutrition.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-                          }
-                        }))}
-                      >
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.nutrition.completed 
-                            ? 'border-blue-500 bg-blue-500' 
-                            : 'border-gray-300 bg-white group-hover:border-gray-400'
-                        }`}>
-                          {checkedTasks.nutrition.completed && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <label className="text-sm text-gray-700 cursor-pointer">
-                          Nutrition
-                          {checkedTasks.nutrition.completed && checkedTasks.nutrition.completedAt && (
-                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.nutrition.completedAt})</span>
-                          )}
-                        </label>
-                      </div>
-                      <div 
-                        className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ 
-                          ...prev, 
-                          epilepsy: { 
-                            completed: !prev.epilepsy.completed,
-                            completedAt: !prev.epilepsy.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-                          }
-                        }))}
-                      >
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.epilepsy.completed 
-                            ? 'border-blue-500 bg-blue-500' 
-                            : 'border-gray-300 bg-white group-hover:border-gray-400'
-                        }`}>
-                          {checkedTasks.epilepsy.completed && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <label className="text-sm text-gray-700 cursor-pointer">
-                          Epilepsie
-                          {checkedTasks.epilepsy.completed && checkedTasks.epilepsy.completedAt && (
-                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.epilepsy.completedAt})</span>
-                          )}
-                        </label>
-                      </div>
-                      <div 
-                        className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ 
-                          ...prev, 
-                          fentanyl: { 
-                            completed: !prev.fentanyl.completed,
-                            completedAt: !prev.fentanyl.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-                          }
-                        }))}
-                      >
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.fentanyl.completed 
-                            ? 'border-blue-500 bg-blue-500' 
-                            : 'border-gray-300 bg-white group-hover:border-gray-400'
-                        }`}>
-                          {checkedTasks.fentanyl.completed && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <label className="text-sm text-gray-700 cursor-pointer">
-                          Fentanyl
-                          {checkedTasks.fentanyl.completed && checkedTasks.fentanyl.completedAt && (
-                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.fentanyl.completedAt})</span>
-                          )}
-                        </label>
-                      </div>
-                      <div 
-                        className="flex items-center space-x-2 cursor-pointer group"
-                        onClick={() => setCheckedTasks(prev => ({ 
-                          ...prev, 
-                          propofol: { 
-                            completed: !prev.propofol.completed,
-                            completedAt: !prev.propofol.completed ? new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined
-                          }
-                        }))}
-                      >
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                          checkedTasks.propofol.completed 
-                            ? 'border-blue-500 bg-blue-500' 
-                            : 'border-gray-300 bg-white group-hover:border-gray-400'
-                        }`}>
-                          {checkedTasks.propofol.completed && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <label className="text-sm text-gray-700 cursor-pointer">
-                          Propofol
-                          {checkedTasks.propofol.completed && checkedTasks.propofol.completedAt && (
-                            <span className="ml-2 text-xs text-gray-500">({checkedTasks.propofol.completedAt})</span>
-                          )}
-                        </label>
-                      </div>
+                        );
+                      })}
                     </div>
                   </CardContent>}
               </Card>

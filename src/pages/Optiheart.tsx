@@ -35,20 +35,21 @@ const Optiheart = () => {
   const [editedObjectives, setEditedObjectives] = useState<string[]>([]);
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
-  const [checkedTasks, setCheckedTasks] = useState({
-    map: false,
-    cardiacOutput: false,
-    lactate: false,
-    scvo2: false,
-    fluidBalance: false,
-    inotropes: false,
-    vasopressors: false,
-    echocardiography: false
-  });
+  const monitoringTargets = [
+    { label: 'PAM', value: 72, unit: 'mmHg', target: '> 65 mmHg', status: 'normal', trend: 'up', change: 3 },
+    { label: 'Débit cardiaque', value: 3.2, unit: 'L/min', target: '4.5-6.0 L/min', status: 'critical', trend: 'up', change: 0.4 },
+    { label: 'Lactates', value: 1.2, unit: 'mmol/L', target: '< 2 mmol/L', status: 'normal', trend: 'down', change: -0.2 },
+    { label: 'ScvO2', value: 72, unit: '%', target: '> 70%', status: 'normal', trend: 'up', change: 2 },
+    { label: 'Bilan hydrique', value: '+500', unit: 'mL', target: 'Équilibré', status: 'warning', trend: 'stable', change: 0 },
+    { label: 'Support inotrope', value: 'Dobutamine 5', unit: 'mcg/kg/min', target: 'Selon besoin', status: 'normal', trend: 'stable' },
+    { label: 'Vasopresseurs', value: 'Noradré 0.15', unit: 'mcg/kg/min', target: 'Selon MAP', status: 'normal', trend: 'down', change: -0.05 },
+    { label: 'Échocardiographie', value: 'FEVG 35%', target: 'Contrôle régulier', status: 'critical', trend: 'stable' }
+  ];
   
-  const totalTasks = Object.keys(checkedTasks).length;
-  const completedTasks = Object.values(checkedTasks).filter(Boolean).length;
-  const completionPercentage = Math.round(completedTasks / totalTasks * 100);
+  const totalTargets = monitoringTargets.length;
+  const normalTargets = monitoringTargets.filter(t => t.status === 'normal').length;
+  const monitoringAdherence = Math.round(normalTargets / totalTargets * 100);
+  const targetOutOfRangeCount = monitoringTargets.filter(t => t.status !== 'normal').length;
 
   if (!patient) {
     return (
@@ -607,24 +608,24 @@ const Optiheart = () => {
               )}
             </Card>
 
-            {/* Monitoring Tasks Checklist */}
+            {/* Monitoring Targets */}
             <Card className="border-2 border-gray-200">
               <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setChecklistExpanded(!checklistExpanded)}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                      completionPercentage >= 90 ? 'border-gray-400 text-gray-600 bg-gray-50' : 
-                      completionPercentage >= 80 ? 'border-orange-400 text-orange-600 bg-orange-50' : 
+                      monitoringAdherence >= 90 ? 'border-gray-400 text-gray-600 bg-gray-50' : 
+                      monitoringAdherence >= 80 ? 'border-orange-400 text-orange-600 bg-orange-50' : 
                       'border-red-400 text-red-600 bg-red-50'
                     }`}>
-                      {completionPercentage}%
+                      {monitoringAdherence}%
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700">
-                        Checklist hémodynamique
+                        Adhérence globale des cibles de monitorage
                       </h3>
                       <p className="text-xs text-gray-500 mt-1">
-                        {completedTasks} tâches sur {totalTasks} à faire
+                        {targetOutOfRangeCount} cibles à surveiller
                       </p>
                     </div>
                   </div>
@@ -634,142 +635,36 @@ const Optiheart = () => {
               {checklistExpanded && (
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
-                    <div 
-                      className="flex items-center space-x-2 cursor-pointer group"
-                      onClick={() => setCheckedTasks(prev => ({ ...prev, map: !prev.map }))}
-                    >
-                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                        checkedTasks.map 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300 bg-white group-hover:border-gray-400'
-                      }`}>
-                        {checkedTasks.map && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        )}
-                      </div>
-                      <label className="text-sm text-gray-700 cursor-pointer">
-                        PAM
-                      </label>
-                    </div>
-                    <div 
-                      className="flex items-center space-x-2 cursor-pointer group"
-                      onClick={() => setCheckedTasks(prev => ({ ...prev, cardiacOutput: !prev.cardiacOutput }))}
-                    >
-                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                        checkedTasks.cardiacOutput 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300 bg-white group-hover:border-gray-400'
-                      }`}>
-                        {checkedTasks.cardiacOutput && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        )}
-                      </div>
-                      <label className="text-sm text-gray-700 cursor-pointer">
-                        Débit cardiaque
-                      </label>
-                    </div>
-                    <div 
-                      className="flex items-center space-x-2 cursor-pointer group"
-                      onClick={() => setCheckedTasks(prev => ({ ...prev, lactate: !prev.lactate }))}
-                    >
-                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                        checkedTasks.lactate 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300 bg-white group-hover:border-gray-400'
-                      }`}>
-                        {checkedTasks.lactate && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        )}
-                      </div>
-                      <label className="text-sm text-gray-700 cursor-pointer">
-                        Lactates
-                      </label>
-                    </div>
-                    <div 
-                      className="flex items-center space-x-2 cursor-pointer group"
-                      onClick={() => setCheckedTasks(prev => ({ ...prev, scvo2: !prev.scvo2 }))}
-                    >
-                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                        checkedTasks.scvo2 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300 bg-white group-hover:border-gray-400'
-                      }`}>
-                        {checkedTasks.scvo2 && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        )}
-                      </div>
-                      <label className="text-sm text-gray-700 cursor-pointer">
-                        ScvO2
-                      </label>
-                    </div>
-                    <div 
-                      className="flex items-center space-x-2 cursor-pointer group"
-                      onClick={() => setCheckedTasks(prev => ({ ...prev, fluidBalance: !prev.fluidBalance }))}
-                    >
-                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                        checkedTasks.fluidBalance 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300 bg-white group-hover:border-gray-400'
-                      }`}>
-                        {checkedTasks.fluidBalance && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        )}
-                      </div>
-                      <label className="text-sm text-gray-700 cursor-pointer">
-                        Bilan hydrique
-                      </label>
-                    </div>
-                    <div 
-                      className="flex items-center space-x-2 cursor-pointer group"
-                      onClick={() => setCheckedTasks(prev => ({ ...prev, inotropes: !prev.inotropes }))}
-                    >
-                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                        checkedTasks.inotropes 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300 bg-white group-hover:border-gray-400'
-                      }`}>
-                        {checkedTasks.inotropes && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        )}
-                      </div>
-                      <label className="text-sm text-gray-700 cursor-pointer">
-                        Support inotrope
-                      </label>
-                    </div>
-                    <div 
-                      className="flex items-center space-x-2 cursor-pointer group"
-                      onClick={() => setCheckedTasks(prev => ({ ...prev, vasopressors: !prev.vasopressors }))}
-                    >
-                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                        checkedTasks.vasopressors 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300 bg-white group-hover:border-gray-400'
-                      }`}>
-                        {checkedTasks.vasopressors && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        )}
-                      </div>
-                      <label className="text-sm text-gray-700 cursor-pointer">
-                        Vasopresseurs
-                      </label>
-                    </div>
-                    <div 
-                      className="flex items-center space-x-2 cursor-pointer group"
-                      onClick={() => setCheckedTasks(prev => ({ ...prev, echocardiography: !prev.echocardiography }))}
-                    >
-                      <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all ${
-                        checkedTasks.echocardiography 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300 bg-white group-hover:border-gray-400'
-                      }`}>
-                        {checkedTasks.echocardiography && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        )}
-                      </div>
-                      <label className="text-sm text-gray-700 cursor-pointer">
-                        Échocardiographie
-                      </label>
-                    </div>
+                    {monitoringTargets.map((target, index) => {
+                      const statusColor = target.status === 'critical' ? 'bg-red-500' : target.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
+                      const getTrendIcon = () => {
+                        if (target.trend === 'up') return <TrendingUp className="h-3 w-3 text-green-500" />;
+                        if (target.trend === 'down') return <TrendingDown className="h-3 w-3 text-red-500" />;
+                        return <Minus className="h-3 w-3 text-gray-400" />;
+                      };
+                      return (
+                        <div 
+                          key={index}
+                          className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
+                        >
+                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-1">
+                              <p className="text-sm font-medium text-gray-700">
+                                {target.label} : {target.value}{target.unit || ''}
+                              </p>
+                              {getTrendIcon()}
+                            </div>
+                            <p className="text-xs text-gray-500">{target.target}</p>
+                            {target.change !== undefined && target.trend !== 'stable' && (
+                              <p className={`text-xs ${target.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                {target.change > 0 ? '+' : ''}{target.change} {target.unit}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               )}
