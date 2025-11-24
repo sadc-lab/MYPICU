@@ -29,7 +29,7 @@ const Optiheart = () => {
   const [interventions, setInterventions] = useState<string[]>([
     'Fluid resuscitation completed',
     'Inotropic support optimized',
-    'Continuous hemodynamic monitoring'
+    'Continuous hemodynamic monitorage'
   ]);
   const [isEditingObjectives, setIsEditingObjectives] = useState(false);
   const [editedObjectives, setEditedObjectives] = useState<string[]>([]);
@@ -512,7 +512,7 @@ const Optiheart = () => {
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Adhérence & Monitoring</CardTitle>
+              <CardTitle className="text-lg">Adhérence & Monitorage</CardTitle>
               <div className="flex gap-2">
                 {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
                   <button
