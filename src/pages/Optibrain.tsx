@@ -605,7 +605,24 @@ const Optibrain = () => {
 
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">Adhérence & Monitoring</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Adhérence & Monitoring</CardTitle>
+              <div className="flex gap-2">
+                {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
+                  <button
+                    key={range}
+                    onClick={() => setTimeRange(range)}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      timeRange === range
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {range === 'now' ? 'Maintenant' : range === 'stay' ? 'Séjour' : range.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
 
@@ -898,26 +915,9 @@ const Optibrain = () => {
               {/* Monitoring Chart */}
               <Card className="border-2 border-gray-200">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">
-                      {timeRange === 'now' ? 'Monitoring (Current)' : timeRange === 'stay' ? 'Monitoring (Séjour complet)' : `Monitoring Last ${timeRange.toUpperCase()}`}
-                    </CardTitle>
-                    <div className="flex gap-2">
-                      {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
-                        <button
-                          key={range}
-                          onClick={() => setTimeRange(range)}
-                          className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                            timeRange === range
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          {range === 'now' ? 'Now' : range === 'stay' ? 'Séjour complet' : range.toUpperCase()}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <CardTitle className="text-base">
+                    {timeRange === 'now' ? 'Monitoring (Maintenant)' : timeRange === 'stay' ? 'Monitoring (Séjour complet)' : `Monitoring (${timeRange.toUpperCase()})`}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
