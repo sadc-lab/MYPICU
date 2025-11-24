@@ -294,11 +294,6 @@ const Optibrain = () => {
               {brainMetrics.map((metric, index) => {
               const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
               const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
-              const getTrendIcon = () => {
-                if (metric.trend === 'up') return <TrendingUp className="h-5 w-5 text-green-500" />;
-                if (metric.trend === 'down') return <TrendingDown className="h-5 w-5 text-red-500" />;
-                return <Minus className="h-5 w-5 text-gray-400" />;
-              };
               return <div key={index} className="flex flex-col items-center">
                       <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
                         {metric.label}
@@ -307,7 +302,6 @@ const Optibrain = () => {
                         <div className={`text-4xl font-bold ${valueColor}`}>
                           {metric.value}
                         </div>
-                        {getTrendIcon()}
                       </div>
                       
                       <div className="w-full max-w-[180px]">
@@ -340,11 +334,6 @@ const Optibrain = () => {
             <div className="grid grid-cols-3 gap-8">
               {brainOptimisationMetrics.map((metric, index) => {
               const statusColor = metric.status === 'warning' ? 'text-orange-500' : 'text-gray-600';
-              const getTrendIcon = () => {
-                if (metric.trend === 'up') return <TrendingUp className="h-5 w-5 text-green-500" />;
-                if (metric.trend === 'down') return <TrendingDown className="h-5 w-5 text-red-500" />;
-                return <Minus className="h-5 w-5 text-gray-400" />;
-              };
               return <div key={index} className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors" onClick={() => metric.hasDetails && setOpenDialog(metric.dialogKey || null)}>
                       <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
                         {metric.label}
@@ -353,7 +342,6 @@ const Optibrain = () => {
                         <div className={`text-4xl font-bold ${statusColor}`}>
                           {metric.displayValue}
                         </div>
-                        {metric.trend !== 'stable' && getTrendIcon()}
                       </div>
                       {metric.change !== undefined && metric.trend !== 'stable' && (
                         <div className={`text-xs ${metric.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
@@ -690,11 +678,6 @@ const Optibrain = () => {
                       {clinicalIndicators.map((indicator, index) => {
                   const isSelected = selectedIndicators.includes(indicator.label);
                   const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
-                  const getTrendIcon = () => {
-                    if (indicator.trend === 'up') return <TrendingUp className="h-3 w-3 text-green-500" />;
-                    if (indicator.trend === 'down') return <TrendingDown className="h-3 w-3 text-red-500" />;
-                    return <Minus className="h-3 w-3 text-gray-400" />;
-                  };
                   return <div key={index} className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${isSelected ? 'bg-blue-50 border-2 border-blue-400' : 'hover:bg-gray-50'}`} onClick={() => {
                     setSelectedIndicators(prev => prev.includes(indicator.label) ? prev.filter(label => label !== indicator.label) : [...prev, indicator.label]);
                   }}>
@@ -704,7 +687,6 @@ const Optibrain = () => {
                                 <p className="text-sm font-medium text-gray-700">
                                   {indicator.label} : {indicator.value}{indicator.unit}
                                 </p>
-                                {getTrendIcon()}
                               </div>
                               <p className="text-xs text-gray-500">{indicator.target}</p>
                               {indicator.trend !== 'stable' && (
@@ -750,11 +732,6 @@ const Optibrain = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
                       {monitoringTargets.map((target, index) => {
                         const statusColor = target.status === 'critical' ? 'bg-red-500' : target.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
-                        const getTrendIcon = () => {
-                          if (target.trend === 'up') return <TrendingUp className="h-3 w-3 text-green-500" />;
-                          if (target.trend === 'down') return <TrendingDown className="h-3 w-3 text-red-500" />;
-                          return <Minus className="h-3 w-3 text-gray-400" />;
-                        };
                         return (
                           <div 
                             key={index}
@@ -766,7 +743,6 @@ const Optibrain = () => {
                                 <p className="text-sm font-medium text-gray-700">
                                   {target.label} : {target.value}{target.unit || ''}
                                 </p>
-                                {getTrendIcon()}
                               </div>
                               <p className="text-xs text-gray-500">{target.target}</p>
                               {target.change !== undefined && target.trend !== 'stable' && (
