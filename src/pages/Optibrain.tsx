@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getPatientById } from '@/utils/patientData';
-import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2 } from 'lucide-react';
+import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 const Optibrain = () => {
@@ -77,7 +77,9 @@ const Optibrain = () => {
     min: 0,
     max: 30,
     targetMin: 7,
-    targetMax: 15
+    targetMax: 15,
+    trend: 'down',
+    change: -2
   }, {
     label: 'CPP',
     value: 65,
@@ -85,7 +87,9 @@ const Optibrain = () => {
     min: 30,
     max: 90,
     targetMin: 50,
-    targetMax: 70
+    targetMax: 70,
+    trend: 'up',
+    change: 3
   }, {
     label: 'GCS',
     value: 12,
@@ -93,7 +97,9 @@ const Optibrain = () => {
     min: 3,
     max: 15,
     targetMin: 13,
-    targetMax: 15
+    targetMax: 15,
+    trend: 'stable',
+    change: 0
   }, {
     label: 'PaCO2',
     value: 38,
@@ -101,7 +107,9 @@ const Optibrain = () => {
     min: 25,
     max: 55,
     targetMin: 35,
-    targetMax: 45
+    targetMax: 45,
+    trend: 'down',
+    change: -1
   }];
   const brainOptimisationMetrics = [{
     label: 'État Neuro',
@@ -110,7 +118,8 @@ const Optibrain = () => {
     unit: '',
     status: 'warning',
     hasDetails: true,
-    dialogKey: 'neuro'
+    dialogKey: 'neuro',
+    trend: 'stable'
   }, {
     label: 'PIC',
     value: '26 mmHg',
@@ -118,7 +127,9 @@ const Optibrain = () => {
     unit: 'mmHg',
     status: 'warning',
     hasDetails: true,
-    dialogKey: 'pic'
+    dialogKey: 'pic',
+    trend: 'down',
+    change: -3
   }, {
     label: 'PPC Opt',
     value: '65 mmHg',
@@ -126,7 +137,9 @@ const Optibrain = () => {
     unit: 'mmHg',
     status: 'normal',
     hasDetails: true,
-    dialogKey: 'ppc'
+    dialogKey: 'ppc',
+    trend: 'up',
+    change: 2
   }];
   const isInRange = (value: number, min: number, max: number) => {
     return value >= min && value <= max;
@@ -136,55 +149,73 @@ const Optibrain = () => {
     value: 38,
     unit: 'mmHg',
     target: '35-45mmHg',
-    status: 'normal'
+    status: 'normal',
+    trend: 'down',
+    change: -1
   }, {
     label: 'PIC',
     value: 27,
     unit: 'mmHg',
     target: '< 20mmHg',
-    status: 'critical'
+    status: 'critical',
+    trend: 'down',
+    change: -2
   }, {
     label: 'PPC',
     value: 73,
     unit: 'mmHg',
     target: '60-70 mmHg',
-    status: 'warning'
+    status: 'warning',
+    trend: 'up',
+    change: 4
   }, {
     label: 'INR',
     value: 1.54,
     unit: '',
     target: '< 1.2',
-    status: 'critical'
+    status: 'critical',
+    trend: 'up',
+    change: 0.12
   }, {
     label: 'Tête',
     value: 32,
     unit: '°',
     target: '0-30°',
-    status: 'warning'
+    status: 'warning',
+    trend: 'stable',
+    change: 0
   }, {
     label: 'Hb',
     value: 8,
     unit: 'g/dL',
     target: '> 7g/dl',
-    status: 'normal'
+    status: 'normal',
+    trend: 'stable',
+    change: 0
   }, {
     label: 'Temp.',
     value: 35.8,
     unit: '°C',
     target: '35-38°C',
-    status: 'normal'
+    status: 'normal',
+    trend: 'up',
+    change: 0.3
   }, {
     label: 'Plaquettes',
     value: 179,
     unit: 'g/L',
     target: '> 100 g/L',
-    status: 'normal'
+    status: 'normal',
+    trend: 'down',
+    change: -8
   }, {
     label: 'Glycémie',
     value: 5.9,
     unit: 'mmol/L',
     target: '5-11 mmol/L',
-    status: 'normal'
+    status: 'normal',
+    trend: 'stable',
+    change: 0
   }];
 
   // Calculate clinical adherence
@@ -276,12 +307,20 @@ const Optibrain = () => {
               {brainMetrics.map((metric, index) => {
               const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
               const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
+              const getTrendIcon = () => {
+                if (metric.trend === 'up') return <TrendingUp className="h-5 w-5 text-green-500" />;
+                if (metric.trend === 'down') return <TrendingDown className="h-5 w-5 text-red-500" />;
+                return <Minus className="h-5 w-5 text-gray-400" />;
+              };
               return <div key={index} className="flex flex-col items-center">
                       <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
                         {metric.label}
                       </div>
-                      <div className={`text-4xl font-bold ${valueColor} mb-3`}>
-                        {metric.value}
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className={`text-4xl font-bold ${valueColor}`}>
+                          {metric.value}
+                        </div>
+                        {getTrendIcon()}
                       </div>
                       
                       <div className="w-full max-w-[180px]">
@@ -314,13 +353,26 @@ const Optibrain = () => {
             <div className="grid grid-cols-3 gap-8">
               {brainOptimisationMetrics.map((metric, index) => {
               const statusColor = metric.status === 'warning' ? 'text-orange-500' : 'text-gray-600';
+              const getTrendIcon = () => {
+                if (metric.trend === 'up') return <TrendingUp className="h-5 w-5 text-green-500" />;
+                if (metric.trend === 'down') return <TrendingDown className="h-5 w-5 text-red-500" />;
+                return <Minus className="h-5 w-5 text-gray-400" />;
+              };
               return <div key={index} className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors" onClick={() => metric.hasDetails && setOpenDialog(metric.dialogKey || null)}>
                       <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
                         {metric.label}
                       </div>
-                      <div className={`text-4xl font-bold ${statusColor} mb-2`}>
-                        {metric.displayValue}
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`text-4xl font-bold ${statusColor}`}>
+                          {metric.displayValue}
+                        </div>
+                        {metric.trend !== 'stable' && getTrendIcon()}
                       </div>
+                      {metric.change !== undefined && metric.trend !== 'stable' && (
+                        <div className={`text-xs ${metric.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                          {metric.change > 0 ? '+' : ''}{metric.change} {metric.unit}
+                        </div>
+                      )}
                       {metric.hasDetails && <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
                           <Info className="h-3 w-3" />
                           <span>Voir détails</span>
@@ -651,15 +703,28 @@ const Optibrain = () => {
                       {clinicalIndicators.map((indicator, index) => {
                   const isSelected = selectedIndicators.includes(indicator.label);
                   const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
+                  const getTrendIcon = () => {
+                    if (indicator.trend === 'up') return <TrendingUp className="h-3 w-3 text-green-500" />;
+                    if (indicator.trend === 'down') return <TrendingDown className="h-3 w-3 text-red-500" />;
+                    return <Minus className="h-3 w-3 text-gray-400" />;
+                  };
                   return <div key={index} className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${isSelected ? 'bg-blue-50 border-2 border-blue-400' : 'hover:bg-gray-50'}`} onClick={() => {
                     setSelectedIndicators(prev => prev.includes(indicator.label) ? prev.filter(label => label !== indicator.label) : [...prev, indicator.label]);
                   }}>
                             <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}></div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-700">
-                                {indicator.label} : {indicator.value}{indicator.unit}
-                              </p>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-1">
+                                <p className="text-sm font-medium text-gray-700">
+                                  {indicator.label} : {indicator.value}{indicator.unit}
+                                </p>
+                                {getTrendIcon()}
+                              </div>
                               <p className="text-xs text-gray-500">{indicator.target}</p>
+                              {indicator.trend !== 'stable' && (
+                                <p className={`text-xs ${indicator.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                  {indicator.change > 0 ? '+' : ''}{indicator.change} {indicator.unit}
+                                </p>
+                              )}
                             </div>
                           </div>;
                 })}

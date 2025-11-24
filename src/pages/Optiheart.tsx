@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getPatientById } from '@/utils/patientData';
-import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2 } from 'lucide-react';
+import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -62,12 +62,12 @@ const Optiheart = () => {
   }
 
   const heartMetrics = [
-    { label: 'Cardiac Output', value: 4.5, unit: 'L/min', min: 2, max: 10, targetMin: 4, targetMax: 8 },
-    { label: 'Cardiac Index', value: 3.2, unit: 'L/min/m²', min: 1.5, max: 5, targetMin: 2.5, targetMax: 4.0 },
-    { label: 'CVP', value: 8, unit: 'mmHg', min: 0, max: 15, targetMin: 2, targetMax: 8 },
-    { label: 'SVR', value: 1200, unit: 'dynes/sec/cm⁻⁵', min: 500, max: 1600, targetMin: 800, targetMax: 1200 },
-    { label: 'Lactate', value: 1.2, unit: 'mmol/L', min: 0, max: 4, targetMin: 0, targetMax: 2 },
-    { label: 'ScvO2', value: 72, unit: '%', min: 50, max: 85, targetMin: 65, targetMax: 75 },
+    { label: 'Cardiac Output', value: 4.5, unit: 'L/min', min: 2, max: 10, targetMin: 4, targetMax: 8, trend: 'up', change: 0.3 },
+    { label: 'Cardiac Index', value: 3.2, unit: 'L/min/m²', min: 1.5, max: 5, targetMin: 2.5, targetMax: 4.0, trend: 'up', change: 0.2 },
+    { label: 'CVP', value: 8, unit: 'mmHg', min: 0, max: 15, targetMin: 2, targetMax: 8, trend: 'stable', change: 0 },
+    { label: 'SVR', value: 1200, unit: 'dynes/sec/cm⁻⁵', min: 500, max: 1600, targetMin: 800, targetMax: 1200, trend: 'down', change: -50 },
+    { label: 'Lactate', value: 1.2, unit: 'mmol/L', min: 0, max: 4, targetMin: 0, targetMax: 2, trend: 'down', change: -0.3 },
+    { label: 'ScvO2', value: 72, unit: '%', min: 50, max: 85, targetMin: 65, targetMax: 75, trend: 'up', change: 2 },
   ];
 
   const heartOptimisationMetrics = [
@@ -78,7 +78,8 @@ const Optiheart = () => {
       unit: '',
       status: 'critical',
       hasDetails: true,
-      dialogKey: 'cardiac'
+      dialogKey: 'cardiac',
+      trend: 'stable'
     },
     {
       label: 'VAP Prediction 1',
@@ -87,7 +88,9 @@ const Optiheart = () => {
       unit: '%',
       status: 'warning',
       hasDetails: true,
-      dialogKey: 'vap1'
+      dialogKey: 'vap1',
+      trend: 'down',
+      change: -3
     },
     {
       label: 'VAP Prediction 2',
@@ -96,20 +99,22 @@ const Optiheart = () => {
       unit: '%',
       status: 'normal',
       hasDetails: true,
-      dialogKey: 'vap2'
+      dialogKey: 'vap2',
+      trend: 'down',
+      change: -5
     }
   ];
 
   const clinicalIndicators = [
-    { label: 'MAP', value: 72, unit: 'mmHg', target: '> 65 mmHg', status: 'normal' },
-    { label: 'FC', value: 98, unit: 'bpm', target: '60-100 bpm', status: 'normal' },
-    { label: 'DC', value: 3.2, unit: 'L/min', target: '4.5-6.0 L/min', status: 'critical' },
-    { label: 'IC', value: 2.1, unit: 'L/min/m²', target: '2.5-4.0 L/min/m²', status: 'critical' },
-    { label: 'RVS', value: 1450, unit: 'dynes/s/cm⁻⁵', target: '800-1200 dynes/s/cm⁻⁵', status: 'warning' },
-    { label: 'CVP', value: 8, unit: 'mmHg', target: '2-8 mmHg', status: 'normal' },
-    { label: 'Lactate', value: 1.2, unit: 'mmol/L', target: '< 2 mmol/L', status: 'normal' },
-    { label: 'ScvO2', value: 72, unit: '%', target: '> 70%', status: 'normal' },
-    { label: 'PAPO', value: 12, unit: 'mmHg', target: '6-12 mmHg', status: 'normal' }
+    { label: 'MAP', value: 72, unit: 'mmHg', target: '> 65 mmHg', status: 'normal', trend: 'up', change: 3 },
+    { label: 'FC', value: 98, unit: 'bpm', target: '60-100 bpm', status: 'normal', trend: 'stable', change: 0 },
+    { label: 'DC', value: 3.2, unit: 'L/min', target: '4.5-6.0 L/min', status: 'critical', trend: 'up', change: 0.4 },
+    { label: 'IC', value: 2.1, unit: 'L/min/m²', target: '2.5-4.0 L/min/m²', status: 'critical', trend: 'up', change: 0.3 },
+    { label: 'RVS', value: 1450, unit: 'dynes/s/cm⁻⁵', target: '800-1200 dynes/s/cm⁻⁵', status: 'warning', trend: 'down', change: -50 },
+    { label: 'CVP', value: 8, unit: 'mmHg', target: '2-8 mmHg', status: 'normal', trend: 'stable', change: 0 },
+    { label: 'Lactate', value: 1.2, unit: 'mmol/L', target: '< 2 mmol/L', status: 'normal', trend: 'down', change: -0.2 },
+    { label: 'ScvO2', value: 72, unit: '%', target: '> 70%', status: 'normal', trend: 'up', change: 2 },
+    { label: 'PAPO', value: 12, unit: 'mmHg', target: '6-12 mmHg', status: 'normal', trend: 'stable', change: 0 }
   ];
 
   // Calculate clinical adherence
@@ -204,14 +209,22 @@ const Optiheart = () => {
               {heartMetrics.map((metric, index) => {
                 const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
                 const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
+                const getTrendIcon = () => {
+                  if (metric.trend === 'up') return <TrendingUp className="h-5 w-5 text-green-500" />;
+                  if (metric.trend === 'down') return <TrendingDown className="h-5 w-5 text-red-500" />;
+                  return <Minus className="h-5 w-5 text-gray-400" />;
+                };
                 
                 return (
                   <div key={index} className="flex flex-col items-center">
                     <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
                       {metric.label}
                     </div>
-                    <div className={`text-4xl font-bold ${valueColor} mb-3`}>
-                      {metric.value}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className={`text-4xl font-bold ${valueColor}`}>
+                        {metric.value}
+                      </div>
+                      {getTrendIcon()}
                     </div>
                     
                     <div className="w-full max-w-[180px]">
@@ -259,6 +272,11 @@ const Optiheart = () => {
             <div className="grid grid-cols-3 gap-8">
               {heartOptimisationMetrics.map((metric, index) => {
                 const statusColor = metric.status === 'critical' ? 'text-red-500' : metric.status === 'warning' ? 'text-orange-500' : 'text-gray-600';
+                const getTrendIcon = () => {
+                  if (metric.trend === 'up') return <TrendingUp className="h-5 w-5 text-green-500" />;
+                  if (metric.trend === 'down') return <TrendingDown className="h-5 w-5 text-red-500" />;
+                  return <Minus className="h-5 w-5 text-gray-400" />;
+                };
                 return (
                   <div 
                     key={index} 
@@ -268,9 +286,17 @@ const Optiheart = () => {
                     <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
                       {metric.label}
                     </div>
-                    <div className={`text-4xl font-bold ${statusColor} mb-2`}>
-                      {metric.displayValue}
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`text-4xl font-bold ${statusColor}`}>
+                        {metric.displayValue}
+                      </div>
+                      {metric.trend !== 'stable' && getTrendIcon()}
                     </div>
+                    {metric.change !== undefined && metric.trend !== 'stable' && (
+                      <div className={`text-xs ${metric.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                        {metric.change > 0 ? '+' : ''}{metric.change} {metric.unit}
+                      </div>
+                    )}
                     {metric.hasDetails && (
                       <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
                         <Info className="h-3 w-3" />
@@ -536,6 +562,11 @@ const Optiheart = () => {
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
                       const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
+                      const getTrendIcon = () => {
+                        if (indicator.trend === 'up') return <TrendingUp className="h-3 w-3 text-green-500" />;
+                        if (indicator.trend === 'down') return <TrendingDown className="h-3 w-3 text-red-500" />;
+                        return <Minus className="h-3 w-3 text-gray-400" />;
+                      };
                       return (
                         <div 
                           key={index}
@@ -551,11 +582,19 @@ const Optiheart = () => {
                           }}
                         >
                           <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}></div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">
-                              {indicator.label} : {indicator.value}{indicator.unit}
-                            </p>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-1">
+                              <p className="text-sm font-medium text-gray-700">
+                                {indicator.label} : {indicator.value}{indicator.unit}
+                              </p>
+                              {getTrendIcon()}
+                            </div>
                             <p className="text-xs text-gray-500">{indicator.target}</p>
+                            {indicator.trend !== 'stable' && (
+                              <p className={`text-xs ${indicator.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                {indicator.change > 0 ? '+' : ''}{indicator.change} {indicator.unit}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );
