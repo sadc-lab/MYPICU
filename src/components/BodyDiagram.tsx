@@ -50,8 +50,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
   const lungsStatus = getOrganStatus('lungs');
 
   return (
-    <div className="relative w-full max-w-5xl mx-auto py-8 animate-fade-in">
-      <div className="flex justify-center gap-16 items-start">
+    <div className="relative w-full max-w-3xl mx-auto py-8 animate-fade-in">
+      <div className="flex justify-center">
         {/* Front view */}
         <div className="relative">
           <div className="text-center mb-6">
@@ -335,108 +335,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
                 </foreignObject>
               </g>
             )}
-          </svg>
-        </div>
-
-        {/* Back view */}
-        <div className="relative">
-          <div className="text-center mb-6">
-            <h3 className="text-base font-semibold text-foreground">Vue de dos</h3>
-          </div>
-          
-          <svg 
-            viewBox="0 0 300 600" 
-            className="w-80 h-auto drop-shadow-lg"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* Body silhouette - back view */}
-            <g opacity="0.4" fill="url(#bodyGradient)" stroke="hsl(var(--muted-foreground) / 0.2)" strokeWidth="1.5">
-              {/* Head */}
-              <ellipse cx="150" cy="50" rx="35" ry="42" />
-              
-              {/* Neck */}
-              <rect x="135" y="85" width="30" height="25" rx="8" />
-              
-              {/* Shoulders */}
-              <ellipse cx="150" cy="115" rx="65" ry="15" />
-              
-              {/* Back/Spine line */}
-              <line x1="150" y1="110" x2="150" y2="340" stroke="hsl(var(--muted-foreground) / 0.15)" strokeWidth="2" strokeDasharray="5,5" />
-              
-              {/* Back muscles */}
-              <path d="M 95 115 Q 85 140 85 180 L 85 280 Q 85 300 95 310 L 115 360 L 130 420" />
-              <path d="M 205 115 Q 215 140 215 180 L 215 280 Q 215 300 205 310 L 185 360 L 170 420" />
-              
-              {/* Waist */}
-              <path d="M 95 310 Q 100 330 110 340 L 130 420" />
-              <path d="M 205 310 Q 200 330 190 340 L 170 420" />
-              
-              {/* Arms */}
-              <path d="M 95 115 Q 75 120 65 130 L 55 200 L 50 260" />
-              <path d="M 205 115 Q 225 120 235 130 L 245 200 L 250 260" />
-              
-              {/* Legs */}
-              <path d="M 130 420 L 132 520 L 128 580" strokeWidth="18" strokeLinecap="round" />
-              <path d="M 170 420 L 168 520 L 172 580" strokeWidth="18" strokeLinecap="round" />
-            </g>
-
-            {/* Brain (back of head) */}
-            <ellipse 
-              cx="150" 
-              cy="45" 
-              rx="32" 
-              ry="38"
-              fill={getOrganColor('brain')}
-              stroke={getStrokeColor('brain')}
-              strokeWidth="2"
-              opacity="0.5"
-              filter="url(#shadow)"
-            />
-
-            {/* Lungs (back view) */}
-            <g opacity="0.6">
-              <path 
-                d="M 120 135 Q 110 145 110 165 L 110 200 Q 110 220 120 225 Q 125 228 130 225 L 135 200 L 135 165 Q 135 145 125 140 Z"
-                fill={getOrganColor('lungs')}
-                stroke={getStrokeColor('lungs')}
-                strokeWidth="2"
-                filter="url(#shadow)"
-              />
-              <path 
-                d="M 180 135 Q 190 145 190 165 L 190 200 Q 190 220 180 225 Q 175 228 170 225 L 165 200 L 165 165 Q 165 145 175 140 Z"
-                fill={getOrganColor('lungs')}
-                stroke={getStrokeColor('lungs')}
-                strokeWidth="2"
-                filter="url(#shadow)"
-              />
-            </g>
-
-            {/* Kidneys (more prominent from back) */}
-            <g>
-              <ellipse 
-                cx="115" 
-                cy="280" 
-                rx="16" 
-                ry="26"
-                fill={getOrganColor('kidneys')}
-                stroke={getStrokeColor('kidneys')}
-                strokeWidth="2"
-                filter="url(#shadow)"
-              />
-              <ellipse 
-                cx="185" 
-                cy="280" 
-                rx="16" 
-                ry="26"
-                fill={getOrganColor('kidneys')}
-                stroke={getStrokeColor('kidneys')}
-                strokeWidth="2"
-                filter="url(#shadow)"
-              />
-              {/* Kidney detail */}
-              <ellipse cx="115" cy="280" rx="8" ry="13" fill="hsl(var(--muted-foreground) / 0.1)" />
-              <ellipse cx="185" cy="280" rx="8" ry="13" fill="hsl(var(--muted-foreground) / 0.1)" />
-            </g>
           </svg>
         </div>
       </div>
