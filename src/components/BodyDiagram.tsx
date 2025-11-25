@@ -288,7 +288,73 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
             alt="Diagramme anatomique" 
             className="w-full max-w-lg h-auto"
           />
-          {/* Interactive overlay for clickable organs - only show if there are problems */}
+          
+          {/* Catheter markers overlay */}
+          <svg 
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-full pointer-events-none"
+            viewBox="0 0 400 600"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            {/* Central venous catheter (neck/chest) */}
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <g className="pointer-events-auto cursor-help">
+                    <circle cx="210" cy="120" r="8" fill="hsl(220 100% 50%)" opacity="0.8" stroke="white" strokeWidth="2" />
+                    <circle cx="210" cy="120" r="8" fill="hsl(220 100% 50%)" opacity="0.5">
+                      <animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                    <text x="225" y="125" fill="hsl(220 100% 40%)" fontSize="12" fontWeight="bold">CVC</text>
+                  </g>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs">
+                  <p className="font-semibold">Cathéter Veineux Central</p>
+                  <p className="text-xs">Position: Veine jugulaire/sous-clavière</p>
+                  <p className="text-xs">Usage: Prélèvements sanguins, monitoring hémodynamique</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Arterial line (wrist) - left */}
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <g className="pointer-events-auto cursor-help">
+                    <circle cx="140" cy="380" r="7" fill="hsl(0 100% 60%)" opacity="0.8" stroke="white" strokeWidth="2" />
+                    <circle cx="140" cy="380" r="7" fill="hsl(0 100% 60%)" opacity="0.5">
+                      <animate attributeName="r" values="7;11;7" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                    <text x="105" y="385" fill="hsl(0 100% 50%)" fontSize="11" fontWeight="bold">Art</text>
+                  </g>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-xs">
+                  <p className="font-semibold">Ligne Artérielle</p>
+                  <p className="text-xs">Position: Artère radiale (poignet)</p>
+                  <p className="text-xs">Usage: Monitoring continu PA, gazométrie artérielle</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Peripheral IV (right arm) */}
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <g className="pointer-events-auto cursor-help">
+                    <circle cx="270" cy="320" r="6" fill="hsl(280 100% 60%)" opacity="0.8" stroke="white" strokeWidth="2" />
+                    <circle cx="270" cy="320" r="6" fill="hsl(280 100% 60%)" opacity="0.5">
+                      <animate attributeName="r" values="6;10;6" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                    <text x="280" y="325" fill="hsl(280 100% 50%)" fontSize="11" fontWeight="bold">PIV</text>
+                  </g>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs">
+                  <p className="font-semibold">Cathéter Intraveineux Périphérique</p>
+                  <p className="text-xs">Position: Veine du bras</p>
+                  <p className="text-xs">Usage: Médication, prélèvements sanguins occasionnels</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </svg>
           
           {/* Message when everything is normal */}
           {!hasProblems && (
