@@ -219,16 +219,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     style={{ pointerEvents: brainStatus ? 'auto' : 'none' }}
                     className={`transition-all duration-300 ${brainStatus ? 'cursor-pointer' : ''}`}
                   >
-                    {/* Clickable area over brain in head */}
-                    <circle
-                      cx="300"
-                      cy="80"
-                      r="44"
-                      fill="transparent"
-                      stroke={brainStatus ? (brainStatus.status === 'critical' ? '#dc2626' : '#ea580c') : 'transparent'}
-                      strokeWidth="3"
-                      opacity="0.6"
-                    />
                   </g>
                 </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
@@ -297,17 +287,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     style={{ pointerEvents: lungsStatus ? 'auto' : 'none' }}
                     className={`transition-all duration-300 ${lungsStatus ? 'cursor-pointer' : ''}`}
                   >
-                    {/* Clickable area over lungs in chest */}
-                    <ellipse
-                      cx="300"
-                      cy="270"
-                      rx="82"
-                      ry="58"
-                      fill="transparent"
-                      stroke={lungsStatus ? (lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c') : 'transparent'}
-                      strokeWidth="3"
-                      opacity="0.6"
-                    />
                   </g>
                 </TooltipTrigger>
               <TooltipContent side="right" className="max-w-xs">
@@ -376,16 +355,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     style={{ pointerEvents: heartStatus ? 'auto' : 'none' }}
                     className={`transition-all duration-300 ${heartStatus ? 'cursor-pointer' : ''}`}
                   >
-                    {/* Clickable area over heart */}
-                    <circle
-                      cx="300"
-                      cy="230"
-                      r="44"
-                      fill="transparent"
-                      stroke={heartStatus ? (heartStatus.status === 'critical' ? '#dc2626' : '#ea580c') : 'transparent'}
-                      strokeWidth="3"
-                      opacity="0.6"
-                    />
                   </g>
                 </TooltipTrigger>
               <TooltipContent side="left" className="max-w-xs">
