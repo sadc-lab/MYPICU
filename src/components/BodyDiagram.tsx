@@ -121,9 +121,9 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               {brainStatus && (
                 <ellipse
                   cx="300"
-                  cy="75"
-                  rx="48"
-                  ry="42"
+                  cy="80"
+                  rx="50"
+                  ry="44"
                   fill={brainStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.3)' : 'rgba(234, 88, 12, 0.25)'}
                   filter="url(#organGlow)"
                   style={{ pointerEvents: 'none' }}
@@ -135,20 +135,20 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 <g>
                   {/* Left lung */}
                   <ellipse
-                    cx="240"
-                    cy="260"
-                    rx="48"
-                    ry="65"
+                    cx="235"
+                    cy="270"
+                    rx="50"
+                    ry="68"
                     fill={lungsStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.3)' : 'rgba(234, 88, 12, 0.25)'}
                     filter="url(#organGlow)"
                     style={{ pointerEvents: 'none' }}
                   />
                   {/* Right lung */}
                   <ellipse
-                    cx="360"
-                    cy="260"
-                    rx="48"
-                    ry="65"
+                    cx="365"
+                    cy="270"
+                    rx="50"
+                    ry="68"
                     fill={lungsStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.3)' : 'rgba(234, 88, 12, 0.25)'}
                     filter="url(#organGlow)"
                     style={{ pointerEvents: 'none' }}
@@ -160,9 +160,9 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               {heartStatus && (
                 <ellipse
                   cx="300"
-                  cy="225"
-                  rx="42"
-                  ry="50"
+                  cy="230"
+                  rx="44"
+                  ry="52"
                   fill={heartStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.35)' : 'rgba(234, 88, 12, 0.3)'}
                   filter="url(#organGlow)"
                   style={{ pointerEvents: 'none' }}
@@ -222,8 +222,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     {/* Clickable area over brain in head */}
                     <circle
                       cx="300"
-                      cy="75"
-                      r="42"
+                      cy="80"
+                      r="44"
                       fill="transparent"
                       stroke={brainStatus ? (brainStatus.status === 'critical' ? '#dc2626' : '#ea580c') : 'transparent'}
                       strokeWidth="3"
@@ -232,10 +232,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     
                     {brainStatus && (
                       <g>
-                        <circle cx="300" cy="75" r="25" fill="rgba(255,255,255,0.95)" />
+                        <circle cx="300" cy="80" r="25" fill="rgba(255,255,255,0.95)" />
                         <text 
                           x="300" 
-                          y="85"
+                          y="90"
                           textAnchor="middle" 
                           className="text-[28px] font-bold"
                           fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -275,7 +275,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     <g key={idx}>
                       <rect
                         x="410"
-                        y={240 + idx * 42}
+                        y={250 + idx * 42}
                         width="140"
                         height="38"
                         rx="6"
@@ -285,7 +285,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       />
                       <text 
                         x="420" 
-                        y={260 + idx * 42}
+                        y={270 + idx * 42}
                         className="text-[14px] font-semibold"
                         fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
@@ -293,7 +293,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       </text>
                       <text 
                         x="420" 
-                        y={273 + idx * 42} 
+                        y={283 + idx * 42}
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
                       >
@@ -315,9 +315,9 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     {/* Clickable area over lungs in chest */}
                     <ellipse
                       cx="300"
-                      cy="260"
-                      rx="80"
-                      ry="55"
+                      cy="270"
+                      rx="82"
+                      ry="58"
                       fill="transparent"
                       stroke={lungsStatus ? (lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c') : 'transparent'}
                       strokeWidth="3"
@@ -326,10 +326,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     
                     {lungsStatus && (
                       <g>
-                        <circle cx="300" cy="260" r="26" fill="rgba(255,255,255,0.95)" />
+                        <circle cx="300" cy="270" r="26" fill="rgba(255,255,255,0.95)" />
                         <text 
                           x="300" 
-                          y="272"
+                          y="282"
                           textAnchor="middle" 
                           className="text-[30px] font-bold"
                           fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -369,7 +369,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     <g key={idx}>
                       <rect
                         x="50"
-                        y={190 + idx * 42}
+                        y={195 + idx * 42}
                         width="140"
                         height="38"
                         rx="6"
@@ -379,7 +379,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       />
                       <text 
                         x="60" 
-                        y={210 + idx * 42}
+                        y={215 + idx * 42}
                         className="text-[14px] font-semibold"
                         fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
@@ -387,7 +387,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       </text>
                       <text 
                         x="60" 
-                        y={223 + idx * 42} 
+                        y={228 + idx * 42}
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
                       >
@@ -409,8 +409,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     {/* Clickable area over heart */}
                     <circle
                       cx="300"
-                      cy="225"
-                      r="42"
+                      cy="230"
+                      r="44"
                       fill="transparent"
                       stroke={heartStatus ? (heartStatus.status === 'critical' ? '#dc2626' : '#ea580c') : 'transparent'}
                       strokeWidth="3"
@@ -419,10 +419,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     
                     {heartStatus && (
                       <g>
-                        <circle cx="300" cy="225" r="25" fill="rgba(255,255,255,0.95)" />
+                        <circle cx="300" cy="230" r="25" fill="rgba(255,255,255,0.95)" />
                         <text 
                           x="300" 
-                          y="236"
+                          y="241"
                           textAnchor="middle" 
                           className="text-[28px] font-bold"
                           fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
