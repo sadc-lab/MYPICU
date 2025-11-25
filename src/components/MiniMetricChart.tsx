@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { LineChart, Line, ResponsiveContainer, ReferenceArea } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, ReferenceArea, XAxis } from 'recharts';
 import { brainMetrics, heartMetrics, lungMetrics } from '@/utils/organMetrics';
 
 interface MiniMetricChartProps {
@@ -17,8 +17,13 @@ export const MiniMetricChart = ({ metricLabel, organ }: MiniMetricChartProps) =>
 
     const data = [];
     const dataPoints = 20;
+    const now = new Date();
+    const intervalMinutes = 60; // 1 hour intervals for 20 hour view
     
     for (let i = dataPoints - 1; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
+      const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+      
       const baseValue = metric.value;
       // Add realistic variation based on trend
       let variation = (Math.random() - 0.5) * (baseValue * 0.15);
@@ -30,6 +35,7 @@ export const MiniMetricChart = ({ metricLabel, organ }: MiniMetricChartProps) =>
       }
       
       data.push({
+        time: timeStr,
         value: Math.max(metric.min, Math.min(metric.max, baseValue + variation))
       });
     }
@@ -48,7 +54,14 @@ export const MiniMetricChart = ({ metricLabel, organ }: MiniMetricChartProps) =>
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+      <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 15, left: 5 }}>
+        <XAxis 
+          dataKey="time" 
+          tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
+          tickLine={false}
+          axisLine={false}
+          interval="preserveStartEnd"
+        />
         <ReferenceArea
           y1={metric.targetMin}
           y2={metric.targetMax}
