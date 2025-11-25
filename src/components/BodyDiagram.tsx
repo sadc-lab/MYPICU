@@ -181,7 +181,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {organIndicators['brain'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="385"
+                        x="330"
                         y={60 + idx * 42}
                         width="165"
                         height="38"
@@ -191,7 +191,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="395" 
+                        x="340" 
                         y={80 + idx * 42}
                         className="text-[14px] font-semibold"
                         fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -199,7 +199,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="395" 
+                        x="340" 
                         y={93 + idx * 42} 
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
@@ -249,7 +249,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {organIndicators['lungs'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="385"
+                        x="330"
                         y={250 + idx * 42}
                         width="165"
                         height="38"
@@ -259,7 +259,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="395" 
+                        x="340" 
                         y={270 + idx * 42}
                         className="text-[14px] font-semibold"
                         fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -267,7 +267,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="395" 
+                        x="340" 
                         y={283 + idx * 42} 
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
@@ -317,7 +317,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {organIndicators['heart'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="385"
+                        x="330"
                         y={210 + idx * 42}
                         width="165"
                         height="38"
@@ -327,7 +327,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="395" 
+                        x="340" 
                         y={230 + idx * 42}
                         className="text-[14px] font-semibold"
                         fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -335,7 +335,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="395" 
+                        x="340" 
                         y={243 + idx * 42} 
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
