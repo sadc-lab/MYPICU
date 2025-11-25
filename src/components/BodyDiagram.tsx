@@ -104,31 +104,85 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
 
             {/* Organs with realistic anatomy */}
             
-            {/* Brain with detail */}
+            {/* Brain - realistic shape with hemispheres and folds */}
             <g 
               onClick={() => brainStatus && handleOrganClick('brain')}
               className={`transition-all duration-300 ${brainStatus ? 'cursor-pointer hover:scale-105' : ''}`}
             >
-              <ellipse 
-                cx="150" 
-                cy="45" 
-                rx="32" 
-                ry="38"
+              {/* Main brain shape */}
+              <path 
+                d="M 150 15 
+                   Q 130 15 120 25 
+                   Q 115 30 115 40 
+                   Q 115 50 118 58
+                   Q 120 65 125 70
+                   Q 132 75 140 75
+                   Q 145 75 150 73
+                   Q 155 75 160 75
+                   Q 168 75 175 70
+                   Q 180 65 182 58
+                   Q 185 50 185 40
+                   Q 185 30 180 25
+                   Q 170 15 150 15 Z"
                 fill={getOrganColor('brain')}
                 stroke={getStrokeColor('brain')}
                 strokeWidth="2"
                 filter="url(#shadow)"
               />
-              {/* Brain folds detail */}
+              
+              {/* Left hemisphere detail */}
               <path 
-                d="M 135 35 Q 140 30 145 35 M 155 35 Q 160 30 165 35 M 140 50 Q 145 45 150 50 M 150 50 Q 155 45 160 50"
-                stroke="hsl(var(--muted-foreground) / 0.3)"
-                strokeWidth="1"
+                d="M 125 30 Q 122 35 122 40 Q 122 48 128 55 Q 132 60 138 62"
+                stroke="hsl(var(--muted-foreground) / 0.25)"
+                strokeWidth="1.5"
                 fill="none"
               />
+              <path 
+                d="M 130 35 Q 127 40 128 45 Q 129 50 133 55"
+                stroke="hsl(var(--muted-foreground) / 0.25)"
+                strokeWidth="1.5"
+                fill="none"
+              />
+              
+              {/* Right hemisphere detail */}
+              <path 
+                d="M 175 30 Q 178 35 178 40 Q 178 48 172 55 Q 168 60 162 62"
+                stroke="hsl(var(--muted-foreground) / 0.25)"
+                strokeWidth="1.5"
+                fill="none"
+              />
+              <path 
+                d="M 170 35 Q 173 40 172 45 Q 171 50 167 55"
+                stroke="hsl(var(--muted-foreground) / 0.25)"
+                strokeWidth="1.5"
+                fill="none"
+              />
+              
+              {/* Center division (longitudinal fissure) */}
+              <path 
+                d="M 150 18 Q 150 25 150 40 Q 150 55 150 70"
+                stroke="hsl(var(--muted-foreground) / 0.2)"
+                strokeWidth="1"
+                fill="none"
+                strokeDasharray="2,2"
+              />
+              
+              {/* Cerebellum */}
+              <ellipse 
+                cx="150" 
+                cy="77" 
+                rx="25" 
+                ry="10"
+                fill={getOrganColor('brain')}
+                stroke={getStrokeColor('brain')}
+                strokeWidth="1.5"
+                opacity="0.8"
+                filter="url(#shadow)"
+              />
+              
               {brainStatus && (
                 <g>
-                  <circle cx="150" cy="45" r="14" fill="rgba(255,255,255,0.9)" />
+                  <circle cx="150" cy="45" r="14" fill="rgba(255,255,255,0.95)" />
                   <text 
                     x="150" 
                     y="52" 
@@ -142,37 +196,94 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
               )}
             </g>
 
-            {/* Lungs - anatomically shaped */}
+            {/* Lungs - realistic lobed structure */}
             <g 
               onClick={() => lungsStatus && handleOrganClick('lungs')}
               className={`transition-all duration-300 ${lungsStatus ? 'cursor-pointer hover:scale-105' : ''}`}
             >
-              {/* Left lung */}
+              {/* Left lung - 2 lobes */}
               <path 
-                d="M 120 135 Q 110 145 110 165 L 110 200 Q 110 220 120 225 Q 125 228 130 225 L 135 200 L 135 165 Q 135 145 125 140 Q 122 138 120 135 Z"
+                d="M 122 135 
+                   Q 108 140 105 155
+                   L 105 185
+                   Q 105 200 110 210
+                   Q 115 218 122 220
+                   Q 128 222 133 218
+                   L 138 200
+                   Q 140 185 138 170
+                   Q 137 155 133 145
+                   Q 128 137 122 135 Z"
                 fill={getOrganColor('lungs')}
                 stroke={getStrokeColor('lungs')}
                 strokeWidth="2"
                 filter="url(#shadow)"
               />
-              {/* Right lung */}
+              {/* Left lung lobes separation */}
               <path 
-                d="M 180 135 Q 190 145 190 165 L 190 200 Q 190 220 180 225 Q 175 228 170 225 L 165 200 L 165 165 Q 165 145 175 140 Q 178 138 180 135 Z"
-                fill={getOrganColor('lungs')}
-                stroke={getStrokeColor('lungs')}
-                strokeWidth="2"
-                filter="url(#shadow)"
-              />
-              {/* Bronchi detail */}
-              <path 
-                d="M 150 120 L 150 140 M 150 140 L 130 155 M 150 140 L 170 155"
-                stroke="hsl(var(--muted-foreground) / 0.3)"
-                strokeWidth="2"
+                d="M 115 170 Q 120 172 125 170"
+                stroke="hsl(var(--muted-foreground) / 0.25)"
+                strokeWidth="1.5"
                 fill="none"
               />
+              
+              {/* Right lung - 3 lobes */}
+              <path 
+                d="M 178 135 
+                   Q 192 140 195 155
+                   L 195 185
+                   Q 195 200 190 210
+                   Q 185 218 178 220
+                   Q 172 222 167 218
+                   L 162 200
+                   Q 160 185 162 170
+                   Q 163 155 167 145
+                   Q 172 137 178 135 Z"
+                fill={getOrganColor('lungs')}
+                stroke={getStrokeColor('lungs')}
+                strokeWidth="2"
+                filter="url(#shadow)"
+              />
+              {/* Right lung lobes separation */}
+              <path 
+                d="M 175 160 Q 180 162 185 160 M 175 185 Q 180 187 185 185"
+                stroke="hsl(var(--muted-foreground) / 0.25)"
+                strokeWidth="1.5"
+                fill="none"
+              />
+              
+              {/* Trachea and bronchi */}
+              <path 
+                d="M 150 115 L 150 138"
+                stroke="hsl(var(--muted-foreground) / 0.3)"
+                strokeWidth="4"
+                strokeLinecap="round"
+                fill="none"
+              />
+              {/* Bronchi branches */}
+              <path 
+                d="M 150 138 Q 145 143 135 150 M 150 138 Q 155 143 165 150"
+                stroke="hsl(var(--muted-foreground) / 0.3)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                fill="none"
+              />
+              {/* Smaller bronchioles */}
+              <path 
+                d="M 135 150 L 125 160 M 135 150 L 128 165"
+                stroke="hsl(var(--muted-foreground) / 0.2)"
+                strokeWidth="1.5"
+                fill="none"
+              />
+              <path 
+                d="M 165 150 L 175 160 M 165 150 L 172 165"
+                stroke="hsl(var(--muted-foreground) / 0.2)"
+                strokeWidth="1.5"
+                fill="none"
+              />
+              
               {lungsStatus && (
                 <g>
-                  <circle cx="150" cy="175" r="14" fill="rgba(255,255,255,0.9)" />
+                  <circle cx="150" cy="175" r="14" fill="rgba(255,255,255,0.95)" />
                   <text 
                     x="150" 
                     y="182" 
@@ -186,30 +297,103 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
               )}
             </g>
 
-            {/* Heart - anatomically shaped */}
+            {/* Heart - realistic anatomical shape with chambers */}
             <g 
               onClick={() => heartStatus && handleOrganClick('heart')}
               className={`transition-all duration-300 ${heartStatus ? 'cursor-pointer hover:scale-105' : ''}`}
             >
+              {/* Main heart body */}
               <path 
-                d="M 150 145 L 142 152 Q 135 159 135 168 Q 135 177 142 184 L 150 192 L 158 184 Q 165 177 165 168 Q 165 159 158 152 Z"
+                d="M 150 147 
+                   L 138 156 
+                   Q 130 163 130 173 
+                   Q 130 180 135 187
+                   L 150 200
+                   L 165 187
+                   Q 170 180 170 173
+                   Q 170 163 162 156
+                   Z"
                 fill={getOrganColor('heart')}
                 stroke={getStrokeColor('heart')}
                 strokeWidth="2"
                 filter="url(#shadow)"
               />
-              {/* Heart chambers detail */}
-              <path 
-                d="M 150 155 L 150 185"
-                stroke="hsl(var(--muted-foreground) / 0.3)"
-                strokeWidth="1"
+              
+              {/* Left atrium bump */}
+              <ellipse 
+                cx="140" 
+                cy="150" 
+                rx="8" 
+                ry="10"
+                fill={getOrganColor('heart')}
+                stroke={getStrokeColor('heart')}
+                strokeWidth="1.5"
+                opacity="0.9"
               />
+              
+              {/* Right atrium bump */}
+              <ellipse 
+                cx="160" 
+                cy="150" 
+                rx="8" 
+                ry="10"
+                fill={getOrganColor('heart')}
+                stroke={getStrokeColor('heart')}
+                strokeWidth="1.5"
+                opacity="0.9"
+              />
+              
+              {/* Aortic arch */}
+              <path 
+                d="M 150 147 Q 148 142 145 140 Q 142 138 140 138"
+                stroke={getOrganColor('heart')}
+                strokeWidth="5"
+                fill="none"
+                strokeLinecap="round"
+                opacity="0.8"
+              />
+              <path 
+                d="M 150 147 Q 152 142 155 140 Q 158 138 160 138"
+                stroke={getOrganColor('heart')}
+                strokeWidth="4"
+                fill="none"
+                strokeLinecap="round"
+                opacity="0.8"
+              />
+              
+              {/* Chamber divisions */}
+              <path 
+                d="M 150 155 L 150 192"
+                stroke="hsl(var(--muted-foreground) / 0.25)"
+                strokeWidth="1.5"
+                strokeDasharray="3,2"
+              />
+              <path 
+                d="M 138 170 Q 150 168 162 170"
+                stroke="hsl(var(--muted-foreground) / 0.25)"
+                strokeWidth="1.5"
+              />
+              
+              {/* Pulmonary vessels */}
+              <path 
+                d="M 140 152 Q 135 148 132 145"
+                stroke="hsl(var(--muted-foreground) / 0.3)"
+                strokeWidth="2"
+                fill="none"
+              />
+              <path 
+                d="M 160 152 Q 165 148 168 145"
+                stroke="hsl(var(--muted-foreground) / 0.3)"
+                strokeWidth="2"
+                fill="none"
+              />
+              
               {heartStatus && (
                 <g>
-                  <circle cx="150" cy="168" r="12" fill="rgba(255,255,255,0.9)" />
+                  <circle cx="150" cy="173" r="13" fill="rgba(255,255,255,0.95)" />
                   <text 
                     x="150" 
-                    y="174" 
+                    y="179" 
                     textAnchor="middle" 
                     className="text-[14px] font-bold"
                     fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
