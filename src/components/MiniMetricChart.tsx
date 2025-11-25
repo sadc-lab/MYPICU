@@ -85,8 +85,7 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
   
   if (!metric) return null;
 
-  const isOutOfRange = metric.value < metric.targetMin || metric.value > metric.targetMax;
-  const strokeColor = isOutOfRange ? '#ef4444' : '#9ca3af';
+  const strokeColor = 'hsl(var(--primary))'; // Blue color
 
   return (
     <ResponsiveContainer width="100%" height="100%">
