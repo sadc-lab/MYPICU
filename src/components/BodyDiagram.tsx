@@ -1,10 +1,13 @@
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
 import anatomyDiagram from '@/assets/anatomy-diagram.png';
 import anatomyNormal from '@/assets/anatomy-normal.png';
 import brainIcon from '@/assets/brain-icon.svg';
@@ -28,6 +31,39 @@ interface BodyDiagramProps {
 
 export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {} }: BodyDiagramProps) => {
   const navigate = useNavigate();
+  
+  // États pour la comparaison temporelle
+  const [selectedPeriods, setSelectedPeriods] = useState<[number, number]>([0, 8]); // 2 périodes sélectionnées
+  const [viewSlider, setViewSlider] = useState([0]); // Position du curseur (0 = période 1, 100 = période 2)
+  
+  // Génération des périodes disponibles (simulation - remplacer par vraies données)
+  const availablePeriods = [
+    { id: 0, label: '08:00', timestamp: '2024-01-15 08:00' },
+    { id: 1, label: '10:00', timestamp: '2024-01-15 10:00' },
+    { id: 2, label: '12:00', timestamp: '2024-01-15 12:00' },
+    { id: 3, label: '14:00', timestamp: '2024-01-15 14:00' },
+    { id: 4, label: '16:00', timestamp: '2024-01-15 16:00' },
+    { id: 5, label: '18:00', timestamp: '2024-01-15 18:00' },
+    { id: 6, label: '20:00', timestamp: '2024-01-15 20:00' },
+    { id: 7, label: '22:00', timestamp: '2024-01-15 22:00' },
+    { id: 8, label: '00:00', timestamp: '2024-01-16 00:00' },
+  ];
+  
+  const handlePeriodClick = (periodId: number) => {
+    const [first, second] = selectedPeriods;
+    // Si on clique sur une période déjà sélectionnée, ne rien faire
+    if (periodId === first || periodId === second) return;
+    // Sinon, remplacer la période la plus proche du curseur
+    const sliderPos = viewSlider[0];
+    if (sliderPos < 50) {
+      setSelectedPeriods([periodId, second]);
+    } else {
+      setSelectedPeriods([first, periodId]);
+    }
+  };
+  
+  // Interpolation entre les deux périodes selon la position du curseur
+  const currentPeriodWeight = viewSlider[0] / 100; // 0 = période 1, 1 = période 2
 
   const handleOrganClick = (organ: string) => {
     const organPageMap: Record<string, string> = {
@@ -151,6 +187,137 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
           <h3 className="text-base font-semibold text-foreground">Vue systémique - Corrélations entre organes</h3>
         </div>
         
+        {/* Timeline interactive de comparaison */}
+        {hasProblems && (
+          <div className="mb-8 bg-card border-2 border-border rounded-lg p-6 shadow-lg">
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Comparaison temporelle
+              </h4>
+              <p className="text-xs text-muted-foreground">Sélectionnez deux périodes sur la timeline et utilisez le curseur pour comparer</p>
+            </div>
+            
+            {/* Timeline interactive */}
+            <div className="relative mb-8">
+              <div className="flex justify-between items-center mb-2">
+                {availablePeriods.map((period) => {
+                  const isSelected = period.id === selectedPeriods[0] || period.id === selectedPeriods[1];
+                  const isFirstPeriod = period.id === selectedPeriods[0];
+                  const isSecondPeriod = period.id === selectedPeriods[1];
+                  
+                  return (
+                    <TooltipProvider key={period.id}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => handlePeriodClick(period.id)}
+                            className={`flex flex-col items-center transition-all ${
+                              isSelected 
+                                ? 'scale-110' 
+                                : 'opacity-50 hover:opacity-100 hover:scale-105'
+                            }`}
+                          >
+                            <div className={`w-4 h-4 rounded-full border-2 mb-1 ${
+                              isFirstPeriod 
+                                ? 'bg-blue-500 border-blue-600 shadow-lg shadow-blue-500/50' 
+                                : isSecondPeriod 
+                                ? 'bg-purple-500 border-purple-600 shadow-lg shadow-purple-500/50'
+                                : 'bg-muted border-border'
+                            }`} />
+                            <span className={`text-xs ${
+                              isSelected ? 'font-bold text-foreground' : 'text-muted-foreground'
+                            }`}>
+                              {period.label}
+                            </span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">{period.timestamp}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                })}
+              </div>
+              
+              {/* Ligne de connexion entre les périodes sélectionnées */}
+              <div className="absolute top-2 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-400 to-purple-500 opacity-30" 
+                   style={{
+                     marginLeft: `${(selectedPeriods[0] / 8) * 100}%`,
+                     width: `${((selectedPeriods[1] - selectedPeriods[0]) / 8) * 100}%`
+                   }} />
+            </div>
+            
+            {/* Curseur de comparaison */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span className="font-semibold text-foreground">
+                    Période 1: {availablePeriods[selectedPeriods[0]].label}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">
+                    Période 2: {availablePeriods[selectedPeriods[1]].label}
+                  </span>
+                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                </div>
+              </div>
+              
+              <div className="relative">
+                <Slider
+                  value={viewSlider}
+                  onValueChange={setViewSlider}
+                  max={100}
+                  step={1}
+                  className="w-full"
+                />
+                <div 
+                  className="absolute top-1/2 -translate-y-1/2 px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg pointer-events-none transition-all duration-200"
+                  style={{
+                    left: `${viewSlider[0]}%`,
+                    transform: `translate(-50%, -50%)`,
+                    background: `linear-gradient(90deg, rgb(59, 130, 246) ${100 - viewSlider[0]}%, rgb(168, 85, 247) ${viewSlider[0]}%)`
+                  }}
+                >
+                  {viewSlider[0] < 50 ? '← Période 1' : 'Période 2 →'}
+                </div>
+              </div>
+              
+              <div className="flex justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setViewSlider([0])}
+                  className="text-xs"
+                >
+                  Période 1
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setViewSlider([50])}
+                  className="text-xs"
+                >
+                  Transition
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setViewSlider([100])}
+                  className="text-xs"
+                >
+                  Période 2
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Recommandations cliniques au-dessus */}
         {hasProblems && recommendations.length > 0 && (
           <div className="mb-6 bg-blue-50 dark:bg-blue-950/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -195,6 +362,25 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
         <div className="relative w-full bg-card border rounded-lg p-6" style={{ minHeight: '500px' }}>
           {hasProblems ? (
             <div className="space-y-6">
+              {/* Indicateur de période active */}
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <div 
+                  className="px-4 py-2 rounded-full font-semibold text-sm shadow-lg transition-all duration-300"
+                  style={{
+                    background: `linear-gradient(90deg, rgb(59, 130, 246) ${100 - viewSlider[0]}%, rgb(168, 85, 247) ${viewSlider[0]}%)`,
+                    color: 'white'
+                  }}
+                >
+                  {viewSlider[0] < 20 ? (
+                    <>📊 Période 1 - {availablePeriods[selectedPeriods[0]].timestamp}</>
+                  ) : viewSlider[0] > 80 ? (
+                    <>📊 Période 2 - {availablePeriods[selectedPeriods[1]].timestamp}</>
+                  ) : (
+                    <>⚖️ Transition entre périodes</>
+                  )}
+                </div>
+              </div>
+              
               {/* Légende */}
               <div className="flex items-center justify-center gap-6 mb-4">
                 <div className="flex items-center gap-2">
