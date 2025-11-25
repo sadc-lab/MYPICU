@@ -6,10 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getPatientById } from '@/utils/patientData';
-import { Thermometer, Activity, Droplet, Gauge, Pill, Check, FileText, Users, Brain, ChevronRight, Heart, Wind, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Thermometer, Activity, Droplet, Gauge, Pill, Check, FileText, Users, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getProblematicIndicators } from '@/utils/organMetrics';
 import { MiniMetricChart } from '@/components/MiniMetricChart';
+import brainIcon from '@/assets/brain-icon.svg';
+import lungsIcon from '@/assets/lungs-icon.svg';
 
 const Optistats = () => {
   const [searchParams] = useSearchParams();
@@ -106,28 +108,34 @@ const Optistats = () => {
 
   // Convert to the format expected by the UI
   const problematicIndicators = Object.entries(groupedIndicators).map(([organ, indicators]) => {
-    const getOrganIcon = () => {
+    const getOrganIconSrc = () => {
       switch (organ) {
-        case 'brain': return Brain;
-        case 'heart': return Heart;
-        case 'lungs': return Wind;
-        default: return Activity;
+        case 'brain': return brainIcon;
+        case 'heart': return null; // Will use HeartIcon component
+        case 'lungs': return lungsIcon;
+        default: return null;
       }
     };
 
-    const getOrganColor = () => {
-      switch (organ) {
-        case 'brain': return 'text-purple-500 dark:text-purple-400';
-        case 'heart': return 'text-red-500 dark:text-red-400';
-        case 'lungs': return 'text-blue-500 dark:text-blue-400';
-        default: return 'text-muted-foreground';
+    const getColorFilter = (status: string) => {
+      if (status === 'critical') {
+        return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)'; // red
       }
+      return 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)'; // orange
+    };
+
+    const getHeartColor = (status: string) => {
+      if (status === 'critical') {
+        return 'text-red-600 dark:text-red-400';
+      }
+      return 'text-orange-600 dark:text-orange-400';
     };
 
     return {
       module: organ,
-      icon: getOrganIcon(),
-      color: getOrganColor(),
+      iconSrc: getOrganIconSrc(),
+      colorFilter: getColorFilter,
+      heartColor: getHeartColor,
       indicators: indicators.map(ind => ({
         label: `${ind.label}: ${ind.current}`,
         target: ind.target,
@@ -307,7 +315,16 @@ const Optistats = () => {
                             <div className={`w-10 h-10 rounded-lg ${
                               indicator.status === 'red' ? 'bg-red-100 dark:bg-red-950' : 'bg-orange-100 dark:bg-orange-950'
                             } flex items-center justify-center`}>
-                              <item.icon className={item.color} size={24} />
+                              {item.module === 'heart' ? (
+                                <HeartIcon className={`h-6 w-6 ${item.heartColor(indicator.status)}`} />
+                              ) : (
+                                <img 
+                                  src={item.iconSrc} 
+                                  alt={item.module} 
+                                  className="h-6 w-6"
+                                  style={{ filter: item.colorFilter(indicator.status) }}
+                                />
+                              )}
                             </div>
                           )}
                         </div>
