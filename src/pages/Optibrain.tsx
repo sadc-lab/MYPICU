@@ -14,11 +14,12 @@ import { brainMetrics as importedBrainMetrics } from '@/utils/organMetrics';
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
+  const metricParam = searchParams.get('metric');
   const patient = getPatientById(patientId);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
-  const [clinicalExpanded, setClinicalExpanded] = useState(false);
-  const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
+  const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
+  const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
   const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h' | 'stay'>('24h');
   const [objectives, setObjectives] = useState<string[]>([
     'Maintain ICP < 20 mmHg',
