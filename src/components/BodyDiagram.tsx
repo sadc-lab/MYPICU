@@ -175,14 +175,14 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               style={{ pointerEvents: 'none' }}
             >
 
-              {/* Brain indicator values - positioned above head */}
+              {/* Brain indicator values - positioned next to point */}
               {brainStatus && organIndicators['brain'] && (
                 <g style={{ pointerEvents: 'auto' }}>
                   {organIndicators['brain'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="50"
-                        y={30 + idx * 42}
+                        x="320"
+                        y={60 + idx * 42}
                         width="140"
                         height="38"
                         rx="6"
@@ -191,16 +191,16 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="60" 
-                        y={50 + idx * 42}
+                        x="330" 
+                        y={80 + idx * 42}
                         className="text-[14px] font-semibold"
                         fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="60" 
-                        y={63 + idx * 42} 
+                        x="330" 
+                        y={93 + idx * 42} 
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
                       >
@@ -268,15 +268,15 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               </TooltipContent>
             </Tooltip>
 
-              {/* Lungs indicator values - positioned on sides */}
+              {/* Lungs indicator values - positioned next to points */}
               {lungsStatus && organIndicators['lungs'] && (
                 <g style={{ pointerEvents: 'auto' }}>
                   {organIndicators['lungs'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="410"
+                        x="385"
                         y={250 + idx * 42}
-                        width="140"
+                        width="165"
                         height="38"
                         rx="6"
                         fill="rgba(255,255,255,0.95)"
@@ -284,7 +284,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="420" 
+                        x="395" 
                         y={270 + idx * 42}
                         className="text-[14px] font-semibold"
                         fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -292,8 +292,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="420" 
-                        y={283 + idx * 42}
+                        x="395" 
+                        y={283 + idx * 42} 
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
                       >
@@ -362,15 +362,15 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               </TooltipContent>
             </Tooltip>
 
-              {/* Heart indicator values - positioned below or beside */}
+              {/* Heart indicator values - positioned next to point */}
               {heartStatus && organIndicators['heart'] && (
                 <g style={{ pointerEvents: 'auto' }}>
                   {organIndicators['heart'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
                         x="50"
-                        y={195 + idx * 42}
-                        width="140"
+                        y={210 + idx * 42}
+                        width="165"
                         height="38"
                         rx="6"
                         fill="rgba(255,255,255,0.95)"
@@ -379,7 +379,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       />
                       <text 
                         x="60" 
-                        y={215 + idx * 42}
+                        y={230 + idx * 42}
                         className="text-[14px] font-semibold"
                         fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
@@ -387,7 +387,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       </text>
                       <text 
                         x="60" 
-                        y={228 + idx * 42}
+                        y={243 + idx * 42} 
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
                       >
