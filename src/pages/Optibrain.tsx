@@ -10,6 +10,7 @@ import { getPatientById } from '@/utils/patientData';
 import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { brainMetrics as importedBrainMetrics } from '@/utils/organMetrics';
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
@@ -57,47 +58,7 @@ const Optibrain = () => {
         </div>
       </div>;
   }
-  const brainMetrics = [{
-    label: 'ICP',
-    value: 15,
-    unit: 'mmHg',
-    min: 0,
-    max: 30,
-    targetMin: 7,
-    targetMax: 15,
-    trend: 'down',
-    change: -2
-  }, {
-    label: 'CPP',
-    value: 65,
-    unit: 'mmHg',
-    min: 30,
-    max: 90,
-    targetMin: 50,
-    targetMax: 70,
-    trend: 'up',
-    change: 3
-  }, {
-    label: 'GCS',
-    value: 12,
-    unit: '',
-    min: 3,
-    max: 15,
-    targetMin: 13,
-    targetMax: 15,
-    trend: 'stable',
-    change: 0
-  }, {
-    label: 'PaCO2',
-    value: 38,
-    unit: 'mmHg',
-    min: 25,
-    max: 55,
-    targetMin: 35,
-    targetMax: 45,
-    trend: 'down',
-    change: -1
-  }];
+  const brainMetrics = importedBrainMetrics;
   const brainOptimisationMetrics = [{
     label: 'État Neuro',
     value: 'Hyperhémie',

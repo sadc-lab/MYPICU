@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getPatientById } from '@/utils/patientData';
 import { Wind, Gauge, Edit2, Check, X, Plus, Trash2 } from 'lucide-react';
+import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
 
 const Optilungs = () => {
   const [searchParams] = useSearchParams();
@@ -40,14 +41,7 @@ const Optilungs = () => {
     );
   }
 
-  const lungMetrics = [
-    { label: 'PaO2', value: 95, unit: 'mmHg', min: 60, max: 120, targetMin: 80, targetMax: 100 },
-    { label: 'PaCO2', value: 38, unit: 'mmHg', min: 25, max: 55, targetMin: 35, targetMax: 45 },
-    { label: 'pH', value: 7.38, unit: '', min: 7.2, max: 7.6, targetMin: 7.35, targetMax: 7.45 },
-    { label: 'FiO2', value: 40, unit: '%', min: 21, max: 100, targetMin: 21, targetMax: 30 },
-    { label: 'P/F Ratio', value: 238, unit: '', min: 100, max: 500, targetMin: 300, targetMax: 500 },
-    { label: 'SpO2', value: 98, unit: '%', min: 85, max: 100, targetMin: 94, targetMax: 100 },
-  ];
+  const lungMetrics = importedLungMetrics;
 
   const isInRange = (value: number, min: number, max: number) => {
     return value >= min && value <= max;
