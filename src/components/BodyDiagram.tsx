@@ -107,9 +107,9 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               style={{ pointerEvents: 'none' }}
             >
               <defs>
-                {/* Filters for organ highlighting */}
-                <filter id="organGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+                {/* Filters for organ points */}
+                <filter id="pointGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
                   <feMerge>
                     <feMergeNode in="coloredBlur"/>
                     <feMergeNode in="SourceGraphic"/>
@@ -117,55 +117,55 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 </filter>
               </defs>
               
-              {/* Brain overlay - increase opacity when problematic */}
+              {/* Brain point - on head */}
               {brainStatus && (
-                <ellipse
+                <circle
                   cx="300"
                   cy="80"
-                  rx="50"
-                  ry="44"
-                  fill={brainStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.3)' : 'rgba(234, 88, 12, 0.25)'}
-                  filter="url(#organGlow)"
+                  r="12"
+                  fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                  filter="url(#pointGlow)"
                   style={{ pointerEvents: 'none' }}
+                  opacity="0.9"
                 />
               )}
               
-              {/* Lungs overlay - increase opacity when problematic */}
+              {/* Lungs points - on chest */}
               {lungsStatus && (
                 <g>
-                  {/* Left lung */}
-                  <ellipse
+                  {/* Left lung point */}
+                  <circle
                     cx="235"
                     cy="270"
-                    rx="50"
-                    ry="68"
-                    fill={lungsStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.3)' : 'rgba(234, 88, 12, 0.25)'}
-                    filter="url(#organGlow)"
+                    r="12"
+                    fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                    filter="url(#pointGlow)"
                     style={{ pointerEvents: 'none' }}
+                    opacity="0.9"
                   />
-                  {/* Right lung */}
-                  <ellipse
+                  {/* Right lung point */}
+                  <circle
                     cx="365"
                     cy="270"
-                    rx="50"
-                    ry="68"
-                    fill={lungsStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.3)' : 'rgba(234, 88, 12, 0.25)'}
-                    filter="url(#organGlow)"
+                    r="12"
+                    fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                    filter="url(#pointGlow)"
                     style={{ pointerEvents: 'none' }}
+                    opacity="0.9"
                   />
                 </g>
               )}
               
-              {/* Heart overlay - increase opacity when problematic */}
+              {/* Heart point - in center chest */}
               {heartStatus && (
-                <ellipse
+                <circle
                   cx="300"
                   cy="230"
-                  rx="44"
-                  ry="52"
-                  fill={heartStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.35)' : 'rgba(234, 88, 12, 0.3)'}
-                  filter="url(#organGlow)"
+                  r="12"
+                  fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                  filter="url(#pointGlow)"
                   style={{ pointerEvents: 'none' }}
+                  opacity="0.9"
                 />
               )}
             </svg>
