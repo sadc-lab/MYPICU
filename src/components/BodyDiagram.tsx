@@ -7,6 +7,9 @@ import {
 } from '@/components/ui/tooltip';
 import anatomyDiagram from '@/assets/anatomy-diagram.png';
 import anatomyNormal from '@/assets/anatomy-normal.png';
+import brainIcon from '@/assets/brain-icon.svg';
+import lungsIcon from '@/assets/lungs-icon.svg';
+import { HeartIcon } from '@/components/icons/HeartIcon';
 
 interface BodyDiagramProps {
   problematicOrgans: {
@@ -253,12 +256,34 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     {/* Ligne verticale */}
                     <line
                       x1="250"
-                      y1="100"
+                      y1="120"
                       x2="250"
                       y2="500"
                       stroke="url(#lineGradient)"
                       strokeWidth="2"
                     />
+                    
+                    {/* Icône de l'organe au-dessus */}
+                    <foreignObject x="215" y="55" width="70" height="70">
+                      <div className="w-16 h-16 rounded-full bg-card border-2 border-border flex items-center justify-center shadow-lg">
+                        <img 
+                          src={brainIcon} 
+                          alt="brain" 
+                          className="h-10 w-10"
+                          style={{ 
+                            filter: brainStatus.status === 'critical' 
+                              ? 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)'
+                              : 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)'
+                          }}
+                        />
+                      </div>
+                    </foreignObject>
+                    
+                    {/* Badge de compte */}
+                    <circle cx="270" cy="65" r="12" fill="white" stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
+                    <text x="270" y="70" className="text-xs font-bold" fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
+                      {brainStatus.count}
+                    </text>
                     
                     {/* Points pour chaque indicateur */}
                     {organIndicators['brain'].slice(0, 4).map((indicator, idx) => {
@@ -272,28 +297,19 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                           className="cursor-pointer transition-transform hover:scale-110"
                           style={{ pointerEvents: 'auto' }}
                         >
-                          {/* Ligne de connexion au point */}
-                          <line
-                            x1="250"
-                            y1={yPosition}
-                            x2="250"
-                            y2={yPosition}
-                            stroke={isCritical ? '#dc2626' : '#ea580c'}
-                            strokeWidth="3"
-                          />
-                          
                           {/* Point */}
                           <circle
                             cx="250"
                             cy={yPosition}
-                            r="12"
+                            r="14"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
                             filter="url(#dotGlow)"
+                            opacity="0.9"
                           />
                           
                           {/* Valeur du point */}
                           <text
-                            x="270"
+                            x="275"
                             y={yPosition + 5}
                             className="text-xs font-semibold"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
@@ -307,18 +323,12 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     {/* Label de l'organe */}
                     <text
                       x="250"
-                      y="530"
+                      y="540"
                       className="text-sm font-bold"
                       fill="hsl(var(--foreground))"
                       textAnchor="middle"
                     >
-                      🧠 Cerveau
-                    </text>
-                    
-                    {/* Badge de compte */}
-                    <circle cx="250" cy="70" r="18" fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} />
-                    <text x="250" y="76" className="text-xs font-bold" fill="white" textAnchor="middle">
-                      {brainStatus.count}
+                      Cerveau
                     </text>
                   </g>
                 )}
@@ -328,12 +338,28 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   <g>
                     <line
                       x1="500"
-                      y1="100"
+                      y1="120"
                       x2="500"
                       y2="500"
                       stroke="url(#lineGradient)"
                       strokeWidth="2"
                     />
+                    
+                    {/* Icône de l'organe au-dessus */}
+                    <foreignObject x="465" y="55" width="70" height="70">
+                      <div className="w-16 h-16 rounded-full bg-card border-2 border-border flex items-center justify-center shadow-lg">
+                        <HeartIcon className={`h-10 w-10 ${
+                          heartStatus.status === 'critical' 
+                            ? 'text-red-600 dark:text-red-400' 
+                            : 'text-orange-600 dark:text-orange-400'
+                        }`} />
+                      </div>
+                    </foreignObject>
+                    
+                    <circle cx="520" cy="65" r="12" fill="white" stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
+                    <text x="520" y="70" className="text-xs font-bold" fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
+                      {heartStatus.count}
+                    </text>
                     
                     {organIndicators['heart'].slice(0, 4).map((indicator, idx) => {
                       const yPosition = 500 - (70 - idx * 15) * 4;
@@ -346,25 +372,17 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                           className="cursor-pointer transition-transform hover:scale-110"
                           style={{ pointerEvents: 'auto' }}
                         >
-                          <line
-                            x1="500"
-                            y1={yPosition}
-                            x2="500"
-                            y2={yPosition}
-                            stroke={isCritical ? '#dc2626' : '#ea580c'}
-                            strokeWidth="3"
-                          />
-                          
                           <circle
                             cx="500"
                             cy={yPosition}
-                            r="12"
+                            r="14"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
                             filter="url(#dotGlow)"
+                            opacity="0.9"
                           />
                           
                           <text
-                            x="520"
+                            x="525"
                             y={yPosition + 5}
                             className="text-xs font-semibold"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
@@ -377,17 +395,12 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     
                     <text
                       x="500"
-                      y="530"
+                      y="540"
                       className="text-sm font-bold"
                       fill="hsl(var(--foreground))"
                       textAnchor="middle"
                     >
-                      ❤️ Cœur
-                    </text>
-                    
-                    <circle cx="500" cy="70" r="18" fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} />
-                    <text x="500" y="76" className="text-xs font-bold" fill="white" textAnchor="middle">
-                      {heartStatus.count}
+                      Cœur
                     </text>
                   </g>
                 )}
@@ -397,12 +410,33 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   <g>
                     <line
                       x1="750"
-                      y1="100"
+                      y1="120"
                       x2="750"
                       y2="500"
                       stroke="url(#lineGradient)"
                       strokeWidth="2"
                     />
+                    
+                    {/* Icône de l'organe au-dessus */}
+                    <foreignObject x="715" y="55" width="70" height="70">
+                      <div className="w-16 h-16 rounded-full bg-card border-2 border-border flex items-center justify-center shadow-lg">
+                        <img 
+                          src={lungsIcon} 
+                          alt="lungs" 
+                          className="h-10 w-10"
+                          style={{ 
+                            filter: lungsStatus.status === 'critical' 
+                              ? 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)'
+                              : 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)'
+                          }}
+                        />
+                      </div>
+                    </foreignObject>
+                    
+                    <circle cx="770" cy="65" r="12" fill="white" stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
+                    <text x="770" y="70" className="text-xs font-bold" fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
+                      {lungsStatus.count}
+                    </text>
                     
                     {organIndicators['lungs'].slice(0, 4).map((indicator, idx) => {
                       const yPosition = 500 - (85 - idx * 18) * 4;
@@ -415,25 +449,17 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                           className="cursor-pointer transition-transform hover:scale-110"
                           style={{ pointerEvents: 'auto' }}
                         >
-                          <line
-                            x1="750"
-                            y1={yPosition}
-                            x2="750"
-                            y2={yPosition}
-                            stroke={isCritical ? '#dc2626' : '#ea580c'}
-                            strokeWidth="3"
-                          />
-                          
                           <circle
                             cx="750"
                             cy={yPosition}
-                            r="12"
+                            r="14"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
                             filter="url(#dotGlow)"
+                            opacity="0.9"
                           />
                           
                           <text
-                            x="770"
+                            x="775"
                             y={yPosition + 5}
                             className="text-xs font-semibold"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
@@ -446,17 +472,12 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     
                     <text
                       x="750"
-                      y="530"
+                      y="540"
                       className="text-sm font-bold"
                       fill="hsl(var(--foreground))"
                       textAnchor="middle"
                     >
-                      🫁 Poumons
-                    </text>
-                    
-                    <circle cx="750" cy="70" r="18" fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} />
-                    <text x="750" y="76" className="text-xs font-bold" fill="white" textAnchor="middle">
-                      {lungsStatus.count}
+                      Poumons
                     </text>
                   </g>
                 )}
