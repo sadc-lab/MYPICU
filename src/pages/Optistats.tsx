@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getPatientById } from '@/utils/patientData';
-import { Thermometer, Activity, Droplet, Gauge, Pill, Check, FileText, Users, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getProblematicIndicators } from '@/utils/organMetrics';
 import { MiniMetricChart } from '@/components/MiniMetricChart';
@@ -87,13 +87,6 @@ const Optistats = () => {
   const isInRange = (value: number, targetMin: number, targetMax: number) => {
     return value >= targetMin && value <= targetMax;
   };
-
-  const therapeuticTabs = [
-    { icon: Pill, label: 'Prescriptions', active: true },
-    { icon: Check, label: 'Access', active: false },
-    { icon: FileText, label: 'Investigation', active: false },
-    { icon: Users, label: 'Consultants', active: false },
-  ];
 
   // Get problematic indicators dynamically from organ metrics
   const dynamicIndicators = getProblematicIndicators();
@@ -230,61 +223,10 @@ const Optistats = () => {
         <Card className="shadow-sm">
           <CardHeader className="border-b">
             <CardTitle className="text-lg font-semibold">
-              Actions Thérapeutiques et Indicateurs Problématiques
+              Indicateurs Problématiques
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            {/* Therapeutic actions section */}
-            <div className="mb-8">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Actions thérapeutiques</h3>
-              
-              {/* Tabs */}
-              <div className="flex gap-4 mb-4">
-                {therapeuticTabs.map((tab, index) => (
-                  <button
-                    key={index}
-                    className={`flex items-center gap-2 text-sm ${
-                      tab.active ? 'text-primary font-medium' : 'text-muted-foreground'
-                    }`}
-                  >
-                    <tab.icon className={`h-4 w-4 ${
-                      tab.active 
-                        ? index === 0 ? 'text-blue-500 dark:text-blue-400' 
-                        : index === 1 ? 'text-foreground'
-                        : index === 2 ? 'text-orange-600 dark:text-orange-400'
-                        : 'text-blue-400 dark:text-blue-300'
-                        : 'text-muted-foreground'
-                    }`} />
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Timeline */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                <span>3 hours ago</span>
-                <span>Now</span>
-              </div>
-
-              {/* Medications timeline */}
-              <div className="space-y-2">
-                <div className="grid grid-cols-[120px_1fr] gap-4">
-                  <div className="bg-blue-200 dark:bg-blue-900 text-blue-900 dark:text-blue-100 px-3 py-2 rounded text-sm font-medium">
-                    Mannitol
-                  </div>
-                  <div className="bg-blue-400 dark:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium">
-                    Midazolam + Ceftriaxone + Gentamicine + Metronidazole
-                  </div>
-                </div>
-                <div className="grid grid-cols-[120px_1fr] gap-4">
-                  <div className="bg-muted text-muted-foreground px-3 py-2 rounded text-sm font-medium">
-                    Urinary catheter
-                  </div>
-                  <div className="bg-muted rounded"></div>
-                </div>
-              </div>
-            </div>
-
             {/* Problematic Indicators section */}
             <div>
               <div className="flex items-center justify-between mb-4">
