@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Patient } from '@/utils/patientData';
 import {
   Dialog,
@@ -189,9 +189,33 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate, isChecked, onCh
 
 export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrganizerProps) => {
   const [orderedPatients, setOrderedPatients] = useState<Patient[]>(patients);
-  const [checkedPatients, setCheckedPatients] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { startTour } = useTourNavigation();
+  
+  // Storage key for this specific tour
+  const storageKey = `tour-checklist-${pedName}-${new Date().toLocaleDateString()}`;
+  
+  // Initialize checked patients from localStorage
+  const [checkedPatients, setCheckedPatients] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        return new Set(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error('Error loading tour checklist:', error);
+    }
+    return new Set();
+  });
+
+  // Save checked patients to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(Array.from(checkedPatients)));
+    } catch (error) {
+      console.error('Error saving tour checklist:', error);
+    }
+  }, [checkedPatients, storageKey]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
