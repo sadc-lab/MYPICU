@@ -15,7 +15,7 @@ const Optistats = () => {
 
   if (!patient) {
     return (
-      <div className="min-h-screen bg-[#EDF2F9]">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
           <p>Patient not found</p>
@@ -118,24 +118,24 @@ const Optistats = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#EDF2F9]">
+    <div className="min-h-screen bg-background">
       <Header />
       <PatientHeader currentPage="optistats" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">Signes Vitaux</CardTitle>
+            <CardTitle className="text-base font-semibold">Signes Vitaux</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
               {vitalSigns.map((vital, index) => {
                 const inRange = isInRange(vital.value, vital.targetMin, vital.targetMax);
-                const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
+                const valueColor = inRange ? 'text-muted-foreground' : 'text-destructive';
                 
                 return (
                   <div key={index} className="flex flex-col items-center">
-                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                    <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
                       {vital.label}
                     </div>
                     <div className={`text-4xl font-bold ${valueColor} mb-3`}>
@@ -144,10 +144,10 @@ const Optistats = () => {
                     
                     <div className="w-full max-w-[180px]">
                       {/* Range bar */}
-                      <div className="relative h-3 bg-gray-200 rounded-full overflow-visible">
+                      <div className="relative h-3 bg-muted rounded-full overflow-visible">
                         {/* Target range (light grey zone) */}
                         <div 
-                          className="absolute top-0 bottom-0 bg-gray-300 rounded-full"
+                          className="absolute top-0 bottom-0 bg-muted/70 rounded-full"
                           style={{
                             left: `${((vital.targetMin - vital.min) / (vital.max - vital.min)) * 100}%`,
                             width: `${((vital.targetMax - vital.targetMin) / (vital.max - vital.min)) * 100}%`
@@ -157,7 +157,7 @@ const Optistats = () => {
                         {/* Current value position on bar */}
                         <div 
                           className={`absolute w-3 h-3 rounded-full border-2 ${
-                            inRange ? 'bg-gray-500 border-gray-600' : 'bg-red-500 border-red-600'
+                            inRange ? 'bg-muted-foreground border-foreground' : 'bg-destructive border-destructive'
                           } z-10 top-0`}
                           style={{
                             left: `${Math.max(0, Math.min(100, ((vital.value - vital.min) / (vital.max - vital.min)) * 100))}%`,
@@ -167,7 +167,7 @@ const Optistats = () => {
                       </div>
                       
                       {/* Target range labels */}
-                      <div className="flex justify-between items-center mt-1.5 text-xs text-gray-500">
+                      <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
                         <span>{vital.targetMin}</span>
                         <span>{vital.targetMax}</span>
                       </div>
@@ -179,16 +179,16 @@ const Optistats = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader className="border-b">
-            <CardTitle className="text-lg font-semibold text-gray-900">
+            <CardTitle className="text-lg font-semibold">
               Actions Thérapeutiques et Indicateurs Problématiques
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             {/* Therapeutic actions section */}
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">Actions thérapeutiques</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-4">Actions thérapeutiques</h3>
               
               {/* Tabs */}
               <div className="flex gap-4 mb-4">
@@ -196,16 +196,16 @@ const Optistats = () => {
                   <button
                     key={index}
                     className={`flex items-center gap-2 text-sm ${
-                      tab.active ? 'text-primary font-medium' : 'text-gray-600'
+                      tab.active ? 'text-primary font-medium' : 'text-muted-foreground'
                     }`}
                   >
                     <tab.icon className={`h-4 w-4 ${
                       tab.active 
-                        ? index === 0 ? 'text-blue-500' 
-                        : index === 1 ? 'text-gray-700'
-                        : index === 2 ? 'text-orange-600'
-                        : 'text-blue-400'
-                        : 'text-gray-500'
+                        ? index === 0 ? 'text-blue-500 dark:text-blue-400' 
+                        : index === 1 ? 'text-foreground'
+                        : index === 2 ? 'text-orange-600 dark:text-orange-400'
+                        : 'text-blue-400 dark:text-blue-300'
+                        : 'text-muted-foreground'
                     }`} />
                     {tab.label}
                   </button>
@@ -213,7 +213,7 @@ const Optistats = () => {
               </div>
 
               {/* Timeline */}
-              <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
                 <span>3 hours ago</span>
                 <span>Now</span>
               </div>
@@ -221,28 +221,28 @@ const Optistats = () => {
               {/* Medications timeline */}
               <div className="space-y-2">
                 <div className="grid grid-cols-[120px_1fr] gap-4">
-                  <div className="bg-blue-200 text-blue-900 px-3 py-2 rounded text-sm font-medium">
+                  <div className="bg-blue-200 dark:bg-blue-900 text-blue-900 dark:text-blue-100 px-3 py-2 rounded text-sm font-medium">
                     Mannitol
                   </div>
-                  <div className="bg-blue-400 text-white px-3 py-2 rounded text-sm font-medium">
+                  <div className="bg-blue-400 dark:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium">
                     Midazolam + Ceftriaxone + Gentamicine + Metronidazole
                   </div>
                 </div>
                 <div className="grid grid-cols-[120px_1fr] gap-4">
-                  <div className="bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm font-medium">
+                  <div className="bg-muted text-muted-foreground px-3 py-2 rounded text-sm font-medium">
                     Urinary catheter
                   </div>
-                  <div className="bg-gray-100 rounded"></div>
+                  <div className="bg-muted rounded"></div>
                 </div>
               </div>
             </div>
 
             {/* Problematic Indicators section */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">Problematic Indicators</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-4">Problematic Indicators</h3>
               
               {/* Table header */}
-              <div className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 mb-3 text-xs font-medium text-gray-600 pb-2 border-b">
+              <div className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 mb-3 text-xs font-medium text-muted-foreground pb-2 border-b">
                 <div>Module</div>
                 <div>Problematic Indicators</div>
                 <div>Clinical target</div>
@@ -258,13 +258,13 @@ const Optistats = () => {
                     {item.indicators.map((indicator, indicatorIndex) => (
                       <div 
                         key={indicatorIndex}
-                        className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 items-center py-3 border-b border-gray-100"
+                        className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 items-center py-3 border-b"
                       >
                         {/* Module icon - only show on first row */}
                         <div>
                           {indicatorIndex === 0 && (
                             <div className={`w-10 h-10 rounded-lg ${
-                              indicator.status === 'red' ? 'bg-red-100' : 'bg-orange-100'
+                              indicator.status === 'red' ? 'bg-red-100 dark:bg-red-950' : 'bg-orange-100 dark:bg-orange-950'
                             } flex items-center justify-center`}>
                               <item.icon className={item.color} size={24} />
                             </div>
@@ -274,13 +274,13 @@ const Optistats = () => {
                         {/* Problematic indicator */}
                         <div className="flex items-center gap-2">
                           <div className={`w-2 h-2 rounded-full ${
-                            indicator.status === 'red' ? 'bg-red-500' : 'bg-orange-500'
+                            indicator.status === 'red' ? 'bg-red-500 dark:bg-red-400' : 'bg-orange-500 dark:bg-orange-400'
                           }`}></div>
-                          <span className="text-sm font-medium text-gray-900">{indicator.label}</span>
+                          <span className="text-sm font-medium text-foreground">{indicator.label}</span>
                         </div>
 
                         {/* Clinical target */}
-                        <div className="text-sm text-gray-600">{indicator.target}</div>
+                        <div className="text-sm text-muted-foreground">{indicator.target}</div>
 
                         {/* Trend */}
                         <div>
@@ -292,12 +292,12 @@ const Optistats = () => {
                         </div>
 
                         {/* Indicator Analysis - mini chart placeholder */}
-                        <div className="h-16 bg-gray-50 rounded flex items-center justify-center">
+                        <div className="h-16 bg-muted rounded flex items-center justify-center">
                           <div className="w-full h-12 flex items-end justify-around px-2">
                             {[...Array(20)].map((_, i) => (
                               <div 
                                 key={i} 
-                                className="w-1 bg-gray-300 rounded-t"
+                                className="w-1 bg-muted-foreground/30 rounded-t"
                                 style={{ height: `${Math.random() * 100}%` }}
                               ></div>
                             ))}
@@ -307,7 +307,7 @@ const Optistats = () => {
                         {/* Arrow button */}
                         <div>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           </Button>
                         </div>
                       </div>

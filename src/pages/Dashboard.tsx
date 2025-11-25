@@ -24,17 +24,17 @@ const Dashboard = () => {
   const averagePelod = displayedPatients.length > 0 
     ? Math.round(displayedPatients.reduce((sum, p) => sum + p.pelodScore, 0) / displayedPatients.length) 
     : 0;
-  return <div className="min-h-screen bg-[#EDF2F9]">
+  return <div className="min-h-screen bg-background">
       <Header />
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-[1600px]">
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 lg:gap-0 mb-6">
           <div className="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
-            <Button variant="outline" className="bg-white border-2 border-gray-300 text-sm sm:text-base">
+            <Button variant="outline" className="bg-card text-sm sm:text-base">
               Accès TVL
             </Button>
             
-            <Button variant="outline" className="bg-white border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)} data-guide="organize-tour">
+            <Button variant="outline" className="bg-card border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)} data-guide="organize-tour">
               Organiser tournée <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
@@ -52,7 +52,7 @@ const Dashboard = () => {
                 <SelectTrigger className="w-auto border-0 bg-transparent text-primary h-auto p-0 text-lg sm:text-xl font-medium hover:opacity-80 focus:ring-0 gap-1">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white z-50">
+                <SelectContent className="z-50">
                   <SelectItem value="A">PED A</SelectItem>
                   <SelectItem value="B">PED B</SelectItem>
                   <SelectItem value="C">PED C</SelectItem>

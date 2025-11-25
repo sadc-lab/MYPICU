@@ -19,24 +19,24 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
   const navigate = useNavigate();
 
   const getAdherenceColor = (adherence: number) => {
-    if (adherence >= 85) return 'text-gray-600';
+    if (adherence >= 85) return 'text-muted-foreground';
     if (adherence >= 70) return 'text-orange-500';
-    return 'text-red-600';
+    return 'text-destructive';
   };
 
   const getOrganIconWithScore = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number, patientId?: string) => {
     const getColor = (score?: number) => {
-      if (!score || score === 0) return 'text-gray-500';
+      if (!score || score === 0) return 'text-muted-foreground';
       if (score === 1) return 'text-orange-600';
       if (score === 2) return 'text-orange-700';
-      return 'text-red-700';
+      return 'text-red-700 dark:text-red-500';
     };
 
     const getBgColor = (score?: number) => {
-      if (!score || score === 0) return 'bg-gray-100';
-      if (score === 1) return 'bg-orange-50';
-      if (score === 2) return 'bg-orange-100';
-      return 'bg-red-50';
+      if (!score || score === 0) return 'bg-muted';
+      if (score === 1) return 'bg-orange-50 dark:bg-orange-950';
+      if (score === 2) return 'bg-orange-100 dark:bg-orange-900';
+      return 'bg-red-50 dark:bg-red-950';
     };
 
     const color = getColor(score);
@@ -111,30 +111,30 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
         </h2>
       )}
       
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" data-guide="patient-table">
+      <div className="bg-card rounded-lg shadow-sm border overflow-hidden" data-guide="patient-table">
         <div className="overflow-x-auto">
           <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50 border-b border-gray-200">
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm min-w-[150px]">Informations Patient</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden sm:table-cell">Âge</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden md:table-cell">
+            <TableRow className="bg-muted/50 border-b">
+              <TableHead className="font-medium text-foreground text-xs sm:text-sm min-w-[150px]">Informations Patient</TableHead>
+              <TableHead className="font-medium text-foreground text-xs sm:text-sm hidden sm:table-cell">Âge</TableHead>
+              <TableHead className="font-medium text-foreground text-xs sm:text-sm hidden md:table-cell">
                 <div className="flex items-center gap-1">
                   #D PICU
                   <ArrowUpDown className="h-3 w-3" />
                 </div>
               </TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm">
+              <TableHead className="font-medium text-foreground text-xs sm:text-sm">
                 <div className="flex items-center gap-1">
                   PELOD
                   <ArrowUpDown className="h-3 w-3" />
                 </div>
               </TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden lg:table-cell">Adhérence</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden xl:table-cell">Diagnostic</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden xl:table-cell">Examens</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm">Alarmes</TableHead>
-              <TableHead className="font-medium text-gray-700 text-xs sm:text-sm hidden md:table-cell">Tournée</TableHead>
+              <TableHead className="font-medium text-foreground text-xs sm:text-sm hidden lg:table-cell">Adhérence</TableHead>
+              <TableHead className="font-medium text-foreground text-xs sm:text-sm hidden xl:table-cell">Diagnostic</TableHead>
+              <TableHead className="font-medium text-foreground text-xs sm:text-sm hidden xl:table-cell">Examens</TableHead>
+              <TableHead className="font-medium text-foreground text-xs sm:text-sm">Alarmes</TableHead>
+              <TableHead className="font-medium text-foreground text-xs sm:text-sm hidden md:table-cell">Tournée</TableHead>
               <TableHead className="hidden sm:table-cell"></TableHead>
             </TableRow>
           </TableHeader>
@@ -142,31 +142,31 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
             {patients.map((patient, index) => (
               <TableRow 
                 key={patient.id}
-                className="cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100"
+                className="cursor-pointer hover:bg-accent transition-colors border-b"
                 onClick={() => navigate(`/optistats?patient=${encodeURIComponent(patient.id)}`)}
               >
                 <TableCell className="py-3 sm:py-4">
-                  <div className="font-medium text-sm sm:text-base text-gray-700">
+                  <div className="font-medium text-sm sm:text-base text-foreground">
                     {patient.id} {patient.name}
                   </div>
-                  <div className="text-xs sm:text-sm text-gray-500">{patient.weight}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">{patient.weight}</div>
                 </TableCell>
-                <TableCell className="text-gray-700 text-sm hidden sm:table-cell">{patient.age}</TableCell>
-                <TableCell className="text-gray-700 text-sm hidden md:table-cell">{patient.picuId}</TableCell>
+                <TableCell className="text-foreground text-sm hidden sm:table-cell">{patient.age}</TableCell>
+                <TableCell className="text-foreground text-sm hidden md:table-cell">{patient.picuId}</TableCell>
                 <TableCell>
-                  <span className="text-gray-700 text-sm">
+                  <span className="text-foreground text-sm">
                     {patient.pelodScore}
                   </span>
                 </TableCell>
                 <TableCell className="hidden lg:table-cell">
-                  <span className="font-medium text-sm text-gray-700">
+                  <span className="font-medium text-sm text-foreground">
                     {patient.adherence}%
                   </span>
                 </TableCell>
-                <TableCell className="text-gray-700 text-sm hidden xl:table-cell max-w-[200px] truncate">{patient.diagnosis}</TableCell>
+                <TableCell className="text-foreground text-sm hidden xl:table-cell max-w-[200px] truncate">{patient.diagnosis}</TableCell>
                 <TableCell className="hidden xl:table-cell">
                   {patient.exam && (
-                    <span className="text-xs sm:text-sm text-gray-600">{patient.exam}</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">{patient.exam}</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -200,7 +200,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                   })()}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button className="text-muted-foreground hover:text-foreground">
                     <MoreHorizontal className="h-5 w-5" />
                   </button>
                 </TableCell>

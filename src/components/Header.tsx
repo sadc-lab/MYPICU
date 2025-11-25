@@ -112,7 +112,7 @@ export const Header = () => {
   return (
     <>
       <InteractiveGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />
-      <header className="border-b bg-white shadow-sm">
+      <header className="border-b bg-card shadow-sm">
         <div className="container mx-auto px-6">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
@@ -131,21 +131,21 @@ export const Header = () => {
                 onFocus={() => setShowDropdown(true)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                 placeholder="Rechercher patients..."
-                className="pl-10 w-[200px] bg-white border-gray-300"
+                className="pl-10 w-[200px] bg-background"
               />
               
               {showDropdown && searchQuery && filteredPatients.length > 0 && (
-                <div className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-[400px] overflow-y-auto">
+                <div className="absolute top-full mt-1 w-full bg-popover border rounded-lg shadow-lg z-50 max-h-[400px] overflow-y-auto">
                   {Object.entries(patientsByPed).sort().map(([ped, patients]) => (
                     <div key={ped}>
-                      <div className="px-4 py-2 bg-gray-100 text-sm font-semibold text-gray-700 border-b">
+                      <div className="px-4 py-2 bg-muted text-sm font-semibold text-muted-foreground border-b">
                         PED {ped}
                       </div>
                       {patients.map((patient) => (
                         <Link
                           key={patient.id}
                           to={`/optistats?patient=${encodeURIComponent(patient.id)}`}
-                          className="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                          className="block px-4 py-3 hover:bg-accent border-b transition-colors"
                           onClick={() => {
                             setShowDropdown(false);
                             setSearchQuery('');
@@ -153,10 +153,10 @@ export const Header = () => {
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="font-medium text-gray-900">{patient.name}</div>
-                              <div className="text-sm text-gray-500">{patient.id}</div>
+                              <div className="font-medium text-foreground">{patient.name}</div>
+                              <div className="text-sm text-muted-foreground">{patient.id}</div>
                             </div>
-                            <div className="text-xs text-gray-400">
+                            <div className="text-xs text-muted-foreground">
                               PELOD: {patient.pelodScore}
                             </div>
                           </div>
@@ -168,7 +168,7 @@ export const Header = () => {
               )}
               
               {showDropdown && searchQuery && filteredPatients.length === 0 && (
-                <div className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-50 p-4 text-center text-gray-500 text-sm">
+                <div className="absolute top-full mt-1 w-full bg-popover border rounded-lg shadow-lg z-50 p-4 text-center text-muted-foreground text-sm">
                   Aucun patient trouvé
                 </div>
               )}
@@ -182,7 +182,7 @@ export const Header = () => {
                   {isOnTourPatient ? `${currentIndex + 1}/${activeTour!.length}` : `${activeTour!.length} patients`}
                 </Badge>
                 
-                <div className="flex items-center gap-1 bg-gray-50 rounded-lg border border-gray-200 p-0.5">
+                <div className="flex items-center gap-1 bg-muted rounded-lg border p-0.5">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -199,19 +199,19 @@ export const Header = () => {
                         <List className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="center" className="w-64 max-h-[400px] overflow-y-auto bg-white z-50">
+                    <DropdownMenuContent align="center" className="w-64 max-h-[400px] overflow-y-auto z-50">
                       {activeTour?.map((patient, index) => (
                         <DropdownMenuItem
                           key={patient.id}
                           onClick={() => handleNavigateToPatient(patient.id)}
                           className={`cursor-pointer ${
-                            patient.id === currentPatientId ? 'bg-primary/10 font-semibold' : ''
+                            patient.id === currentPatientId ? 'bg-accent font-semibold' : ''
                           }`}
                         >
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500">{index + 1}.</span>
-                              <span className="text-red-500 font-semibold text-sm">{patient.id}</span>
+                              <span className="text-xs text-muted-foreground">{index + 1}.</span>
+                              <span className="text-destructive font-semibold text-sm">{patient.id}</span>
                               <span className="text-sm truncate">{patient.name}</span>
                             </div>
                           </div>
@@ -239,8 +239,8 @@ export const Header = () => {
                         size="sm"
                         className={`h-7 px-3 gap-1.5 ${
                           getVisitStatus(currentPatientId)
-                            ? 'bg-green-600 hover:bg-green-700 text-white'
-                            : 'hover:bg-gray-100'
+                            ? 'bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800'
+                            : 'hover:bg-accent'
                         }`}
                       >
                         <Check className="h-4 w-4" />
@@ -249,7 +249,7 @@ export const Header = () => {
                         </span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40 bg-white z-50">
+                    <DropdownMenuContent align="end" className="w-40 z-50">
                       <DropdownMenuItem
                         onClick={() => confirmVisit(currentPatientId, 'Priority')}
                         className="cursor-pointer"
@@ -278,14 +278,14 @@ export const Header = () => {
           <div className="flex items-center gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 text-gray-500 hover:text-gray-700" data-guide="user-menu">
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-foreground" data-guide="user-menu">
                   <User className="h-5 w-5" />
                   <span className="hidden md:inline">
                     {user?.user_metadata?.full_name || 'Philippe Jouvet'}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-gray-800 z-50">
+              <DropdownMenuContent align="end" className="w-56 z-50">
                 <DropdownMenuLabel>Réglages</DropdownMenuLabel>
                 <DropdownMenuItem 
                   className="flex items-center justify-between cursor-pointer"
@@ -314,7 +314,7 @@ export const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
               <Bell className="h-5 w-5" />
             </Button>
           </div>
