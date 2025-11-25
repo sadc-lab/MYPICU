@@ -8,6 +8,7 @@ import { getPatientById } from '@/utils/patientData';
 import { Thermometer, Activity, Droplet, Gauge, Pill, Check, FileText, Users, Brain, ChevronRight, Heart, Wind, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getProblematicIndicators } from '@/utils/organMetrics';
+import { MiniMetricChart } from '@/components/MiniMetricChart';
 
 const Optistats = () => {
   const [searchParams] = useSearchParams();
@@ -315,17 +316,12 @@ const Optistats = () => {
                           )}
                         </div>
 
-                        {/* Indicator Analysis - mini chart placeholder */}
-                        <div className="h-16 bg-muted rounded flex items-center justify-center">
-                          <div className="w-full h-12 flex items-end justify-around px-2">
-                            {[...Array(20)].map((_, i) => (
-                              <div 
-                                key={i} 
-                                className="w-1 bg-muted-foreground/30 rounded-t"
-                                style={{ height: `${Math.random() * 100}%` }}
-                              ></div>
-                            ))}
-                          </div>
+                        {/* Indicator Analysis - mini chart */}
+                        <div className="h-16 bg-muted rounded flex items-center justify-center overflow-hidden">
+                          <MiniMetricChart 
+                            metricLabel={indicator.label.split(':')[0].trim()} 
+                            organ={item.module}
+                          />
                         </div>
 
                         {/* Arrow button */}
