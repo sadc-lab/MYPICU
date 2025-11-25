@@ -1,5 +1,6 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { Table, LayoutGrid } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,8 +11,11 @@ import { ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getProblematicIndicators } from '@/utils/organMetrics';
 import { MiniMetricChart } from '@/components/MiniMetricChart';
+import { BodyDiagram } from '@/components/BodyDiagram';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const Optistats = () => {
   const [searchParams] = useSearchParams();
@@ -19,6 +23,7 @@ const Optistats = () => {
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
   const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h' | 'stay'>('24h');
+  const [viewMode, setViewMode] = useState<'table' | 'diagram'>('table');
 
   if (!patient) {
     return (
@@ -158,6 +163,16 @@ const Optistats = () => {
     }
   };
 
+  // Prepare data for body diagram
+  const problematicOrgans = Object.entries(groupedIndicators).map(([organ, indicators]) => {
+    const hasCritical = indicators.some(ind => ind.status === 'critical');
+    return {
+      organ,
+      status: hasCritical ? 'critical' as const : 'warning' as const,
+      count: indicators.length
+    };
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -222,116 +237,141 @@ const Optistats = () => {
 
         <Card className="shadow-sm">
           <CardHeader className="border-b">
-            <CardTitle className="text-lg font-semibold">
-              Indicateurs Problématiques
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold">
+                Indicateurs Problématiques
+              </CardTitle>
+              <div className="flex items-center gap-3">
+                <Label htmlFor="view-mode" className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Table className="h-4 w-4" />
+                  Tableau
+                </Label>
+                <Switch
+                  id="view-mode"
+                  checked={viewMode === 'diagram'}
+                  onCheckedChange={(checked) => setViewMode(checked ? 'diagram' : 'table')}
+                />
+                <Label htmlFor="view-mode" className="text-sm text-muted-foreground flex items-center gap-2">
+                  Schéma
+                  <LayoutGrid className="h-4 w-4" />
+                </Label>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="pt-6">
-            {/* Problematic Indicators section */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-foreground">Problematic Indicators</h3>
-                
-                {/* Time Range Selector */}
-                <div className="flex gap-2">
-                  {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
-                    <Button
-                      key={range}
-                      variant={timeRange === range ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setTimeRange(range)}
-                      className="h-8 text-xs"
-                    >
-                      {range === 'stay' ? 'Full Stay' : range === 'now' ? 'Now' : range}
-                    </Button>
+            {viewMode === 'table' ? (
+              /* Table View */
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-foreground">Problematic Indicators</h3>
+                  
+                  {/* Time Range Selector */}
+                  <div className="flex gap-2">
+                    {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
+                      <Button
+                        key={range}
+                        variant={timeRange === range ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setTimeRange(range)}
+                        className="h-8 text-xs"
+                      >
+                        {range === 'stay' ? 'Full Stay' : range === 'now' ? 'Now' : range}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              
+                {/* Table header */}
+                <div className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 mb-3 text-xs font-medium text-muted-foreground pb-2 border-b">
+                  <div>Module</div>
+                  <div>Problematic Indicators</div>
+                  <div>Clinical target</div>
+                  <div>Trend</div>
+                  <div>Indicator Analysis</div>
+                  <div></div>
+                </div>
+
+                {/* Table rows */}
+                <div className="space-y-4">
+                  {problematicIndicators.map((item, itemIndex) => (
+                    <div key={itemIndex}>
+                      {item.indicators.map((indicator, indicatorIndex) => (
+                        <div 
+                          key={indicatorIndex}
+                          className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 items-center py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => handleIndicatorClick(item.module, indicator.label)}
+                        >
+                          {/* Module icon - only show on first row */}
+                          <div>
+                            {indicatorIndex === 0 && (
+                              <div className={`w-10 h-10 rounded-lg ${
+                                indicator.status === 'red' ? 'bg-red-100 dark:bg-red-950' : 'bg-orange-100 dark:bg-orange-950'
+                              } flex items-center justify-center`}>
+                                {item.module === 'heart' ? (
+                                  <HeartIcon className={`h-6 w-6 ${item.heartColor(indicator.status)}`} />
+                                ) : (
+                                  <img 
+                                    src={item.iconSrc} 
+                                    alt={item.module} 
+                                    className="h-6 w-6"
+                                    style={{ filter: item.colorFilter(indicator.status) }}
+                                  />
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Problematic indicator */}
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              indicator.status === 'red' ? 'bg-red-500 dark:bg-red-400' : 'bg-orange-500 dark:bg-orange-400'
+                            }`}></div>
+                            <span className="text-sm font-medium text-foreground">{indicator.label}</span>
+                          </div>
+
+                          {/* Clinical target */}
+                          <div className="text-sm text-muted-foreground">{indicator.target}</div>
+
+                          {/* Trend */}
+                          <div>
+                            {indicator.trendIcon && (
+                              <div className="flex items-center gap-2">
+                                {indicator.trendIcon === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
+                                {indicator.trendIcon === 'down' && <TrendingDown className="w-4 h-4 text-destructive" />}
+                                {indicator.trendIcon === 'stable' && <Minus className="w-4 h-4 text-muted-foreground" />}
+                                <span className="text-xs text-muted-foreground capitalize">{indicator.trendIcon}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Indicator Analysis - mini chart */}
+                          <div className="h-16 bg-muted rounded flex items-center justify-center overflow-hidden">
+                            <MiniMetricChart 
+                              metricLabel={indicator.label.split(':')[0].trim()} 
+                              organ={item.module}
+                              timeRange={timeRange}
+                            />
+                          </div>
+
+                          {/* Arrow button */}
+                          <div>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   ))}
                 </div>
               </div>
-              
-              {/* Table header */}
-              <div className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 mb-3 text-xs font-medium text-muted-foreground pb-2 border-b">
-                <div>Module</div>
-                <div>Problematic Indicators</div>
-                <div>Clinical target</div>
-                <div>Trend</div>
-                <div>Indicator Analysis</div>
-                <div></div>
-              </div>
-
-              {/* Table rows */}
-              <div className="space-y-4">
-                {problematicIndicators.map((item, itemIndex) => (
-                  <div key={itemIndex}>
-                    {item.indicators.map((indicator, indicatorIndex) => (
-                      <div 
-                        key={indicatorIndex}
-                        className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 items-center py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => handleIndicatorClick(item.module, indicator.label)}
-                      >
-                        {/* Module icon - only show on first row */}
-                        <div>
-                          {indicatorIndex === 0 && (
-                            <div className={`w-10 h-10 rounded-lg ${
-                              indicator.status === 'red' ? 'bg-red-100 dark:bg-red-950' : 'bg-orange-100 dark:bg-orange-950'
-                            } flex items-center justify-center`}>
-                              {item.module === 'heart' ? (
-                                <HeartIcon className={`h-6 w-6 ${item.heartColor(indicator.status)}`} />
-                              ) : (
-                                <img 
-                                  src={item.iconSrc} 
-                                  alt={item.module} 
-                                  className="h-6 w-6"
-                                  style={{ filter: item.colorFilter(indicator.status) }}
-                                />
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Problematic indicator */}
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${
-                            indicator.status === 'red' ? 'bg-red-500 dark:bg-red-400' : 'bg-orange-500 dark:bg-orange-400'
-                          }`}></div>
-                          <span className="text-sm font-medium text-foreground">{indicator.label}</span>
-                        </div>
-
-                        {/* Clinical target */}
-                        <div className="text-sm text-muted-foreground">{indicator.target}</div>
-
-                        {/* Trend */}
-                        <div>
-                          {indicator.trendIcon && (
-                            <div className="flex items-center gap-2">
-                              {indicator.trendIcon === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
-                              {indicator.trendIcon === 'down' && <TrendingDown className="w-4 h-4 text-destructive" />}
-                              {indicator.trendIcon === 'stable' && <Minus className="w-4 h-4 text-muted-foreground" />}
-                              <span className="text-xs text-muted-foreground capitalize">{indicator.trendIcon}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Indicator Analysis - mini chart */}
-                        <div className="h-16 bg-muted rounded flex items-center justify-center overflow-hidden">
-                          <MiniMetricChart 
-                            metricLabel={indicator.label.split(':')[0].trim()} 
-                            organ={item.module}
-                            timeRange={timeRange}
-                          />
-                        </div>
-
-                        {/* Arrow button */}
-                        <div>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
+            ) : (
+              /* Diagram View */
+              <BodyDiagram 
+                problematicOrgans={problematicOrgans}
+                patientId={patientId}
+              />
+            )}
           </CardContent>
         </Card>
       </main>
