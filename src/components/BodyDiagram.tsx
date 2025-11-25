@@ -31,18 +31,15 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
 
   const getOrganColor = (organ: string) => {
     const status = getOrganStatus(organ);
-    if (!status) return 'hsl(var(--muted-foreground) / 0.15)';
-    return status.status === 'critical' 
-      ? 'hsl(0 84% 60% / 0.7)' 
-      : 'hsl(20 91% 48% / 0.7)';
-  };
-
-  const getStrokeColor = (organ: string) => {
-    const status = getOrganStatus(organ);
-    if (!status) return 'none';
+    if (!status) return 'hsl(210 40% 60%)'; // Default blue-gray
     return status.status === 'critical' 
       ? 'hsl(0 84% 60%)' 
       : 'hsl(20 91% 48%)';
+  };
+
+  const getOrganOpacity = (organ: string) => {
+    const status = getOrganStatus(organ);
+    return status ? '0.85' : '0.6';
   };
 
   const brainStatus = getOrganStatus('brain');
@@ -52,243 +49,145 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
   return (
     <div className="relative w-full max-w-3xl mx-auto py-8 animate-fade-in">
       <div className="flex justify-center">
-        {/* Front view */}
         <div className="relative">
           <div className="text-center mb-6">
-            <h3 className="text-base font-semibold text-foreground">Vue de face</h3>
+            <h3 className="text-base font-semibold text-foreground">Vue anatomique</h3>
           </div>
           
           <svg 
             viewBox="0 0 300 600" 
-            className="w-80 h-auto drop-shadow-lg"
+            className="w-96 h-auto"
             xmlns="http://www.w3.org/2000/svg"
           >
             <defs>
-              <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--muted-foreground) / 0.08)" />
-                <stop offset="100%" stopColor="hsl(var(--muted-foreground) / 0.03)" />
-              </linearGradient>
-              
-              <filter id="shadow">
-                <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.2"/>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
               </filter>
             </defs>
 
-            {/* Body silhouette with realistic proportions */}
-            <g opacity="0.4" fill="url(#bodyGradient)" stroke="hsl(var(--muted-foreground) / 0.2)" strokeWidth="1.5">
+            {/* Human body silhouette - translucent */}
+            <g fill="hsl(210 30% 85%)" opacity="0.35" stroke="hsl(210 30% 70%)" strokeWidth="1">
               {/* Head */}
-              <ellipse cx="150" cy="50" rx="35" ry="42" />
+              <ellipse cx="150" cy="55" rx="42" ry="50" />
               
               {/* Neck */}
-              <rect x="135" y="85" width="30" height="25" rx="8" />
+              <path d="M 130 95 L 125 112 L 135 112 L 165 112 L 175 112 L 170 95" />
               
               {/* Shoulders */}
-              <ellipse cx="150" cy="115" rx="65" ry="15" />
+              <path d="M 100 112 Q 90 115 85 125 L 75 155" />
+              <path d="M 200 112 Q 210 115 215 125 L 225 155" />
               
-              {/* Chest/Torso */}
-              <path d="M 95 115 Q 85 140 85 180 L 85 280 Q 85 300 95 310 L 115 360 L 130 420" />
-              <path d="M 205 115 Q 215 140 215 180 L 215 280 Q 215 300 205 310 L 185 360 L 170 420" />
+              {/* Torso */}
+              <path d="M 100 112 L 95 185 Q 93 240 98 285 L 110 350 L 125 420" />
+              <path d="M 200 112 L 205 185 Q 207 240 202 285 L 190 350 L 175 420" />
               
               {/* Waist */}
-              <path d="M 95 310 Q 100 330 110 340 L 130 420" />
-              <path d="M 205 310 Q 200 330 190 340 L 170 420" />
+              <path d="M 98 285 Q 105 310 115 330" />
+              <path d="M 202 285 Q 195 310 185 330" />
+              
+              {/* Chest width */}
+              <path d="M 100 112 Q 110 118 120 118 L 180 118 Q 190 118 200 112" />
               
               {/* Arms */}
-              <path d="M 95 115 Q 75 120 65 130 L 55 200 L 50 260" />
-              <path d="M 205 115 Q 225 120 235 130 L 245 200 L 250 260" />
+              <path d="M 75 155 L 68 220 L 65 270" />
+              <path d="M 225 155 L 232 220 L 235 270" />
               
               {/* Legs */}
-              <path d="M 130 420 L 132 520 L 128 580" strokeWidth="18" strokeLinecap="round" />
-              <path d="M 170 420 L 168 520 L 172 580" strokeWidth="18" strokeLinecap="round" />
+              <path d="M 125 420 L 128 500 L 125 575" strokeWidth="20" strokeLinecap="round" />
+              <path d="M 175 420 L 172 500 L 175 575" strokeWidth="20" strokeLinecap="round" />
+              
+              {/* Hip connections */}
+              <path d="M 110 350 Q 115 380 125 420" />
+              <path d="M 190 350 Q 185 380 175 420" />
             </g>
 
-            {/* Organs with realistic anatomy */}
+            {/* Internal organs */}
             
-            {/* Brain - realistic shape with hemispheres and folds */}
-            <g 
-              onClick={() => brainStatus && handleOrganClick('brain')}
-              className={`transition-all duration-300 ${brainStatus ? 'cursor-pointer hover:scale-105' : ''}`}
-            >
-              {/* Main brain shape */}
-              <path 
-                d="M 150 15 
-                   Q 130 15 120 25 
-                   Q 115 30 115 40 
-                   Q 115 50 118 58
-                   Q 120 65 125 70
-                   Q 132 75 140 75
-                   Q 145 75 150 73
-                   Q 155 75 160 75
-                   Q 168 75 175 70
-                   Q 180 65 182 58
-                   Q 185 50 185 40
-                   Q 185 30 180 25
-                   Q 170 15 150 15 Z"
-                fill={getOrganColor('brain')}
-                stroke={getStrokeColor('brain')}
-                strokeWidth="2"
-                filter="url(#shadow)"
-              />
-              
-              {/* Left hemisphere detail */}
-              <path 
-                d="M 125 30 Q 122 35 122 40 Q 122 48 128 55 Q 132 60 138 62"
-                stroke="hsl(var(--muted-foreground) / 0.25)"
-                strokeWidth="1.5"
-                fill="none"
-              />
-              <path 
-                d="M 130 35 Q 127 40 128 45 Q 129 50 133 55"
-                stroke="hsl(var(--muted-foreground) / 0.25)"
-                strokeWidth="1.5"
-                fill="none"
-              />
-              
-              {/* Right hemisphere detail */}
-              <path 
-                d="M 175 30 Q 178 35 178 40 Q 178 48 172 55 Q 168 60 162 62"
-                stroke="hsl(var(--muted-foreground) / 0.25)"
-                strokeWidth="1.5"
-                fill="none"
-              />
-              <path 
-                d="M 170 35 Q 173 40 172 45 Q 171 50 167 55"
-                stroke="hsl(var(--muted-foreground) / 0.25)"
-                strokeWidth="1.5"
-                fill="none"
-              />
-              
-              {/* Center division (longitudinal fissure) */}
-              <path 
-                d="M 150 18 Q 150 25 150 40 Q 150 55 150 70"
-                stroke="hsl(var(--muted-foreground) / 0.2)"
-                strokeWidth="1"
-                fill="none"
-                strokeDasharray="2,2"
-              />
-              
-              {/* Cerebellum */}
-              <ellipse 
-                cx="150" 
-                cy="77" 
-                rx="25" 
-                ry="10"
-                fill={getOrganColor('brain')}
-                stroke={getStrokeColor('brain')}
-                strokeWidth="1.5"
-                opacity="0.8"
-                filter="url(#shadow)"
-              />
-              
-              {brainStatus && (
-                <g>
-                  <circle cx="150" cy="45" r="14" fill="rgba(255,255,255,0.95)" />
-                  <text 
-                    x="150" 
-                    y="52" 
-                    textAnchor="middle" 
-                    className="text-[16px] font-bold"
-                    fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                  >
-                    {brainStatus.count}
-                  </text>
-                </g>
-              )}
-            </g>
+            {/* Trachea (windpipe) */}
+            <path 
+              d="M 150 105 L 150 145"
+              stroke="hsl(210 30% 55%)"
+              strokeWidth="5"
+              fill="none"
+              opacity="0.5"
+            />
+            <path 
+              d="M 147 110 L 153 110 M 147 120 L 153 120 M 147 130 L 153 130 M 147 140 L 153 140"
+              stroke="hsl(210 30% 65%)"
+              strokeWidth="0.5"
+              opacity="0.5"
+            />
 
-            {/* Lungs - realistic lobed structure */}
+            {/* Lungs - realistic medical illustration style */}
             <g 
               onClick={() => lungsStatus && handleOrganClick('lungs')}
               className={`transition-all duration-300 ${lungsStatus ? 'cursor-pointer hover:scale-105' : ''}`}
             >
-              {/* Left lung - 2 lobes */}
+              {/* Left lung with lobes */}
               <path 
-                d="M 122 135 
-                   Q 108 140 105 155
-                   L 105 185
-                   Q 105 200 110 210
-                   Q 115 218 122 220
-                   Q 128 222 133 218
-                   L 138 200
-                   Q 140 185 138 170
-                   Q 137 155 133 145
-                   Q 128 137 122 135 Z"
+                d="M 115 145 
+                   Q 100 150 95 165
+                   L 93 210
+                   Q 93 235 100 250
+                   Q 105 260 115 262
+                   L 128 258
+                   Q 135 250 135 235
+                   L 135 165
+                   Q 135 150 125 145
+                   Z"
                 fill={getOrganColor('lungs')}
-                stroke={getStrokeColor('lungs')}
-                strokeWidth="2"
-                filter="url(#shadow)"
+                opacity={getOrganOpacity('lungs')}
+                stroke="hsl(210 30% 45%)"
+                strokeWidth="1"
+                filter="url(#glow)"
               />
-              {/* Left lung lobes separation */}
-              <path 
-                d="M 115 170 Q 120 172 125 170"
-                stroke="hsl(var(--muted-foreground) / 0.25)"
-                strokeWidth="1.5"
-                fill="none"
-              />
+              {/* Left lung lobes detail */}
+              <path d="M 100 185 Q 110 187 120 185" stroke="hsl(210 30% 40%)" strokeWidth="0.8" fill="none" opacity="0.5" />
+              <path d="M 98 215 Q 108 217 118 215" stroke="hsl(210 30% 40%)" strokeWidth="0.8" fill="none" opacity="0.5" />
               
-              {/* Right lung - 3 lobes */}
+              {/* Right lung with lobes */}
               <path 
-                d="M 178 135 
-                   Q 192 140 195 155
-                   L 195 185
-                   Q 195 200 190 210
-                   Q 185 218 178 220
-                   Q 172 222 167 218
-                   L 162 200
-                   Q 160 185 162 170
-                   Q 163 155 167 145
-                   Q 172 137 178 135 Z"
+                d="M 185 145 
+                   Q 200 150 205 165
+                   L 207 210
+                   Q 207 235 200 250
+                   Q 195 260 185 262
+                   L 172 258
+                   Q 165 250 165 235
+                   L 165 165
+                   Q 165 150 175 145
+                   Z"
                 fill={getOrganColor('lungs')}
-                stroke={getStrokeColor('lungs')}
-                strokeWidth="2"
-                filter="url(#shadow)"
+                opacity={getOrganOpacity('lungs')}
+                stroke="hsl(210 30% 45%)"
+                strokeWidth="1"
+                filter="url(#glow)"
               />
-              {/* Right lung lobes separation */}
-              <path 
-                d="M 175 160 Q 180 162 185 160 M 175 185 Q 180 187 185 185"
-                stroke="hsl(var(--muted-foreground) / 0.25)"
-                strokeWidth="1.5"
-                fill="none"
-              />
+              {/* Right lung lobes detail - 3 lobes */}
+              <path d="M 180 170 Q 190 172 200 170" stroke="hsl(210 30% 40%)" strokeWidth="0.8" fill="none" opacity="0.5" />
+              <path d="M 180 200 Q 190 202 200 200" stroke="hsl(210 30% 40%)" strokeWidth="0.8" fill="none" opacity="0.5" />
+              <path d="M 182 230 Q 192 232 202 230" stroke="hsl(210 30% 40%)" strokeWidth="0.8" fill="none" opacity="0.5" />
               
-              {/* Trachea and bronchi */}
-              <path 
-                d="M 150 115 L 150 138"
-                stroke="hsl(var(--muted-foreground) / 0.3)"
-                strokeWidth="4"
-                strokeLinecap="round"
-                fill="none"
-              />
-              {/* Bronchi branches */}
-              <path 
-                d="M 150 138 Q 145 143 135 150 M 150 138 Q 155 143 165 150"
-                stroke="hsl(var(--muted-foreground) / 0.3)"
-                strokeWidth="3"
-                strokeLinecap="round"
-                fill="none"
-              />
-              {/* Smaller bronchioles */}
-              <path 
-                d="M 135 150 L 125 160 M 135 150 L 128 165"
-                stroke="hsl(var(--muted-foreground) / 0.2)"
-                strokeWidth="1.5"
-                fill="none"
-              />
-              <path 
-                d="M 165 150 L 175 160 M 165 150 L 172 165"
-                stroke="hsl(var(--muted-foreground) / 0.2)"
-                strokeWidth="1.5"
-                fill="none"
-              />
+              {/* Bronchi */}
+              <path d="M 150 145 Q 145 150 135 160" stroke="hsl(210 30% 50%)" strokeWidth="3.5" fill="none" opacity="0.6" />
+              <path d="M 150 145 Q 155 150 165 160" stroke="hsl(210 30% 50%)" strokeWidth="3.5" fill="none" opacity="0.6" />
+              
+              {/* Bronchioles */}
+              <path d="M 135 160 L 120 175 M 135 160 L 118 188 M 135 160 L 125 200" stroke="hsl(210 30% 55%)" strokeWidth="1.5" fill="none" opacity="0.4" />
+              <path d="M 165 160 L 180 175 M 165 160 L 182 188 M 165 160 L 175 200" stroke="hsl(210 30% 55%)" strokeWidth="1.5" fill="none" opacity="0.4" />
               
               {lungsStatus && (
                 <g>
-                  <circle cx="150" cy="175" r="14" fill="rgba(255,255,255,0.95)" />
+                  <circle cx="150" cy="200" r="16" fill="rgba(255,255,255,0.95)" />
                   <text 
                     x="150" 
-                    y="182" 
+                    y="207" 
                     textAnchor="middle" 
-                    className="text-[16px] font-bold"
+                    className="text-[18px] font-bold"
                     fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                   >
                     {lungsStatus.count}
@@ -297,105 +196,46 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
               )}
             </g>
 
-            {/* Heart - realistic anatomical shape with chambers */}
+            {/* Heart - positioned in front of lungs */}
             <g 
               onClick={() => heartStatus && handleOrganClick('heart')}
               className={`transition-all duration-300 ${heartStatus ? 'cursor-pointer hover:scale-105' : ''}`}
             >
-              {/* Main heart body */}
               <path 
-                d="M 150 147 
-                   L 138 156 
-                   Q 130 163 130 173 
-                   Q 130 180 135 187
-                   L 150 200
-                   L 165 187
-                   Q 170 180 170 173
-                   Q 170 163 162 156
+                d="M 150 160
+                   L 135 172
+                   Q 125 180 125 192
+                   Q 125 205 135 217
+                   L 150 232
+                   L 165 217
+                   Q 175 205 175 192
+                   Q 175 180 165 172
                    Z"
                 fill={getOrganColor('heart')}
-                stroke={getStrokeColor('heart')}
-                strokeWidth="2"
-                filter="url(#shadow)"
-              />
-              
-              {/* Left atrium bump */}
-              <ellipse 
-                cx="140" 
-                cy="150" 
-                rx="8" 
-                ry="10"
-                fill={getOrganColor('heart')}
-                stroke={getStrokeColor('heart')}
+                opacity={getOrganOpacity('heart')}
+                stroke="hsl(210 30% 45%)"
                 strokeWidth="1.5"
-                opacity="0.9"
+                filter="url(#glow)"
               />
               
-              {/* Right atrium bump */}
-              <ellipse 
-                cx="160" 
-                cy="150" 
-                rx="8" 
-                ry="10"
-                fill={getOrganColor('heart')}
-                stroke={getStrokeColor('heart')}
-                strokeWidth="1.5"
-                opacity="0.9"
-              />
+              {/* Heart chambers */}
+              <path d="M 150 170 L 150 225" stroke="hsl(210 30% 35%)" strokeWidth="1" opacity="0.4" strokeDasharray="3,2" />
+              <path d="M 135 190 Q 150 188 165 190" stroke="hsl(210 30% 35%)" strokeWidth="1" opacity="0.4" />
               
-              {/* Aortic arch */}
-              <path 
-                d="M 150 147 Q 148 142 145 140 Q 142 138 140 138"
-                stroke={getOrganColor('heart')}
-                strokeWidth="5"
-                fill="none"
-                strokeLinecap="round"
-                opacity="0.8"
-              />
-              <path 
-                d="M 150 147 Q 152 142 155 140 Q 158 138 160 138"
-                stroke={getOrganColor('heart')}
-                strokeWidth="4"
-                fill="none"
-                strokeLinecap="round"
-                opacity="0.8"
-              />
-              
-              {/* Chamber divisions */}
-              <path 
-                d="M 150 155 L 150 192"
-                stroke="hsl(var(--muted-foreground) / 0.25)"
-                strokeWidth="1.5"
-                strokeDasharray="3,2"
-              />
-              <path 
-                d="M 138 170 Q 150 168 162 170"
-                stroke="hsl(var(--muted-foreground) / 0.25)"
-                strokeWidth="1.5"
-              />
-              
-              {/* Pulmonary vessels */}
-              <path 
-                d="M 140 152 Q 135 148 132 145"
-                stroke="hsl(var(--muted-foreground) / 0.3)"
-                strokeWidth="2"
-                fill="none"
-              />
-              <path 
-                d="M 160 152 Q 165 148 168 145"
-                stroke="hsl(var(--muted-foreground) / 0.3)"
-                strokeWidth="2"
-                fill="none"
-              />
+              {/* Aorta */}
+              <path d="M 150 160 Q 148 152 145 148 Q 142 145 138 145" 
+                    stroke={getOrganColor('heart')} strokeWidth="4" fill="none" opacity="0.7" strokeLinecap="round" />
+              <path d="M 150 160 Q 152 152 155 148 Q 158 145 162 145" 
+                    stroke={getOrganColor('heart')} strokeWidth="3.5" fill="none" opacity="0.7" strokeLinecap="round" />
               
               {heartStatus && (
                 <g>
-                  <circle cx="150" cy="173" r="13" fill="rgba(255,255,255,0.95)" />
+                  <circle cx="150" cy="195" r="14" fill="rgba(255,255,255,0.95)" />
                   <text 
                     x="150" 
-                    y="179" 
+                    y="202" 
                     textAnchor="middle" 
-                    className="text-[14px] font-bold"
+                    className="text-[16px] font-bold"
                     fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                   >
                     {heartStatus.count}
@@ -404,85 +244,92 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
               )}
             </g>
 
-            {/* Liver - right side, detailed shape */}
+            {/* Liver */}
             <path 
-              d="M 155 230 Q 180 230 195 240 L 200 270 Q 200 285 190 290 L 160 295 Q 155 295 155 290 Z"
+              d="M 155 255 Q 185 255 200 265 L 205 295 Q 205 315 195 322 L 160 328 Q 155 328 155 320 Z"
               fill={getOrganColor('liver')}
-              stroke={getStrokeColor('liver')}
-              strokeWidth="2"
-              filter="url(#shadow)"
+              opacity={getOrganOpacity('liver')}
+              stroke="hsl(210 30% 45%)"
+              strokeWidth="1"
+              filter="url(#glow)"
             />
 
             {/* Stomach */}
-            <ellipse 
-              cx="135" 
-              cy="255" 
-              rx="20" 
-              ry="28"
+            <path 
+              d="M 135 265 Q 125 268 120 278 L 118 300 Q 118 312 125 318 Q 132 322 140 318 Q 145 314 145 305 L 145 278 Q 143 270 135 265 Z"
               fill={getOrganColor('stomach')}
-              stroke={getStrokeColor('stomach')}
-              strokeWidth="1.5"
-              filter="url(#shadow)"
+              opacity={getOrganOpacity('stomach')}
+              stroke="hsl(210 30% 45%)"
+              strokeWidth="1"
+              filter="url(#glow)"
             />
 
             {/* Kidneys */}
             <g>
               <ellipse 
-                cx="115" 
-                cy="280" 
-                rx="12" 
-                ry="22"
+                cx="110" 
+                cy="305" 
+                rx="14" 
+                ry="25"
                 fill={getOrganColor('kidneys')}
-                stroke={getStrokeColor('kidneys')}
-                strokeWidth="1.5"
-                filter="url(#shadow)"
+                opacity={getOrganOpacity('kidneys')}
+                stroke="hsl(210 30% 45%)"
+                strokeWidth="1"
+                filter="url(#glow)"
               />
+              <ellipse cx="110" cy="305" rx="7" ry="12" fill="hsl(210 30% 50%)" opacity="0.3" />
+              
               <ellipse 
-                cx="185" 
-                cy="280" 
-                rx="12" 
-                ry="22"
+                cx="190" 
+                cy="305" 
+                rx="14" 
+                ry="25"
                 fill={getOrganColor('kidneys')}
-                stroke={getStrokeColor('kidneys')}
-                strokeWidth="1.5"
-                filter="url(#shadow)"
+                opacity={getOrganOpacity('kidneys')}
+                stroke="hsl(210 30% 45%)"
+                strokeWidth="1"
+                filter="url(#glow)"
               />
+              <ellipse cx="190" cy="305" rx="7" ry="12" fill="hsl(210 30% 50%)" opacity="0.3" />
             </g>
 
-            {/* Pancreas */}
-            <ellipse 
-              cx="150" 
-              cy="265" 
-              rx="30" 
-              ry="8"
-              fill={getOrganColor('pancreas')}
-              stroke={getStrokeColor('pancreas')}
-              strokeWidth="1.5"
-              filter="url(#shadow)"
-            />
-
-            {/* Intestines - coiled pattern */}
+            {/* Small intestine - coiled */}
             <g 
               fill={getOrganColor('intestine')}
-              stroke={getStrokeColor('intestine')}
-              strokeWidth="1.5"
-              filter="url(#shadow)"
+              opacity={getOrganOpacity('intestine')}
+              stroke="hsl(210 30% 45%)"
+              strokeWidth="1"
+              filter="url(#glow)"
             >
-              <path d="M 130 310 Q 120 320 125 335 Q 130 350 145 350 Q 160 350 165 335 Q 170 320 160 310 Z" />
-              <path d="M 145 350 Q 140 365 150 375 Q 160 375 155 360" />
+              <circle cx="140" cy="360" r="12" />
+              <circle cx="160" cy="360" r="12" />
+              <circle cx="150" cy="378" r="12" />
+              <circle cx="135" cy="390" r="11" />
+              <circle cx="165" cy="390" r="11" />
             </g>
+
+            {/* Large intestine outline */}
+            <path 
+              d="M 125 340 L 110 355 L 110 395 L 125 410 L 175 410 L 190 395 L 190 355 L 175 340"
+              fill="none"
+              stroke={getOrganColor('intestine')}
+              strokeWidth="8"
+              opacity={getOrganOpacity('intestine')}
+              strokeLinecap="round"
+              filter="url(#glow)"
+            />
           </svg>
 
-          {/* Labels with connecting lines */}
+          {/* Labels */}
           <svg className="absolute inset-0 pointer-events-none w-full h-full" viewBox="0 0 300 600">
             {brainStatus && (
               <g>
-                <line x1="185" y1="45" x2="235" y2="30" stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="1.5" />
-                <foreignObject x="235" y="15" width="120" height="40">
-                  <div className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shadow-lg ${
+                <line x1="192" y1="55" x2="245" y2="40" stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
+                <foreignObject x="245" y="22" width="130" height="40">
+                  <div className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shadow-lg border-2 ${
                     brainStatus.status === 'critical' 
-                      ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-400'
-                      : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border border-orange-400'
+                      ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-500'
+                      : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-orange-500'
                   }`}>
                     Cerveau ({brainStatus.count})
                   </div>
@@ -492,12 +339,12 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
             
             {heartStatus && (
               <g>
-                <line x1="120" y1="168" x2="50" y2="168" stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="1.5" />
-                <foreignObject x="5" y="150" width="120" height="40">
-                  <div className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shadow-lg ${
+                <line x1="125" y1="195" x2="55" y2="195" stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
+                <foreignObject x="5" y="177" width="130" height="40">
+                  <div className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shadow-lg border-2 ${
                     heartStatus.status === 'critical' 
-                      ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-400'
-                      : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border border-orange-400'
+                      ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-500'
+                      : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-orange-500'
                   }`}>
                     Cœur ({heartStatus.count})
                   </div>
@@ -507,12 +354,12 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
 
             {lungsStatus && (
               <g>
-                <line x1="195" y1="175" x2="245" y2="175" stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="1.5" />
-                <foreignObject x="245" y="157" width="120" height="40">
-                  <div className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shadow-lg ${
+                <line x1="207" y1="200" x2="250" y2="200" stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
+                <foreignObject x="250" y="182" width="130" height="40">
+                  <div className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shadow-lg border-2 ${
                     lungsStatus.status === 'critical' 
-                      ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-400'
-                      : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border border-orange-400'
+                      ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-500'
+                      : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-orange-500'
                   }`}>
                     Poumons ({lungsStatus.count})
                   </div>
@@ -523,55 +370,56 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
         </div>
       </div>
 
-      {/* Legend with better styling */}
+      {/* Legend */}
       <div className="mt-10 flex items-center justify-center gap-10 text-sm">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-muted/30 border-2 border-muted-foreground/20"></div>
+          <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: 'hsl(210 40% 60%)', opacity: 0.6 }}></div>
           <span className="text-muted-foreground font-medium">Normal</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-orange-500/70 border-2 border-orange-500"></div>
+          <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: 'hsl(20 91% 48%)', opacity: 0.85 }}></div>
           <span className="text-muted-foreground font-medium">Attention</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-red-500/70 border-2 border-red-500"></div>
+          <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: 'hsl(0 84% 60%)', opacity: 0.85 }}></div>
           <span className="text-muted-foreground font-medium">Critique</span>
         </div>
       </div>
 
-      {/* Organ list summary */}
+      {/* Organ summary list */}
       {problematicOrgans.length > 0 && (
         <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
-          {[
-            { id: 'brain', label: 'Cerveau' },
-            { id: 'heart', label: 'Cœur' },
-            { id: 'lungs', label: 'Poumons' },
-            { id: 'liver', label: 'Foie' },
-            { id: 'kidneys', label: 'Reins' },
-            { id: 'pancreas', label: 'Pancréas' },
-            { id: 'intestine', label: 'Intestin grêle' },
-          ].map((organ) => {
-            const status = getOrganStatus(organ.id);
-            if (!status) return null;
+          {problematicOrgans.map((organ) => {
+            const organLabels: Record<string, string> = {
+              brain: 'Cerveau',
+              heart: 'Cœur',
+              lungs: 'Poumons',
+              liver: 'Foie',
+              kidneys: 'Reins',
+              pancreas: 'Pancréas',
+              intestine: 'Intestin',
+            };
+            
+            const isClickable = ['brain', 'heart', 'lungs'].includes(organ.organ);
             
             return (
               <button
-                key={organ.id}
-                onClick={() => ['brain', 'heart', 'lungs'].includes(organ.id) && handleOrganClick(organ.id)}
+                key={organ.organ}
+                onClick={() => isClickable && handleOrganClick(organ.organ)}
                 className={`
                   px-4 py-3 rounded-lg text-sm font-medium text-left
                   transition-all duration-300 hover:scale-105 hover:shadow-md
-                  ${status.status === 'critical'
-                    ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-2 border-red-400 dark:border-red-700'
-                    : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-2 border-orange-400 dark:border-orange-700'
+                  ${organ.status === 'critical'
+                    ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-2 border-red-500'
+                    : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-2 border-orange-500'
                   }
-                  ${['brain', 'heart', 'lungs'].includes(organ.id) ? 'cursor-pointer' : 'cursor-default'}
+                  ${isClickable ? 'cursor-pointer' : 'cursor-default'}
                 `}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold">{organ.label}</span>
+                  <span className="font-semibold">{organLabels[organ.organ]}</span>
                   <span className="text-xs opacity-75 ml-2">
-                    {status.count} indicateur{status.count > 1 ? 's' : ''}
+                    {organ.count} indicateur{organ.count > 1 ? 's' : ''}
                   </span>
                 </div>
               </button>
