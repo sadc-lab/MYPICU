@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,7 @@ const Optistats = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
+  const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h' | 'stay'>('24h');
 
   if (!patient) {
     return (
@@ -261,7 +263,24 @@ const Optistats = () => {
 
             {/* Problematic Indicators section */}
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-4">Problematic Indicators</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-foreground">Problematic Indicators</h3>
+                
+                {/* Time Range Selector */}
+                <div className="flex gap-2">
+                  {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
+                    <Button
+                      key={range}
+                      variant={timeRange === range ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTimeRange(range)}
+                      className="h-8 text-xs"
+                    >
+                      {range === 'stay' ? 'Full Stay' : range === 'now' ? 'Now' : range}
+                    </Button>
+                  ))}
+                </div>
+              </div>
               
               {/* Table header */}
               <div className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 mb-3 text-xs font-medium text-muted-foreground pb-2 border-b">
@@ -321,6 +340,7 @@ const Optistats = () => {
                           <MiniMetricChart 
                             metricLabel={indicator.label.split(':')[0].trim()} 
                             organ={item.module}
+                            timeRange={timeRange}
                           />
                         </div>
 

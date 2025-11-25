@@ -5,9 +5,10 @@ import { brainMetrics, heartMetrics, lungMetrics } from '@/utils/organMetrics';
 interface MiniMetricChartProps {
   metricLabel: string;
   organ: string;
+  timeRange?: 'now' | '3h' | '6h' | '12h' | '24h' | 'stay';
 }
 
-export const MiniMetricChart = ({ metricLabel, organ }: MiniMetricChartProps) => {
+export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniMetricChartProps) => {
   const chartData = useMemo(() => {
     // Find the metric
     const allMetrics = [...brainMetrics, ...heartMetrics, ...lungMetrics];
@@ -16,13 +17,48 @@ export const MiniMetricChart = ({ metricLabel, organ }: MiniMetricChartProps) =>
     if (!metric) return [];
 
     const data = [];
-    const dataPoints = 20;
     const now = new Date();
-    const intervalMinutes = 60; // 1 hour intervals for 20 hour view
+    
+    // Determine number of data points and time intervals based on time range
+    let dataPoints: number;
+    let intervalMinutes: number;
+    
+    switch (timeRange) {
+      case 'now':
+        dataPoints = 1;
+        intervalMinutes = 0;
+        break;
+      case '3h':
+        dataPoints = 18; // One point every 10 minutes
+        intervalMinutes = 10;
+        break;
+      case '6h':
+        dataPoints = 24; // One point every 15 minutes
+        intervalMinutes = 15;
+        break;
+      case '12h':
+        dataPoints = 24; // One point every 30 minutes
+        intervalMinutes = 30;
+        break;
+      case '24h':
+        dataPoints = 24; // One point every hour
+        intervalMinutes = 60;
+        break;
+      case 'stay':
+        dataPoints = 48; // One point every 2 hours for a typical ICU stay
+        intervalMinutes = 120;
+        break;
+      default:
+        dataPoints = 24;
+        intervalMinutes = 60;
+        break;
+    }
     
     for (let i = dataPoints - 1; i >= 0; i--) {
       const time = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
-      const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+      const timeStr = timeRange === 'now' 
+        ? 'Now'
+        : `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
       
       const baseValue = metric.value;
       // Add realistic variation based on trend
@@ -41,7 +77,7 @@ export const MiniMetricChart = ({ metricLabel, organ }: MiniMetricChartProps) =>
     }
     
     return data;
-  }, [metricLabel, organ]);
+  }, [metricLabel, organ, timeRange]);
 
   // Get metric to determine color based on status
   const allMetrics = [...brainMetrics, ...heartMetrics, ...lungMetrics];
