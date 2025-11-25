@@ -175,14 +175,14 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               style={{ pointerEvents: 'none' }}
             >
 
-              {/* Brain indicator values - positioned next to point */}
+              {/* Brain indicator values - positioned on image */}
               {brainStatus && organIndicators['brain'] && (
                 <g style={{ pointerEvents: 'auto' }}>
                   {/* Connection line from point to indicator */}
                   <line
-                    x1="422"
+                    x1="410"
                     y1="80"
-                    x2="435"
+                    x2="450"
                     y2="80"
                     stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     strokeWidth="1.5"
@@ -192,8 +192,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {organIndicators['brain'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="435"
-                        y={55 + idx * 50}
+                        x="450"
+                        y={20 + idx * 50}
                         width="190"
                         height="45"
                         rx="6"
@@ -202,16 +202,16 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="445" 
-                        y={78 + idx * 50}
+                        x="460" 
+                        y={43 + idx * 50}
                         className="text-[15px] font-semibold"
                         fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="445" 
-                        y={92 + idx * 50} 
+                        x="460" 
+                        y={57 + idx * 50} 
                         className="text-[12px]"
                         fill="hsl(var(--muted-foreground))"
                       >
@@ -254,14 +254,14 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               </TooltipContent>
             </Tooltip>
 
-              {/* Lungs indicator values - positioned next to points */}
+              {/* Lungs indicator values - positioned on image */}
               {lungsStatus && organIndicators['lungs'] && (
                 <g style={{ pointerEvents: 'auto' }}>
                   {/* Connection lines from points to indicators */}
                   <line
-                    x1="422"
+                    x1="410"
                     y1="265"
-                    x2="435"
+                    x2="450"
                     y2="265"
                     stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     strokeWidth="1.5"
@@ -271,7 +271,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {organIndicators['lungs'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="435"
+                        x="450"
                         y={240 + idx * 50}
                         width="190"
                         height="45"
@@ -281,7 +281,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="445" 
+                        x="460" 
                         y={263 + idx * 50}
                         className="text-[15px] font-semibold"
                         fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -289,7 +289,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="445" 
+                        x="460" 
                         y={277 + idx * 50} 
                         className="text-[12px]"
                         fill="hsl(var(--muted-foreground))"
@@ -333,15 +333,15 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               </TooltipContent>
             </Tooltip>
 
-              {/* Heart indicator values - positioned next to point */}
+              {/* Heart indicator values - positioned on image */}
               {heartStatus && organIndicators['heart'] && (
                 <g style={{ pointerEvents: 'auto' }}>
                   {/* Connection line from point to indicator */}
                   <line
-                    x1="422"
+                    x1="410"
                     y1="230"
-                    x2="435"
-                    y2="230"
+                    x2="450"
+                    y2="155"
                     stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     strokeWidth="1.5"
                     strokeDasharray="3,3"
@@ -350,8 +350,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {organIndicators['heart'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="435"
-                        y={185 + idx * 50}
+                        x="450"
+                        y={130 + idx * 50}
                         width="190"
                         height="45"
                         rx="6"
@@ -360,16 +360,16 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="445" 
-                        y={208 + idx * 50}
+                        x="460" 
+                        y={153 + idx * 50}
                         className="text-[15px] font-semibold"
                         fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="445" 
-                        y={222 + idx * 50} 
+                        x="460" 
+                        y={167 + idx * 50} 
                         className="text-[12px]"
                         fill="hsl(var(--muted-foreground))"
                       >
