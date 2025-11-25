@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import anatomyDiagram from '@/assets/anatomy-diagram.png';
+import anatomyNormal from '@/assets/anatomy-normal.png';
 
 interface BodyDiagramProps {
   problematicOrgans: {
@@ -58,6 +59,9 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
   const brainStatus = getOrganStatus('brain');
   const heartStatus = getOrganStatus('heart');
   const lungsStatus = getOrganStatus('lungs');
+  
+  // Check if there are any problematic organs
+  const hasProblems = problematicOrgans.length > 0;
 
   const getOrganInfo = (organ: string) => {
     const infoMap: Record<string, { name: string; function: string; normal: string }> = {
@@ -88,13 +92,14 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
         </div>
         
         <div className="relative flex justify-center">
-          {/* Main anatomy image */}
+          {/* Main anatomy image - switch based on organ status */}
           <img 
-            src={anatomyDiagram} 
+            src={hasProblems ? anatomyDiagram : anatomyNormal}
             alt="Diagramme anatomique" 
             className="w-full max-w-3xl h-auto"
           />
-          {/* Interactive overlay for clickable organs */}
+          {/* Interactive overlay for clickable organs - only show if there are problems */}
+          {hasProblems && (
           <div className="absolute inset-0 flex justify-center">
             <svg 
               viewBox="0 0 600 1400" 
@@ -383,6 +388,16 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
             </Tooltip>
           </svg>
           </div>
+          )}
+          
+          {/* Message when everything is normal */}
+          {!hasProblems && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 px-6 py-3 rounded-lg shadow-lg border-2 border-green-500">
+                <p className="text-lg font-semibold">✓ Tous les organes sont normaux</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </TooltipProvider>
