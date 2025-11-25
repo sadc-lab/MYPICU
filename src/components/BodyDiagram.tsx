@@ -84,12 +84,201 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
     return infoMap[organ] || { name: '', function: '', normal: '' };
   };
 
+  // Generate clinical recommendations based on problematic organs
+  const getRecommendations = () => {
+    const recommendations: Array<{ organ: string; text: string; priority: 'critical' | 'warning' }> = [];
+    
+    if (brainStatus) {
+      if (brainStatus.status === 'critical') {
+        recommendations.push({
+          organ: 'Cerveau',
+          text: 'Surveillance neurologique rapprochée nécessaire. Évaluer la pression intracrânienne et envisager une imagerie cérébrale urgente.',
+          priority: 'critical'
+        });
+      } else {
+        recommendations.push({
+          organ: 'Cerveau',
+          text: 'Surveiller l\'évolution des paramètres neurologiques. Adapter la sédation si nécessaire.',
+          priority: 'warning'
+        });
+      }
+    }
+    
+    if (heartStatus) {
+      if (heartStatus.status === 'critical') {
+        recommendations.push({
+          organ: 'Cœur',
+          text: 'Support hémodynamique urgent requis. Considérer l\'ajustement des inotropes/vasopresseurs et évaluer la fonction cardiaque par échocardiographie.',
+          priority: 'critical'
+        });
+      } else {
+        recommendations.push({
+          organ: 'Cœur',
+          text: 'Optimiser le bilan hydrique et surveiller la fonction cardiaque. Réévaluer les besoins en support cardiovasculaire.',
+          priority: 'warning'
+        });
+      }
+    }
+    
+    if (lungsStatus) {
+      if (lungsStatus.status === 'critical') {
+        recommendations.push({
+          organ: 'Poumons',
+          text: 'Détresse respiratoire nécessitant une intervention immédiate. Optimiser les paramètres ventilatoires et envisager des stratégies protectrices.',
+          priority: 'critical'
+        });
+      } else {
+        recommendations.push({
+          organ: 'Poumons',
+          text: 'Surveiller l\'oxygénation et les échanges gazeux. Ajuster la FiO2 et les paramètres de ventilation selon les besoins.',
+          priority: 'warning'
+        });
+      }
+    }
+    
+    return recommendations;
+  };
+
+  const recommendations = getRecommendations();
+
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="relative w-full max-w-2xl mx-auto py-8 animate-fade-in">
+      <div className="relative w-full max-w-4xl mx-auto py-8 animate-fade-in">
         <div className="text-center mb-6">
           <h3 className="text-base font-semibold text-foreground">Vue anatomique</h3>
         </div>
+        
+        {/* Indicateurs problématiques et recommandations au-dessus du schéma */}
+        {hasProblems && (
+          <div className="mb-6 space-y-4">
+            {/* Indicateurs problématiques */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {brainStatus && organIndicators['brain'] && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-3 h-3 rounded-full ${brainStatus.status === 'critical' ? 'bg-red-500' : 'bg-orange-500'}`} />
+                    <span className="text-sm font-semibold">Cerveau</span>
+                  </div>
+                  {organIndicators['brain'].slice(0, 2).map((indicator, idx) => (
+                    <div 
+                      key={idx}
+                      className={`p-3 rounded-lg border-2 ${
+                        brainStatus.status === 'critical' 
+                          ? 'border-red-500 bg-red-50 dark:bg-red-950/20' 
+                          : 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                      }`}
+                    >
+                      <div className={`text-sm font-semibold ${
+                        brainStatus.status === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
+                      }`}>
+                        {indicator.label}: {indicator.current}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Cible: {indicator.target}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {heartStatus && organIndicators['heart'] && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-3 h-3 rounded-full ${heartStatus.status === 'critical' ? 'bg-red-500' : 'bg-orange-500'}`} />
+                    <span className="text-sm font-semibold">Cœur</span>
+                  </div>
+                  {organIndicators['heart'].slice(0, 2).map((indicator, idx) => (
+                    <div 
+                      key={idx}
+                      className={`p-3 rounded-lg border-2 ${
+                        heartStatus.status === 'critical' 
+                          ? 'border-red-500 bg-red-50 dark:bg-red-950/20' 
+                          : 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                      }`}
+                    >
+                      <div className={`text-sm font-semibold ${
+                        heartStatus.status === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
+                      }`}>
+                        {indicator.label}: {indicator.current}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Cible: {indicator.target}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {lungsStatus && organIndicators['lungs'] && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-3 h-3 rounded-full ${lungsStatus.status === 'critical' ? 'bg-red-500' : 'bg-orange-500'}`} />
+                    <span className="text-sm font-semibold">Poumons</span>
+                  </div>
+                  {organIndicators['lungs'].slice(0, 2).map((indicator, idx) => (
+                    <div 
+                      key={idx}
+                      className={`p-3 rounded-lg border-2 ${
+                        lungsStatus.status === 'critical' 
+                          ? 'border-red-500 bg-red-50 dark:bg-red-950/20' 
+                          : 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                      }`}
+                    >
+                      <div className={`text-sm font-semibold ${
+                        lungsStatus.status === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
+                      }`}>
+                        {indicator.label}: {indicator.current}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Cible: {indicator.target}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Recommandations cliniques */}
+            {recommendations.length > 0 && (
+              <div className="bg-blue-50 dark:bg-blue-950/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Recommandations cliniques
+                </h4>
+                <div className="space-y-2">
+                  {recommendations.map((rec, idx) => (
+                    <div 
+                      key={idx}
+                      className={`flex gap-3 p-3 rounded-lg ${
+                        rec.priority === 'critical' 
+                          ? 'bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500' 
+                          : 'bg-orange-100 dark:bg-orange-900/20 border-l-4 border-orange-500'
+                      }`}
+                    >
+                      <div className="flex-shrink-0 mt-0.5">
+                        {rec.priority === 'critical' ? (
+                          <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm text-foreground">{rec.organ}</div>
+                        <div className="text-sm text-muted-foreground mt-1">{rec.text}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         
         <div className="relative flex justify-center">
           {/* Main anatomy image - switch based on organ status */}
@@ -99,321 +288,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
             className="w-full max-w-lg h-auto"
           />
           {/* Interactive overlay for clickable organs - only show if there are problems */}
-          {hasProblems && (
-          <div className="absolute inset-0 flex justify-center">
-            <svg 
-              viewBox="0 0 600 850" 
-              className="w-full max-w-lg h-auto"
-              style={{ pointerEvents: 'none' }}
-            >
-              <defs>
-                {/* Filters for organ points */}
-                <filter id="pointGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                  <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              
-              {/* Brain point - right side of image */}
-              {brainStatus && (
-                <circle
-                  cx="410"
-                  cy="80"
-                  r="12"
-                  fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                  filter="url(#pointGlow)"
-                  style={{ pointerEvents: 'none' }}
-                  opacity="0.9"
-                />
-              )}
-              
-              {/* Lungs points - right side of image */}
-              {lungsStatus && (
-                <g>
-                  {/* Left lung point */}
-                  <circle
-                    cx="410"
-                    cy="250"
-                    r="12"
-                    fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                    filter="url(#pointGlow)"
-                    style={{ pointerEvents: 'none' }}
-                    opacity="0.9"
-                  />
-                  {/* Right lung point */}
-                  <circle
-                    cx="410"
-                    cy="280"
-                    r="12"
-                    fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                    filter="url(#pointGlow)"
-                    style={{ pointerEvents: 'none' }}
-                    opacity="0.9"
-                  />
-                </g>
-              )}
-              
-              {/* Heart point - right side of image */}
-              {heartStatus && (
-                <circle
-                  cx="410"
-                  cy="230"
-                  r="12"
-                  fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                  filter="url(#pointGlow)"
-                  style={{ pointerEvents: 'none' }}
-                  opacity="0.9"
-                />
-              )}
-            </svg>
-            <svg 
-              viewBox="0 0 650 850" 
-              className="w-full max-w-lg h-auto"
-              style={{ pointerEvents: 'none' }}
-            >
-
-              {/* Brain indicator values - positioned on image */}
-              {brainStatus && organIndicators['brain'] && (
-                <g style={{ pointerEvents: 'auto' }}>
-                  {/* Connection line from point to indicator */}
-                  <line
-                    x1="410"
-                    y1="80"
-                    x2="450"
-                    y2="80"
-                    stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                    strokeWidth="1.5"
-                    strokeDasharray="3,3"
-                    opacity="0.5"
-                  />
-                  {organIndicators['brain'].slice(0, 2).map((indicator, idx) => (
-                    <g key={idx}>
-                      <rect
-                        x="450"
-                        y={20 + idx * 50}
-                        width="190"
-                        height="45"
-                        rx="6"
-                        fill="rgba(255,255,255,0.95)"
-                        stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                        strokeWidth="2.5"
-                      />
-                      <text 
-                        x="460" 
-                        y={43 + idx * 50}
-                        className="text-[15px] font-semibold"
-                        fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                      >
-                        {indicator.label}: {indicator.current}
-                      </text>
-                      <text 
-                        x="460" 
-                        y={57 + idx * 50} 
-                        className="text-[12px]"
-                        fill="hsl(var(--muted-foreground))"
-                      >
-                        Cible: {indicator.target}
-                      </text>
-                    </g>
-                  ))}
-                </g>
-              )}
-
-              {/* Brain clickable area - on head */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <g 
-                    onClick={() => brainStatus && handleOrganClick('brain')}
-                    style={{ pointerEvents: brainStatus ? 'auto' : 'none' }}
-                    className={`transition-all duration-300 ${brainStatus ? 'cursor-pointer' : ''}`}
-                  >
-                  </g>
-                </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <div className="space-y-2">
-                  <p className="font-semibold text-sm">{getOrganInfo('brain').name}</p>
-                  <p className="text-xs text-muted-foreground">{getOrganInfo('brain').function}</p>
-                  <div className="border-t pt-2 mt-2">
-                    <p className="text-xs font-medium">Valeurs normales:</p>
-                    <p className="text-xs text-muted-foreground">{getOrganInfo('brain').normal}</p>
-                  </div>
-                  {brainStatus && (
-                    <div className={`border-t pt-2 mt-2 ${
-                      brainStatus.status === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
-                    }`}>
-                      <p className="text-xs font-semibold">
-                        ⚠ {brainStatus.count} indicateur{brainStatus.count > 1 ? 's' : ''} problématique{brainStatus.count > 1 ? 's' : ''}
-                      </p>
-                      <p className="text-xs mt-1">Cliquez pour voir les détails</p>
-                    </div>
-                  )}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-
-              {/* Lungs indicator values - positioned on image */}
-              {lungsStatus && organIndicators['lungs'] && (
-                <g style={{ pointerEvents: 'auto' }}>
-                  {/* Connection lines from points to indicators */}
-                  <line
-                    x1="410"
-                    y1="265"
-                    x2="450"
-                    y2="265"
-                    stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                    strokeWidth="1.5"
-                    strokeDasharray="3,3"
-                    opacity="0.5"
-                  />
-                  {organIndicators['lungs'].slice(0, 2).map((indicator, idx) => (
-                    <g key={idx}>
-                      <rect
-                        x="450"
-                        y={240 + idx * 50}
-                        width="190"
-                        height="45"
-                        rx="6"
-                        fill="rgba(255,255,255,0.95)"
-                        stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                        strokeWidth="2.5"
-                      />
-                      <text 
-                        x="460" 
-                        y={263 + idx * 50}
-                        className="text-[15px] font-semibold"
-                        fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                      >
-                        {indicator.label}: {indicator.current}
-                      </text>
-                      <text 
-                        x="460" 
-                        y={277 + idx * 50} 
-                        className="text-[12px]"
-                        fill="hsl(var(--muted-foreground))"
-                      >
-                        Cible: {indicator.target}
-                      </text>
-                    </g>
-                  ))}
-                </g>
-              )}
-
-              {/* Lungs clickable area - in chest */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <g 
-                    onClick={() => lungsStatus && handleOrganClick('lungs')}
-                    style={{ pointerEvents: lungsStatus ? 'auto' : 'none' }}
-                    className={`transition-all duration-300 ${lungsStatus ? 'cursor-pointer' : ''}`}
-                  >
-                  </g>
-                </TooltipTrigger>
-              <TooltipContent side="right" className="max-w-xs">
-                <div className="space-y-2">
-                  <p className="font-semibold text-sm">{getOrganInfo('lungs').name}</p>
-                  <p className="text-xs text-muted-foreground">{getOrganInfo('lungs').function}</p>
-                  <div className="border-t pt-2 mt-2">
-                    <p className="text-xs font-medium">Valeurs normales:</p>
-                    <p className="text-xs text-muted-foreground">{getOrganInfo('lungs').normal}</p>
-                  </div>
-                  {lungsStatus && (
-                    <div className={`border-t pt-2 mt-2 ${
-                      lungsStatus.status === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
-                    }`}>
-                      <p className="text-xs font-semibold">
-                        ⚠ {lungsStatus.count} indicateur{lungsStatus.count > 1 ? 's' : ''} problématique{lungsStatus.count > 1 ? 's' : ''}
-                      </p>
-                      <p className="text-xs mt-1">Cliquez pour voir les détails</p>
-                    </div>
-                  )}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-
-              {/* Heart indicator values - positioned on image */}
-              {heartStatus && organIndicators['heart'] && (
-                <g style={{ pointerEvents: 'auto' }}>
-                  {/* Connection line from point to indicator */}
-                  <line
-                    x1="410"
-                    y1="230"
-                    x2="450"
-                    y2="155"
-                    stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                    strokeWidth="1.5"
-                    strokeDasharray="3,3"
-                    opacity="0.5"
-                  />
-                  {organIndicators['heart'].slice(0, 2).map((indicator, idx) => (
-                    <g key={idx}>
-                      <rect
-                        x="450"
-                        y={130 + idx * 50}
-                        width="190"
-                        height="45"
-                        rx="6"
-                        fill="rgba(255,255,255,0.95)"
-                        stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                        strokeWidth="2.5"
-                      />
-                      <text 
-                        x="460" 
-                        y={153 + idx * 50}
-                        className="text-[15px] font-semibold"
-                        fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                      >
-                        {indicator.label}: {indicator.current}
-                      </text>
-                      <text 
-                        x="460" 
-                        y={167 + idx * 50} 
-                        className="text-[12px]"
-                        fill="hsl(var(--muted-foreground))"
-                      >
-                        Cible: {indicator.target}
-                      </text>
-                    </g>
-                  ))}
-                </g>
-              )}
-
-              {/* Heart clickable area - in center chest */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <g 
-                    onClick={() => heartStatus && handleOrganClick('heart')}
-                    style={{ pointerEvents: heartStatus ? 'auto' : 'none' }}
-                    className={`transition-all duration-300 ${heartStatus ? 'cursor-pointer' : ''}`}
-                  >
-                  </g>
-                </TooltipTrigger>
-              <TooltipContent side="left" className="max-w-xs">
-                <div className="space-y-2">
-                  <p className="font-semibold text-sm">{getOrganInfo('heart').name}</p>
-                  <p className="text-xs text-muted-foreground">{getOrganInfo('heart').function}</p>
-                  <div className="border-t pt-2 mt-2">
-                    <p className="text-xs font-medium">Valeurs normales:</p>
-                    <p className="text-xs text-muted-foreground">{getOrganInfo('heart').normal}</p>
-                  </div>
-                  {heartStatus && (
-                    <div className={`border-t pt-2 mt-2 ${
-                      heartStatus.status === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
-                    }`}>
-                      <p className="text-xs font-semibold">
-                        ⚠ {heartStatus.count} indicateur{heartStatus.count > 1 ? 's' : ''} problématique{heartStatus.count > 1 ? 's' : ''}
-                      </p>
-                      <p className="text-xs mt-1">Cliquez pour voir les détails</p>
-                    </div>
-                  )}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </svg>
-          </div>
-          )}
           
           {/* Message when everything is normal */}
           {!hasProblems && (
