@@ -106,6 +106,74 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               className="w-full max-w-3xl h-auto"
               style={{ pointerEvents: 'none' }}
             >
+              <defs>
+                {/* Filters for organ highlighting */}
+                <filter id="organGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              
+              {/* Brain overlay - increase opacity when problematic */}
+              {brainStatus && (
+                <ellipse
+                  cx="300"
+                  cy="90"
+                  rx="50"
+                  ry="45"
+                  fill={brainStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.3)' : 'rgba(234, 88, 12, 0.25)'}
+                  filter="url(#organGlow)"
+                  style={{ pointerEvents: 'none' }}
+                />
+              )}
+              
+              {/* Lungs overlay - increase opacity when problematic */}
+              {lungsStatus && (
+                <g>
+                  {/* Left lung */}
+                  <ellipse
+                    cx="240"
+                    cy="350"
+                    rx="50"
+                    ry="70"
+                    fill={lungsStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.3)' : 'rgba(234, 88, 12, 0.25)'}
+                    filter="url(#organGlow)"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  {/* Right lung */}
+                  <ellipse
+                    cx="360"
+                    cy="350"
+                    rx="50"
+                    ry="70"
+                    fill={lungsStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.3)' : 'rgba(234, 88, 12, 0.25)'}
+                    filter="url(#organGlow)"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                </g>
+              )}
+              
+              {/* Heart overlay - increase opacity when problematic */}
+              {heartStatus && (
+                <ellipse
+                  cx="300"
+                  cy="310"
+                  rx="45"
+                  ry="55"
+                  fill={heartStatus.status === 'critical' ? 'rgba(220, 38, 38, 0.35)' : 'rgba(234, 88, 12, 0.3)'}
+                  filter="url(#organGlow)"
+                  style={{ pointerEvents: 'none' }}
+                />
+              )}
+            </svg>
+            <svg 
+              viewBox="0 0 600 1400" 
+              className="w-full max-w-3xl h-auto"
+              style={{ pointerEvents: 'none' }}
+            >
 
               {/* Brain indicator values - positioned above head */}
               {brainStatus && organIndicators['brain'] && (
