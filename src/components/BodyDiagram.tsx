@@ -229,21 +229,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       strokeWidth="3"
                       opacity="0.6"
                     />
-                    
-                    {brainStatus && (
-                      <g>
-                        <circle cx="300" cy="80" r="25" fill="rgba(255,255,255,0.95)" />
-                        <text 
-                          x="300" 
-                          y="90"
-                          textAnchor="middle" 
-                          className="text-[28px] font-bold"
-                          fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                        >
-                          {brainStatus.count}
-                        </text>
-                      </g>
-                    )}
                   </g>
                 </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
@@ -323,21 +308,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       strokeWidth="3"
                       opacity="0.6"
                     />
-                    
-                    {lungsStatus && (
-                      <g>
-                        <circle cx="300" cy="270" r="26" fill="rgba(255,255,255,0.95)" />
-                        <text 
-                          x="300" 
-                          y="282"
-                          textAnchor="middle" 
-                          className="text-[30px] font-bold"
-                          fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                        >
-                          {lungsStatus.count}
-                        </text>
-                      </g>
-                    )}
                   </g>
                 </TooltipTrigger>
               <TooltipContent side="right" className="max-w-xs">
@@ -416,21 +386,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       strokeWidth="3"
                       opacity="0.6"
                     />
-                    
-                    {heartStatus && (
-                      <g>
-                        <circle cx="300" cy="230" r="25" fill="rgba(255,255,255,0.95)" />
-                        <text 
-                          x="300" 
-                          y="241"
-                          textAnchor="middle" 
-                          className="text-[28px] font-bold"
-                          fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                        >
-                          {heartStatus.count}
-                        </text>
-                      </g>
-                    )}
                   </g>
                 </TooltipTrigger>
               <TooltipContent side="left" className="max-w-xs">
