@@ -13,6 +13,7 @@ import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
 const Optilungs = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
+  const metricParam = searchParams.get('metric');
   const patient = getPatientById(patientId);
   const [objectives, setObjectives] = useState<string[]>([
     'Maintain SpO2 > 92%',

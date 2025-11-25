@@ -150,7 +150,7 @@ const Optistats = () => {
     };
   });
 
-  const handleIndicatorClick = (organ: string) => {
+  const handleIndicatorClick = (organ: string, metricLabel: string) => {
     const organPageMap: Record<string, string> = {
       'brain': 'optibrain',
       'heart': 'optiheart',
@@ -159,7 +159,9 @@ const Optistats = () => {
     
     const page = organPageMap[organ];
     if (page) {
-      navigate(`/${page}?patient=${encodeURIComponent(patientId)}`);
+      // Extract just the metric name (before the colon if present)
+      const metricName = metricLabel.split(':')[0].trim();
+      navigate(`/${page}?patient=${encodeURIComponent(patientId)}&metric=${encodeURIComponent(metricName)}`);
     }
   };
 
@@ -322,7 +324,7 @@ const Optistats = () => {
                       <div 
                         key={indicatorIndex}
                         className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 items-center py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => handleIndicatorClick(item.module)}
+                        onClick={() => handleIndicatorClick(item.module, indicator.label)}
                       >
                         {/* Module icon - only show on first row */}
                         <div>
