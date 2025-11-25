@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getPatientById } from '@/utils/patientData';
-import { Thermometer, Activity, Droplet, Gauge, Pill, Check, FileText, Users, Brain, ChevronRight } from 'lucide-react';
+import { Thermometer, Activity, Droplet, Gauge, Pill, Check, FileText, Users, Brain, ChevronRight, Heart, Wind, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
+import { getProblematicIndicators } from '@/utils/organMetrics';
 
 const Optistats = () => {
   const [searchParams] = useSearchParams();
@@ -88,34 +89,54 @@ const Optistats = () => {
     { icon: Users, label: 'Consultants', active: false },
   ];
 
-  const problematicIndicators = [
-    {
-      module: 'brain',
-      icon: Brain,
-      color: 'text-red-500',
-      indicators: [
-        { label: 'PIC : 27mmHg', target: '< 20mmHg', trend: '-10.4%', trendColor: 'bg-orange-100 text-orange-600', status: 'red' },
-        { label: 'PPC: 73mmHg', target: '60-70 mmHg', trend: '-29.4%', trendColor: 'bg-red-100 text-red-600', status: 'red' },
-        { label: 'INR : 1,54', target: '< 1,2', trend: null, trendColor: '', status: 'red' },
-      ]
-    },
-    {
-      module: 'general',
-      icon: Thermometer,
-      color: 'text-orange-500',
-      indicators: [
-        { label: 'Tête : 32°', target: '0-30°', trend: null, trendColor: '', status: 'orange' },
-      ]
-    },
-    {
-      module: 'heart',
-      icon: HeartIcon,
-      color: 'text-orange-500',
-      indicators: [
-        { label: 'RM : 150 bpm', target: '86-123 bpm', trend: '-49.4%', trendColor: 'bg-red-100 text-red-600', status: 'orange' },
-      ]
-    },
-  ];
+  // Get problematic indicators dynamically from organ metrics
+  const dynamicIndicators = getProblematicIndicators();
+  
+  // Group indicators by organ
+  const groupedIndicators = dynamicIndicators.reduce((acc, indicator) => {
+    if (!acc[indicator.organ]) {
+      acc[indicator.organ] = [];
+    }
+    acc[indicator.organ].push(indicator);
+    return acc;
+  }, {} as Record<string, typeof dynamicIndicators>);
+
+  // Convert to the format expected by the UI
+  const problematicIndicators = Object.entries(groupedIndicators).map(([organ, indicators]) => {
+    const getOrganIcon = () => {
+      switch (organ) {
+        case 'brain': return Brain;
+        case 'heart': return Heart;
+        case 'lungs': return Wind;
+        default: return Activity;
+      }
+    };
+
+    const getOrganColor = () => {
+      switch (organ) {
+        case 'brain': return 'text-purple-500 dark:text-purple-400';
+        case 'heart': return 'text-red-500 dark:text-red-400';
+        case 'lungs': return 'text-blue-500 dark:text-blue-400';
+        default: return 'text-muted-foreground';
+      }
+    };
+
+    return {
+      module: organ,
+      icon: getOrganIcon(),
+      color: getOrganColor(),
+      indicators: indicators.map(ind => ({
+        label: `${ind.label}: ${ind.current}`,
+        target: ind.target,
+        trend: ind.trend,
+        trendIcon: ind.trend,
+        trendColor: ind.status === 'critical' 
+          ? 'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400' 
+          : 'bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400',
+        status: ind.status === 'critical' ? 'red' : 'orange'
+      }))
+    };
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -284,10 +305,13 @@ const Optistats = () => {
 
                         {/* Trend */}
                         <div>
-                          {indicator.trend && (
-                            <Badge className={`${indicator.trendColor} text-xs px-2 py-1`}>
-                              {indicator.trend}
-                            </Badge>
+                          {indicator.trendIcon && (
+                            <div className="flex items-center gap-2">
+                              {indicator.trendIcon === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
+                              {indicator.trendIcon === 'down' && <TrendingDown className="w-4 h-4 text-destructive" />}
+                              {indicator.trendIcon === 'stable' && <Minus className="w-4 h-4 text-muted-foreground" />}
+                              <span className="text-xs text-muted-foreground capitalize">{indicator.trendIcon}</span>
+                            </div>
                           )}
                         </div>
 

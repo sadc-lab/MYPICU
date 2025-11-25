@@ -10,6 +10,7 @@ import { getPatientById } from '@/utils/patientData';
 import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { heartMetrics as importedHeartMetrics } from '@/utils/organMetrics';
 
 const Optiheart = () => {
   const [searchParams] = useSearchParams();
@@ -62,14 +63,7 @@ const Optiheart = () => {
     );
   }
 
-  const heartMetrics = [
-    { label: 'Cardiac Output', value: 4.5, unit: 'L/min', min: 2, max: 10, targetMin: 4, targetMax: 8, trend: 'up', change: 0.3 },
-    { label: 'Cardiac Index', value: 3.2, unit: 'L/min/m²', min: 1.5, max: 5, targetMin: 2.5, targetMax: 4.0, trend: 'up', change: 0.2 },
-    { label: 'CVP', value: 8, unit: 'mmHg', min: 0, max: 15, targetMin: 2, targetMax: 8, trend: 'stable', change: 0 },
-    { label: 'SVR', value: 1200, unit: 'dynes/sec/cm⁻⁵', min: 500, max: 1600, targetMin: 800, targetMax: 1200, trend: 'down', change: -50 },
-    { label: 'Lactate', value: 1.2, unit: 'mmol/L', min: 0, max: 4, targetMin: 0, targetMax: 2, trend: 'down', change: -0.3 },
-    { label: 'ScvO2', value: 72, unit: '%', min: 50, max: 85, targetMin: 65, targetMax: 75, trend: 'up', change: 2 },
-  ];
+  const heartMetrics = importedHeartMetrics;
 
   const heartOptimisationMetrics = [
     {
