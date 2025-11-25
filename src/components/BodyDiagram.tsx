@@ -381,18 +381,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 </div>
               </div>
               
-              {/* Légende */}
-              <div className="flex items-center justify-center gap-6 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <span className="text-sm text-muted-foreground">Critique</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                  <span className="text-sm text-muted-foreground">Avertissement</span>
-                </div>
-              </div>
-
               <svg viewBox="0 0 1200 700" className="w-full h-auto">
                 <defs>
                   {/* Gradient pour les lignes */}
@@ -508,16 +496,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       </div>
                     </foreignObject>
                     
-                    <text
-                      x="100"
-                      y="155"
-                      className="text-sm font-bold"
-                      fill="hsl(var(--foreground))"
-                      textAnchor="start"
-                    >
-                      Cerveau
-                    </text>
-                    
                     {/* Badge de compte */}
                     <circle cx="165" cy="150" r="12" fill="white" stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
                     <text x="165" y="155" className="text-xs font-bold" fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
@@ -598,16 +576,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       </div>
                     </foreignObject>
                     
-                    <text
-                      x="100"
-                      y="355"
-                      className="text-sm font-bold"
-                      fill="hsl(var(--foreground))"
-                      textAnchor="start"
-                    >
-                      Cœur
-                    </text>
-                    
                     <circle cx="165" cy="350" r="12" fill="white" stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
                     <text x="165" y="355" className="text-xs font-bold" fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
                       {heartStatus.count}
@@ -686,16 +654,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         />
                       </div>
                     </foreignObject>
-                    
-                    <text
-                      x="100"
-                      y="555"
-                      className="text-sm font-bold"
-                      fill="hsl(var(--foreground))"
-                      textAnchor="start"
-                    >
-                      Poumons
-                    </text>
                     
                     <circle cx="165" cy="550" r="12" fill="white" stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
                     <text x="165" y="555" className="text-xs font-bold" fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
