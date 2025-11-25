@@ -93,7 +93,8 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
       <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
         <CartesianGrid 
           strokeDasharray="3 3" 
-          stroke="hsl(var(--border))" 
+          stroke="hsl(var(--muted-foreground))" 
+          strokeOpacity={0.3}
           vertical={false}
         />
         <YAxis 
@@ -104,14 +105,14 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
           y1={metric.targetMin}
           y2={metric.targetMax}
           fill="hsl(var(--muted))"
-          fillOpacity={0.8}
+          fillOpacity={0.9}
           strokeOpacity={0}
         />
         <Line 
           type="monotone" 
           dataKey="value" 
           stroke={strokeColor} 
-          strokeWidth={2.5}
+          strokeWidth={3}
           dot={false}
         />
       </LineChart>
