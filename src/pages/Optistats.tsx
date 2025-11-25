@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
@@ -15,6 +15,7 @@ import lungsIcon from '@/assets/lungs-icon.svg';
 
 const Optistats = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
   const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h' | 'stay'>('24h');
@@ -148,6 +149,19 @@ const Optistats = () => {
       }))
     };
   });
+
+  const handleIndicatorClick = (organ: string) => {
+    const organPageMap: Record<string, string> = {
+      'brain': 'optibrain',
+      'heart': 'optiheart',
+      'lungs': 'optilungs'
+    };
+    
+    const page = organPageMap[organ];
+    if (page) {
+      navigate(`/${page}?patient=${encodeURIComponent(patientId)}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -307,7 +321,8 @@ const Optistats = () => {
                     {item.indicators.map((indicator, indicatorIndex) => (
                       <div 
                         key={indicatorIndex}
-                        className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 items-center py-3 border-b"
+                        className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 items-center py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleIndicatorClick(item.module)}
                       >
                         {/* Module icon - only show on first row */}
                         <div>
