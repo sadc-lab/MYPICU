@@ -157,26 +157,26 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 {organIndicators['brain'].slice(0, 2).map((indicator, idx) => (
                   <g key={idx}>
                     <rect
-                      x="15"
-                      y={30 + idx * 28}
-                      width="95"
-                      height="23"
+                      x="10"
+                      y={40 + idx * 30}
+                      width="90"
+                      height="24"
                       rx="4"
                       fill="rgba(255,255,255,0.95)"
                       stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       strokeWidth="1.5"
                     />
                     <text 
-                      x="22" 
-                      y={42 + idx * 28} 
+                      x="17" 
+                      y={52 + idx * 30} 
                       className="text-[9px] font-semibold"
                       fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     >
                       {indicator.label}: {indicator.current}
                     </text>
                     <text 
-                      x="22" 
-                      y={50 + idx * 28} 
+                      x="17" 
+                      y={60 + idx * 30} 
                       className="text-[7px]"
                       fill="hsl(var(--muted-foreground))"
                     >
@@ -196,16 +196,16 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 >
                   {/* Main cerebrum */}
                   <path
-                    d="M 175 35 
-                       Q 160 30 150 30 Q 140 30 125 35
-                       Q 115 40 112 50
-                       Q 110 58 112 67
-                       Q 115 78 125 85
-                       Q 135 90 150 90
-                       Q 165 90 175 85
-                       Q 185 78 188 67
-                       Q 190 58 188 50
-                       Q 185 40 175 35 Z"
+                    d="M 175 50 
+                       Q 160 45 150 45 Q 140 45 125 50
+                       Q 115 55 112 65
+                       Q 110 73 112 82
+                       Q 115 93 125 100
+                       Q 135 105 150 105
+                       Q 165 105 175 100
+                       Q 185 93 188 82
+                       Q 190 73 188 65
+                       Q 185 55 175 50 Z"
                     fill="url(#brainGradient)"
                     stroke="hsl(210 30% 40%)"
                     strokeWidth="1.5"
@@ -214,14 +214,14 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {/* Left hemisphere details */}
                   <path
-                    d="M 120 48 Q 118 52 118 58 Q 118 65 122 72 Q 126 78 132 82"
+                    d="M 120 63 Q 118 67 118 73 Q 118 80 122 87 Q 126 93 132 97"
                     stroke="hsl(210 30% 35%)"
                     strokeWidth="1.2"
                     fill="none"
                     opacity="0.4"
                   />
                   <path
-                    d="M 126 52 Q 124 56 124 61 Q 124 66 128 71"
+                    d="M 126 67 Q 124 71 124 76 Q 124 81 128 86"
                     stroke="hsl(210 30% 35%)"
                     strokeWidth="1"
                     fill="none"
@@ -230,14 +230,14 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {/* Right hemisphere details */}
                   <path
-                    d="M 180 48 Q 182 52 182 58 Q 182 65 178 72 Q 174 78 168 82"
+                    d="M 180 63 Q 182 67 182 73 Q 182 80 178 87 Q 174 93 168 97"
                     stroke="hsl(210 30% 35%)"
                     strokeWidth="1.2"
                     fill="none"
                     opacity="0.4"
                   />
                   <path
-                    d="M 174 52 Q 176 56 176 61 Q 176 66 172 71"
+                    d="M 174 67 Q 176 71 176 76 Q 176 81 172 86"
                     stroke="hsl(210 30% 35%)"
                     strokeWidth="1"
                     fill="none"
@@ -246,7 +246,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {/* Longitudinal fissure */}
                   <path
-                    d="M 150 32 Q 150 40 150 60 Q 150 75 150 87"
+                    d="M 150 47 Q 150 55 150 75 Q 150 90 150 102"
                     stroke="hsl(210 30% 30%)"
                     strokeWidth="1.5"
                     strokeDasharray="3,2"
@@ -257,7 +257,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {/* Cerebellum */}
                   <ellipse
                     cx="150"
-                    cy="92"
+                    cy="107"
                     rx="28"
                     ry="11"
                     fill="url(#brainGradient)"
@@ -266,7 +266,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     opacity="0.85"
                   />
                   <path
-                    d="M 125 92 Q 135 90 145 92 Q 155 90 165 92 Q 172 94 175 92"
+                    d="M 125 107 Q 135 105 145 107 Q 155 105 165 107 Q 172 109 175 107"
                     stroke="hsl(210 30% 35%)"
                     strokeWidth="0.8"
                     fill="none"
@@ -275,10 +275,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {brainStatus && (
                     <g>
-                      <circle cx="150" cy="60" r="15" fill="rgba(255,255,255,0.95)" />
+                      <circle cx="150" cy="75" r="15" fill="rgba(255,255,255,0.95)" />
                       <text 
                         x="150" 
-                        y="67" 
+                        y="82" 
                         textAnchor="middle" 
                         className="text-[17px] font-bold"
                         fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -317,26 +317,26 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 {organIndicators['lungs'].slice(0, 2).map((indicator, idx) => (
                   <g key={idx}>
                     <rect
-                      x="240"
-                      y={150 + idx * 28}
-                      width="100"
-                      height="23"
+                      x="250"
+                      y={160 + idx * 30}
+                      width="95"
+                      height="24"
                       rx="4"
                       fill="rgba(255,255,255,0.95)"
                       stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       strokeWidth="1.5"
                     />
                     <text 
-                      x="247" 
-                      y={162 + idx * 28} 
+                      x="257" 
+                      y={172 + idx * 30} 
                       className="text-[9px] font-semibold"
                       fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     >
                       {indicator.label}: {indicator.current}
                     </text>
                     <text 
-                      x="247" 
-                      y={170 + idx * 28} 
+                      x="257" 
+                      y={180 + idx * 30} 
                       className="text-[7px]"
                       fill="hsl(var(--muted-foreground))"
                     >
@@ -356,14 +356,14 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 >
                   {/* Trachea */}
                   <path
-                    d="M 175 108 L 175 130"
+                    d="M 175 123 L 175 145"
                     stroke="hsl(210 30% 50%)"
                     strokeWidth="5"
                     strokeLinecap="round"
                     opacity="0.5"
                   />
                   <path
-                    d="M 173 112 L 177 112 M 173 118 L 177 118 M 173 124 L 177 124"
+                    d="M 173 127 L 177 127 M 173 133 L 177 133 M 173 139 L 177 139"
                     stroke="hsl(210 30% 60%)"
                     strokeWidth="0.8"
                     opacity="0.5"
@@ -371,15 +371,15 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {/* Left lung with 2 lobes */}
                   <path
-                    d="M 140 135
-                       Q 125 138 118 150
-                       L 116 180
-                       Q 116 198 122 210
-                       Q 128 220 138 223
-                       L 150 220
-                       Q 158 215 158 200
-                       L 158 150
-                       Q 158 138 148 135
+                    d="M 140 150
+                       Q 125 153 118 165
+                       L 116 195
+                       Q 116 213 122 225
+                       Q 128 235 138 238
+                       L 150 235
+                       Q 158 230 158 215
+                       L 158 165
+                       Q 158 153 148 150
                        Z"
                     fill="url(#lungsGradient)"
                     stroke="hsl(210 30% 42%)"
@@ -388,28 +388,28 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   />
                   {/* Left lung fissure */}
                   <path
-                    d="M 125 175 Q 135 177 145 175"
+                    d="M 125 190 Q 135 192 145 190"
                     stroke="hsl(210 30% 35%)"
                     strokeWidth="1.2"
                     fill="none"
                     opacity="0.4"
                   />
                   {/* Alveoli detail */}
-                  <circle cx="130" cy="165" r="3" fill="hsl(210 30% 50%)" opacity="0.15"/>
-                  <circle cx="138" cy="170" r="2.5" fill="hsl(210 30% 50%)" opacity="0.15"/>
-                  <circle cx="132" cy="190" r="3" fill="hsl(210 30% 50%)" opacity="0.15"/>
+                  <circle cx="130" cy="180" r="3" fill="hsl(210 30% 50%)" opacity="0.15"/>
+                  <circle cx="138" cy="185" r="2.5" fill="hsl(210 30% 50%)" opacity="0.15"/>
+                  <circle cx="132" cy="205" r="3" fill="hsl(210 30% 50%)" opacity="0.15"/>
                   
                   {/* Right lung with 3 lobes */}
                   <path
-                    d="M 210 135
-                       Q 225 138 232 150
-                       L 234 180
-                       Q 234 198 228 210
-                       Q 222 220 212 223
-                       L 200 220
-                       Q 192 215 192 200
-                       L 192 150
-                       Q 192 138 202 135
+                    d="M 210 150
+                       Q 225 153 232 165
+                       L 234 195
+                       Q 234 213 228 225
+                       Q 222 235 212 238
+                       L 200 235
+                       Q 192 230 192 215
+                       L 192 165
+                       Q 192 153 202 150
                        Z"
                     fill="url(#lungsGradient)"
                     stroke="hsl(210 30% 42%)"
@@ -418,34 +418,34 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   />
                   {/* Right lung fissures (3 lobes) */}
                   <path
-                    d="M 205 160 Q 215 162 225 160"
+                    d="M 205 175 Q 215 177 225 175"
                     stroke="hsl(210 30% 35%)"
                     strokeWidth="1.2"
                     fill="none"
                     opacity="0.4"
                   />
                   <path
-                    d="M 205 190 Q 215 192 225 190"
+                    d="M 205 205 Q 215 207 225 205"
                     stroke="hsl(210 30% 35%)"
                     strokeWidth="1.2"
                     fill="none"
                     opacity="0.4"
                   />
                   {/* Alveoli detail */}
-                  <circle cx="220" cy="165" r="3" fill="hsl(210 30% 50%)" opacity="0.15"/>
-                  <circle cx="212" cy="170" r="2.5" fill="hsl(210 30% 50%)" opacity="0.15"/>
-                  <circle cx="218" cy="190" r="3" fill="hsl(210 30% 50%)" opacity="0.15"/>
+                  <circle cx="220" cy="180" r="3" fill="hsl(210 30% 50%)" opacity="0.15"/>
+                  <circle cx="212" cy="185" r="2.5" fill="hsl(210 30% 50%)" opacity="0.15"/>
+                  <circle cx="218" cy="205" r="3" fill="hsl(210 30% 50%)" opacity="0.15"/>
                   
                   {/* Bronchi */}
                   <path
-                    d="M 175 130 Q 172 138 160 148"
+                    d="M 175 145 Q 172 153 160 163"
                     stroke="hsl(210 30% 48%)"
                     strokeWidth="3.5"
                     strokeLinecap="round"
                     opacity="0.6"
                   />
                   <path
-                    d="M 175 130 Q 178 138 190 148"
+                    d="M 175 145 Q 178 153 190 163"
                     stroke="hsl(210 30% 48%)"
                     strokeWidth="3.5"
                     strokeLinecap="round"
@@ -454,13 +454,13 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {/* Bronchioles */}
                   <path
-                    d="M 160 148 L 145 162 M 160 148 L 150 172"
+                    d="M 160 163 L 145 177 M 160 163 L 150 187"
                     stroke="hsl(210 30% 52%)"
                     strokeWidth="1.8"
                     opacity="0.4"
                   />
                   <path
-                    d="M 190 148 L 205 162 M 190 148 L 200 172"
+                    d="M 190 163 L 205 177 M 190 163 L 200 187"
                     stroke="hsl(210 30% 52%)"
                     strokeWidth="1.8"
                     opacity="0.4"
@@ -468,10 +468,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {lungsStatus && (
                     <g>
-                      <circle cx="175" cy="180" r="16" fill="rgba(255,255,255,0.95)" />
+                      <circle cx="175" cy="195" r="16" fill="rgba(255,255,255,0.95)" />
                       <text 
                         x="175" 
-                        y="188" 
+                        y="203" 
                         textAnchor="middle" 
                         className="text-[18px] font-bold"
                         fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -510,26 +510,26 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 {organIndicators['heart'].slice(0, 2).map((indicator, idx) => (
                   <g key={idx}>
                     <rect
-                      x="15"
-                      y={185 + idx * 28}
-                      width="100"
-                      height="23"
+                      x="10"
+                      y={240 + idx * 30}
+                      width="95"
+                      height="24"
                       rx="4"
                       fill="rgba(255,255,255,0.95)"
                       stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       strokeWidth="1.5"
                     />
                     <text 
-                      x="22" 
-                      y={197 + idx * 28} 
+                      x="17" 
+                      y={252 + idx * 30} 
                       className="text-[9px] font-semibold"
                       fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     >
                       {indicator.label}: {indicator.current}
                     </text>
                     <text 
-                      x="22" 
-                      y={205 + idx * 28} 
+                      x="17" 
+                      y={260 + idx * 30} 
                       className="text-[7px]"
                       fill="hsl(var(--muted-foreground))"
                     >
@@ -549,14 +549,14 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 >
                   {/* Main heart ventricles */}
                   <path
-                    d="M 175 155
-                       L 162 165
-                       Q 150 175 150 190
-                       Q 150 202 160 215
-                       L 175 230
-                       L 190 215
-                       Q 200 202 200 190
-                       Q 200 175 188 165
+                    d="M 175 180
+                       L 162 190
+                       Q 150 200 150 215
+                       Q 150 227 160 240
+                       L 175 255
+                       L 190 240
+                       Q 200 227 200 215
+                       Q 200 200 188 190
                        Z"
                     fill="url(#heartGradient)"
                     stroke="hsl(210 30% 40%)"
@@ -567,7 +567,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {/* Left atrium */}
                   <ellipse
                     cx="165"
-                    cy="152"
+                    cy="177"
                     rx="9"
                     ry="11"
                     fill="url(#heartGradient)"
@@ -579,7 +579,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {/* Right atrium */}
                   <ellipse
                     cx="185"
-                    cy="152"
+                    cy="177"
                     rx="9"
                     ry="11"
                     fill="url(#heartGradient)"
@@ -590,7 +590,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {/* Aorta */}
                   <path
-                    d="M 175 155 Q 173 147 168 142 Q 164 138 160 137"
+                    d="M 175 180 Q 173 172 168 167 Q 164 163 160 162"
                     stroke={getOrganColor('heart')}
                     strokeWidth="5"
                     fill="none"
@@ -600,7 +600,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {/* Pulmonary artery */}
                   <path
-                    d="M 175 155 Q 177 147 182 142 Q 186 138 190 137"
+                    d="M 175 180 Q 177 172 182 167 Q 186 163 190 162"
                     stroke={getOrganColor('heart')}
                     strokeWidth="4.5"
                     fill="none"
@@ -610,7 +610,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {/* Ventricular septum */}
                   <path
-                    d="M 175 165 L 175 222"
+                    d="M 175 190 L 175 247"
                     stroke="hsl(210 30% 32%)"
                     strokeWidth="1.8"
                     strokeDasharray="4,2"
@@ -619,7 +619,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {/* Valve detail */}
                   <path
-                    d="M 162 180 Q 175 178 188 180"
+                    d="M 162 205 Q 175 203 188 205"
                     stroke="hsl(210 30% 35%)"
                     strokeWidth="1.5"
                     opacity="0.4"
@@ -627,13 +627,13 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {/* Coronary arteries */}
                   <path
-                    d="M 165 168 Q 160 172 158 180"
+                    d="M 165 193 Q 160 197 158 205"
                     stroke="hsl(0 70% 50%)"
                     strokeWidth="1.2"
                     opacity="0.5"
                   />
                   <path
-                    d="M 185 168 Q 190 172 192 180"
+                    d="M 185 193 Q 190 197 192 205"
                     stroke="hsl(0 70% 50%)"
                     strokeWidth="1.2"
                     opacity="0.5"
@@ -641,10 +641,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   
                   {heartStatus && (
                     <g>
-                      <circle cx="175" cy="192" r="15" fill="rgba(255,255,255,0.95)" />
+                      <circle cx="175" cy="217" r="15" fill="rgba(255,255,255,0.95)" />
                       <text 
                         x="175" 
-                        y="199" 
+                        y="224" 
                         textAnchor="middle" 
                         className="text-[17px] font-bold"
                         fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
