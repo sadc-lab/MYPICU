@@ -178,6 +178,17 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               {/* Brain indicator values - positioned next to point */}
               {brainStatus && organIndicators['brain'] && (
                 <g style={{ pointerEvents: 'auto' }}>
+                  {/* Connection line from point to indicator */}
+                  <line
+                    x1="312"
+                    y1="80"
+                    x2="330"
+                    y2="79"
+                    stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                    strokeWidth="1.5"
+                    strokeDasharray="3,3"
+                    opacity="0.5"
+                  />
                   {organIndicators['brain'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
@@ -246,6 +257,27 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               {/* Lungs indicator values - positioned next to points */}
               {lungsStatus && organIndicators['lungs'] && (
                 <g style={{ pointerEvents: 'auto' }}>
+                  {/* Connection lines from points to indicators */}
+                  <line
+                    x1="247"
+                    y1="270"
+                    x2="330"
+                    y2="269"
+                    stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                    strokeWidth="1.5"
+                    strokeDasharray="3,3"
+                    opacity="0.5"
+                  />
+                  <line
+                    x1="353"
+                    y1="270"
+                    x2="330"
+                    y2="269"
+                    stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                    strokeWidth="1.5"
+                    strokeDasharray="3,3"
+                    opacity="0.5"
+                  />
                   {organIndicators['lungs'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
@@ -314,6 +346,17 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               {/* Heart indicator values - positioned next to point */}
               {heartStatus && organIndicators['heart'] && (
                 <g style={{ pointerEvents: 'auto' }}>
+                  {/* Connection line from point to indicator */}
+                  <line
+                    x1="312"
+                    y1="230"
+                    x2="330"
+                    y2="229"
+                    stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                    strokeWidth="1.5"
+                    strokeDasharray="3,3"
+                    opacity="0.5"
+                  />
                   {organIndicators['heart'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
