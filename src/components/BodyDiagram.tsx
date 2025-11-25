@@ -117,10 +117,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 </filter>
               </defs>
               
-              {/* Brain point - on head */}
+              {/* Brain point - right side of image */}
               {brainStatus && (
                 <circle
-                  cx="300"
+                  cx="410"
                   cy="80"
                   r="12"
                   fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -130,13 +130,13 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 />
               )}
               
-              {/* Lungs points - on chest */}
+              {/* Lungs points - right side of image */}
               {lungsStatus && (
                 <g>
                   {/* Left lung point */}
                   <circle
-                    cx="235"
-                    cy="270"
+                    cx="410"
+                    cy="250"
                     r="12"
                     fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     filter="url(#pointGlow)"
@@ -145,8 +145,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   />
                   {/* Right lung point */}
                   <circle
-                    cx="365"
-                    cy="270"
+                    cx="410"
+                    cy="280"
                     r="12"
                     fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     filter="url(#pointGlow)"
@@ -156,10 +156,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 </g>
               )}
               
-              {/* Heart point - in center chest */}
+              {/* Heart point - right side of image */}
               {heartStatus && (
                 <circle
-                  cx="300"
+                  cx="410"
                   cy="230"
                   r="12"
                   fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
@@ -170,7 +170,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               )}
             </svg>
             <svg 
-              viewBox="0 0 600 850" 
+              viewBox="0 0 650 850" 
               className="w-full max-w-lg h-auto"
               style={{ pointerEvents: 'none' }}
             >
@@ -180,10 +180,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 <g style={{ pointerEvents: 'auto' }}>
                   {/* Connection line from point to indicator */}
                   <line
-                    x1="312"
+                    x1="422"
                     y1="80"
-                    x2="330"
-                    y2="79"
+                    x2="435"
+                    y2="80"
                     stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     strokeWidth="1.5"
                     strokeDasharray="3,3"
@@ -192,27 +192,27 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {organIndicators['brain'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="330"
-                        y={60 + idx * 42}
-                        width="165"
-                        height="38"
+                        x="435"
+                        y={55 + idx * 50}
+                        width="190"
+                        height="45"
                         rx="6"
                         fill="rgba(255,255,255,0.95)"
                         stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="340" 
-                        y={80 + idx * 42}
-                        className="text-[14px] font-semibold"
+                        x="445" 
+                        y={78 + idx * 50}
+                        className="text-[15px] font-semibold"
                         fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="340" 
-                        y={93 + idx * 42} 
-                        className="text-[11px]"
+                        x="445" 
+                        y={92 + idx * 50} 
+                        className="text-[12px]"
                         fill="hsl(var(--muted-foreground))"
                       >
                         Cible: {indicator.target}
@@ -259,20 +259,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 <g style={{ pointerEvents: 'auto' }}>
                   {/* Connection lines from points to indicators */}
                   <line
-                    x1="247"
-                    y1="270"
-                    x2="330"
-                    y2="269"
-                    stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                    strokeWidth="1.5"
-                    strokeDasharray="3,3"
-                    opacity="0.5"
-                  />
-                  <line
-                    x1="353"
-                    y1="270"
-                    x2="330"
-                    y2="269"
+                    x1="422"
+                    y1="265"
+                    x2="435"
+                    y2="265"
                     stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     strokeWidth="1.5"
                     strokeDasharray="3,3"
@@ -281,27 +271,27 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {organIndicators['lungs'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="330"
-                        y={250 + idx * 42}
-                        width="165"
-                        height="38"
+                        x="435"
+                        y={240 + idx * 50}
+                        width="190"
+                        height="45"
                         rx="6"
                         fill="rgba(255,255,255,0.95)"
                         stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="340" 
-                        y={270 + idx * 42}
-                        className="text-[14px] font-semibold"
+                        x="445" 
+                        y={263 + idx * 50}
+                        className="text-[15px] font-semibold"
                         fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="340" 
-                        y={283 + idx * 42} 
-                        className="text-[11px]"
+                        x="445" 
+                        y={277 + idx * 50} 
+                        className="text-[12px]"
                         fill="hsl(var(--muted-foreground))"
                       >
                         Cible: {indicator.target}
@@ -348,10 +338,10 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 <g style={{ pointerEvents: 'auto' }}>
                   {/* Connection line from point to indicator */}
                   <line
-                    x1="312"
+                    x1="422"
                     y1="230"
-                    x2="330"
-                    y2="229"
+                    x2="435"
+                    y2="230"
                     stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     strokeWidth="1.5"
                     strokeDasharray="3,3"
@@ -360,27 +350,27 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {organIndicators['heart'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="330"
-                        y={210 + idx * 42}
-                        width="165"
-                        height="38"
+                        x="435"
+                        y={185 + idx * 50}
+                        width="190"
+                        height="45"
                         rx="6"
                         fill="rgba(255,255,255,0.95)"
                         stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="340" 
-                        y={230 + idx * 42}
-                        className="text-[14px] font-semibold"
+                        x="445" 
+                        y={208 + idx * 50}
+                        className="text-[15px] font-semibold"
                         fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="340" 
-                        y={243 + idx * 42} 
-                        className="text-[11px]"
+                        x="445" 
+                        y={222 + idx * 50} 
+                        className="text-[12px]"
                         fill="hsl(var(--muted-foreground))"
                       >
                         Cible: {indicator.target}
