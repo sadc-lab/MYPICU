@@ -381,7 +381,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 </div>
               </div>
               
-              <svg viewBox="0 0 1200 700" className="w-full h-auto">
+              <svg viewBox="0 0 1200 500" className="w-full h-auto">
                 <defs>
                   {/* Gradient pour les lignes */}
                   <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -397,16 +397,24 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       <feMergeNode in="SourceGraphic"/>
                     </feMerge>
                   </filter>
+                  
+                  {/* Pattern pour la grille */}
+                  <pattern id="grid" width="112.5" height="80" patternUnits="userSpaceOnUse">
+                    <path d="M 112.5 0 L 0 0 0 80" fill="none" stroke="hsl(var(--border))" strokeWidth="0.5" opacity="0.3"/>
+                  </pattern>
                 </defs>
+
+                {/* Grille de fond */}
+                <rect x="200" y="60" width="900" height="360" fill="url(#grid)" />
 
                 {/* Échelle de temps sur l'axe X */}
                 <g>
                   {/* Ligne de l'axe X */}
                   <line
                     x1="200"
-                    y1="620"
+                    y1="440"
                     x2="1100"
-                    y2="620"
+                    y2="440"
                     stroke="hsl(var(--border))"
                     strokeWidth="2"
                   />
@@ -418,15 +426,15 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       <g key={time}>
                         <line
                           x1={xPos}
-                          y1="615"
+                          y1="435"
                           x2={xPos}
-                          y2="625"
+                          y2="445"
                           stroke="hsl(var(--border))"
                           strokeWidth="2"
                         />
                         <text
                           x={xPos}
-                          y="645"
+                          y="465"
                           className="text-xs font-medium"
                           fill="hsl(var(--muted-foreground))"
                           textAnchor="middle"
@@ -440,7 +448,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   {/* Label de l'axe X */}
                   <text
                     x="650"
-                    y="680"
+                    y="490"
                     className="text-sm font-semibold"
                     fill="hsl(var(--foreground))"
                     textAnchor="middle"
@@ -449,39 +457,21 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   </text>
                 </g>
 
-                {/* Grille verticale pour le temps */}
-                {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => {
-                  const xPos = 200 + (idx * 112.5);
-                  return (
-                    <line
-                      key={idx}
-                      x1={xPos}
-                      y1="80"
-                      x2={xPos}
-                      y2="620"
-                      stroke="hsl(var(--border))"
-                      strokeWidth="1"
-                      strokeDasharray="2,2"
-                      opacity="0.2"
-                    />
-                  );
-                })}
-
                 {/* Organe Cerveau */}
                 {brainStatus && organIndicators['brain'] && (
                   <g>
                     {/* Ligne horizontale pour le cerveau */}
                     <line
                       x1="200"
-                      y1="150"
+                      y1="140"
                       x2="1100"
-                      y2="150"
+                      y2="140"
                       stroke="url(#lineGradient)"
                       strokeWidth="2"
                     />
                     
                     {/* Icône et label de l'organe à gauche */}
-                    <foreignObject x="20" y="115" width="70" height="70">
+                    <foreignObject x="20" y="105" width="70" height="70">
                       <div className="w-16 h-16 rounded-full bg-card border-2 border-border flex items-center justify-center shadow-lg">
                         <img 
                           src={brainIcon} 
@@ -497,8 +487,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     </foreignObject>
                     
                     {/* Badge de compte */}
-                    <circle cx="165" cy="150" r="12" fill="white" stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
-                    <text x="165" y="155" className="text-xs font-bold" fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
+                    <circle cx="165" cy="140" r="12" fill="white" stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
+                    <text x="165" y="145" className="text-xs font-bold" fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
                       {brainStatus.count}
                     </text>
                     
@@ -519,7 +509,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                           {/* Point */}
                           <circle
                             cx={xPosition}
-                            cy="150"
+                            cy="140"
                             r="12"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
                             filter="url(#dotGlow)"
@@ -529,7 +519,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                           {/* Label au-dessus du point */}
                           <text
                             x={xPosition}
-                            y="130"
+                            y="120"
                             className="text-xs font-semibold"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
                             textAnchor="middle"
@@ -540,7 +530,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                           {/* Valeur en-dessous du point */}
                           <text
                             x={xPosition}
-                            y="175"
+                            y="165"
                             className="text-xs"
                             fill="hsl(var(--muted-foreground))"
                             textAnchor="middle"
@@ -558,15 +548,15 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   <g>
                     <line
                       x1="200"
-                      y1="350"
+                      y1="260"
                       x2="1100"
-                      y2="350"
+                      y2="260"
                       stroke="url(#lineGradient)"
                       strokeWidth="2"
                     />
                     
                     {/* Icône et label de l'organe à gauche */}
-                    <foreignObject x="20" y="315" width="70" height="70">
+                    <foreignObject x="20" y="225" width="70" height="70">
                       <div className="w-16 h-16 rounded-full bg-card border-2 border-border flex items-center justify-center shadow-lg">
                         <HeartIcon className={`h-10 w-10 ${
                           heartStatus.status === 'critical' 
@@ -576,8 +566,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       </div>
                     </foreignObject>
                     
-                    <circle cx="165" cy="350" r="12" fill="white" stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
-                    <text x="165" y="355" className="text-xs font-bold" fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
+                    <circle cx="165" cy="260" r="12" fill="white" stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
+                    <text x="165" y="265" className="text-xs font-bold" fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
                       {heartStatus.count}
                     </text>
                     
@@ -595,7 +585,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         >
                           <circle
                             cx={xPosition}
-                            cy="350"
+                            cy="260"
                             r="12"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
                             filter="url(#dotGlow)"
@@ -604,7 +594,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                           
                           <text
                             x={xPosition}
-                            y="330"
+                            y="240"
                             className="text-xs font-semibold"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
                             textAnchor="middle"
@@ -614,7 +604,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                           
                           <text
                             x={xPosition}
-                            y="375"
+                            y="285"
                             className="text-xs"
                             fill="hsl(var(--muted-foreground))"
                             textAnchor="middle"
@@ -632,15 +622,15 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                   <g>
                     <line
                       x1="200"
-                      y1="550"
+                      y1="380"
                       x2="1100"
-                      y2="550"
+                      y2="380"
                       stroke="url(#lineGradient)"
                       strokeWidth="2"
                     />
                     
                     {/* Icône et label de l'organe à gauche */}
-                    <foreignObject x="20" y="515" width="70" height="70">
+                    <foreignObject x="20" y="345" width="70" height="70">
                       <div className="w-16 h-16 rounded-full bg-card border-2 border-border flex items-center justify-center shadow-lg">
                         <img 
                           src={lungsIcon} 
@@ -655,8 +645,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       </div>
                     </foreignObject>
                     
-                    <circle cx="165" cy="550" r="12" fill="white" stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
-                    <text x="165" y="555" className="text-xs font-bold" fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
+                    <circle cx="165" cy="380" r="12" fill="white" stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
+                    <text x="165" y="385" className="text-xs font-bold" fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} textAnchor="middle">
                       {lungsStatus.count}
                     </text>
                     
@@ -674,7 +664,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         >
                           <circle
                             cx={xPosition}
-                            cy="550"
+                            cy="380"
                             r="12"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
                             filter="url(#dotGlow)"
@@ -683,7 +673,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                           
                           <text
                             x={xPosition}
-                            y="530"
+                            y="360"
                             className="text-xs font-semibold"
                             fill={isCritical ? '#dc2626' : '#ea580c'}
                             textAnchor="middle"
@@ -693,7 +683,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                           
                           <text
                             x={xPosition}
-                            y="575"
+                            y="405"
                             className="text-xs"
                             fill="hsl(var(--muted-foreground))"
                             textAnchor="middle"
@@ -718,9 +708,9 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         <line
                           key={`brain-heart-${idx}`}
                           x1={xPos1}
-                          y1="150"
+                          y1="140"
                           x2={xPos2}
-                          y2="350"
+                          y2="260"
                           stroke="hsl(var(--primary))"
                           strokeWidth="1.5"
                           strokeDasharray="4,4"
@@ -741,9 +731,9 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         <line
                           key={`heart-lungs-${idx}`}
                           x1={xPos1}
-                          y1="350"
+                          y1="260"
                           x2={xPos2}
-                          y2="550"
+                          y2="380"
                           stroke="hsl(var(--primary))"
                           strokeWidth="1.5"
                           strokeDasharray="4,4"
