@@ -103,7 +103,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
           </div>
           
           <svg 
-            viewBox="0 0 300 600" 
+            viewBox="50 10 200 280" 
             className="w-96 h-auto"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -116,59 +116,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
                 </feMerge>
               </filter>
             </defs>
-
-            {/* Human body silhouette - translucent */}
-            <g fill="hsl(210 30% 85%)" opacity="0.35" stroke="hsl(210 30% 70%)" strokeWidth="1">
-              {/* Head */}
-              <ellipse cx="150" cy="55" rx="42" ry="50" />
-              
-              {/* Neck */}
-              <path d="M 130 95 L 125 112 L 135 112 L 165 112 L 175 112 L 170 95" />
-              
-              {/* Shoulders */}
-              <path d="M 100 112 Q 90 115 85 125 L 75 155" />
-              <path d="M 200 112 Q 210 115 215 125 L 225 155" />
-              
-              {/* Torso */}
-              <path d="M 100 112 L 95 185 Q 93 240 98 285 L 110 350 L 125 420" />
-              <path d="M 200 112 L 205 185 Q 207 240 202 285 L 190 350 L 175 420" />
-              
-              {/* Waist */}
-              <path d="M 98 285 Q 105 310 115 330" />
-              <path d="M 202 285 Q 195 310 185 330" />
-              
-              {/* Chest width */}
-              <path d="M 100 112 Q 110 118 120 118 L 180 118 Q 190 118 200 112" />
-              
-              {/* Arms */}
-              <path d="M 75 155 L 68 220 L 65 270" />
-              <path d="M 225 155 L 232 220 L 235 270" />
-              
-              {/* Legs */}
-              <path d="M 125 420 L 128 500 L 125 575" strokeWidth="20" strokeLinecap="round" />
-              <path d="M 175 420 L 172 500 L 175 575" strokeWidth="20" strokeLinecap="round" />
-              
-              {/* Hip connections */}
-              <path d="M 110 350 Q 115 380 125 420" />
-              <path d="M 190 350 Q 185 380 175 420" />
-            </g>
-
-            {/* Internal organs */}
-            
-            {/* Trachea (windpipe) */}
-            <path 
-              d="M 150 105 L 150 145"
-              stroke="hsl(210 30% 55%)"
-              strokeWidth="5"
-              fill="none"
-              opacity="0.5"
-            />
-            <path 
-              d="M 147 110 L 153 110 M 147 120 L 153 120 M 147 130 L 153 130 M 147 140 L 153 140"
-              stroke="hsl(210 30% 65%)"
-              strokeWidth="0.5"
-              opacity="0.5"
-            />
 
             {/* Brain */}
             <Tooltip>
@@ -242,7 +189,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
               </TooltipContent>
             </Tooltip>
 
-            {/* Lungs - realistic medical illustration style */}
+            {/* Heart - positioned in front of lungs */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <g 
@@ -411,129 +358,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
                 </div>
               </TooltipContent>
             </Tooltip>
-
-            {/* Liver */}
-            <path 
-              d="M 155 255 Q 185 255 200 265 L 205 295 Q 205 315 195 322 L 160 328 Q 155 328 155 320 Z"
-              fill={getOrganColor('liver')}
-              opacity={getOrganOpacity('liver')}
-              stroke="hsl(210 30% 45%)"
-              strokeWidth="1"
-              filter="url(#glow)"
-            />
-
-            {/* Stomach */}
-            <path 
-              d="M 135 265 Q 125 268 120 278 L 118 300 Q 118 312 125 318 Q 132 322 140 318 Q 145 314 145 305 L 145 278 Q 143 270 135 265 Z"
-              fill={getOrganColor('stomach')}
-              opacity={getOrganOpacity('stomach')}
-              stroke="hsl(210 30% 45%)"
-              strokeWidth="1"
-              filter="url(#glow)"
-            />
-
-            {/* Kidneys */}
-            <g>
-              <ellipse 
-                cx="110" 
-                cy="305" 
-                rx="14" 
-                ry="25"
-                fill={getOrganColor('kidneys')}
-                opacity={getOrganOpacity('kidneys')}
-                stroke="hsl(210 30% 45%)"
-                strokeWidth="1"
-                filter="url(#glow)"
-              />
-              <ellipse cx="110" cy="305" rx="7" ry="12" fill="hsl(210 30% 50%)" opacity="0.3" />
-              
-              <ellipse 
-                cx="190" 
-                cy="305" 
-                rx="14" 
-                ry="25"
-                fill={getOrganColor('kidneys')}
-                opacity={getOrganOpacity('kidneys')}
-                stroke="hsl(210 30% 45%)"
-                strokeWidth="1"
-                filter="url(#glow)"
-              />
-              <ellipse cx="190" cy="305" rx="7" ry="12" fill="hsl(210 30% 50%)" opacity="0.3" />
-            </g>
-
-            {/* Small intestine - coiled */}
-            <g 
-              fill={getOrganColor('intestine')}
-              opacity={getOrganOpacity('intestine')}
-              stroke="hsl(210 30% 45%)"
-              strokeWidth="1"
-              filter="url(#glow)"
-            >
-              <circle cx="140" cy="360" r="12" />
-              <circle cx="160" cy="360" r="12" />
-              <circle cx="150" cy="378" r="12" />
-              <circle cx="135" cy="390" r="11" />
-              <circle cx="165" cy="390" r="11" />
-            </g>
-
-            {/* Large intestine outline */}
-            <path 
-              d="M 125 340 L 110 355 L 110 395 L 125 410 L 175 410 L 190 395 L 190 355 L 175 340"
-              fill="none"
-              stroke={getOrganColor('intestine')}
-              strokeWidth="8"
-              opacity={getOrganOpacity('intestine')}
-              strokeLinecap="round"
-              filter="url(#glow)"
-            />
-          </svg>
-
-          {/* Labels */}
-          <svg className="absolute inset-0 pointer-events-none w-full h-full" viewBox="0 0 300 600">
-            {brainStatus && (
-              <g>
-                <line x1="192" y1="55" x2="245" y2="40" stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
-                <foreignObject x="245" y="22" width="130" height="40">
-                  <div className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shadow-lg border-2 ${
-                    brainStatus.status === 'critical' 
-                      ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-500'
-                      : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-orange-500'
-                  }`}>
-                    Cerveau ({brainStatus.count})
-                  </div>
-                </foreignObject>
-              </g>
-            )}
-            
-            {heartStatus && (
-              <g>
-                <line x1="125" y1="195" x2="55" y2="195" stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
-                <foreignObject x="5" y="177" width="130" height="40">
-                  <div className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shadow-lg border-2 ${
-                    heartStatus.status === 'critical' 
-                      ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-500'
-                      : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-orange-500'
-                  }`}>
-                    Cœur ({heartStatus.count})
-                  </div>
-                </foreignObject>
-              </g>
-            )}
-
-            {lungsStatus && (
-              <g>
-                <line x1="207" y1="200" x2="250" y2="200" stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} strokeWidth="2" />
-                <foreignObject x="250" y="182" width="130" height="40">
-                  <div className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shadow-lg border-2 ${
-                    lungsStatus.status === 'critical' 
-                      ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-500'
-                      : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-orange-500'
-                  }`}>
-                    Poumons ({lungsStatus.count})
-                  </div>
-                </foreignObject>
-              </g>
-            )}
           </svg>
         </div>
       </div>
@@ -556,32 +380,27 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
 
       {/* Organ summary list */}
       {problematicOrgans.length > 0 && (
-        <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
-          {problematicOrgans.map((organ) => {
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+          {problematicOrgans
+            .filter(organ => ['brain', 'heart', 'lungs'].includes(organ.organ))
+            .map((organ) => {
             const organLabels: Record<string, string> = {
               brain: 'Cerveau',
               heart: 'Cœur',
               lungs: 'Poumons',
-              liver: 'Foie',
-              kidneys: 'Reins',
-              pancreas: 'Pancréas',
-              intestine: 'Intestin',
             };
-            
-            const isClickable = ['brain', 'heart', 'lungs'].includes(organ.organ);
             
             return (
               <button
                 key={organ.organ}
-                onClick={() => isClickable && handleOrganClick(organ.organ)}
+                onClick={() => handleOrganClick(organ.organ)}
                 className={`
                   px-4 py-3 rounded-lg text-sm font-medium text-left
-                  transition-all duration-300 hover:scale-105 hover:shadow-md
+                  transition-all duration-300 hover:scale-105 hover:shadow-md cursor-pointer
                   ${organ.status === 'critical'
                     ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-2 border-red-500'
                     : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-2 border-orange-500'
                   }
-                  ${isClickable ? 'cursor-pointer' : 'cursor-default'}
                 `}
               >
                 <div className="flex items-center justify-between">
