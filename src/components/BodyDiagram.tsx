@@ -97,19 +97,19 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
           {/* Interactive overlay for clickable organs */}
           <div className="absolute inset-0 flex justify-center">
             <svg 
-              viewBox="0 0 1000 1200" 
+              viewBox="0 0 600 1400" 
               className="w-full max-w-3xl h-auto"
               style={{ pointerEvents: 'none' }}
             >
 
-              {/* Brain indicator values - positioned for the right side detail */}
+              {/* Brain indicator values - positioned above head */}
               {brainStatus && organIndicators['brain'] && (
                 <g style={{ pointerEvents: 'auto' }}>
                   {organIndicators['brain'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="680"
-                        y={180 + idx * 45}
+                        x="50"
+                        y={50 + idx * 45}
                         width="140"
                         height="38"
                         rx="6"
@@ -118,16 +118,16 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="690" 
-                        y={200 + idx * 45} 
+                        x="60" 
+                        y={70 + idx * 45} 
                         className="text-[14px] font-semibold"
                         fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="690" 
-                        y={213 + idx * 45} 
+                        x="60" 
+                        y={83 + idx * 45} 
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
                       >
@@ -138,7 +138,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 </g>
               )}
 
-              {/* Brain clickable area - on the detailed organ view */}
+              {/* Brain clickable area - on head */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <g 
@@ -146,11 +146,11 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     style={{ pointerEvents: brainStatus ? 'auto' : 'none' }}
                     className={`transition-all duration-300 ${brainStatus ? 'cursor-pointer' : ''}`}
                   >
-                    {/* Clickable area over brain detail */}
+                    {/* Clickable area over brain in head */}
                     <circle
-                      cx="900"
-                      cy="230"
-                      r="60"
+                      cx="300"
+                      cy="90"
+                      r="45"
                       fill="transparent"
                       stroke={brainStatus ? (brainStatus.status === 'critical' ? '#dc2626' : '#ea580c') : 'transparent'}
                       strokeWidth="3"
@@ -159,12 +159,12 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     
                     {brainStatus && (
                       <g>
-                        <circle cx="900" cy="230" r="28" fill="rgba(255,255,255,0.95)" />
+                        <circle cx="300" cy="90" r="25" fill="rgba(255,255,255,0.95)" />
                         <text 
-                          x="900" 
-                          y="243" 
+                          x="300" 
+                          y="100" 
                           textAnchor="middle" 
-                          className="text-[32px] font-bold"
+                          className="text-[28px] font-bold"
                           fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                         >
                           {brainStatus.count}
@@ -195,14 +195,14 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               </TooltipContent>
             </Tooltip>
 
-              {/* Lungs indicator values */}
+              {/* Lungs indicator values - positioned on sides */}
               {lungsStatus && organIndicators['lungs'] && (
                 <g style={{ pointerEvents: 'auto' }}>
                   {organIndicators['lungs'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="680"
-                        y={340 + idx * 45}
+                        x="410"
+                        y={330 + idx * 45}
                         width="140"
                         height="38"
                         rx="6"
@@ -211,16 +211,16 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="690" 
-                        y={360 + idx * 45} 
+                        x="420" 
+                        y={350 + idx * 45} 
                         className="text-[14px] font-semibold"
                         fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="690" 
-                        y={373 + idx * 45} 
+                        x="420" 
+                        y={363 + idx * 45} 
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
                       >
@@ -231,7 +231,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 </g>
               )}
 
-              {/* Lungs clickable area */}
+              {/* Lungs clickable area - in chest */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <g 
@@ -239,11 +239,12 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     style={{ pointerEvents: lungsStatus ? 'auto' : 'none' }}
                     className={`transition-all duration-300 ${lungsStatus ? 'cursor-pointer' : ''}`}
                   >
-                    {/* Clickable area over lungs detail */}
-                    <circle
-                      cx="880"
-                      cy="380"
-                      r="70"
+                    {/* Clickable area over lungs in chest */}
+                    <ellipse
+                      cx="300"
+                      cy="350"
+                      rx="80"
+                      ry="60"
                       fill="transparent"
                       stroke={lungsStatus ? (lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c') : 'transparent'}
                       strokeWidth="3"
@@ -252,12 +253,12 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     
                     {lungsStatus && (
                       <g>
-                        <circle cx="880" cy="380" r="30" fill="rgba(255,255,255,0.95)" />
+                        <circle cx="300" cy="350" r="26" fill="rgba(255,255,255,0.95)" />
                         <text 
-                          x="880" 
-                          y="395" 
+                          x="300" 
+                          y="362" 
                           textAnchor="middle" 
-                          className="text-[34px] font-bold"
+                          className="text-[30px] font-bold"
                           fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                         >
                           {lungsStatus.count}
@@ -288,14 +289,14 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               </TooltipContent>
             </Tooltip>
 
-              {/* Heart indicator values */}
+              {/* Heart indicator values - positioned below or beside */}
               {heartStatus && organIndicators['heart'] && (
                 <g style={{ pointerEvents: 'auto' }}>
                   {organIndicators['heart'].slice(0, 2).map((indicator, idx) => (
                     <g key={idx}>
                       <rect
-                        x="680"
-                        y={280 + idx * 45}
+                        x="50"
+                        y={260 + idx * 45}
                         width="140"
                         height="38"
                         rx="6"
@@ -304,16 +305,16 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                         strokeWidth="2.5"
                       />
                       <text 
-                        x="690" 
-                        y={300 + idx * 45} 
+                        x="60" 
+                        y={280 + idx * 45} 
                         className="text-[14px] font-semibold"
                         fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
                       <text 
-                        x="690" 
-                        y={313 + idx * 45} 
+                        x="60" 
+                        y={293 + idx * 45} 
                         className="text-[11px]"
                         fill="hsl(var(--muted-foreground))"
                       >
@@ -324,7 +325,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 </g>
               )}
 
-              {/* Heart clickable area */}
+              {/* Heart clickable area - in center chest */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <g 
@@ -332,11 +333,11 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     style={{ pointerEvents: heartStatus ? 'auto' : 'none' }}
                     className={`transition-all duration-300 ${heartStatus ? 'cursor-pointer' : ''}`}
                   >
-                    {/* Clickable area over heart detail */}
+                    {/* Clickable area over heart */}
                     <circle
-                      cx="920"
+                      cx="300"
                       cy="310"
-                      r="55"
+                      r="45"
                       fill="transparent"
                       stroke={heartStatus ? (heartStatus.status === 'critical' ? '#dc2626' : '#ea580c') : 'transparent'}
                       strokeWidth="3"
@@ -345,12 +346,12 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     
                     {heartStatus && (
                       <g>
-                        <circle cx="920" cy="310" r="28" fill="rgba(255,255,255,0.95)" />
+                        <circle cx="300" cy="310" r="25" fill="rgba(255,255,255,0.95)" />
                         <text 
-                          x="920" 
-                          y="323" 
+                          x="300" 
+                          y="321" 
                           textAnchor="middle" 
-                          className="text-[32px] font-bold"
+                          className="text-[28px] font-bold"
                           fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                         >
                           {heartStatus.count}
