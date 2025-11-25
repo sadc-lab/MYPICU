@@ -188,328 +188,318 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
           </div>
         )}
         
-        {/* Réseau de bulles avec corrélations */}
-        <div className="relative w-full" style={{ minHeight: '600px' }}>
+        {/* Graphique à points dispersés pour les organes */}
+        <div className="relative w-full bg-card border rounded-lg p-6" style={{ minHeight: '500px' }}>
           {hasProblems ? (
-            <svg viewBox="0 0 1000 600" className="w-full h-auto">
-              <defs>
-                {/* Gradient pour les connexions */}
-                <linearGradient id="connectionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.3" />
-                </linearGradient>
-                
-                {/* Filtres pour les ombres */}
-                <filter id="nodeShadow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                  <feOffset dx="0" dy="2" result="offsetblur"/>
-                  <feComponentTransfer>
-                    <feFuncA type="linear" slope="0.3"/>
-                  </feComponentTransfer>
-                  <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
+            <div className="space-y-6">
+              {/* Légende */}
+              <div className="flex items-center justify-center gap-6 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <span className="text-sm text-muted-foreground">Critique</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                  <span className="text-sm text-muted-foreground">Avertissement</span>
+                </div>
+              </div>
 
-              {/* Lignes de corrélation entre systèmes */}
-              {brainStatus && heartStatus && (
-                <>
-                  <line x1="200" y1="150" x2="500" y2="300" stroke="url(#connectionGradient)" strokeWidth="2" strokeDasharray="5,5" />
-                  <text x="350" y="215" className="text-xs" fill="hsl(var(--muted-foreground))" textAnchor="middle">
-                    Débit sanguin cérébral
-                  </text>
-                </>
-              )}
-              {brainStatus && lungsStatus && (
-                <>
-                  <line x1="200" y1="150" x2="800" y2="300" stroke="url(#connectionGradient)" strokeWidth="2" strokeDasharray="5,5" />
-                  <text x="500" y="215" className="text-xs" fill="hsl(var(--muted-foreground))" textAnchor="middle">
-                    Oxygénation cérébrale
-                  </text>
-                </>
-              )}
-              {heartStatus && lungsStatus && (
-                <>
-                  <line x1="500" y1="300" x2="800" y2="300" stroke="url(#connectionGradient)" strokeWidth="2" strokeDasharray="5,5" />
-                  <text x="650" y="285" className="text-xs" fill="hsl(var(--muted-foreground))" textAnchor="middle">
-                    Échanges gazeux cardio-pulmonaires
-                  </text>
-                </>
-              )}
+              <svg viewBox="0 0 1000 600" className="w-full h-auto">
+                <defs>
+                  {/* Gradient pour les lignes */}
+                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity="0.1" />
+                    <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity="0.3" />
+                  </linearGradient>
+                  
+                  {/* Filtres pour les points */}
+                  <filter id="dotGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
 
-              {/* Nœud Cerveau */}
-              {brainStatus && (
-                <g onClick={() => handleOrganClick('brain')} className="cursor-pointer transition-transform hover:scale-105" style={{ pointerEvents: 'auto' }}>
-                  <rect
-                    x="50"
-                    y="50"
-                    width="300"
-                    height={120 + (organIndicators['brain']?.length || 0) * 60}
-                    rx="12"
-                    fill="hsl(var(--card))"
-                    stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                    strokeWidth="3"
-                    filter="url(#nodeShadow)"
-                  />
-                  
-                  {/* En-tête du nœud */}
-                  <rect
-                    x="50"
-                    y="50"
-                    width="300"
-                    height="45"
-                    rx="12"
-                    fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                  />
-                  <text x="200" y="78" className="text-base font-bold" fill="white" textAnchor="middle">
-                    🧠 OPTIBRAIN
-                  </text>
-                  
-                  {/* Indicateurs */}
-                  {organIndicators['brain']?.slice(0, 3).map((indicator, idx) => (
-                    <g key={idx}>
-                      {/* Fond de l'indicateur */}
-                      <rect
-                        x="60"
-                        y={105 + idx * 60}
-                        width="280"
-                        height="50"
-                        rx="6"
-                        fill={brainStatus.status === 'critical' ? 'hsl(0 84% 97%)' : 'hsl(25 95% 97%)'}
-                      />
-                      
-                      {/* Label et valeur */}
-                      <text 
-                        x="70" 
-                        y={125 + idx * 60}
-                        className="text-sm font-semibold"
-                        fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                      >
-                        {indicator.label}: {indicator.current}
-                      </text>
-                      
-                      {/* Cible clinique */}
-                      <text 
-                        x="70" 
-                        y={145 + idx * 60}
-                        className="text-xs"
-                        fill="hsl(var(--muted-foreground))"
-                      >
-                        Cible: {indicator.target}
-                      </text>
-                      
-                      {/* Icône de tendance */}
-                      {indicator.status === 'critical' ? (
-                        <g transform={`translate(310, ${115 + idx * 60})`}>
-                          <circle cx="0" cy="0" r="12" fill="#dc2626" opacity="0.2"/>
-                          <path d="M-4,-4 L4,4 M-4,4 L4,-4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
-                        </g>
-                      ) : (
-                        <g transform={`translate(310, ${115 + idx * 60})`}>
-                          <circle cx="0" cy="0" r="12" fill="#ea580c" opacity="0.2"/>
-                          <path d="M-6,0 L0,-6 L6,0" stroke="#ea580c" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                        </g>
-                      )}
-                    </g>
-                  ))}
-                  
-                  {/* Badge de statut */}
-                  <circle
-                    cx="330"
-                    cy="72"
-                    r="18"
-                    fill="white"
-                  />
-                  <circle
-                    cx="330"
-                    cy="72"
-                    r="15"
-                    fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                  />
-                  <text x="330" y="77" className="text-xs font-bold" fill="white" textAnchor="middle">
-                    {brainStatus.count}
-                  </text>
-                </g>
-              )}
+                {/* Grille horizontale */}
+                {[0, 20, 40, 60, 80, 100].map((value) => (
+                  <g key={value}>
+                    <line
+                      x1="150"
+                      y1={500 - value * 4}
+                      x2="850"
+                      y2={500 - value * 4}
+                      stroke="hsl(var(--border))"
+                      strokeWidth="1"
+                      strokeDasharray="2,2"
+                      opacity="0.3"
+                    />
+                    <text
+                      x="120"
+                      y={505 - value * 4}
+                      className="text-xs"
+                      fill="hsl(var(--muted-foreground))"
+                      textAnchor="end"
+                    >
+                      {value}
+                    </text>
+                  </g>
+                ))}
 
-              {/* Nœud Cœur */}
-              {heartStatus && (
-                <g onClick={() => handleOrganClick('heart')} className="cursor-pointer transition-transform hover:scale-105" style={{ pointerEvents: 'auto' }}>
-                  <rect
-                    x="350"
-                    y="200"
-                    width="300"
-                    height={120 + (organIndicators['heart']?.length || 0) * 60}
-                    rx="12"
-                    fill="hsl(var(--card))"
-                    stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                    strokeWidth="3"
-                    filter="url(#nodeShadow)"
-                  />
-                  
-                  <rect
-                    x="350"
-                    y="200"
-                    width="300"
-                    height="45"
-                    rx="12"
-                    fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                  />
-                  <text x="500" y="228" className="text-base font-bold" fill="white" textAnchor="middle">
-                    ❤️ OPTIHEART
-                  </text>
-                  
-                  {organIndicators['heart']?.slice(0, 3).map((indicator, idx) => (
-                    <g key={idx}>
-                      <rect
-                        x="360"
-                        y={255 + idx * 60}
-                        width="280"
-                        height="50"
-                        rx="6"
-                        fill={heartStatus.status === 'critical' ? 'hsl(0 84% 97%)' : 'hsl(25 95% 97%)'}
-                      />
+                {/* Organe Cerveau */}
+                {brainStatus && organIndicators['brain'] && (
+                  <g>
+                    {/* Ligne verticale */}
+                    <line
+                      x1="250"
+                      y1="100"
+                      x2="250"
+                      y2="500"
+                      stroke="url(#lineGradient)"
+                      strokeWidth="2"
+                    />
+                    
+                    {/* Points pour chaque indicateur */}
+                    {organIndicators['brain'].slice(0, 4).map((indicator, idx) => {
+                      const yPosition = 500 - (80 - idx * 20) * 4;
+                      const isCritical = indicator.status === 'critical';
                       
-                      <text 
-                        x="370" 
-                        y={275 + idx * 60}
-                        className="text-sm font-semibold"
-                        fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                      >
-                        {indicator.label}: {indicator.current}
-                      </text>
-                      
-                      <text 
-                        x="370" 
-                        y={295 + idx * 60}
-                        className="text-xs"
-                        fill="hsl(var(--muted-foreground))"
-                      >
-                        Cible: {indicator.target}
-                      </text>
-                      
-                      {indicator.status === 'critical' ? (
-                        <g transform={`translate(610, ${265 + idx * 60})`}>
-                          <circle cx="0" cy="0" r="12" fill="#dc2626" opacity="0.2"/>
-                          <path d="M-4,-4 L4,4 M-4,4 L4,-4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
+                      return (
+                        <g 
+                          key={idx}
+                          onClick={() => handleOrganClick('brain')}
+                          className="cursor-pointer transition-transform hover:scale-110"
+                          style={{ pointerEvents: 'auto' }}
+                        >
+                          {/* Ligne de connexion au point */}
+                          <line
+                            x1="250"
+                            y1={yPosition}
+                            x2="250"
+                            y2={yPosition}
+                            stroke={isCritical ? '#dc2626' : '#ea580c'}
+                            strokeWidth="3"
+                          />
+                          
+                          {/* Point */}
+                          <circle
+                            cx="250"
+                            cy={yPosition}
+                            r="12"
+                            fill={isCritical ? '#dc2626' : '#ea580c'}
+                            filter="url(#dotGlow)"
+                          />
+                          
+                          {/* Valeur du point */}
+                          <text
+                            x="270"
+                            y={yPosition + 5}
+                            className="text-xs font-semibold"
+                            fill={isCritical ? '#dc2626' : '#ea580c'}
+                          >
+                            {indicator.label}: {indicator.current}
+                          </text>
                         </g>
-                      ) : (
-                        <g transform={`translate(610, ${265 + idx * 60})`}>
-                          <circle cx="0" cy="0" r="12" fill="#ea580c" opacity="0.2"/>
-                          <path d="M-6,0 L0,-6 L6,0" stroke="#ea580c" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                        </g>
-                      )}
-                    </g>
-                  ))}
-                  
-                  <circle
-                    cx="630"
-                    cy="222"
-                    r="18"
-                    fill="white"
-                  />
-                  <circle
-                    cx="630"
-                    cy="222"
-                    r="15"
-                    fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                  />
-                  <text x="630" y="227" className="text-xs font-bold" fill="white" textAnchor="middle">
-                    {heartStatus.count}
-                  </text>
-                </g>
-              )}
+                      );
+                    })}
+                    
+                    {/* Label de l'organe */}
+                    <text
+                      x="250"
+                      y="530"
+                      className="text-sm font-bold"
+                      fill="hsl(var(--foreground))"
+                      textAnchor="middle"
+                    >
+                      🧠 Cerveau
+                    </text>
+                    
+                    {/* Badge de compte */}
+                    <circle cx="250" cy="70" r="18" fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'} />
+                    <text x="250" y="76" className="text-xs font-bold" fill="white" textAnchor="middle">
+                      {brainStatus.count}
+                    </text>
+                  </g>
+                )}
 
-              {/* Nœud Poumons */}
-              {lungsStatus && (
-                <g onClick={() => handleOrganClick('lungs')} className="cursor-pointer transition-transform hover:scale-105" style={{ pointerEvents: 'auto' }}>
-                  <rect
-                    x="650"
-                    y="200"
-                    width="300"
-                    height={120 + (organIndicators['lungs']?.length || 0) * 60}
-                    rx="12"
-                    fill="hsl(var(--card))"
-                    stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                    strokeWidth="3"
-                    filter="url(#nodeShadow)"
-                  />
-                  
-                  <rect
-                    x="650"
-                    y="200"
-                    width="300"
-                    height="45"
-                    rx="12"
-                    fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                  />
-                  <text x="800" y="228" className="text-base font-bold" fill="white" textAnchor="middle">
-                    🫁 OPTILUNGS
-                  </text>
-                  
-                  {organIndicators['lungs']?.slice(0, 3).map((indicator, idx) => (
-                    <g key={idx}>
-                      <rect
-                        x="660"
-                        y={255 + idx * 60}
-                        width="280"
-                        height="50"
-                        rx="6"
-                        fill={lungsStatus.status === 'critical' ? 'hsl(0 84% 97%)' : 'hsl(25 95% 97%)'}
-                      />
+                {/* Organe Cœur */}
+                {heartStatus && organIndicators['heart'] && (
+                  <g>
+                    <line
+                      x1="500"
+                      y1="100"
+                      x2="500"
+                      y2="500"
+                      stroke="url(#lineGradient)"
+                      strokeWidth="2"
+                    />
+                    
+                    {organIndicators['heart'].slice(0, 4).map((indicator, idx) => {
+                      const yPosition = 500 - (70 - idx * 15) * 4;
+                      const isCritical = indicator.status === 'critical';
                       
-                      <text 
-                        x="670" 
-                        y={275 + idx * 60}
-                        className="text-sm font-semibold"
-                        fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
-                      >
-                        {indicator.label}: {indicator.current}
-                      </text>
-                      
-                      <text 
-                        x="670" 
-                        y={295 + idx * 60}
-                        className="text-xs"
-                        fill="hsl(var(--muted-foreground))"
-                      >
-                        Cible: {indicator.target}
-                      </text>
-                      
-                      {indicator.status === 'critical' ? (
-                        <g transform={`translate(910, ${265 + idx * 60})`}>
-                          <circle cx="0" cy="0" r="12" fill="#dc2626" opacity="0.2"/>
-                          <path d="M-4,-4 L4,4 M-4,4 L4,-4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
+                      return (
+                        <g 
+                          key={idx}
+                          onClick={() => handleOrganClick('heart')}
+                          className="cursor-pointer transition-transform hover:scale-110"
+                          style={{ pointerEvents: 'auto' }}
+                        >
+                          <line
+                            x1="500"
+                            y1={yPosition}
+                            x2="500"
+                            y2={yPosition}
+                            stroke={isCritical ? '#dc2626' : '#ea580c'}
+                            strokeWidth="3"
+                          />
+                          
+                          <circle
+                            cx="500"
+                            cy={yPosition}
+                            r="12"
+                            fill={isCritical ? '#dc2626' : '#ea580c'}
+                            filter="url(#dotGlow)"
+                          />
+                          
+                          <text
+                            x="520"
+                            y={yPosition + 5}
+                            className="text-xs font-semibold"
+                            fill={isCritical ? '#dc2626' : '#ea580c'}
+                          >
+                            {indicator.label}: {indicator.current}
+                          </text>
                         </g>
-                      ) : (
-                        <g transform={`translate(910, ${265 + idx * 60})`}>
-                          <circle cx="0" cy="0" r="12" fill="#ea580c" opacity="0.2"/>
-                          <path d="M-6,0 L0,-6 L6,0" stroke="#ea580c" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      );
+                    })}
+                    
+                    <text
+                      x="500"
+                      y="530"
+                      className="text-sm font-bold"
+                      fill="hsl(var(--foreground))"
+                      textAnchor="middle"
+                    >
+                      ❤️ Cœur
+                    </text>
+                    
+                    <circle cx="500" cy="70" r="18" fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'} />
+                    <text x="500" y="76" className="text-xs font-bold" fill="white" textAnchor="middle">
+                      {heartStatus.count}
+                    </text>
+                  </g>
+                )}
+
+                {/* Organe Poumons */}
+                {lungsStatus && organIndicators['lungs'] && (
+                  <g>
+                    <line
+                      x1="750"
+                      y1="100"
+                      x2="750"
+                      y2="500"
+                      stroke="url(#lineGradient)"
+                      strokeWidth="2"
+                    />
+                    
+                    {organIndicators['lungs'].slice(0, 4).map((indicator, idx) => {
+                      const yPosition = 500 - (85 - idx * 18) * 4;
+                      const isCritical = indicator.status === 'critical';
+                      
+                      return (
+                        <g 
+                          key={idx}
+                          onClick={() => handleOrganClick('lungs')}
+                          className="cursor-pointer transition-transform hover:scale-110"
+                          style={{ pointerEvents: 'auto' }}
+                        >
+                          <line
+                            x1="750"
+                            y1={yPosition}
+                            x2="750"
+                            y2={yPosition}
+                            stroke={isCritical ? '#dc2626' : '#ea580c'}
+                            strokeWidth="3"
+                          />
+                          
+                          <circle
+                            cx="750"
+                            cy={yPosition}
+                            r="12"
+                            fill={isCritical ? '#dc2626' : '#ea580c'}
+                            filter="url(#dotGlow)"
+                          />
+                          
+                          <text
+                            x="770"
+                            y={yPosition + 5}
+                            className="text-xs font-semibold"
+                            fill={isCritical ? '#dc2626' : '#ea580c'}
+                          >
+                            {indicator.label}: {indicator.current}
+                          </text>
                         </g>
-                      )}
-                    </g>
-                  ))}
-                  
-                  <circle
-                    cx="930"
-                    cy="222"
-                    r="18"
-                    fill="white"
+                      );
+                    })}
+                    
+                    <text
+                      x="750"
+                      y="530"
+                      className="text-sm font-bold"
+                      fill="hsl(var(--foreground))"
+                      textAnchor="middle"
+                    >
+                      🫁 Poumons
+                    </text>
+                    
+                    <circle cx="750" cy="70" r="18" fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'} />
+                    <text x="750" y="76" className="text-xs font-bold" fill="white" textAnchor="middle">
+                      {lungsStatus.count}
+                    </text>
+                  </g>
+                )}
+
+                {/* Lignes de corrélation entre organes */}
+                {brainStatus && heartStatus && (
+                  <line
+                    x1="250"
+                    y1="50"
+                    x2="500"
+                    y2="50"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    opacity="0.3"
                   />
-                  <circle
-                    cx="930"
-                    cy="222"
-                    r="15"
-                    fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                )}
+                {heartStatus && lungsStatus && (
+                  <line
+                    x1="500"
+                    y1="50"
+                    x2="750"
+                    y2="50"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    opacity="0.3"
                   />
-                  <text x="930" y="227" className="text-xs font-bold" fill="white" textAnchor="middle">
-                    {lungsStatus.count}
-                  </text>
-                </g>
-              )}
-            </svg>
+                )}
+                {brainStatus && lungsStatus && (
+                  <line
+                    x1="250"
+                    y1="40"
+                    x2="750"
+                    y2="40"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    opacity="0.3"
+                  />
+                )}
+              </svg>
+            </div>
           ) : (
             <div className="flex items-center justify-center h-96">
               <div className="bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 px-6 py-3 rounded-lg shadow-lg border-2 border-green-500">
