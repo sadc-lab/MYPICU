@@ -680,58 +680,6 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="mt-10 flex items-center justify-center gap-10 text-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: 'hsl(210 40% 60%)', opacity: 0.6 }}></div>
-          <span className="text-muted-foreground font-medium">Normal</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: 'hsl(20 91% 48%)', opacity: 0.85 }}></div>
-          <span className="text-muted-foreground font-medium">Attention</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: 'hsl(0 84% 60%)', opacity: 0.85 }}></div>
-          <span className="text-muted-foreground font-medium">Critique</span>
-        </div>
-      </div>
-
-      {/* Organ summary list */}
-      {problematicOrgans.length > 0 && (
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-          {problematicOrgans
-            .filter(organ => ['brain', 'heart', 'lungs'].includes(organ.organ))
-            .map((organ) => {
-            const organLabels: Record<string, string> = {
-              brain: 'Cerveau',
-              heart: 'Cœur',
-              lungs: 'Poumons',
-            };
-            
-            return (
-              <button
-                key={organ.organ}
-                onClick={() => handleOrganClick(organ.organ)}
-                className={`
-                  px-4 py-3 rounded-lg text-sm font-medium text-left
-                  transition-all duration-300 hover:scale-105 hover:shadow-md cursor-pointer
-                  ${organ.status === 'critical'
-                    ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-2 border-red-500'
-                    : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-2 border-orange-500'
-                  }
-                `}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">{organLabels[organ.organ]}</span>
-                  <span className="text-xs opacity-75 ml-2">
-                    {organ.count} indicateur{organ.count > 1 ? 's' : ''}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
       </div>
     </TooltipProvider>
   );
