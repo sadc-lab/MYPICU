@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Brain, Heart, Wind, Droplet } from 'lucide-react';
 
 interface BodyDiagramProps {
   problematicOrgans: {
@@ -9,61 +8,6 @@ interface BodyDiagramProps {
   }[];
   patientId: string;
 }
-
-const OrganIcon = ({ 
-  name, 
-  status 
-}: { 
-  name: string; 
-  status?: 'critical' | 'warning';
-}) => {
-  const getColor = () => {
-    if (!status) return '#94a3b8'; // muted
-    return status === 'critical' ? '#dc2626' : '#ea580c'; // red or orange
-  };
-
-  const color = getColor();
-
-  const organs: Record<string, JSX.Element> = {
-    brain: (
-      <svg viewBox="0 0 24 24" fill={color} className="w-full h-full">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5 0 1.64-.8 3.09-2.03 4h-5.94C7.8 12.09 7 10.64 7 9c0-2.76 2.24-5 5-5z"/>
-      </svg>
-    ),
-    heart: (
-      <svg viewBox="0 0 24 24" fill={color} className="w-full h-full">
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-      </svg>
-    ),
-    lungs: (
-      <svg viewBox="0 0 24 24" fill={color} className="w-full h-full">
-        <path d="M6.5 3C4.57 3 3 4.57 3 6.5v9C3 17.43 4.57 19 6.5 19c1.04 0 1.98-.45 2.63-1.16.29-.32.54-.68.74-1.09V7.25c-.2-.41-.45-.77-.74-1.09C8.48 5.45 7.54 5 6.5 5 5.67 5 5 5.67 5 6.5v9c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-9C8 5.67 7.33 5 6.5 5zm11 0c-1.93 0-3.5 1.57-3.5 3.5v9c0 1.93 1.57 3.5 3.5 3.5s3.5-1.57 3.5-3.5v-9C21 4.57 19.43 3 17.5 3zm0 2c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-9c0-.83.67-1.5 1.5-1.5zM12 3v8c-.2.41-.45.77-.74 1.09.29.32.54.68.74 1.09V21h0"/>
-      </svg>
-    ),
-    liver: (
-      <svg viewBox="0 0 24 24" fill={color} className="w-full h-full">
-        <path d="M18 4c-1.66 0-3 1.34-3 3v2h-2V7c0-1.66-1.34-3-3-3H8C6.34 4 5 5.34 5 7v8c0 2.76 2.24 5 5 5h4c2.76 0 5-2.24 5-5V7c0-1.66-1.34-3-3-3h-2zm-8 2h2c.55 0 1 .45 1 1v2H9V7c0-.55.45-1 1-1zm5 0h2c.55 0 1 .45 1 1v8c0 1.66-1.34 3-3 3h-4c-1.66 0-3-1.34-3-3v-5h10V7c0-.55.45-1 1-1z"/>
-      </svg>
-    ),
-    pancreas: (
-      <svg viewBox="0 0 24 24" fill={color} className="w-full h-full">
-        <path d="M20 8H4c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zm0 6H4v-4h16v4zM7 11h2v2H7zm4 0h6v2h-6z"/>
-      </svg>
-    ),
-    kidneys: (
-      <svg viewBox="0 0 24 24" fill={color} className="w-full h-full">
-        <path d="M8 4C6.34 4 5 5.34 5 7v10c0 1.66 1.34 3 3 3 1.66 0 3-1.34 3-3V7c0-1.66-1.34-3-3-3zm0 2c.55 0 1 .45 1 1v10c0 .55-.45 1-1 1s-1-.45-1-1V7c0-.55.45-1 1-1zm8-2c-1.66 0-3 1.34-3 3v10c0 1.66 1.34 3 3 3 1.66 0 3-1.34 3-3V7c0-1.66-1.34-3-3-3zm0 2c.55 0 1 .45 1 1v10c0 .55-.45 1-1 1s-1-.45-1-1V7c0-.55.45-1 1-1z"/>
-      </svg>
-    ),
-    intestine: (
-      <svg viewBox="0 0 24 24" fill={color} className="w-full h-full">
-        <path d="M12 2C9.79 2 8 3.79 8 6v12c0 2.21 1.79 4 4 4s4-1.79 4-4V6c0-2.21-1.79-4-4-4zm2 16c0 1.1-.9 2-2 2s-2-.9-2-2v-3h4v3zm0-5h-4V9h4v4zm0-6h-4V6c0-1.1.9-2 2-2s2 .9 2 2v1z"/>
-      </svg>
-    ),
-  };
-
-  return organs[name] || null;
-};
 
 export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) => {
   const navigate = useNavigate();
@@ -85,129 +29,383 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
     return problematicOrgans.find(o => o.organ === organ);
   };
 
-  const allOrgans = [
-    { id: 'brain', label: 'Cerveau', top: '8%', left: '50%' },
-    { id: 'heart', label: 'Cœur', top: '32%', left: '50%' },
-    { id: 'lungs', label: 'Poumons', top: '28%', left: '35%' },
-    { id: 'liver', label: 'Foie', top: '42%', left: '60%' },
-    { id: 'pancreas', label: 'Pancréas', top: '48%', left: '50%' },
-    { id: 'kidneys', label: 'Reins', top: '52%', left: '40%' },
-    { id: 'intestine', label: 'Intestin grêle', top: '60%', left: '50%' },
-  ];
+  const getOrganColor = (organ: string) => {
+    const status = getOrganStatus(organ);
+    if (!status) return '#94a3b8'; // muted gray
+    return status.status === 'critical' ? '#dc2626' : '#ea580c'; // red or orange
+  };
+
+  const getOrganOpacity = (organ: string) => {
+    const status = getOrganStatus(organ);
+    return status ? '0.7' : '0.15';
+  };
+
+  const brainStatus = getOrganStatus('brain');
+  const heartStatus = getOrganStatus('heart');
+  const lungsStatus = getOrganStatus('lungs');
 
   return (
-    <div className="relative w-full max-w-3xl mx-auto py-12 px-8">
-      {/* Human body silhouette */}
-      <div className="relative mx-auto" style={{ width: '300px', height: '600px' }}>
-        <svg
-          viewBox="0 0 200 400"
-          className="w-full h-full opacity-5"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Head */}
-          <ellipse cx="100" cy="35" rx="25" ry="30" fill="currentColor" className="text-muted-foreground" />
-          {/* Neck */}
-          <rect x="90" y="60" width="20" height="15" fill="currentColor" className="text-muted-foreground" />
-          {/* Torso */}
-          <path
-            d="M 80 75 L 75 200 Q 75 210 85 210 L 115 210 Q 125 210 125 200 L 120 75 Q 120 65 110 65 L 90 65 Q 80 65 80 75"
-            fill="currentColor"
-            className="text-muted-foreground"
-          />
-          {/* Arms */}
-          <rect x="50" y="85" width="30" height="12" rx="6" fill="currentColor" className="text-muted-foreground" />
-          <rect x="120" y="85" width="30" height="12" rx="6" fill="currentColor" className="text-muted-foreground" />
-          {/* Legs */}
-          <rect x="82" y="210" width="15" height="80" rx="7" fill="currentColor" className="text-muted-foreground" />
-          <rect x="103" y="210" width="15" height="80" rx="7" fill="currentColor" className="text-muted-foreground" />
-        </svg>
-
-        {/* Organs overlay */}
-        {allOrgans.map((organ) => {
-          const status = getOrganStatus(organ.id);
-          const hasClickHandler = ['brain', 'heart', 'lungs'].includes(organ.id);
+    <div className="relative w-full max-w-4xl mx-auto py-8">
+      <div className="flex justify-center gap-12">
+        {/* Front view */}
+        <div className="relative">
+          <div className="text-center mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Vue de face</h3>
+          </div>
           
-          return (
-            <div
-              key={organ.id}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 animate-fade-in"
-              style={{ top: organ.top, left: organ.left }}
+          <svg 
+            viewBox="0 0 200 400" 
+            className="w-64 h-auto"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            {/* Body outline */}
+            <g className="text-muted-foreground" stroke="currentColor" strokeWidth="2" fill="none">
+              {/* Head */}
+              <ellipse cx="100" cy="35" rx="28" ry="32" />
+              {/* Neck */}
+              <path d="M 85 60 L 85 75 M 115 60 L 115 75" />
+              {/* Shoulders and arms */}
+              <path d="M 75 75 Q 65 75 60 80 L 50 120 L 45 160" />
+              <path d="M 125 75 Q 135 75 140 80 L 150 120 L 155 160" />
+              {/* Torso */}
+              <path d="M 75 75 L 70 130 Q 68 180 75 220 L 85 280" />
+              <path d="M 125 75 L 130 130 Q 132 180 125 220 L 115 280" />
+              {/* Legs */}
+              <path d="M 85 280 L 88 350 L 85 390" />
+              <path d="M 115 280 L 112 350 L 115 390" />
+              {/* Bottom connections */}
+              <path d="M 75 220 Q 80 240 85 280" />
+              <path d="M 125 220 Q 120 240 115 280" />
+            </g>
+
+            {/* Brain */}
+            <g 
+              onClick={() => brainStatus && handleOrganClick('brain')}
+              className={brainStatus ? 'cursor-pointer hover:scale-105 transition-transform' : ''}
             >
-              <button
-                onClick={() => hasClickHandler && handleOrganClick(organ.id)}
-                disabled={!hasClickHandler}
-                className={`
-                  group relative
-                  ${hasClickHandler ? 'cursor-pointer hover:scale-110' : 'cursor-default'}
-                  transition-all duration-300
-                `}
+              <ellipse 
+                cx="100" 
+                cy="30" 
+                rx="22" 
+                ry="25"
+                fill={getOrganColor('brain')}
+                opacity={getOrganOpacity('brain')}
+                className="transition-all duration-300"
+              />
+              {brainStatus && (
+                <text 
+                  x="100" 
+                  y="35" 
+                  textAnchor="middle" 
+                  className="text-[10px] font-bold fill-white"
+                >
+                  {brainStatus.count}
+                </text>
+              )}
+            </g>
+
+            {/* Lungs - left and right */}
+            <g 
+              onClick={() => lungsStatus && handleOrganClick('lungs')}
+              className={lungsStatus ? 'cursor-pointer hover:scale-105 transition-transform' : ''}
+            >
+              {/* Left lung */}
+              <ellipse 
+                cx="85" 
+                cy="105" 
+                rx="18" 
+                ry="35"
+                fill={getOrganColor('lungs')}
+                opacity={getOrganOpacity('lungs')}
+                className="transition-all duration-300"
+              />
+              {/* Right lung */}
+              <ellipse 
+                cx="115" 
+                cy="105" 
+                rx="18" 
+                ry="35"
+                fill={getOrganColor('lungs')}
+                opacity={getOrganOpacity('lungs')}
+                className="transition-all duration-300"
+              />
+              {lungsStatus && (
+                <text 
+                  x="100" 
+                  y="110" 
+                  textAnchor="middle" 
+                  className="text-[10px] font-bold fill-white"
+                >
+                  {lungsStatus.count}
+                </text>
+              )}
+            </g>
+
+            {/* Heart */}
+            <g 
+              onClick={() => heartStatus && handleOrganClick('heart')}
+              className={heartStatus ? 'cursor-pointer hover:scale-105 transition-transform' : ''}
+            >
+              <path 
+                d="M 100 95 L 92 103 Q 88 107 88 112 Q 88 117 92 121 L 100 129 L 108 121 Q 112 117 112 112 Q 112 107 108 103 Z"
+                fill={getOrganColor('heart')}
+                opacity={getOrganOpacity('heart')}
+                className="transition-all duration-300"
+              />
+              {heartStatus && (
+                <text 
+                  x="100" 
+                  y="115" 
+                  textAnchor="middle" 
+                  className="text-[8px] font-bold fill-white"
+                >
+                  {heartStatus.count}
+                </text>
+              )}
+            </g>
+
+            {/* Liver */}
+            <path 
+              d="M 95 145 Q 90 145 85 150 L 85 170 Q 85 175 90 175 L 110 175 Q 118 175 120 170 L 120 150 Q 118 145 110 145 Z"
+              fill={getOrganColor('liver')}
+              opacity={getOrganOpacity('liver')}
+              className="transition-all duration-300"
+            />
+
+            {/* Kidneys */}
+            <g>
+              <ellipse 
+                cx="82" 
+                cy="160" 
+                rx="8" 
+                ry="18"
+                fill={getOrganColor('kidneys')}
+                opacity={getOrganOpacity('kidneys')}
+                className="transition-all duration-300"
+              />
+              <ellipse 
+                cx="118" 
+                cy="160" 
+                rx="8" 
+                ry="18"
+                fill={getOrganColor('kidneys')}
+                opacity={getOrganOpacity('kidneys')}
+                className="transition-all duration-300"
+              />
+            </g>
+
+            {/* Intestines */}
+            <g>
+              <path 
+                d="M 90 190 Q 85 190 85 195 L 85 230 Q 85 235 90 235 L 110 235 Q 115 235 115 230 L 115 195 Q 115 190 110 190 Z"
+                fill={getOrganColor('intestine')}
+                opacity={getOrganOpacity('intestine')}
+                className="transition-all duration-300"
+              />
+            </g>
+
+            {/* Pancreas */}
+            <path 
+              d="M 85 153 Q 82 153 82 156 L 82 162 Q 82 165 85 165 L 115 165 Q 118 165 118 162 L 118 156 Q 118 153 115 153 Z"
+              fill={getOrganColor('pancreas')}
+              opacity={getOrganOpacity('pancreas')}
+              className="transition-all duration-300"
+            />
+          </svg>
+
+          {/* Labels for front view */}
+          <div className="absolute inset-0 pointer-events-none">
+            {brainStatus && (
+              <div 
+                className="absolute"
+                style={{ top: '5%', left: '50%', transform: 'translateX(-50%)' }}
               >
-                {/* Organ icon */}
-                <div
-                  className={`
-                    w-16 h-16 rounded-full p-3 shadow-lg
-                    transition-all duration-300
-                    ${status 
-                      ? status.status === 'critical'
-                        ? 'bg-red-100 dark:bg-red-950 ring-2 ring-red-500 dark:ring-red-400'
-                        : 'bg-orange-100 dark:bg-orange-950 ring-2 ring-orange-500 dark:ring-orange-400'
-                      : 'bg-muted/50'
-                    }
-                  `}
-                >
-                  <OrganIcon name={organ.id} status={status?.status} />
+                <div className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
+                  brainStatus.status === 'critical' 
+                    ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300'
+                    : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300'
+                }`}>
+                  Cerveau ({brainStatus.count})
                 </div>
-
-                {/* Label */}
-                <div
-                  className={`
-                    absolute top-full mt-2 left-1/2 transform -translate-x-1/2
-                    px-3 py-1 rounded-md shadow-md whitespace-nowrap text-xs font-medium
-                    transition-all duration-300
-                    ${status
-                      ? status.status === 'critical'
-                        ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300'
-                        : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300'
-                      : 'bg-muted text-muted-foreground'
-                    }
-                  `}
-                >
-                  {organ.label}
-                  {status && (
-                    <span className="ml-1 text-xs">
-                      ({status.count})
-                    </span>
-                  )}
+              </div>
+            )}
+            
+            {heartStatus && (
+              <div 
+                className="absolute"
+                style={{ top: '26%', left: '10%' }}
+              >
+                <div className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
+                  heartStatus.status === 'critical' 
+                    ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300'
+                    : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300'
+                }`}>
+                  Cœur ({heartStatus.count})
                 </div>
+              </div>
+            )}
 
-                {/* Hover tooltip for clickable organs */}
-                {hasClickHandler && status && (
-                  <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    <div className="bg-foreground text-background px-2 py-1 rounded text-xs whitespace-nowrap">
-                      Cliquer pour voir les détails
-                    </div>
-                  </div>
-                )}
-              </button>
-            </div>
-          );
-        })}
+            {lungsStatus && (
+              <div 
+                className="absolute"
+                style={{ top: '22%', right: '10%' }}
+              >
+                <div className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
+                  lungsStatus.status === 'critical' 
+                    ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300'
+                    : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300'
+                }`}>
+                  Poumons ({lungsStatus.count})
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Back view */}
+        <div className="relative">
+          <div className="text-center mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Vue de dos</h3>
+          </div>
+          
+          <svg 
+            viewBox="0 0 200 400" 
+            className="w-64 h-auto"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            {/* Body outline - back view */}
+            <g className="text-muted-foreground" stroke="currentColor" strokeWidth="2" fill="none">
+              {/* Head */}
+              <ellipse cx="100" cy="35" rx="28" ry="32" />
+              {/* Neck */}
+              <path d="M 85 60 L 85 75 M 115 60 L 115 75" />
+              {/* Shoulders and arms */}
+              <path d="M 75 75 Q 65 75 60 80 L 50 120 L 45 160" />
+              <path d="M 125 75 Q 135 75 140 80 L 150 120 L 155 160" />
+              {/* Back/Spine */}
+              <path d="M 100 75 L 100 220" strokeDasharray="3,3" />
+              {/* Torso */}
+              <path d="M 75 75 L 70 130 Q 68 180 75 220 L 85 280" />
+              <path d="M 125 75 L 130 130 Q 132 180 125 220 L 115 280" />
+              {/* Legs */}
+              <path d="M 85 280 L 88 350 L 85 390" />
+              <path d="M 115 280 L 112 350 L 115 390" />
+              {/* Bottom connections */}
+              <path d="M 75 220 Q 80 240 85 280" />
+              <path d="M 125 220 Q 120 240 115 280" />
+            </g>
+
+            {/* Brain (back) */}
+            <ellipse 
+              cx="100" 
+              cy="30" 
+              rx="22" 
+              ry="25"
+              fill={getOrganColor('brain')}
+              opacity={getOrganOpacity('brain')}
+              className="transition-all duration-300"
+            />
+
+            {/* Lungs (back) */}
+            <g>
+              <ellipse 
+                cx="85" 
+                cy="105" 
+                rx="18" 
+                ry="35"
+                fill={getOrganColor('lungs')}
+                opacity={getOrganOpacity('lungs')}
+                className="transition-all duration-300"
+              />
+              <ellipse 
+                cx="115" 
+                cy="105" 
+                rx="18" 
+                ry="35"
+                fill={getOrganColor('lungs')}
+                opacity={getOrganOpacity('lungs')}
+                className="transition-all duration-300"
+              />
+            </g>
+
+            {/* Kidneys (more prominent from back) */}
+            <g>
+              <ellipse 
+                cx="82" 
+                cy="160" 
+                rx="12" 
+                ry="22"
+                fill={getOrganColor('kidneys')}
+                opacity={getOrganOpacity('kidneys')}
+                className="transition-all duration-300"
+              />
+              <ellipse 
+                cx="118" 
+                cy="160" 
+                rx="12" 
+                ry="22"
+                fill={getOrganColor('kidneys')}
+                opacity={getOrganOpacity('kidneys')}
+                className="transition-all duration-300"
+              />
+            </g>
+          </svg>
+        </div>
       </div>
 
       {/* Legend */}
-      <div className="mt-8 flex items-center justify-center gap-6 text-sm">
+      <div className="mt-8 flex items-center justify-center gap-8 text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-muted"></div>
+          <div className="w-6 h-6 rounded bg-muted/50 border border-muted-foreground"></div>
           <span className="text-muted-foreground">Normal</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-orange-500"></div>
+          <div className="w-6 h-6 rounded bg-orange-500"></div>
           <span className="text-muted-foreground">Attention</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-red-500"></div>
+          <div className="w-6 h-6 rounded bg-red-500"></div>
           <span className="text-muted-foreground">Critique</span>
         </div>
+      </div>
+
+      {/* Organ list summary */}
+      <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
+        {[
+          { id: 'brain', label: 'Cerveau' },
+          { id: 'heart', label: 'Cœur' },
+          { id: 'lungs', label: 'Poumons' },
+          { id: 'liver', label: 'Foie' },
+          { id: 'kidneys', label: 'Reins' },
+          { id: 'pancreas', label: 'Pancréas' },
+          { id: 'intestine', label: 'Intestin grêle' },
+        ].map((organ) => {
+          const status = getOrganStatus(organ.id);
+          if (!status) return null;
+          
+          return (
+            <button
+              key={organ.id}
+              onClick={() => ['brain', 'heart', 'lungs'].includes(organ.id) && handleOrganClick(organ.id)}
+              className={`
+                px-3 py-2 rounded-lg text-sm font-medium text-left
+                transition-all duration-300 hover:scale-105
+                ${status.status === 'critical'
+                  ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700'
+                  : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-700'
+                }
+                ${['brain', 'heart', 'lungs'].includes(organ.id) ? 'cursor-pointer' : 'cursor-default'}
+              `}
+            >
+              <div className="flex items-center justify-between">
+                <span>{organ.label}</span>
+                <span className="text-xs opacity-75">
+                  {status.count} indicateur{status.count > 1 ? 's' : ''}
+                </span>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
