@@ -48,13 +48,13 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const isActivePage = (page: string) => currentPage === page;
 
   return (
-    <div className="bg-white border-b border-gray-200 mb-4 sm:mb-6">
+    <div className="bg-card border-b border-border mb-4 sm:mb-6">
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
           <Button
             variant="ghost"
             onClick={() => navigate('/')}
-            className="text-gray-600 hover:text-gray-900 text-sm self-start"
+            className="text-muted-foreground hover:text-foreground text-sm self-start"
             size="sm"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
@@ -71,17 +71,17 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
 
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 mb-3 sm:mb-4">
           <div className="flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
               {patient.id} {patient.name}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
               <span>{patient.age}</span>
               <span>•</span>
               <span>{patient.weight}</span>
               <span>•</span>
               <span>PICU: {patient.picuId}</span>
             </div>
-            <p className="text-xs sm:text-sm text-gray-700 mt-2">
+            <p className="text-xs sm:text-sm text-foreground mt-2">
               <strong>Diagnostic:</strong> {patient.diagnosis}
             </p>
             
@@ -91,26 +91,26 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 <ChevronDown className={`h-4 w-4 transition-transform ${showVitals ? 'rotate-180' : ''}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-2 border-t border-gray-200">
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-2 border-t border-border">
                   <div className="text-xs">
-                    <span className="text-gray-500 block">FC</span>
-                    <span className="font-semibold text-gray-900">85 bpm</span>
+                    <span className="text-muted-foreground block">FC</span>
+                    <span className="font-semibold text-foreground">85 bpm</span>
                   </div>
                   <div className="text-xs">
-                    <span className="text-gray-500 block">TA</span>
-                    <span className="font-semibold text-gray-900">120/80 mmHg</span>
+                    <span className="text-muted-foreground block">TA</span>
+                    <span className="font-semibold text-foreground">120/80 mmHg</span>
                   </div>
                   <div className="text-xs">
-                    <span className="text-gray-500 block">Temp</span>
-                    <span className="font-semibold text-gray-900">37.2°C</span>
+                    <span className="text-muted-foreground block">Temp</span>
+                    <span className="font-semibold text-foreground">37.2°C</span>
                   </div>
                   <div className="text-xs">
-                    <span className="text-gray-500 block">FR</span>
-                    <span className="font-semibold text-gray-900">18/min</span>
+                    <span className="text-muted-foreground block">FR</span>
+                    <span className="font-semibold text-foreground">18/min</span>
                   </div>
                   <div className="text-xs">
-                    <span className="text-gray-500 block">SpO2</span>
-                    <span className="font-semibold text-gray-900">98%</span>
+                    <span className="text-muted-foreground block">SpO2</span>
+                    <span className="font-semibold text-foreground">98%</span>
                   </div>
                 </div>
               </CollapsibleContent>
@@ -119,8 +119,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-2 w-full lg:w-auto">
             <div className="text-left sm:text-right sm:mr-4">
-              <div className="text-xs text-gray-500 mb-1">PELOD Score</div>
-              <div className="text-2xl sm:text-3xl font-bold text-gray-900">{patient.pelodScore}</div>
+              <div className="text-xs text-muted-foreground mb-1">PELOD Score</div>
+              <div className="text-2xl sm:text-3xl font-bold text-foreground">{patient.pelodScore}</div>
             </div>
 
             <div className="flex gap-1 flex-wrap">
