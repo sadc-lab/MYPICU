@@ -370,6 +370,7 @@ const Optistats = () => {
               <BodyDiagram 
                 problematicOrgans={problematicOrgans}
                 patientId={patientId}
+                organIndicators={groupedIndicators}
               />
             )}
           </CardContent>

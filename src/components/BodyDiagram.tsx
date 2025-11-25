@@ -13,9 +13,15 @@ interface BodyDiagramProps {
     count: number;
   }[];
   patientId: string;
+  organIndicators?: Record<string, Array<{
+    label: string;
+    current: string;
+    target: string;
+    status: 'critical' | 'warning';
+  }>>;
 }
 
-export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) => {
+export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {} }: BodyDiagramProps) => {
   const navigate = useNavigate();
 
   const handleOrganClick = (organ: string) => {
@@ -149,6 +155,42 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
               opacity="0.3"
             />
 
+            {/* Brain indicator values */}
+            {brainStatus && organIndicators['brain'] && (
+              <g>
+                {organIndicators['brain'].slice(0, 2).map((indicator, idx) => (
+                  <g key={idx}>
+                    <rect
+                      x="52"
+                      y={25 + idx * 25}
+                      width="85"
+                      height="20"
+                      rx="4"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                      strokeWidth="1.5"
+                    />
+                    <text 
+                      x="58" 
+                      y={35 + idx * 25} 
+                      className="text-[8px] font-semibold"
+                      fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                    >
+                      {indicator.label}: {indicator.current}
+                    </text>
+                    <text 
+                      x="58" 
+                      y={42 + idx * 25} 
+                      className="text-[6px]"
+                      fill="hsl(var(--muted-foreground))"
+                    >
+                      Cible: {indicator.target}
+                    </text>
+                  </g>
+                ))}
+              </g>
+            )}
+
             {/* Brain */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -220,6 +262,42 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
                 </div>
               </TooltipContent>
             </Tooltip>
+
+            {/* Lungs indicator values */}
+            {lungsStatus && organIndicators['lungs'] && (
+              <g>
+                {organIndicators['lungs'].slice(0, 2).map((indicator, idx) => (
+                  <g key={idx}>
+                    <rect
+                      x="205"
+                      y={155 + idx * 25}
+                      width="90"
+                      height="20"
+                      rx="4"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                      strokeWidth="1.5"
+                    />
+                    <text 
+                      x="210" 
+                      y={165 + idx * 25} 
+                      className="text-[8px] font-semibold"
+                      fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                    >
+                      {indicator.label}: {indicator.current}
+                    </text>
+                    <text 
+                      x="210" 
+                      y={172 + idx * 25} 
+                      className="text-[6px]"
+                      fill="hsl(var(--muted-foreground))"
+                    >
+                      Cible: {indicator.target}
+                    </text>
+                  </g>
+                ))}
+              </g>
+            )}
 
             {/* Heart - positioned in front of lungs */}
             <Tooltip>
@@ -390,6 +468,42 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
                 </div>
               </TooltipContent>
             </Tooltip>
+            
+            {/* Heart indicator values */}
+            {heartStatus && organIndicators['heart'] && (
+              <g>
+                {organIndicators['heart'].slice(0, 2).map((indicator, idx) => (
+                  <g key={idx}>
+                    <rect
+                      x="52"
+                      y={185 + idx * 25}
+                      width="90"
+                      height="20"
+                      rx="4"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                      strokeWidth="1.5"
+                    />
+                    <text 
+                      x="58" 
+                      y={195 + idx * 25} 
+                      className="text-[8px] font-semibold"
+                      fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                    >
+                      {indicator.label}: {indicator.current}
+                    </text>
+                    <text 
+                      x="58" 
+                      y={202 + idx * 25} 
+                      className="text-[6px]"
+                      fill="hsl(var(--muted-foreground))"
+                    >
+                      Cible: {indicator.target}
+                    </text>
+                  </g>
+                ))}
+              </g>
+            )}
           </svg>
         </div>
       </div>
