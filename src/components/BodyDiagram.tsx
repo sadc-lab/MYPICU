@@ -112,19 +112,37 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                 <path d="M 100 0 L 0 0 0 100" fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" opacity="0.25"/>
               </pattern>
               
-              {/* Gradients for realistic organs */}
-              <radialGradient id="brainGradient" cx="30%" cy="30%">
-                <stop offset="0%" stopColor={getOrganColor('brain')} stopOpacity="1"/>
-                <stop offset="100%" stopColor={getOrganColor('brain')} stopOpacity="0.7"/>
+              {/* Gradients for medical-style organs */}
+              <radialGradient id="brainGradient" cx="40%" cy="35%">
+                <stop offset="0%" stopColor="#E8A87C" stopOpacity="1"/>
+                <stop offset="50%" stopColor="#D69A6E" stopOpacity="0.95"/>
+                <stop offset="100%" stopColor="#C88B5F" stopOpacity="0.85"/>
               </radialGradient>
               
-              <radialGradient id="heartGradient" cx="30%" cy="30%">
+              <radialGradient id="brainGradientProblem" cx="40%" cy="35%">
+                <stop offset="0%" stopColor={getOrganColor('brain')} stopOpacity="1"/>
+                <stop offset="100%" stopColor={getOrganColor('brain')} stopOpacity="0.75"/>
+              </radialGradient>
+              
+              <radialGradient id="heartGradient" cx="35%" cy="30%">
+                <stop offset="0%" stopColor="#E74C4C" stopOpacity="1"/>
+                <stop offset="50%" stopColor="#D43C3C" stopOpacity="0.95"/>
+                <stop offset="100%" stopColor="#C12E2E" stopOpacity="0.85"/>
+              </radialGradient>
+              
+              <radialGradient id="heartGradientProblem" cx="35%" cy="30%">
                 <stop offset="0%" stopColor={getOrganColor('heart')} stopOpacity="1"/>
                 <stop offset="100%" stopColor={getOrganColor('heart')} stopOpacity="0.75"/>
               </radialGradient>
               
-              <radialGradient id="lungsGradient" cx="30%" cy="30%">
-                <stop offset="0%" stopColor={getOrganColor('lungs')} stopOpacity="0.95"/>
+              <radialGradient id="lungsGradient" cx="40%" cy="35%">
+                <stop offset="0%" stopColor="#E89BA3" stopOpacity="1"/>
+                <stop offset="50%" stopColor="#D98895" stopOpacity="0.95"/>
+                <stop offset="100%" stopColor="#C87887" stopOpacity="0.85"/>
+              </radialGradient>
+              
+              <radialGradient id="lungsGradientProblem" cx="40%" cy="35%">
+                <stop offset="0%" stopColor={getOrganColor('lungs')} stopOpacity="1"/>
                 <stop offset="100%" stopColor={getOrganColor('lungs')} stopOpacity="0.6"/>
               </radialGradient>
             </defs>
@@ -187,88 +205,130 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               </g>
             )}
 
-            {/* Brain - stylized like reference image */}
+            {/* Brain - medical style */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <g 
                   onClick={() => brainStatus && handleOrganClick('brain')}
                   className={`transition-all duration-300 ${brainStatus ? 'cursor-pointer hover:scale-105' : ''}`}
                 >
-                  {/* Main brain shape - rounded */}
-                  <ellipse
-                    cx="150"
-                    cy="70"
-                    rx="35"
-                    ry="30"
-                    fill="url(#brainGradient)"
-                    stroke="hsl(210 30% 40%)"
+                  {/* Main cerebrum with lobes */}
+                  <path
+                    d="M 150 45
+                       Q 165 43 177 50
+                       Q 186 57 188 68
+                       Q 190 80 186 90
+                       Q 180 100 168 105
+                       L 155 108
+                       L 145 108
+                       L 132 105
+                       Q 120 100 114 90
+                       Q 110 80 112 68
+                       Q 114 57 123 50
+                       Q 135 43 150 45 Z"
+                    fill={brainStatus ? "url(#brainGradientProblem)" : "url(#brainGradient)"}
+                    stroke="#A67C52"
                     strokeWidth="2"
                     filter="url(#glow)"
                   />
                   
-                  {/* Central fissure */}
+                  {/* Central longitudinal fissure */}
                   <path
-                    d="M 150 42 L 150 98"
-                    stroke="hsl(210 30% 30%)"
-                    strokeWidth="2"
+                    d="M 150 47 Q 150 56 150 75 Q 150 90 150 106"
+                    stroke="#8B6942"
+                    strokeWidth="2.5"
                     fill="none"
-                    opacity="0.5"
+                    opacity="0.6"
                   />
                   
-                  {/* Left hemisphere neural pattern */}
+                  {/* Left frontal lobe details */}
                   <path
-                    d="M 130 55 Q 125 60 122 65 M 130 62 Q 125 67 122 72"
-                    stroke="hsl(210 30% 35%)"
+                    d="M 125 58 Q 120 62 118 68"
+                    stroke="#A67C52"
                     strokeWidth="2"
                     fill="none"
-                    opacity="0.6"
+                    opacity="0.7"
                     strokeLinecap="round"
                   />
                   <path
-                    d="M 135 70 Q 130 73 125 78 M 135 78 Q 130 81 125 86"
-                    stroke="hsl(210 30% 35%)"
-                    strokeWidth="2"
+                    d="M 130 65 Q 125 69 123 75"
+                    stroke="#A67C52"
+                    strokeWidth="1.8"
                     fill="none"
-                    opacity="0.6"
+                    opacity="0.65"
                     strokeLinecap="round"
                   />
-                  <circle cx="125" cy="62" r="2.5" fill="hsl(210 30% 35%)" opacity="0.7"/>
-                  <circle cx="120" cy="75" r="2.5" fill="hsl(210 30% 35%)" opacity="0.7"/>
                   
-                  {/* Right hemisphere neural pattern */}
+                  {/* Left parietal/temporal lobe */}
                   <path
-                    d="M 170 55 Q 175 60 178 65 M 170 62 Q 175 67 178 72"
-                    stroke="hsl(210 30% 35%)"
+                    d="M 128 80 Q 122 84 120 90"
+                    stroke="#A67C52"
                     strokeWidth="2"
                     fill="none"
-                    opacity="0.6"
+                    opacity="0.7"
                     strokeLinecap="round"
                   />
                   <path
-                    d="M 165 70 Q 170 73 175 78 M 165 78 Q 170 81 175 86"
-                    stroke="hsl(210 30% 35%)"
-                    strokeWidth="2"
+                    d="M 135 88 Q 130 92 128 98"
+                    stroke="#A67C52"
+                    strokeWidth="1.8"
                     fill="none"
-                    opacity="0.6"
+                    opacity="0.65"
                     strokeLinecap="round"
                   />
-                  <circle cx="175" cy="62" r="2.5" fill="hsl(210 30% 35%)" opacity="0.7"/>
-                  <circle cx="180" cy="75" r="2.5" fill="hsl(210 30% 35%)" opacity="0.7"/>
                   
-                  {/* Additional neural connections */}
-                  <circle cx="142" cy="58" r="2" fill="hsl(210 30% 35%)" opacity="0.6"/>
-                  <circle cx="158" cy="58" r="2" fill="hsl(210 30% 35%)" opacity="0.6"/>
-                  <circle cx="142" cy="82" r="2" fill="hsl(210 30% 35%)" opacity="0.6"/>
-                  <circle cx="158" cy="82" r="2" fill="hsl(210 30% 35%)" opacity="0.6"/>
+                  {/* Right frontal lobe details */}
+                  <path
+                    d="M 175 58 Q 180 62 182 68"
+                    stroke="#A67C52"
+                    strokeWidth="2"
+                    fill="none"
+                    opacity="0.7"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 170 65 Q 175 69 177 75"
+                    stroke="#A67C52"
+                    strokeWidth="1.8"
+                    fill="none"
+                    opacity="0.65"
+                    strokeLinecap="round"
+                  />
+                  
+                  {/* Right parietal/temporal lobe */}
+                  <path
+                    d="M 172 80 Q 178 84 180 90"
+                    stroke="#A67C52"
+                    strokeWidth="2"
+                    fill="none"
+                    opacity="0.7"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 165 88 Q 170 92 172 98"
+                    stroke="#A67C52"
+                    strokeWidth="1.8"
+                    fill="none"
+                    opacity="0.65"
+                    strokeLinecap="round"
+                  />
+                  
+                  {/* Gyri and sulci details */}
+                  <circle cx="128" cy="70" r="2" fill="#A67C52" opacity="0.5"/>
+                  <circle cx="135" cy="77" r="1.8" fill="#A67C52" opacity="0.5"/>
+                  <circle cx="142" cy="68" r="1.5" fill="#A67C52" opacity="0.45"/>
+                  <circle cx="172" cy="70" r="2" fill="#A67C52" opacity="0.5"/>
+                  <circle cx="165" cy="77" r="1.8" fill="#A67C52" opacity="0.5"/>
+                  <circle cx="158" cy="68" r="1.5" fill="#A67C52" opacity="0.45"/>
                   
                   {brainStatus && (
                     <g>
-                      <circle cx="150" cy="70" r="15" fill="rgba(255,255,255,0.95)" />
+                      <circle cx="150" cy="75" r="16" fill="rgba(255,255,255,0.95)" />
                       <text 
                         x="150" 
-                        y="77" 
+                        y="82" 
                         textAnchor="middle" 
-                        className="text-[17px] font-bold"
+                        className="text-[18px] font-bold"
                         fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {brainStatus.count}
@@ -335,90 +395,146 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               </g>
             )}
 
-            {/* Lungs - stylized like reference image */}
+            {/* Lungs - medical style with detailed anatomy */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <g 
                   onClick={() => lungsStatus && handleOrganClick('lungs')}
                   className={`transition-all duration-300 ${lungsStatus ? 'cursor-pointer hover:scale-105' : ''}`}
                 >
-                  {/* Trachea */}
+                  {/* Trachea with cartilage rings */}
                   <rect
-                    x="172"
-                    y="110"
-                    width="6"
-                    height="35"
-                    rx="3"
-                    fill="hsl(210 30% 55%)"
+                    x="170"
+                    y="115"
+                    width="10"
+                    height="32"
+                    rx="4"
+                    fill="#9EACB8"
+                    opacity="0.85"
+                  />
+                  {/* Cartilage rings */}
+                  <path
+                    d="M 171 120 L 179 120 M 171 125 L 179 125 M 171 130 L 179 130 M 171 135 L 179 135 M 171 140 L 179 140"
+                    stroke="#7A8A99"
+                    strokeWidth="1.5"
+                    opacity="0.6"
+                  />
+                  
+                  {/* Left lung - detailed with lobes */}
+                  <path
+                    d="M 148 152
+                       Q 128 156 122 170
+                       L 120 195
+                       Q 120 210 124 220
+                       L 126 227
+                       Q 130 235 140 238
+                       L 152 235
+                       Q 158 230 160 220
+                       L 160 168
+                       Q 160 158 152 152 Z"
+                    fill={lungsStatus ? "url(#lungsGradientProblem)" : "url(#lungsGradient)"}
+                    stroke="#B87882"
+                    strokeWidth="2.5"
+                    filter="url(#glow)"
+                  />
+                  {/* Left lung superior lobe fissure */}
+                  <path
+                    d="M 128 185 Q 138 187 148 185"
+                    stroke="#B87882"
+                    strokeWidth="1.5"
+                    fill="none"
+                    opacity="0.5"
+                  />
+                  {/* Alveoli texture - left */}
+                  <circle cx="132" cy="175" r="3.5" fill="#D098A0" opacity="0.4"/>
+                  <circle cx="140" cy="180" r="3" fill="#D098A0" opacity="0.35"/>
+                  <circle cx="148" cy="176" r="2.8" fill="#D098A0" opacity="0.35"/>
+                  <circle cx="135" cy="195" r="3.2" fill="#D098A0" opacity="0.4"/>
+                  <circle cx="143" cy="200" r="3" fill="#D098A0" opacity="0.35"/>
+                  <circle cx="130" cy="210" r="3.5" fill="#D098A0" opacity="0.4"/>
+                  <circle cx="138" cy="217" r="3" fill="#D098A0" opacity="0.35"/>
+                  
+                  {/* Right lung - detailed with 3 lobes */}
+                  <path
+                    d="M 202 152
+                       Q 222 156 228 170
+                       L 230 195
+                       Q 230 210 226 220
+                       L 224 227
+                       Q 220 235 210 238
+                       L 198 235
+                       Q 192 230 190 220
+                       L 190 168
+                       Q 190 158 198 152 Z"
+                    fill={lungsStatus ? "url(#lungsGradientProblem)" : "url(#lungsGradient)"}
+                    stroke="#B87882"
+                    strokeWidth="2.5"
+                    filter="url(#glow)"
+                  />
+                  {/* Right lung fissures (3 lobes) */}
+                  <path
+                    d="M 205 172 Q 215 174 223 172"
+                    stroke="#B87882"
+                    strokeWidth="1.5"
+                    fill="none"
+                    opacity="0.5"
+                  />
+                  <path
+                    d="M 204 202 Q 214 204 222 202"
+                    stroke="#B87882"
+                    strokeWidth="1.5"
+                    fill="none"
+                    opacity="0.5"
+                  />
+                  {/* Alveoli texture - right */}
+                  <circle cx="218" cy="175" r="3.5" fill="#D098A0" opacity="0.4"/>
+                  <circle cx="210" cy="180" r="3" fill="#D098A0" opacity="0.35"/>
+                  <circle cx="202" cy="176" r="2.8" fill="#D098A0" opacity="0.35"/>
+                  <circle cx="215" cy="195" r="3.2" fill="#D098A0" opacity="0.4"/>
+                  <circle cx="207" cy="200" r="3" fill="#D098A0" opacity="0.35"/>
+                  <circle cx="220" cy="210" r="3.5" fill="#D098A0" opacity="0.4"/>
+                  <circle cx="212" cy="217" r="3" fill="#D098A0" opacity="0.35"/>
+                  
+                  {/* Primary bronchi */}
+                  <path
+                    d="M 175 147 Q 170 157 163 166"
+                    stroke="#8B99A6"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    opacity="0.85"
+                  />
+                  <path
+                    d="M 175 147 Q 180 157 187 166"
+                    stroke="#8B99A6"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    opacity="0.85"
+                  />
+                  
+                  {/* Secondary bronchi */}
+                  <path
+                    d="M 163 166 L 152 178 M 163 166 L 148 190"
+                    stroke="#9EACB8"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
                     opacity="0.7"
                   />
                   <path
-                    d="M 173 115 L 177 115 M 173 120 L 177 120 M 173 125 L 177 125 M 173 130 L 177 130 M 173 135 L 177 135 M 173 140 L 177 140"
-                    stroke="hsl(210 30% 70%)"
-                    strokeWidth="0.8"
-                    opacity="0.5"
-                  />
-                  
-                  {/* Left lung - simplified shape */}
-                  <path
-                    d="M 145 150
-                       Q 125 155 120 170
-                       L 118 205
-                       Q 118 220 125 230
-                       Q 130 237 140 240
-                       L 155 235
-                       Q 160 228 160 210
-                       L 160 165
-                       Q 160 153 150 150
-                       Z"
-                    fill="url(#lungsGradient)"
-                    stroke="hsl(210 30% 35%)"
-                    strokeWidth="2"
-                    filter="url(#glow)"
-                  />
-                  
-                  {/* Right lung - simplified shape */}
-                  <path
-                    d="M 205 150
-                       Q 225 155 230 170
-                       L 232 205
-                       Q 232 220 225 230
-                       Q 220 237 210 240
-                       L 195 235
-                       Q 190 228 190 210
-                       L 190 165
-                       Q 190 153 200 150
-                       Z"
-                    fill="url(#lungsGradient)"
-                    stroke="hsl(210 30% 35%)"
-                    strokeWidth="2"
-                    filter="url(#glow)"
-                  />
-                  
-                  {/* Bronchi */}
-                  <path
-                    d="M 175 145 Q 170 155 162 163"
-                    stroke="hsl(210 30% 45%)"
-                    strokeWidth="4"
+                    d="M 187 166 L 198 178 M 187 166 L 202 190"
+                    stroke="#9EACB8"
+                    strokeWidth="2.5"
                     strokeLinecap="round"
-                    opacity="0.8"
-                  />
-                  <path
-                    d="M 175 145 Q 180 155 188 163"
-                    stroke="hsl(210 30% 45%)"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    opacity="0.8"
+                    opacity="0.7"
                   />
                   
                   {lungsStatus && (
                     <g>
-                      <circle cx="175" cy="190" r="16" fill="rgba(255,255,255,0.95)" />
+                      <circle cx="175" cy="195" r="17" fill="rgba(255,255,255,0.95)" />
                       <text 
                         x="175" 
-                        y="198" 
+                        y="203" 
                         textAnchor="middle" 
-                        className="text-[18px] font-bold"
+                        className="text-[19px] font-bold"
                         fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {lungsStatus.count}
@@ -485,99 +601,148 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
               </g>
             )}
 
-            {/* Heart - stylized like reference image */}
+            {/* Heart - medical anatomical style */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <g 
                   onClick={() => heartStatus && handleOrganClick('heart')}
                   className={`transition-all duration-300 ${heartStatus ? 'cursor-pointer hover:scale-105' : ''}`}
                 >
-                  {/* Main heart body - rounded bottom */}
+                  {/* Main heart ventricles */}
                   <path
-                    d="M 175 165
-                       L 160 175
-                       Q 148 185 148 202
-                       Q 148 218 158 230
-                       L 175 245
-                       L 192 230
-                       Q 202 218 202 202
-                       Q 202 185 190 175
+                    d="M 175 170
+                       L 162 182
+                       Q 152 192 152 207
+                       Q 152 222 162 233
+                       L 175 247
+                       L 188 233
+                       Q 198 222 198 207
+                       Q 198 192 188 182
                        Z"
-                    fill="url(#heartGradient)"
-                    stroke="hsl(0 70% 40%)"
+                    fill={heartStatus ? "url(#heartGradientProblem)" : "url(#heartGradient)"}
+                    stroke="#B83838"
                     strokeWidth="2.5"
                     filter="url(#glow)"
                   />
                   
-                  {/* Left atrium curve */}
+                  {/* Left atrium */}
                   <path
-                    d="M 160 175 Q 155 168 155 160 Q 155 153 160 148 Q 165 145 170 148"
-                    fill="url(#heartGradient)"
-                    stroke="hsl(0 70% 40%)"
+                    d="M 162 182 Q 157 175 157 167 Q 157 159 162 154 Q 167 150 172 154 L 175 158"
+                    fill={heartStatus ? "url(#heartGradientProblem)" : "url(#heartGradient)"}
+                    stroke="#B83838"
                     strokeWidth="2.5"
                   />
                   
-                  {/* Right atrium curve */}
+                  {/* Right atrium */}
                   <path
-                    d="M 190 175 Q 195 168 195 160 Q 195 153 190 148 Q 185 145 180 148"
-                    fill="url(#heartGradient)"
-                    stroke="hsl(0 70% 40%)"
+                    d="M 188 182 Q 193 175 193 167 Q 193 159 188 154 Q 183 150 178 154 L 175 158"
+                    fill={heartStatus ? "url(#heartGradientProblem)" : "url(#heartGradient)"}
+                    stroke="#B83838"
                     strokeWidth="2.5"
                   />
                   
-                  {/* Aorta detail */}
-                  <circle
-                    cx="167"
-                    cy="155"
-                    r="6"
-                    fill="url(#heartGradient)"
-                    stroke="hsl(0 70% 40%)"
-                    strokeWidth="2"
-                  />
-                  <circle
-                    cx="183"
-                    cy="155"
-                    r="6"
-                    fill="url(#heartGradient)"
-                    stroke="hsl(0 70% 40%)"
-                    strokeWidth="2"
-                  />
-                  
-                  {/* Ventricular septum line */}
+                  {/* Aorta arch */}
                   <path
-                    d="M 175 175 L 175 238"
-                    stroke="hsl(0 70% 30%)"
-                    strokeWidth="2"
-                    opacity="0.4"
-                  />
-                  
-                  {/* Valve curves */}
-                  <path
-                    d="M 162 195 Q 168 192 175 195 Q 182 192 188 195"
-                    stroke="hsl(0 70% 30%)"
-                    strokeWidth="1.5"
+                    d="M 172 154 Q 168 148 165 142"
+                    stroke="#D84444"
+                    strokeWidth="6"
+                    strokeLinecap="round"
                     fill="none"
+                    opacity="0.9"
+                  />
+                  
+                  {/* Pulmonary artery */}
+                  <path
+                    d="M 178 154 Q 182 148 185 142"
+                    stroke="#C94040"
+                    strokeWidth="5.5"
+                    strokeLinecap="round"
+                    fill="none"
+                    opacity="0.85"
+                  />
+                  
+                  {/* Ventricular septum */}
+                  <path
+                    d="M 175 185 L 175 242"
+                    stroke="#A83030"
+                    strokeWidth="2.5"
+                    strokeDasharray="5,3"
+                    opacity="0.6"
+                  />
+                  
+                  {/* Tricuspid and mitral valves */}
+                  <path
+                    d="M 164 195 Q 169 193 175 196 Q 181 193 186 195"
+                    stroke="#A83030"
+                    strokeWidth="2"
+                    fill="none"
+                    opacity="0.7"
+                  />
+                  <ellipse
+                    cx="169"
+                    cy="195"
+                    rx="3"
+                    ry="2"
+                    fill="#A83030"
+                    opacity="0.5"
+                  />
+                  <ellipse
+                    cx="181"
+                    cy="195"
+                    rx="3"
+                    ry="2"
+                    fill="#A83030"
                     opacity="0.5"
                   />
                   
-                  {/* Highlight/shine effect */}
+                  {/* Coronary arteries */}
+                  <path
+                    d="M 165 190 Q 160 195 158 202 M 168 200 Q 164 205 162 212"
+                    stroke="#D84444"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    opacity="0.7"
+                  />
+                  <path
+                    d="M 185 190 Q 190 195 192 202 M 182 200 Q 186 205 188 212"
+                    stroke="#D84444"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    opacity="0.7"
+                  />
+                  
+                  {/* Muscular texture */}
+                  <path
+                    d="M 165 210 Q 170 208 175 210 M 165 220 Q 170 218 175 220"
+                    stroke="#A83030"
+                    strokeWidth="1.2"
+                    opacity="0.4"
+                  />
+                  <path
+                    d="M 175 210 Q 180 208 185 210 M 175 220 Q 180 218 185 220"
+                    stroke="#A83030"
+                    strokeWidth="1.2"
+                    opacity="0.4"
+                  />
+                  
+                  {/* Highlight for dimension */}
                   <ellipse
                     cx="168"
-                    cy="185"
-                    rx="8"
-                    ry="12"
+                    cy="195"
+                    rx="10"
+                    ry="15"
                     fill="white"
                     opacity="0.15"
                   />
                   
                   {heartStatus && (
                     <g>
-                      <circle cx="175" cy="205" r="16" fill="rgba(255,255,255,0.95)" />
+                      <circle cx="175" cy="210" r="17" fill="rgba(255,255,255,0.95)" />
                       <text 
                         x="175" 
-                        y="213" 
+                        y="218" 
                         textAnchor="middle" 
-                        className="text-[18px] font-bold"
+                        className="text-[19px] font-bold"
                         fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {heartStatus.count}
