@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { GripVertical, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTourNavigation } from '@/hooks/useTourNavigation';
@@ -45,11 +44,9 @@ interface SortablePatientItemProps {
   patient: Patient;
   getPelodColor: (score: number) => string;
   navigate: (path: string) => void;
-  isChecked: boolean;
-  onCheckedChange: (checked: boolean) => void;
 }
 
-const SortablePatientItem = ({ patient, getPelodColor, navigate, isChecked, onCheckedChange }: SortablePatientItemProps) => {
+const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatientItemProps) => {
   const {
     attributes,
     listeners,
@@ -107,30 +104,24 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate, isChecked, onCh
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+      className={`flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors ${
         isDragging ? 'opacity-50 shadow-lg' : ''
-      } ${isChecked ? 'bg-muted/50 border-border opacity-75' : 'bg-card border-border hover:bg-muted/30'}`}
+      }`}
     >
-      <Checkbox
-        checked={isChecked}
-        onCheckedChange={onCheckedChange}
-        className="flex-shrink-0"
-      />
-      
       <div
         {...attributes}
         {...listeners}
         className="cursor-grab active:cursor-grabbing touch-none"
       >
-        <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+        <GripVertical className="h-5 w-5 text-gray-400 flex-shrink-0" />
       </div>
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className={`font-semibold ${isChecked ? 'text-destructive/50 line-through' : 'text-destructive'}`}>{patient.id}</span>
-          <span className={`font-medium ${isChecked ? 'text-foreground/50 line-through' : 'text-foreground'}`}>{patient.name}</span>
+          <span className="font-semibold text-red-500">{patient.id}</span>
+          <span className="font-medium text-gray-900">{patient.name}</span>
         </div>
-        <div className={`flex flex-wrap items-center gap-2 text-sm ${isChecked ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
+        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
           <span>{patient.age}</span>
           <span>•</span>
           <span>{patient.weight}</span>
@@ -189,7 +180,6 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate, isChecked, onCh
 
 export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrganizerProps) => {
   const [orderedPatients, setOrderedPatients] = useState<Patient[]>(patients);
-  const [checkedPatients, setCheckedPatients] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { startTour } = useTourNavigation();
 
@@ -222,18 +212,6 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
     }
   };
 
-  const handleCheckChange = (patientId: string, checked: boolean) => {
-    setCheckedPatients(prev => {
-      const newSet = new Set(prev);
-      if (checked) {
-        newSet.add(patientId);
-      } else {
-        newSet.delete(patientId);
-      }
-      return newSet;
-    });
-  };
-
   const getPelodColor = (score: number) => {
     if (score >= 25) return 'bg-red-500 text-white';
     if (score >= 20) return 'bg-red-400 text-white';
@@ -242,35 +220,15 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
     return 'bg-green-500 text-white';
   };
 
-  const completedCount = checkedPatients.size;
-  const totalCount = orderedPatients.length;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-card">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Organize Tour - {pedName}</DialogTitle>
           <DialogDescription>
-            Drag and drop patients to reorder your tour sequence. Check off patients as you visit them.
+            Drag and drop patients to reorder your tour sequence. Click "Start Tour" when ready.
           </DialogDescription>
         </DialogHeader>
-
-        {totalCount > 0 && (
-          <div className="flex items-center justify-between px-4 py-2 bg-muted/50 rounded-lg border border-border">
-            <span className="text-sm font-medium text-foreground">Tour Progress</span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {completedCount} / {totalCount} completed
-              </span>
-              <div className="h-2 w-24 bg-secondary rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-300"
-                  style={{ width: `${(completedCount / totalCount) * 100}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
 
         <DndContext
           sensors={sensors}
@@ -288,16 +246,14 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
                   patient={patient}
                   getPelodColor={getPelodColor}
                   navigate={navigate}
-                  isChecked={checkedPatients.has(patient.id)}
-                  onCheckedChange={(checked) => handleCheckChange(patient.id, checked)}
                 />
               ))}
             </SortableContext>
           </div>
         </DndContext>
 
-        <div className="flex justify-between items-center pt-4 border-t border-border">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex justify-between items-center pt-4 border-t">
+          <p className="text-sm text-gray-600">
             {orderedPatients.length} patient{orderedPatients.length !== 1 ? 's' : ''} in tour
           </p>
           <div className="flex gap-2">
