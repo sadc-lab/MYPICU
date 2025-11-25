@@ -1,4 +1,10 @@
 import { useNavigate } from 'react-router-dom';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface BodyDiagramProps {
   problematicOrgans: {
@@ -46,8 +52,50 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
   const heartStatus = getOrganStatus('heart');
   const lungsStatus = getOrganStatus('lungs');
 
+  const getOrganInfo = (organ: string) => {
+    const infoMap: Record<string, { name: string; function: string; normal: string }> = {
+      brain: {
+        name: 'Cerveau',
+        function: 'Contrôle toutes les fonctions du corps, conscience, mémoire, coordination',
+        normal: 'PIC: 5-15 mmHg, Débit sanguin: 50 mL/100g/min'
+      },
+      heart: {
+        name: 'Cœur',
+        function: 'Pompe le sang oxygéné vers tous les organes du corps',
+        normal: 'FC: 60-100 bpm, Débit cardiaque: 4-8 L/min, PAM: 70-100 mmHg'
+      },
+      lungs: {
+        name: 'Poumons',
+        function: 'Échanges gazeux: oxygénation du sang et élimination du CO2',
+        normal: 'SpO2: >95%, FR: 12-20/min, PaO2: 80-100 mmHg'
+      },
+      liver: {
+        name: 'Foie',
+        function: 'Métabolisme, détoxification, production de protéines',
+        normal: 'Bilirubine: <20 µmol/L, ASAT/ALAT: <40 UI/L'
+      },
+      stomach: {
+        name: 'Estomac',
+        function: 'Digestion des aliments, production d\'acide gastrique',
+        normal: 'pH: 1.5-3.5, Volume: 1-1.5L'
+      },
+      kidneys: {
+        name: 'Reins',
+        function: 'Filtration du sang, élimination des déchets, équilibre hydrique',
+        normal: 'Créatinine: 60-110 µmol/L, DFG: >90 mL/min'
+      },
+      intestine: {
+        name: 'Intestins',
+        function: 'Absorption des nutriments, digestion, transit',
+        normal: 'Transit: 24-72h, Absorption: 90% nutriments'
+      }
+    };
+    return infoMap[organ] || { name: '', function: '', normal: '' };
+  };
+
   return (
-    <div className="relative w-full max-w-3xl mx-auto py-8 animate-fade-in">
+    <TooltipProvider delayDuration={200}>
+      <div className="relative w-full max-w-3xl mx-auto py-8 animate-fade-in">
       <div className="flex justify-center">
         <div className="relative">
           <div className="text-center mb-6">
@@ -122,11 +170,85 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
               opacity="0.5"
             />
 
+            {/* Brain */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <g 
+                  onClick={() => brainStatus && handleOrganClick('brain')}
+                  className={`transition-all duration-300 ${brainStatus ? 'cursor-pointer hover:scale-105' : ''}`}
+                >
+                  <ellipse 
+                    cx="150" 
+                    cy="55" 
+                    rx="38" 
+                    ry="45"
+                    fill={getOrganColor('brain')}
+                    opacity={getOrganOpacity('brain')}
+                    stroke="hsl(210 30% 45%)"
+                    strokeWidth="1.5"
+                    filter="url(#glow)"
+                  />
+                  {/* Brain hemispheres */}
+                  <path 
+                    d="M 150 15 L 150 95" 
+                    stroke="hsl(210 30% 35%)" 
+                    strokeWidth="1" 
+                    opacity="0.3"
+                    strokeDasharray="2,2"
+                  />
+                  {/* Brain folds */}
+                  <path 
+                    d="M 125 45 Q 130 40 135 45 M 165 45 Q 170 40 175 45 M 130 65 Q 135 60 140 65 M 160 65 Q 165 60 170 65" 
+                    stroke="hsl(210 30% 40%)" 
+                    strokeWidth="1" 
+                    fill="none"
+                    opacity="0.4"
+                  />
+                  {brainStatus && (
+                    <g>
+                      <circle cx="150" cy="55" r="14" fill="rgba(255,255,255,0.95)" />
+                      <text 
+                        x="150" 
+                        y="62" 
+                        textAnchor="middle" 
+                        className="text-[16px] font-bold"
+                        fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
+                      >
+                        {brainStatus.count}
+                      </text>
+                    </g>
+                  )}
+                </g>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <div className="space-y-2">
+                  <p className="font-semibold text-sm">{getOrganInfo('brain').name}</p>
+                  <p className="text-xs text-muted-foreground">{getOrganInfo('brain').function}</p>
+                  <div className="border-t pt-2 mt-2">
+                    <p className="text-xs font-medium">Valeurs normales:</p>
+                    <p className="text-xs text-muted-foreground">{getOrganInfo('brain').normal}</p>
+                  </div>
+                  {brainStatus && (
+                    <div className={`border-t pt-2 mt-2 ${
+                      brainStatus.status === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
+                    }`}>
+                      <p className="text-xs font-semibold">
+                        ⚠ {brainStatus.count} indicateur{brainStatus.count > 1 ? 's' : ''} problématique{brainStatus.count > 1 ? 's' : ''}
+                      </p>
+                      <p className="text-xs mt-1">Cliquez pour voir les détails</p>
+                    </div>
+                  )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+
             {/* Lungs - realistic medical illustration style */}
-            <g 
-              onClick={() => lungsStatus && handleOrganClick('lungs')}
-              className={`transition-all duration-300 ${lungsStatus ? 'cursor-pointer hover:scale-105' : ''}`}
-            >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <g 
+                  onClick={() => lungsStatus && handleOrganClick('lungs')}
+                  className={`transition-all duration-300 ${lungsStatus ? 'cursor-pointer hover:scale-105' : ''}`}
+                >
               {/* Left lung with lobes */}
               <path 
                 d="M 115 145 
@@ -194,13 +316,37 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
                   </text>
                 </g>
               )}
-            </g>
+                </g>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-xs">
+                <div className="space-y-2">
+                  <p className="font-semibold text-sm">{getOrganInfo('lungs').name}</p>
+                  <p className="text-xs text-muted-foreground">{getOrganInfo('lungs').function}</p>
+                  <div className="border-t pt-2 mt-2">
+                    <p className="text-xs font-medium">Valeurs normales:</p>
+                    <p className="text-xs text-muted-foreground">{getOrganInfo('lungs').normal}</p>
+                  </div>
+                  {lungsStatus && (
+                    <div className={`border-t pt-2 mt-2 ${
+                      lungsStatus.status === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
+                    }`}>
+                      <p className="text-xs font-semibold">
+                        ⚠ {lungsStatus.count} indicateur{lungsStatus.count > 1 ? 's' : ''} problématique{lungsStatus.count > 1 ? 's' : ''}
+                      </p>
+                      <p className="text-xs mt-1">Cliquez pour voir les détails</p>
+                    </div>
+                  )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
 
             {/* Heart - positioned in front of lungs */}
-            <g 
-              onClick={() => heartStatus && handleOrganClick('heart')}
-              className={`transition-all duration-300 ${heartStatus ? 'cursor-pointer hover:scale-105' : ''}`}
-            >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <g 
+                  onClick={() => heartStatus && handleOrganClick('heart')}
+                  className={`transition-all duration-300 ${heartStatus ? 'cursor-pointer hover:scale-105' : ''}`}
+                >
               <path 
                 d="M 150 160
                    L 135 172
@@ -242,7 +388,29 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
                   </text>
                 </g>
               )}
-            </g>
+                </g>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="max-w-xs">
+                <div className="space-y-2">
+                  <p className="font-semibold text-sm">{getOrganInfo('heart').name}</p>
+                  <p className="text-xs text-muted-foreground">{getOrganInfo('heart').function}</p>
+                  <div className="border-t pt-2 mt-2">
+                    <p className="text-xs font-medium">Valeurs normales:</p>
+                    <p className="text-xs text-muted-foreground">{getOrganInfo('heart').normal}</p>
+                  </div>
+                  {heartStatus && (
+                    <div className={`border-t pt-2 mt-2 ${
+                      heartStatus.status === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
+                    }`}>
+                      <p className="text-xs font-semibold">
+                        ⚠ {heartStatus.count} indicateur{heartStatus.count > 1 ? 's' : ''} problématique{heartStatus.count > 1 ? 's' : ''}
+                      </p>
+                      <p className="text-xs mt-1">Cliquez pour voir les détails</p>
+                    </div>
+                  )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
 
             {/* Liver */}
             <path 
@@ -427,6 +595,7 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
           })}
         </div>
       )}
-    </div>
+      </div>
+    </TooltipProvider>
   );
 };
