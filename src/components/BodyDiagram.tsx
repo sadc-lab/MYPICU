@@ -246,9 +246,9 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     x="50"
                     y="50"
                     width="300"
-                    height={100 + (organIndicators['brain']?.length || 0) * 35}
+                    height={120 + (organIndicators['brain']?.length || 0) * 60}
                     rx="12"
-                    fill={brainStatus.status === 'critical' ? 'hsl(0 84% 95%)' : 'hsl(25 95% 95%)'}
+                    fill="hsl(var(--card))"
                     stroke={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     strokeWidth="3"
                     filter="url(#nodeShadow)"
@@ -259,44 +259,76 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     x="50"
                     y="50"
                     width="300"
-                    height="40"
+                    height="45"
                     rx="12"
                     fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                   />
-                  <text x="200" y="75" className="text-base font-bold" fill="white" textAnchor="middle">
+                  <text x="200" y="78" className="text-base font-bold" fill="white" textAnchor="middle">
                     🧠 OPTIBRAIN
                   </text>
                   
                   {/* Indicateurs */}
                   {organIndicators['brain']?.slice(0, 3).map((indicator, idx) => (
                     <g key={idx}>
+                      {/* Fond de l'indicateur */}
+                      <rect
+                        x="60"
+                        y={105 + idx * 60}
+                        width="280"
+                        height="50"
+                        rx="6"
+                        fill={brainStatus.status === 'critical' ? 'hsl(0 84% 97%)' : 'hsl(25 95% 97%)'}
+                      />
+                      
+                      {/* Label et valeur */}
                       <text 
                         x="70" 
-                        y={110 + idx * 35}
+                        y={125 + idx * 60}
                         className="text-sm font-semibold"
                         fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
+                      
+                      {/* Cible clinique */}
                       <text 
                         x="70" 
-                        y={125 + idx * 35}
+                        y={145 + idx * 60}
                         className="text-xs"
                         fill="hsl(var(--muted-foreground))"
                       >
                         Cible: {indicator.target}
                       </text>
+                      
+                      {/* Icône de tendance */}
+                      {indicator.status === 'critical' ? (
+                        <g transform={`translate(310, ${115 + idx * 60})`}>
+                          <circle cx="0" cy="0" r="12" fill="#dc2626" opacity="0.2"/>
+                          <path d="M-4,-4 L4,4 M-4,4 L4,-4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
+                        </g>
+                      ) : (
+                        <g transform={`translate(310, ${115 + idx * 60})`}>
+                          <circle cx="0" cy="0" r="12" fill="#ea580c" opacity="0.2"/>
+                          <path d="M-6,0 L0,-6 L6,0" stroke="#ea580c" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </g>
+                      )}
                     </g>
                   ))}
                   
                   {/* Badge de statut */}
                   <circle
                     cx="330"
-                    cy="70"
+                    cy="72"
+                    r="18"
+                    fill="white"
+                  />
+                  <circle
+                    cx="330"
+                    cy="72"
                     r="15"
                     fill={brainStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                   />
-                  <text x="330" y="75" className="text-xs font-bold" fill="white" textAnchor="middle">
+                  <text x="330" y="77" className="text-xs font-bold" fill="white" textAnchor="middle">
                     {brainStatus.count}
                   </text>
                 </g>
@@ -309,9 +341,9 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     x="350"
                     y="200"
                     width="300"
-                    height={100 + (organIndicators['heart']?.length || 0) * 35}
+                    height={120 + (organIndicators['heart']?.length || 0) * 60}
                     rx="12"
-                    fill={heartStatus.status === 'critical' ? 'hsl(0 84% 95%)' : 'hsl(25 95% 95%)'}
+                    fill="hsl(var(--card))"
                     stroke={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     strokeWidth="3"
                     filter="url(#nodeShadow)"
@@ -321,42 +353,70 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     x="350"
                     y="200"
                     width="300"
-                    height="40"
+                    height="45"
                     rx="12"
                     fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                   />
-                  <text x="500" y="225" className="text-base font-bold" fill="white" textAnchor="middle">
+                  <text x="500" y="228" className="text-base font-bold" fill="white" textAnchor="middle">
                     ❤️ OPTIHEART
                   </text>
                   
                   {organIndicators['heart']?.slice(0, 3).map((indicator, idx) => (
                     <g key={idx}>
+                      <rect
+                        x="360"
+                        y={255 + idx * 60}
+                        width="280"
+                        height="50"
+                        rx="6"
+                        fill={heartStatus.status === 'critical' ? 'hsl(0 84% 97%)' : 'hsl(25 95% 97%)'}
+                      />
+                      
                       <text 
                         x="370" 
-                        y={260 + idx * 35}
+                        y={275 + idx * 60}
                         className="text-sm font-semibold"
                         fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
+                      
                       <text 
                         x="370" 
-                        y={275 + idx * 35}
+                        y={295 + idx * 60}
                         className="text-xs"
                         fill="hsl(var(--muted-foreground))"
                       >
                         Cible: {indicator.target}
                       </text>
+                      
+                      {indicator.status === 'critical' ? (
+                        <g transform={`translate(610, ${265 + idx * 60})`}>
+                          <circle cx="0" cy="0" r="12" fill="#dc2626" opacity="0.2"/>
+                          <path d="M-4,-4 L4,4 M-4,4 L4,-4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
+                        </g>
+                      ) : (
+                        <g transform={`translate(610, ${265 + idx * 60})`}>
+                          <circle cx="0" cy="0" r="12" fill="#ea580c" opacity="0.2"/>
+                          <path d="M-6,0 L0,-6 L6,0" stroke="#ea580c" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </g>
+                      )}
                     </g>
                   ))}
                   
                   <circle
                     cx="630"
-                    cy="220"
+                    cy="222"
+                    r="18"
+                    fill="white"
+                  />
+                  <circle
+                    cx="630"
+                    cy="222"
                     r="15"
                     fill={heartStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                   />
-                  <text x="630" y="225" className="text-xs font-bold" fill="white" textAnchor="middle">
+                  <text x="630" y="227" className="text-xs font-bold" fill="white" textAnchor="middle">
                     {heartStatus.count}
                   </text>
                 </g>
@@ -369,9 +429,9 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     x="650"
                     y="200"
                     width="300"
-                    height={100 + (organIndicators['lungs']?.length || 0) * 35}
+                    height={120 + (organIndicators['lungs']?.length || 0) * 60}
                     rx="12"
-                    fill={lungsStatus.status === 'critical' ? 'hsl(0 84% 95%)' : 'hsl(25 95% 95%)'}
+                    fill="hsl(var(--card))"
                     stroke={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                     strokeWidth="3"
                     filter="url(#nodeShadow)"
@@ -381,42 +441,70 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                     x="650"
                     y="200"
                     width="300"
-                    height="40"
+                    height="45"
                     rx="12"
                     fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                   />
-                  <text x="800" y="225" className="text-base font-bold" fill="white" textAnchor="middle">
+                  <text x="800" y="228" className="text-base font-bold" fill="white" textAnchor="middle">
                     🫁 OPTILUNGS
                   </text>
                   
                   {organIndicators['lungs']?.slice(0, 3).map((indicator, idx) => (
                     <g key={idx}>
+                      <rect
+                        x="660"
+                        y={255 + idx * 60}
+                        width="280"
+                        height="50"
+                        rx="6"
+                        fill={lungsStatus.status === 'critical' ? 'hsl(0 84% 97%)' : 'hsl(25 95% 97%)'}
+                      />
+                      
                       <text 
                         x="670" 
-                        y={260 + idx * 35}
+                        y={275 + idx * 60}
                         className="text-sm font-semibold"
                         fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                       >
                         {indicator.label}: {indicator.current}
                       </text>
+                      
                       <text 
                         x="670" 
-                        y={275 + idx * 35}
+                        y={295 + idx * 60}
                         className="text-xs"
                         fill="hsl(var(--muted-foreground))"
                       >
                         Cible: {indicator.target}
                       </text>
+                      
+                      {indicator.status === 'critical' ? (
+                        <g transform={`translate(910, ${265 + idx * 60})`}>
+                          <circle cx="0" cy="0" r="12" fill="#dc2626" opacity="0.2"/>
+                          <path d="M-4,-4 L4,4 M-4,4 L4,-4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
+                        </g>
+                      ) : (
+                        <g transform={`translate(910, ${265 + idx * 60})`}>
+                          <circle cx="0" cy="0" r="12" fill="#ea580c" opacity="0.2"/>
+                          <path d="M-6,0 L0,-6 L6,0" stroke="#ea580c" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </g>
+                      )}
                     </g>
                   ))}
                   
                   <circle
                     cx="930"
-                    cy="220"
+                    cy="222"
+                    r="18"
+                    fill="white"
+                  />
+                  <circle
+                    cx="930"
+                    cy="222"
                     r="15"
                     fill={lungsStatus.status === 'critical' ? '#dc2626' : '#ea580c'}
                   />
-                  <text x="930" y="225" className="text-xs font-bold" fill="white" textAnchor="middle">
+                  <text x="930" y="227" className="text-xs font-bold" fill="white" textAnchor="middle">
                     {lungsStatus.count}
                   </text>
                 </g>
