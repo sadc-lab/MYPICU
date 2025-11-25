@@ -115,7 +115,39 @@ export const BodyDiagram = ({ problematicOrgans, patientId }: BodyDiagramProps) 
                   <feMergeNode in="SourceGraphic"/>
                 </feMerge>
               </filter>
+              
+              {/* Medical grid pattern */}
+              <pattern id="medicalGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth="0.3" opacity="0.15"/>
+              </pattern>
+              
+              <pattern id="medicalGridMajor" width="100" height="100" patternUnits="userSpaceOnUse">
+                <rect width="100" height="100" fill="url(#medicalGrid)"/>
+                <path d="M 100 0 L 0 0 0 100" fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" opacity="0.25"/>
+              </pattern>
             </defs>
+
+            {/* Background with medical grid */}
+            <rect 
+              x="50" 
+              y="10" 
+              width="200" 
+              height="280" 
+              fill="url(#medicalGridMajor)" 
+              opacity="0.8"
+            />
+            
+            {/* Subtle frame border */}
+            <rect 
+              x="50" 
+              y="10" 
+              width="200" 
+              height="280" 
+              fill="none" 
+              stroke="hsl(var(--muted-foreground))" 
+              strokeWidth="1" 
+              opacity="0.3"
+            />
 
             {/* Brain */}
             <Tooltip>
