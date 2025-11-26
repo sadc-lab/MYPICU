@@ -238,7 +238,9 @@ export const Header = () => {
                         variant={getVisitStatus(currentPatientId) ? "default" : "ghost"}
                         size="sm"
                         className={`h-7 px-3 gap-1.5 ${
-                          getVisitStatus(currentPatientId)
+                          getVisitStatus(currentPatientId) === 'Priority'
+                            ? 'bg-red-600 hover:bg-red-700 text-white dark:bg-red-700 dark:hover:bg-red-800'
+                            : getVisitStatus(currentPatientId)
                             ? 'bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800'
                             : 'hover:bg-accent'
                         }`}
