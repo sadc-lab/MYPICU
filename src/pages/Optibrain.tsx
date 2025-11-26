@@ -445,12 +445,6 @@ const Optibrain = () => {
             <div className="space-y-6">
               {/* État Neurologique Card */}
               <div className="border rounded-lg p-6 bg-white shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-base font-semibold text-gray-700">
-                    <span className="text-red-500">Hyperhémie</span> depuis : 3am
-                  </h3>
-                </div>
-
                 {/* Individual Bars */}
                 <div className="space-y-6">
                   {/* Hyperhémie */}
@@ -500,10 +494,15 @@ const Optibrain = () => {
 
                 {/* Metrics Footer */}
                 <div className="border-t mt-6 pt-4">
-                  <div className="text-sm text-gray-600">
-                    PPC actuel : <span className="font-semibold">65 mmHg</span>
-                    <span className="mx-2">|</span>
-                    PPC moyen : <span className="font-semibold">68 mmHg</span>
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div>
+                      État : <span className="font-semibold text-red-500">Hyperhémie</span> <span className="text-gray-500">depuis 3am</span>
+                    </div>
+                    <div>
+                      PPC actuel : <span className="font-semibold">65 mmHg</span>
+                      <span className="mx-2">|</span>
+                      PPC moyen : <span className="font-semibold">68 mmHg</span>
+                    </div>
                   </div>
                 </div>
               </div>
