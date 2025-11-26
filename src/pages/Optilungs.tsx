@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getPatientById } from '@/utils/patientData';
-import { Wind, Gauge, Edit2, Check, X, Plus, Trash2 } from 'lucide-react';
+import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
 
 const Optilungs = () => {
@@ -15,6 +16,7 @@ const Optilungs = () => {
   const patientId = searchParams.get('patient') || '#25';
   const metricParam = searchParams.get('metric');
   const patient = getPatientById(patientId);
+  const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [objectives, setObjectives] = useState<string[]>([
     'Maintain SpO2 > 92%',
     'Lung protective ventilation (TV 6-8 mL/kg IBW)',
@@ -119,6 +121,106 @@ const Optilungs = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="bg-white shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-gray-900">Lung Optimisation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-8">
+              <div 
+                className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                onClick={() => setOpenDialog('vap1')}
+              >
+                <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                  VAP Prediction 1
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="text-4xl font-bold text-orange-500">75</div>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
+                  <Info className="h-3 w-3" />
+                  <span>Voir détails</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* VAP Prediction 1 Dialog */}
+        <Dialog open={openDialog === 'vap1'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>VAP Prediction 1 - Risk Assessment</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              {/* Prediction Card */}
+              <div className="border rounded-lg p-6 bg-white shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-gray-700">
+                    Prédictions VAP module 1 : <span className="font-normal text-gray-500">dernières 48 heures</span>
+                  </h3>
+                </div>
+                
+                {/* Percentage Badge */}
+                <div className="flex justify-center mb-4">
+                  <div className="inline-block px-4 py-1 border-2 border-gray-300 rounded-full">
+                    <span className="text-xl font-semibold text-gray-700">77.9%</span>
+                  </div>
+                </div>
+
+                {/* Gradient Bar */}
+                <div className="mb-6">
+                  <div className="relative h-8 rounded-full overflow-hidden flex">
+                    <div className="w-[10%] bg-red-500"></div>
+                    <div className="w-[10%] bg-red-400"></div>
+                    <div className="w-[10%] bg-orange-400"></div>
+                    <div className="w-[10%] bg-orange-300"></div>
+                    <div className="w-[10%] bg-yellow-300"></div>
+                    <div className="w-[10%] bg-yellow-200"></div>
+                    <div className="w-[10%] bg-lime-300"></div>
+                    <div className="w-[10%] bg-lime-400"></div>
+                    <div className="w-[10%] bg-green-400"></div>
+                    <div className="w-[10%] bg-green-500"></div>
+                  </div>
+                  
+                  {/* Scale markers */}
+                  <div className="flex justify-between mt-2 text-xs text-gray-500">
+                    <span>10</span>
+                    <span>20</span>
+                    <span>30</span>
+                    <span>40</span>
+                    <span>50</span>
+                    <span>60</span>
+                    <span>70</span>
+                    <span>80</span>
+                    <span>90</span>
+                  </div>
+                </div>
+
+                {/* Metrics */}
+                <div className="border-t pt-4">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>FiO2 : <span className="font-semibold">N/A</span></span>
+                    <span>PEEP : <span className="font-semibold">N/A</span></span>
+                    <span>Fiabilité : <span className="font-semibold text-orange-500">77.9%</span></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recommendations */}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-gray-700">Recommendations:</p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                  <li>Enhance respiratory hygiene protocols</li>
+                  <li>Review sedation levels</li>
+                  <li>Consider probiotic prophylaxis</li>
+                  <li>Monitor ventilator settings</li>
+                </ul>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <Card className="lg:col-span-2 bg-white shadow-sm">

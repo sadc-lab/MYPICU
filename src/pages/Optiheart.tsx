@@ -76,28 +76,6 @@ const Optiheart = () => {
       hasDetails: true,
       dialogKey: 'cardiac',
       trend: 'stable'
-    },
-    {
-      label: 'VAP Prediction 1',
-      value: '75%',
-      displayValue: '75',
-      unit: '%',
-      status: 'warning',
-      hasDetails: true,
-      dialogKey: 'vap1',
-      trend: 'down',
-      change: -3
-    },
-    {
-      label: 'VAP Prediction 2',
-      value: '62%',
-      displayValue: '62',
-      unit: '%',
-      status: 'normal',
-      hasDetails: true,
-      dialogKey: 'vap2',
-      trend: 'down',
-      change: -5
     }
   ];
 
@@ -258,7 +236,7 @@ const Optiheart = () => {
             <CardTitle className="text-base font-semibold text-gray-900">Heart Optimisation</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-8">
               {heartOptimisationMetrics.map((metric, index) => {
                 const statusColor = metric.status === 'critical' ? 'text-red-500' : metric.status === 'warning' ? 'text-orange-500' : 'text-gray-600';
                 return (
@@ -332,156 +310,6 @@ const Optiheart = () => {
               <div className="pt-3 border-t text-sm text-gray-600">
                 Débit cardiaque actuel : <span className="text-gray-600 font-semibold">3.2 L/min</span>
                 <span className="ml-4">Débit moyen : <span className="text-gray-600 font-semibold">3.5 L/min</span></span>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* VAP Prediction 1 Dialog */}
-        <Dialog open={openDialog === 'vap1'} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>VAP Prediction 1 - Risk Assessment</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6">
-              {/* Prediction Card */}
-              <div className="border rounded-lg p-6 bg-white shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold text-gray-700">
-                    Prédictions VAP module 1 : <span className="font-normal text-gray-500">dernières 48 heures</span>
-                  </h3>
-                </div>
-                
-                {/* Percentage Badge */}
-                <div className="flex justify-center mb-4">
-                  <div className="inline-block px-4 py-1 border-2 border-gray-300 rounded-full">
-                    <span className="text-xl font-semibold text-gray-700">77.9%</span>
-                  </div>
-                </div>
-
-                {/* Gradient Bar */}
-                <div className="mb-6">
-                  <div className="relative h-8 rounded-full overflow-hidden flex">
-                    <div className="w-[10%] bg-red-500"></div>
-                    <div className="w-[10%] bg-red-400"></div>
-                    <div className="w-[10%] bg-orange-400"></div>
-                    <div className="w-[10%] bg-orange-300"></div>
-                    <div className="w-[10%] bg-yellow-300"></div>
-                    <div className="w-[10%] bg-yellow-200"></div>
-                    <div className="w-[10%] bg-lime-300"></div>
-                    <div className="w-[10%] bg-lime-400"></div>
-                    <div className="w-[10%] bg-green-400"></div>
-                    <div className="w-[10%] bg-green-500"></div>
-                  </div>
-                  
-                  {/* Scale markers */}
-                  <div className="flex justify-between mt-2 text-xs text-gray-500">
-                    <span>10</span>
-                    <span>20</span>
-                    <span>30</span>
-                    <span>40</span>
-                    <span>50</span>
-                    <span>60</span>
-                    <span>70</span>
-                    <span>80</span>
-                    <span>90</span>
-                  </div>
-                </div>
-
-                {/* Metrics */}
-                <div className="border-t pt-4">
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>FiO2 : <span className="font-semibold">N/A</span></span>
-                    <span>PEEP : <span className="font-semibold">N/A</span></span>
-                    <span>Fiabilité : <span className="font-semibold text-orange-500">77.9%</span></span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recommendations */}
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-gray-700">Recommendations:</p>
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  <li>Enhance respiratory hygiene protocols</li>
-                  <li>Review sedation levels</li>
-                  <li>Consider probiotic prophylaxis</li>
-                  <li>Monitor ventilator settings</li>
-                </ul>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* VAP Prediction 2 Dialog */}
-        <Dialog open={openDialog === 'vap2'} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>VAP Prediction 2 - Alternative Model</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6">
-              {/* Prediction Card */}
-              <div className="border rounded-lg p-6 bg-white shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold text-gray-700">
-                    Prédictions VAP module 2 : <span className="font-normal text-gray-500">dernières 48 heures</span>
-                  </h3>
-                </div>
-                
-                {/* Percentage Badge */}
-                <div className="flex justify-center mb-4">
-                  <div className="inline-block px-4 py-1 border-2 border-gray-300 rounded-full">
-                    <span className="text-xl font-semibold text-gray-700">80.1%</span>
-                  </div>
-                </div>
-
-                {/* Gradient Bar */}
-                <div className="mb-6">
-                  <div className="relative h-8 rounded-full overflow-hidden flex">
-                    <div className="w-[10%] bg-red-500"></div>
-                    <div className="w-[10%] bg-red-400"></div>
-                    <div className="w-[10%] bg-orange-500"></div>
-                    <div className="w-[10%] bg-orange-400"></div>
-                    <div className="w-[10%] bg-yellow-400"></div>
-                    <div className="w-[10%] bg-yellow-300"></div>
-                    <div className="w-[10%] bg-lime-400"></div>
-                    <div className="w-[10%] bg-lime-300"></div>
-                    <div className="w-[10%] bg-green-400"></div>
-                    <div className="w-[10%] bg-green-500"></div>
-                  </div>
-                  
-                  {/* Scale markers */}
-                  <div className="flex justify-between mt-2 text-xs text-gray-500">
-                    <span>10</span>
-                    <span>20</span>
-                    <span>30</span>
-                    <span>40</span>
-                    <span>50</span>
-                    <span>60</span>
-                    <span>70</span>
-                    <span>80</span>
-                    <span>90</span>
-                  </div>
-                </div>
-
-                {/* Metrics */}
-                <div className="border-t pt-4">
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>FiO2 : <span className="font-semibold">N/A</span></span>
-                    <span>PEEP : <span className="font-semibold">N/A</span></span>
-                    <span>Fiabilité : <span className="font-semibold text-green-500">80.1%</span></span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recommendations */}
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-gray-700">Preventive Measures:</p>
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  <li>Maintain head-of-bed elevation 30-45°</li>
-                  <li>Implement daily sedation interruption</li>
-                  <li>Oral hygiene with chlorhexidine</li>
-                  <li>Regular endotracheal cuff pressure check</li>
-                </ul>
               </div>
             </div>
           </DialogContent>
