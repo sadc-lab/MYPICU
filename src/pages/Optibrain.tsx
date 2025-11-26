@@ -16,6 +16,8 @@ import {
   X,
   Plus,
   Trash2,
+  TrendingUp,
+  TrendingDown,
   Minus,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -354,6 +356,12 @@ const Optibrain = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <div className={`text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
                     </div>
+                    {metric.change !== undefined && metric.trend !== "stable" && (
+                      <div className={`text-xs ${metric.trend === "up" ? "text-green-600" : "text-red-600"}`}>
+                        {metric.change > 0 ? "+" : ""}
+                        {metric.change} {metric.unit}
+                      </div>
+                    )}
                     {metric.hasDetails && (
                       <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
                         <Info className="h-3 w-3" />
@@ -713,6 +721,12 @@ const Optibrain = () => {
                               </p>
                             </div>
                             <p className="text-xs text-gray-500">{indicator.target}</p>
+                            {indicator.trend !== "stable" && (
+                              <p className={`text-xs ${indicator.trend === "up" ? "text-green-600" : "text-red-600"}`}>
+                                {indicator.change > 0 ? "+" : ""}
+                                {indicator.change} {indicator.unit}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );
@@ -780,6 +794,12 @@ const Optibrain = () => {
                               </p>
                             </div>
                             <p className="text-xs text-gray-500">{target.target}</p>
+                            {target.change !== undefined && target.trend !== "stable" && (
+                              <p className={`text-xs ${target.trend === "up" ? "text-green-600" : "text-red-600"}`}>
+                                {target.change > 0 ? "+" : ""}
+                                {target.change} {target.unit}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );
