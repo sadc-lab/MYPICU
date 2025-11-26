@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
+import { useTourNavigation } from '@/hooks/useTourNavigation';
 
 interface PatientTableProps {
   patients: Patient[];
@@ -17,6 +18,7 @@ interface PatientTableProps {
 
 export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true }: PatientTableProps) => {
   const navigate = useNavigate();
+  const { getVisitStatus } = useTourNavigation();
 
   const getAdherenceColor = (adherence: number) => {
     if (adherence >= 85) return 'text-muted-foreground';
@@ -178,10 +180,38 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {(() => {
+                    const visitStatus = getVisitStatus(patient.id);
+                    if (visitStatus) {
+                      const getStatusDisplay = (status: string) => {
+                        switch(status) {
+                          case 'Priority': return 'Prioritaire';
+                          case 'Confirmed': return 'Confirmé';
+                          case 'Leaving': return 'Sortant';
+                          case 'To Check': return 'À vérifier';
+                          default: return status;
+                        }
+                      };
+                      
+                      return (
+                        <Badge 
+                          variant={visitStatus === 'Priority' ? 'destructive' : 'secondary'}
+                          className={`text-xs ${
+                            visitStatus === 'Priority' 
+                              ? 'bg-red-600 hover:bg-red-700 text-white'
+                              : visitStatus === 'Confirmed'
+                              ? 'bg-green-600 hover:bg-green-700 text-white'
+                              : ''
+                          }`}
+                        >
+                          {getStatusDisplay(visitStatus)}
+                        </Badge>
+                      );
+                    }
+                    
                     const totalAlarms = (patient.brainScore || 0) + (patient.heartScore || 0) + (patient.lungsScore || 0) + (patient.kidneyScore || 0);
                     if (totalAlarms > 5) {
                       return (
-                        <Badge variant="destructive" className="text-xs">
+                        <Badge variant="destructive" className="text-xs bg-red-600 hover:bg-red-700 text-white">
                           Priorité
                         </Badge>
                       );
@@ -190,7 +220,11 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                       return (
                         <Badge 
                           variant={patient.tour === 'Priority' ? 'destructive' : 'secondary'}
-                          className="text-xs"
+                          className={`text-xs ${
+                            patient.tour === 'Priority' 
+                              ? 'bg-red-600 hover:bg-red-700 text-white'
+                              : ''
+                          }`}
                         >
                           {patient.tour}
                         </Badge>
