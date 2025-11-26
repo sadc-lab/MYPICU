@@ -212,29 +212,151 @@ interface ProblematicIndicator {
   organ: string;
 }
 
+// Monitoring targets for adherence sections
+export const brainMonitoringTargets = [
+  {
+    label: "Opioide",
+    value: 150,
+    unit: "mcg/h",
+    target: "100-200 mcg/h",
+    status: "normal",
+    trend: "stable",
+    change: 0,
+    organ: "brain"
+  },
+  {
+    label: "Hypnotique",
+    value: 220,
+    unit: "mg/h",
+    target: "150-250 mg/h",
+    status: "normal",
+    trend: "down",
+    change: -10,
+    organ: "brain"
+  },
+  {
+    label: "AntiEpileptique",
+    value: "Non",
+    target: "Aucune",
+    status: "normal",
+    trend: "stable",
+    organ: "brain"
+  },
+  {
+    label: "Propofol 48h",
+    value: "10.5",
+    unit: "g",
+    target: "< 12g",
+    status: "normal",
+    trend: "stable",
+    change: 0,
+    organ: "brain"
+  },
+  {
+    label: "Nutrition",
+    value: "Entérale",
+    target: "Entérale/Parentérale",
+    status: "normal",
+    trend: "stable",
+    organ: "brain"
+  },
+  {
+    label: "PIC",
+    value: 26,
+    unit: "mmHg",
+    target: "< 20 mmHg",
+    status: "warning",
+    trend: "down",
+    change: -3,
+    organ: "brain"
+  },
+  {
+    label: "PAM",
+    value: 85,
+    unit: "mmHg",
+    target: "> 65 mmHg",
+    status: "normal",
+    trend: "up",
+    change: 2,
+    organ: "brain"
+  },
+  {
+    label: "PVC",
+    value: 8,
+    unit: "mmHg",
+    target: "2-8 mmHg",
+    status: "normal",
+    trend: "stable",
+    change: 0,
+    organ: "brain"
+  },
+  {
+    label: "ETCO2",
+    value: 38,
+    unit: "mmHg",
+    target: "35-45 mmHg",
+    status: "normal",
+    trend: "stable",
+    change: 0,
+    organ: "brain"
+  },
+  {
+    label: "Pupille droite",
+    value: "3mm",
+    target: "Réactive",
+    status: "normal",
+    trend: "stable",
+    organ: "brain"
+  },
+  {
+    label: "Pupille gauche",
+    value: "3mm",
+    target: "Réactive",
+    status: "normal",
+    trend: "stable",
+    organ: "brain"
+  }
+];
+
+export const heartMonitoringTargets = [
+  { label: 'PAM', value: 72, unit: 'mmHg', target: '> 65 mmHg', status: 'normal', trend: 'up', change: 3, organ: 'heart' },
+  { label: 'Débit cardiaque', value: 3.2, unit: 'L/min', target: '4.5-6.0 L/min', status: 'critical', trend: 'up', change: 0.4, organ: 'heart' },
+  { label: 'Lactates', value: 1.2, unit: 'mmol/L', target: '< 2 mmol/L', status: 'normal', trend: 'down', change: -0.2, organ: 'heart' },
+  { label: 'ScvO2', value: 72, unit: '%', target: '> 70%', status: 'normal', trend: 'up', change: 2, organ: 'heart' },
+  { label: 'Bilan hydrique', value: '+500', unit: 'mL', target: 'Équilibré', status: 'warning', trend: 'stable', change: 0, organ: 'heart' },
+  { label: 'Support inotrope', value: 'Dobutamine 5', unit: 'mcg/kg/min', target: 'Selon besoin', status: 'normal', trend: 'stable', organ: 'heart' },
+  { label: 'Vasopresseurs', value: 'Noradré 0.15', unit: 'mcg/kg/min', target: 'Selon MAP', status: 'normal', trend: 'down', change: -0.05, organ: 'heart' },
+  { label: 'Échocardiographie', value: 'FEVG 35%', target: 'Contrôle régulier', status: 'critical', trend: 'stable', organ: 'heart' }
+];
+
+export const lungMonitoringTargets: any[] = [
+  // Optilungs doesn't have monitoring targets section yet
+];
+
 export const getProblematicIndicators = (): ProblematicIndicator[] => {
-  const allMetrics = [...brainMetrics, ...heartMetrics, ...lungMetrics];
+  const allMonitoringTargets = [
+    ...brainMonitoringTargets,
+    ...heartMonitoringTargets,
+    ...lungMonitoringTargets
+  ];
+  
   const problematic: ProblematicIndicator[] = [];
 
-  allMetrics.forEach((metric: Metric) => {
-    const isOutOfRange = metric.value < metric.targetMin || metric.value > metric.targetMax;
-    
-    if (isOutOfRange) {
-      const deviation = Math.abs(
-        metric.value < metric.targetMin 
-          ? metric.value - metric.targetMin 
-          : metric.value - metric.targetMax
-      );
-      const deviationPercent = (deviation / metric.targetMin) * 100;
-      
+  allMonitoringTargets.forEach((target: any) => {
+    // Only include indicators that are not normal
+    if (target.status !== 'normal') {
+      const currentValue = typeof target.value === 'number' 
+        ? `${target.value}${target.unit || ''}`
+        : target.value;
+        
       problematic.push({
-        icon: metric.organ === 'brain' ? 'Brain' : metric.organ === 'heart' ? 'Heart' : 'Lungs',
-        label: metric.label,
-        current: `${metric.value}${metric.unit}`,
-        target: `${metric.targetMin}-${metric.targetMax}${metric.unit}`,
-        trend: (metric.trend as 'up' | 'down' | 'stable') || 'stable',
-        status: deviationPercent > 20 ? 'critical' : 'warning',
-        organ: metric.organ
+        icon: target.organ === 'brain' ? 'Brain' : target.organ === 'heart' ? 'Heart' : 'Lungs',
+        label: target.label,
+        current: currentValue,
+        target: target.target,
+        trend: (target.trend as 'up' | 'down' | 'stable') || 'stable',
+        status: target.status,
+        organ: target.organ
       });
     }
   });
