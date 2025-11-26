@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getPatientById } from '@/utils/patientData';
-import { ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ChevronRight, Minus } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getProblematicIndicators } from '@/utils/organMetrics';
 import { MiniMetricChart } from '@/components/MiniMetricChart';
@@ -331,18 +331,6 @@ const Optistats = () => {
 
                           {/* Clinical target */}
                           <div className="text-sm text-muted-foreground">{indicator.target}</div>
-
-                          {/* Trend */}
-                          <div>
-                            {indicator.trendIcon && (
-                              <div className="flex items-center gap-2">
-                                {indicator.trendIcon === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
-                                {indicator.trendIcon === 'down' && <TrendingDown className="w-4 h-4 text-destructive" />}
-                                {indicator.trendIcon === 'stable' && <Minus className="w-4 h-4 text-muted-foreground" />}
-                                <span className="text-xs text-muted-foreground capitalize">{indicator.trendIcon}</span>
-                              </div>
-                            )}
-                          </div>
 
                           {/* Indicator Analysis - mini chart */}
                           <div className="h-16 bg-muted rounded flex items-center justify-center overflow-hidden">
