@@ -251,6 +251,12 @@ export const Header = () => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40 z-50">
                       <DropdownMenuItem
+                        onClick={() => confirmVisit(currentPatientId, 'Confirmed')}
+                        className="cursor-pointer"
+                      >
+                        Confirmer
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         onClick={() => confirmVisit(currentPatientId, 'Priority')}
                         className="cursor-pointer"
                       >

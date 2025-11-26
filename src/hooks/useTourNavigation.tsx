@@ -4,7 +4,7 @@ import { Patient } from '@/utils/patientData';
 const TOUR_STORAGE_KEY = 'mypicu-active-tour';
 const VISIT_CONFIRMATIONS_KEY = 'mypicu-visit-confirmations';
 
-export type VisitStatus = 'Priority' | 'Leaving' | 'To Check';
+export type VisitStatus = 'Confirmed' | 'Priority' | 'Leaving' | 'To Check';
 
 export const useTourNavigation = () => {
   const [activeTour, setActiveTour] = useState<Patient[] | null>(() => {
