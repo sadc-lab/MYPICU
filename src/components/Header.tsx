@@ -241,7 +241,7 @@ export const Header = () => {
                           getVisitStatus(currentPatientId) === 'Priority'
                             ? 'bg-red-600 hover:bg-red-700 text-white dark:bg-red-700 dark:hover:bg-red-800'
                             : getVisitStatus(currentPatientId)
-                            ? 'bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800'
+                            ? 'bg-gray-500 hover:bg-gray-600 text-white dark:bg-gray-600 dark:hover:bg-gray-700'
                             : 'hover:bg-accent'
                         }`}
                       >

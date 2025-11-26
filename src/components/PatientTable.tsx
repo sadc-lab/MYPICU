@@ -194,13 +194,11 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                       
                       return (
                         <Badge 
-                          variant={visitStatus === 'Priority' ? 'destructive' : 'secondary'}
+                          variant="secondary"
                           className={`text-xs ${
                             visitStatus === 'Priority' 
                               ? 'bg-red-600 hover:bg-red-700 text-white'
-                              : visitStatus === 'Confirmed'
-                              ? 'bg-green-600 hover:bg-green-700 text-white'
-                              : ''
+                              : 'bg-gray-500 hover:bg-gray-600 text-white'
                           }`}
                         >
                           {getStatusDisplay(visitStatus)}
@@ -219,11 +217,11 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                     if (patient.tour) {
                       return (
                         <Badge 
-                          variant={patient.tour === 'Priority' ? 'destructive' : 'secondary'}
+                          variant="secondary"
                           className={`text-xs ${
                             patient.tour === 'Priority' 
                               ? 'bg-red-600 hover:bg-red-700 text-white'
-                              : ''
+                              : 'bg-gray-500 hover:bg-gray-600 text-white'
                           }`}
                         >
                           {patient.tour}
