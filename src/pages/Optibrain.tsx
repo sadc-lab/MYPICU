@@ -676,9 +676,7 @@ const Optibrain = () => {
                       {clinicalAdherence}%
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-700">
-                        Adhérence globale des indicateurs cliniques : surveiller PIC, PPC, INR et tête
-                      </h3>
+                      <h3 className="text-sm font-semibold text-gray-700">Adhérence aux cibles recommandées</h3>
                       <p className="text-xs text-gray-500 mt-1">{outOfRangeCount} Indicateurs à surveiller</p>
                     </div>
                   </div>
