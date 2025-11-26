@@ -282,11 +282,10 @@ const Optistats = () => {
                 </div>
               
                 {/* Table header */}
-                <div className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 mb-3 text-xs font-medium text-muted-foreground pb-2 border-b">
+                <div className="grid grid-cols-[80px_200px_150px_1fr_50px] gap-4 mb-3 text-xs font-medium text-muted-foreground pb-2 border-b">
                   <div>Module</div>
                   <div>Problematic Indicators</div>
                   <div>Clinical target</div>
-                  <div>Trend</div>
                   <div>Indicator Analysis</div>
                   <div></div>
                 </div>
@@ -298,7 +297,7 @@ const Optistats = () => {
                       {item.indicators.map((indicator, indicatorIndex) => (
                         <div 
                           key={indicatorIndex}
-                          className="grid grid-cols-[80px_200px_150px_120px_1fr_50px] gap-4 items-center py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors"
+                          className="grid grid-cols-[80px_200px_150px_1fr_50px] gap-4 items-center py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors"
                           onClick={() => handleIndicatorClick(item.module, indicator.label)}
                         >
                           {/* Module icon - only show on first row */}
