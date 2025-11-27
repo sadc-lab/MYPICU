@@ -147,7 +147,7 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
           <p>Visualisez tous vos patients avec leurs informations clés, alarmes et scores PELOD.</p>
         </div>
       ),
-      placement: 'top',
+      placement: 'bottom',
     },
     {
       target: 'body',
