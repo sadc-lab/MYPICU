@@ -11,13 +11,14 @@ interface ChecklistItem {
 }
 
 const defaultChecklist: ChecklistItem[] = [
-  { id: 'vitals', label: 'Vérifier les signes vitaux', checked: false },
-  { id: 'medications', label: 'Réviser les médicaments', checked: false },
-  { id: 'labs', label: 'Consulter les résultats de laboratoire', checked: false },
-  { id: 'ventilation', label: 'Évaluer les paramètres de ventilation', checked: false },
-  { id: 'nutrition', label: 'Vérifier le plan nutritionnel', checked: false },
-  { id: 'family', label: 'Communication avec la famille', checked: false },
-  { id: 'documentation', label: 'Compléter la documentation', checked: false },
+  { id: 'bilan', label: 'Objectif de Bilan Entrée/Sortie ?', checked: false },
+  { id: 'thrombose', label: 'Prophylaxie Thrombose veineuse ?', checked: false },
+  { id: 'ulcere', label: 'Prophylaxie Ulcère de stress ?', checked: false },
+  { id: 'radios', label: 'Fréquence des radios ?', checked: false },
+  { id: 'labos', label: 'Fréquence des labos ?', checked: false },
+  { id: 'equipement', label: 'Équipement à retirer ?', checked: false },
+  { id: 'alarmes', label: 'Limites d\'alarmes et fréquence de surveillance ?', checked: false },
+  { id: 'isolement', label: 'Mesures d\'isolement ?', checked: false },
 ];
 
 const STORAGE_KEY = 'tour-checklist';
@@ -55,7 +56,7 @@ export const TourChecklist = () => {
           <div className="flex items-center gap-2">
             <ClipboardCheck className="h-5 w-5 text-primary" />
             <CardTitle className="text-base font-medium text-primary">
-              Liste de vérification - Tournée
+              Checklist de fin de tournée
             </CardTitle>
             <span className="text-sm text-muted-foreground">
               ({completedCount}/{checklist.length})
