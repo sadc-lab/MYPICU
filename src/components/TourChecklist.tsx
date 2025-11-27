@@ -11,14 +11,14 @@ interface ChecklistItem {
 }
 
 const defaultChecklist: ChecklistItem[] = [
-  { id: 'bilan', label: 'Objectif de Bilan Entrée/Sortie ?', checked: false },
-  { id: 'thrombose', label: 'Prophylaxie Thrombose veineuse ?', checked: false },
-  { id: 'ulcere', label: 'Prophylaxie Ulcère de stress ?', checked: false },
-  { id: 'radios', label: 'Fréquence des radios ?', checked: false },
-  { id: 'labos', label: 'Fréquence des labos ?', checked: false },
-  { id: 'equipement', label: 'Équipement à retirer ?', checked: false },
-  { id: 'alarmes', label: 'Limites d\'alarmes et fréquence de surveillance ?', checked: false },
-  { id: 'isolement', label: 'Mesures d\'isolement ?', checked: false },
+  { id: 'bilan', label: 'Objectif de Bilan Entrée/Sortie', checked: false },
+  { id: 'thrombose', label: 'Prophylaxie Thrombose veineuse', checked: false },
+  { id: 'ulcere', label: 'Prophylaxie Ulcère de stress', checked: false },
+  { id: 'radios', label: 'Fréquence des radios', checked: false },
+  { id: 'labos', label: 'Fréquence des labos', checked: false },
+  { id: 'equipement', label: 'Équipement à retirer', checked: false },
+  { id: 'alarmes', label: 'Limites d\'alarmes et fréquence de surveillance', checked: false },
+  { id: 'isolement', label: 'Mesures d\'isolement', checked: false },
 ];
 
 const STORAGE_KEY = 'tour-checklist';
