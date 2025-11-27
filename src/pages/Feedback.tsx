@@ -64,9 +64,8 @@ const Feedback = () => {
                   id="message"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Partagez vos réflexions..."
+                  placeholder="Partagez vos réflexions... (facultatif)"
                   rows={5}
-                  required
                 />
               </div>
 
