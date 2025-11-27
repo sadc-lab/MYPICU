@@ -24,7 +24,7 @@ const defaultChecklist: ChecklistItem[] = [
 const STORAGE_KEY = "tour-checklist";
 
 export const TourChecklist = () => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? JSON.parse(saved) : defaultChecklist;
