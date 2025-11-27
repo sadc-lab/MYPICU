@@ -599,9 +599,6 @@ const Optibrain = () => {
                 <div>
                   PPC visée : <span className="text-gray-900 font-semibold">60 mmHg</span>
                 </div>
-                <div>
-                  Zone acceptable : <span className="text-gray-900 font-semibold">50-70 mmHg</span>
-                </div>
               </div>
 
               <div className="h-80 w-full">
@@ -648,30 +645,6 @@ const Optibrain = () => {
                         borderRadius: "4px",
                       }}
                     />
-                    <Legend />
-
-                    {/* Zone acceptable (upper bound) */}
-                    <Line
-                      type="monotone"
-                      dataKey="upperBound"
-                      stroke="#999"
-                      strokeWidth={1.5}
-                      strokeDasharray="5 5"
-                      dot={false}
-                      name="Limite supérieure (70 mmHg)"
-                    />
-
-                    {/* Zone acceptable (lower bound) */}
-                    <Line
-                      type="monotone"
-                      dataKey="lowerBound"
-                      stroke="#999"
-                      strokeWidth={1.5}
-                      strokeDasharray="5 5"
-                      dot={false}
-                      name="Limite inférieure (50 mmHg)"
-                    />
-
                     {/* Target PPC */}
                     <Line
                       type="monotone"
