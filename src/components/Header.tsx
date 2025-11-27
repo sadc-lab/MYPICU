@@ -69,7 +69,11 @@ export const Header = () => {
       : location.pathname.startsWith('/optilungs')
       ? '/optilungs'
       : '/optistats';
-    window.location.href = `${basePath}?patient=${encodeURIComponent(patientId)}`;
+    const timeRange = searchParams.get('timeRange');
+    const params = new URLSearchParams();
+    params.set('patient', patientId);
+    if (timeRange) params.set('timeRange', timeRange);
+    window.location.href = `${basePath}?${params.toString()}`;
   };
 
   // Close dropdown when clicking outside
@@ -141,10 +145,15 @@ export const Header = () => {
                       <div className="px-4 py-2 bg-muted text-sm font-semibold text-muted-foreground border-b">
                         PED {ped}
                       </div>
-                      {patients.map((patient) => (
+                      {patients.map((patient) => {
+                        const timeRange = searchParams.get('timeRange');
+                        const linkParams = new URLSearchParams();
+                        linkParams.set('patient', patient.id);
+                        if (timeRange) linkParams.set('timeRange', timeRange);
+                        return (
                         <Link
                           key={patient.id}
-                          to={`/optistats?patient=${encodeURIComponent(patient.id)}`}
+                          to={`/optistats?${linkParams.toString()}`}
                           className="block px-4 py-3 hover:bg-accent border-b transition-colors"
                           onClick={() => {
                             setShowDropdown(false);
@@ -161,7 +170,8 @@ export const Header = () => {
                             </div>
                           </div>
                         </Link>
-                      ))}
+                        );
+                      })}
                     </div>
                   ))}
                 </div>
