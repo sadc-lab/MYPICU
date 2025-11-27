@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
+import { TourChecklist } from '@/components/TourChecklist';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -174,6 +175,7 @@ const Optiheart = () => {
       <PatientHeader currentPage="optiheart" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
+        <TourChecklist compact patientId={patientId} />
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="text-base font-semibold text-gray-900">Métriques Cardiaques</CardTitle>
