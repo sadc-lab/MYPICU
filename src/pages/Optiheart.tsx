@@ -341,24 +341,24 @@ const Optiheart = () => {
           </CardHeader>
           <CardContent className="space-y-4">
 
-            {/* Clinical Indicators Adherence */}
+            {/* Clinical Indicators */}
             <Card className="border-2 border-gray-200">
               <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setClinicalExpanded(!clinicalExpanded)}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                      clinicalAdherence >= 90 ? 'border-gray-400 text-gray-600 bg-gray-50' : 
-                      clinicalAdherence >= 80 ? 'border-orange-400 text-orange-600 bg-orange-50' : 
+                      outOfRangeCount === 0 ? 'border-gray-400 text-gray-600 bg-gray-50' : 
+                      outOfRangeCount <= 2 ? 'border-orange-400 text-orange-600 bg-orange-50' : 
                       'border-red-400 text-red-600 bg-red-50'
                     }`}>
-                      {clinicalAdherence}%
+                      {outOfRangeCount}
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700">
-                        Adhérence globale des indicateurs cliniques : surveiller DC, IC, et RVS
+                        Indicateurs cliniques problématiques : surveiller DC, IC, et RVS
                       </h3>
                       <p className="text-xs text-gray-500 mt-1">
-                        {outOfRangeCount} indicateurs à surveiller
+                        {outOfRangeCount} indicateur{outOfRangeCount > 1 ? 's' : ''} hors cible sur {totalIndicators}
                       </p>
                     </div>
                   </div>
