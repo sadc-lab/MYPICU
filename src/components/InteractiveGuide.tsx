@@ -28,6 +28,56 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       disableBeacon: true,
     },
     {
+      target: 'body',
+      content: (
+        <div>
+          <h3 className="font-semibold mb-2">🧠 Module OptiBrain</h3>
+          <p className="mb-2">Surveillance neurologique complète du patient :</p>
+          <ul className="list-disc list-inside text-sm space-y-1">
+            <li><strong>Pression intracrânienne (PIC)</strong> - Monitoring et alertes</li>
+            <li><strong>Pression de perfusion cérébrale (PPC)</strong> - Suivi en temps réel</li>
+            <li><strong>Sédation</strong> - Évaluation et ajustement</li>
+            <li><strong>EEG</strong> - Analyse de l'activité cérébrale</li>
+          </ul>
+        </div>
+      ),
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: (
+        <div>
+          <h3 className="font-semibold mb-2">❤️ Module OptiHeart</h3>
+          <p className="mb-2">Surveillance cardiovasculaire avancée :</p>
+          <ul className="list-disc list-inside text-sm space-y-1">
+            <li><strong>Débit cardiaque</strong> - Mesure et tendances</li>
+            <li><strong>Pression artérielle</strong> - MAP, systolique, diastolique</li>
+            <li><strong>Bilan hydrique</strong> - Entrées/sorties</li>
+            <li><strong>Échocardiographie</strong> - Résultats et analyses</li>
+            <li><strong>Lactates</strong> - Indicateur de perfusion tissulaire</li>
+          </ul>
+        </div>
+      ),
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: (
+        <div>
+          <h3 className="font-semibold mb-2">🫁 Module OptiLungs</h3>
+          <p className="mb-2">Surveillance respiratoire complète :</p>
+          <ul className="list-disc list-inside text-sm space-y-1">
+            <li><strong>Ventilation mécanique</strong> - Paramètres et modes</li>
+            <li><strong>Gaz du sang</strong> - pH, PaO2, PaCO2, HCO3</li>
+            <li><strong>Compliance pulmonaire</strong> - Évaluation dynamique</li>
+            <li><strong>Prédiction VAP</strong> - Risque de pneumonie associée à la ventilation</li>
+            <li><strong>Sevrage respiratoire</strong> - Critères et progression</li>
+          </ul>
+        </div>
+      ),
+      placement: 'center',
+    },
+    {
       target: '[data-guide="search"]',
       content: (
         <div>
