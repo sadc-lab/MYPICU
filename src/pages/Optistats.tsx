@@ -1,22 +1,17 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Table, LayoutGrid } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { TourChecklist } from '@/components/TourChecklist';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getPatientById } from '@/utils/patientData';
-import { ChevronRight, Minus } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getProblematicIndicators } from '@/utils/organMetrics';
 import { MiniMetricChart } from '@/components/MiniMetricChart';
-import { BodyDiagram } from '@/components/BodyDiagram';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 
 const Optistats = () => {
   const [searchParams] = useSearchParams();
@@ -24,14 +19,13 @@ const Optistats = () => {
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
   const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h' | 'stay'>('24h');
-  const [viewMode, setViewMode] = useState<'table' | 'diagram'>('table');
 
   if (!patient) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p>Patient not found</p>
+          <p>Patient non trouvé</p>
         </div>
       </div>
     );
@@ -164,16 +158,6 @@ const Optistats = () => {
     }
   };
 
-  // Prepare data for body diagram
-  const problematicOrgans = Object.entries(groupedIndicators).map(([organ, indicators]) => {
-    const hasCritical = indicators.some(ind => ind.status === 'critical');
-    return {
-      organ,
-      status: hasCritical ? 'critical' as const : 'warning' as const,
-      count: indicators.length
-    };
-  });
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -243,52 +227,32 @@ const Optistats = () => {
               <CardTitle className="text-lg font-semibold">
                 Indicateurs Problématiques
               </CardTitle>
-              <div className="flex items-center gap-3">
-                <Label htmlFor="view-mode" className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Table className="h-4 w-4" />
-                  Tableau
-                </Label>
-                <Switch
-                  id="view-mode"
-                  checked={viewMode === 'diagram'}
-                  onCheckedChange={(checked) => setViewMode(checked ? 'diagram' : 'table')}
-                />
-                <Label htmlFor="view-mode" className="text-sm text-muted-foreground flex items-center gap-2">
-                  Schéma
-                  <LayoutGrid className="h-4 w-4" />
-                </Label>
+              {/* Time Range Selector */}
+              <div className="flex gap-2">
+                {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
+                  <Button
+                    key={range}
+                    variant={timeRange === range ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setTimeRange(range)}
+                    className="h-8 text-xs"
+                  >
+                    {range === 'stay' ? 'Séjour' : range === 'now' ? 'Actuel' : range}
+                  </Button>
+                ))}
               </div>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            {viewMode === 'table' ? (
-              /* Table View */
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-foreground">Problematic Indicators</h3>
-                  
-                  {/* Time Range Selector */}
-                  <div className="flex gap-2">
-                    {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
-                      <Button
-                        key={range}
-                        variant={timeRange === range ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setTimeRange(range)}
-                        className="h-8 text-xs"
-                      >
-                        {range === 'stay' ? 'Full Stay' : range === 'now' ? 'Now' : range}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+            {/* Table View */}
+            <div>
               
                 {/* Table header */}
                 <div className="grid grid-cols-[80px_200px_150px_1fr_50px] gap-4 mb-3 text-xs font-medium text-muted-foreground pb-2 border-b">
                   <div>Module</div>
-                  <div>Problematic Indicators</div>
-                  <div>Clinical target</div>
-                  <div>Indicator Analysis</div>
+                  <div>Indicateurs problématiques</div>
+                  <div>Cible clinique</div>
+                  <div>Analyse de l'indicateur</div>
                   <div></div>
                 </div>
 
@@ -352,14 +316,6 @@ const Optistats = () => {
                   ))}
                 </div>
               </div>
-            ) : (
-              /* Diagram View */
-              <BodyDiagram 
-                problematicOrgans={problematicOrgans}
-                patientId={patientId}
-                organIndicators={groupedIndicators}
-              />
-            )}
           </CardContent>
         </Card>
       </main>
