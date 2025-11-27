@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import Joyride, { Step, CallBackProps, STATUS } from 'react-joyride';
+import BrainIcon from '@/assets/brain-icon.svg';
+import HeartIcon from '@/assets/heart-mypicu.svg';
+import LungsIcon from '@/assets/lungs-icon.svg';
 
 interface InteractiveGuideProps {
   isOpen: boolean;
@@ -31,7 +34,10 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: 'body',
       content: (
         <div>
-          <h3 className="font-semibold mb-2">🧠 Module OptiBrain</h3>
+          <h3 className="font-semibold mb-2 flex items-center gap-2">
+            <img src={BrainIcon} alt="Brain" className="w-5 h-5" />
+            Module OptiBrain
+          </h3>
           <p className="mb-2">Surveillance neurologique complète du patient :</p>
           <ul className="list-disc list-inside text-sm space-y-1">
             <li><strong>Pression intracrânienne (PIC)</strong> - Monitoring et alertes</li>
@@ -47,7 +53,10 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: 'body',
       content: (
         <div>
-          <h3 className="font-semibold mb-2">❤️ Module OptiHeart</h3>
+          <h3 className="font-semibold mb-2 flex items-center gap-2">
+            <img src={HeartIcon} alt="Heart" className="w-5 h-5" />
+            Module OptiHeart
+          </h3>
           <p className="mb-2">Surveillance cardiovasculaire avancée :</p>
           <ul className="list-disc list-inside text-sm space-y-1">
             <li><strong>Débit cardiaque</strong> - Mesure et tendances</li>
@@ -64,7 +73,10 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: 'body',
       content: (
         <div>
-          <h3 className="font-semibold mb-2">🫁 Module OptiLungs</h3>
+          <h3 className="font-semibold mb-2 flex items-center gap-2">
+            <img src={LungsIcon} alt="Lungs" className="w-5 h-5" />
+            Module OptiLungs
+          </h3>
           <p className="mb-2">Surveillance respiratoire complète :</p>
           <ul className="list-disc list-inside text-sm space-y-1">
             <li><strong>Ventilation mécanique</strong> - Paramètres et modes</li>
