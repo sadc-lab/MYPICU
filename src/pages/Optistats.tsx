@@ -1,5 +1,4 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { TourChecklist } from '@/components/TourChecklist';
@@ -12,13 +11,14 @@ import { getProblematicIndicators } from '@/utils/organMetrics';
 import { MiniMetricChart } from '@/components/MiniMetricChart';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
+import { useTimeRange } from '@/hooks/useTimeRange';
 
 const Optistats = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
-  const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h' | 'stay'>('24h');
+  const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
 
   if (!patient) {
     return (
@@ -229,7 +229,7 @@ const Optistats = () => {
               </CardTitle>
               {/* Time Range Selector */}
               <div className="flex gap-2">
-                {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
+                {timeRanges.map((range) => (
                   <Button
                     key={range}
                     variant={timeRange === range ? 'default' : 'outline'}
@@ -237,7 +237,7 @@ const Optistats = () => {
                     onClick={() => setTimeRange(range)}
                     className="h-8 text-xs"
                   >
-                    {range === 'stay' ? 'Séjour' : range === 'now' ? 'Actuel' : range}
+                    {getTimeRangeLabel(range)}
                   </Button>
                 ))}
               </div>

@@ -24,6 +24,8 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
+import { useTimeRange } from "@/hooks/useTimeRange";
+
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
@@ -33,7 +35,7 @@ const Optibrain = () => {
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
-  const [timeRange, setTimeRange] = useState<"now" | "3h" | "6h" | "12h" | "24h" | "stay">("24h");
+  const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
   const [objectives, setObjectives] = useState<string[]>([
     "Maintain ICP < 20 mmHg",
     "Maintain CPP 50-70 mmHg",
@@ -677,7 +679,7 @@ const Optibrain = () => {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Adhérence & Monitorage</CardTitle>
               <div className="flex gap-2">
-                {(["now", "3h", "6h", "12h", "24h", "stay"] as const).map((range) => (
+                {timeRanges.map((range) => (
                   <button
                     key={range}
                     onClick={() => setTimeRange(range)}
@@ -685,7 +687,7 @@ const Optibrain = () => {
                       timeRange === range ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
-                    {range === "now" ? "Maintenant" : range === "stay" ? "Séjour" : range.toUpperCase()}
+                    {getTimeRangeLabel(range)}
                   </button>
                 ))}
               </div>

@@ -12,6 +12,7 @@ import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus } fr
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { heartMetrics as importedHeartMetrics } from '@/utils/organMetrics';
+import { useTimeRange } from '@/hooks/useTimeRange';
 
 const Optiheart = () => {
   const [searchParams] = useSearchParams();
@@ -22,7 +23,7 @@ const Optiheart = () => {
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
-  const [timeRange, setTimeRange] = useState<'now' | '3h' | '6h' | '12h' | '24h' | 'stay'>('24h');
+  const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
   const [objectives, setObjectives] = useState<string[]>([
     'Maintain MAP > 65 mmHg',
     'Cardiac index > 2.5 L/min/m²',
@@ -322,7 +323,7 @@ const Optiheart = () => {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Adhérence & Monitorage</CardTitle>
               <div className="flex gap-2">
-                {(['now', '3h', '6h', '12h', '24h', 'stay'] as const).map((range) => (
+                {timeRanges.map((range) => (
                   <button
                     key={range}
                     onClick={() => setTimeRange(range)}
@@ -332,7 +333,7 @@ const Optiheart = () => {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {range === 'now' ? 'Maintenant' : range === 'stay' ? 'Séjour' : range.toUpperCase()}
+                    {getTimeRangeLabel(range)}
                   </button>
                 ))}
               </div>
