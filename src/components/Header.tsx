@@ -283,7 +283,7 @@ export const Header = () => {
             )}
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-foreground" data-guide="user-menu">
