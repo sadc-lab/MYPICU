@@ -1,6 +1,7 @@
 import { Header } from '@/components/Header';
 import { PatientTable } from '@/components/PatientTable';
 import { PelodBadges } from '@/components/PelodBadges';
+import { TourChecklist } from '@/components/TourChecklist';
 import { TourOrganizer } from '@/components/TourOrganizer';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,6 +29,8 @@ const Dashboard = () => {
       <Header />
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-[1600px]">
+        <TourChecklist />
+        
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 lg:gap-0 mb-6">
           <div className="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
             <Button variant="outline" className="bg-card text-sm sm:text-base">
