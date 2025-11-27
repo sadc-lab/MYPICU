@@ -83,11 +83,18 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
       }
     };
 
+    const organNames: Record<string, string> = {
+      brain: 'du cerveau',
+      heart: 'du cœur',
+      lungs: 'des poumons',
+      kidney: 'des reins'
+    };
+
     return (
       <div 
         className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor} cursor-pointer hover:opacity-80 transition-opacity`}
         onClick={handleClick}
-        title="Voir détails ${organ}"
+        title={`Voir détails ${organNames[organ] || organ}`}
       >
         {organ === 'brain' ? (
           <img src={brainIcon} alt="brain" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(score) }} />
@@ -109,7 +116,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
     <div className="space-y-3">
       {showTitle && (
         <h2 className="text-lg sm:text-xl font-medium text-primary">
-          Patient Status {pedName}
+          Statut des patients {pedName}
         </h2>
       )}
       

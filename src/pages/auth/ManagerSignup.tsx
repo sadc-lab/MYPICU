@@ -36,19 +36,19 @@ const ManagerSignup = () => {
               <UserCog className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-center">Create Manager Account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Créer un compte Gestionnaire</CardTitle>
           <CardDescription className="text-center">
-            Full access to manage teams and system settings
+            Accès complet pour gérer les équipes et les paramètres du système
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">Nom complet</Label>
               <Input
                 id="fullName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Jean Dupont"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
@@ -59,14 +59,14 @@ const ManagerSignup = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="vous@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mot de passe</Label>
               <Input
                 id="password"
                 type="password"
@@ -77,7 +77,7 @@ const ManagerSignup = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -88,13 +88,13 @@ const ManagerSignup = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creating account...' : 'Create Manager Account'}
+              {isLoading ? 'Création du compte...' : 'Créer le compte Gestionnaire'}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Already have an account?{' '}
+            Vous avez déjà un compte ?{' '}
             <Link to="/auth/login" className="text-primary hover:underline">
-              Log in
+              Se connecter
             </Link>
           </div>
         </CardContent>
