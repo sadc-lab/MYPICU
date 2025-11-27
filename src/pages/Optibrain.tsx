@@ -592,15 +592,6 @@ const Optibrain = () => {
               <DialogTitle>PPC Optimale - Étude sur 6 heures</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <div>
-                  PPC actuelle : <span className="text-gray-900 font-semibold">65 mmHg</span>
-                </div>
-                <div>
-                  PPC visée : <span className="text-gray-900 font-semibold">60 mmHg</span>
-                </div>
-              </div>
-
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
