@@ -125,7 +125,13 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
 
             <div className="flex gap-1 flex-wrap">
               <button
-                onClick={() => navigate(`/optistats?patient=${encodeURIComponent(patientId)}`)}
+                onClick={() => {
+                  const timeRange = searchParams.get('timeRange');
+                  const params = new URLSearchParams();
+                  params.set('patient', patientId);
+                  if (timeRange) params.set('timeRange', timeRange);
+                  navigate(`/optistats?${params.toString()}`);
+                }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                   isActivePage('optistats')
                     ? 'bg-primary text-white'
@@ -144,7 +150,13 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               </button>
 
               <button
-                onClick={() => navigate(`/optibrain?patient=${encodeURIComponent(patientId)}`)}
+                onClick={() => {
+                  const timeRange = searchParams.get('timeRange');
+                  const params = new URLSearchParams();
+                  params.set('patient', patientId);
+                  if (timeRange) params.set('timeRange', timeRange);
+                  navigate(`/optibrain?${params.toString()}`);
+                }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                   isActivePage('optibrain')
                     ? 'bg-primary text-white'
@@ -163,7 +175,13 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               </button>
 
               <button
-                onClick={() => navigate(`/optiheart?patient=${encodeURIComponent(patientId)}`)}
+                onClick={() => {
+                  const timeRange = searchParams.get('timeRange');
+                  const params = new URLSearchParams();
+                  params.set('patient', patientId);
+                  if (timeRange) params.set('timeRange', timeRange);
+                  navigate(`/optiheart?${params.toString()}`);
+                }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                   isActivePage('optiheart')
                     ? 'bg-primary text-white'
@@ -177,7 +195,13 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               </button>
 
               <button
-                onClick={() => navigate(`/optilungs?patient=${encodeURIComponent(patientId)}`)}
+                onClick={() => {
+                  const timeRange = searchParams.get('timeRange');
+                  const params = new URLSearchParams();
+                  params.set('patient', patientId);
+                  if (timeRange) params.set('timeRange', timeRange);
+                  navigate(`/optilungs?${params.toString()}`);
+                }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                   isActivePage('optilungs')
                     ? 'bg-primary text-white'
