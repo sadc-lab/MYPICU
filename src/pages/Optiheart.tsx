@@ -172,12 +172,10 @@ const Optiheart = () => {
   return (
     <div className="min-h-screen bg-[#EDF2F9]">
       <Header />
-      <div className="container mx-auto px-6 max-w-[1600px]">
-        <TourChecklist compact patientId={patientId} />
-      </div>
       <PatientHeader currentPage="optiheart" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
+        <TourChecklist compact patientId={patientId} />
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="text-base font-semibold text-gray-900">Métriques Cardiaques</CardTitle>
