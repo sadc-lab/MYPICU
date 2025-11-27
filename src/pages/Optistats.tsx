@@ -263,24 +263,7 @@ const Optistats = () => {
               /* Table View */
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-6">
-                    <h3 className="text-sm font-semibold text-foreground">Problematic Indicators</h3>
-                    {/* Legend */}
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-4 h-0 border-t-2 border-dashed" style={{ borderColor: 'hsl(142 76% 36%)' }}></div>
-                        <span>Cible clinique</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-4 h-0.5 bg-red-500 rounded"></div>
-                        <span>Hors cible</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-4 h-0.5 bg-gray-400 rounded"></div>
-                        <span>Dans cible</span>
-                      </div>
-                    </div>
-                  </div>
+                  <h3 className="text-sm font-semibold text-foreground">Problematic Indicators</h3>
                   
                   {/* Time Range Selector */}
                   <div className="flex gap-2">
