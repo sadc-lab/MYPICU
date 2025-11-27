@@ -288,9 +288,11 @@ const Optibrain = () => {
   const outOfRangeCount = clinicalIndicators.filter((i) => i.status !== "normal").length;
 
   // Generate mock chart data based on selected time range
+  // PPC Opt is always calculated at 15-minute intervals
   const chartData = useMemo(() => {
     const data = [];
     const now = new Date();
+    const PPC_OPT_INTERVAL = 15; // PPC optimal is always calculated at 15-minute intervals
 
     // Determine number of data points and time intervals based on time range
     let dataPoints: number;
@@ -302,53 +304,71 @@ const Optibrain = () => {
         intervalMinutes = 0;
         break;
       case "3h":
-        dataPoints = 18; // One point every 10 minutes
-        intervalMinutes = 10;
+        dataPoints = 12; // One point every 15 minutes (aligned with PPC Opt)
+        intervalMinutes = 15;
         break;
       case "6h":
         dataPoints = 24; // One point every 15 minutes
         intervalMinutes = 15;
         break;
       case "12h":
-        dataPoints = 24; // One point every 30 minutes
-        intervalMinutes = 30;
+        dataPoints = 48; // One point every 15 minutes
+        intervalMinutes = 15;
         break;
       case "24h":
-        dataPoints = 24; // One point every hour
-        intervalMinutes = 60;
+        dataPoints = 96; // One point every 15 minutes
+        intervalMinutes = 15;
         break;
       case "stay":
-        dataPoints = 48; // One point every 2 hours for a typical ICU stay
-        intervalMinutes = 120;
+        dataPoints = 192; // One point every 15 minutes for ~48h stay
+        intervalMinutes = 15;
         break;
       default:
-        dataPoints = 24;
-        intervalMinutes = 60;
+        dataPoints = 96;
+        intervalMinutes = 15;
         break;
     }
 
+    // Generate seed for consistent random values per timestamp
+    const getSeededRandom = (seed: number) => {
+      const x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    };
+
     for (let i = dataPoints - 1; i >= 0; i--) {
       const time = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
+      // Round to nearest 15 minutes for consistency
+      time.setMinutes(Math.floor(time.getMinutes() / 15) * 15);
+      time.setSeconds(0);
+      time.setMilliseconds(0);
+      
       const timeStr =
         timeRange === "now"
-          ? "Now"
+          ? "Actuel"
           : `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
 
       const dataPoint: any = {
         time: timeStr,
+        timestamp: time.getTime(),
       };
 
       clinicalIndicators.forEach((indicator) => {
         const baseValue = indicator.value;
-        // Add some random variation to make it look realistic
-        const variation = (Math.random() - 0.5) * (baseValue * 0.2);
+        // Use seeded random for consistent values based on timestamp and indicator
+        const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
+        const variation = (getSeededRandom(seed) - 0.5) * (baseValue * 0.2);
         dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
       });
 
       data.push(dataPoint);
     }
 
-    return data;
+    // Remove duplicates based on timestamp
+    const uniqueData = data.filter((item, index, self) =>
+      index === self.findIndex((t) => t.timestamp === item.timestamp)
+    );
+
+    return uniqueData;
   }, [timeRange]);
 
   // Color mapping for chart lines based on status
