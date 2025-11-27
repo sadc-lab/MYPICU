@@ -332,7 +332,7 @@ const Optistats = () => {
                           <div className="text-sm text-muted-foreground">{indicator.target}</div>
 
                           {/* Indicator Analysis - mini chart */}
-                          <div className="h-16 bg-muted rounded flex items-center justify-center overflow-hidden">
+                          <div className="h-16 bg-background border rounded flex items-center justify-center overflow-hidden">
                             <MiniMetricChart 
                               metricLabel={indicator.label.split(':')[0].trim()} 
                               organ={item.module}
