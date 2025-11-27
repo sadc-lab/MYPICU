@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { LineChart, Line, ResponsiveContainer, ReferenceArea, YAxis } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, ReferenceArea, YAxis, ReferenceLine } from 'recharts';
 import { brainMetrics, heartMetrics, lungMetrics, brainMonitoringTargets, heartMonitoringTargets } from '@/utils/organMetrics';
 
 interface MiniMetricChartProps {
@@ -159,6 +159,18 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
           y2={metricData.targetMax}
           fill="hsl(var(--muted) / 0.5)"
           strokeOpacity={0}
+        />
+        <ReferenceLine 
+          y={metricData.targetMin} 
+          stroke="hsl(var(--muted-foreground))" 
+          strokeDasharray="4 4" 
+          strokeWidth={1}
+        />
+        <ReferenceLine 
+          y={metricData.targetMax} 
+          stroke="hsl(var(--muted-foreground))" 
+          strokeDasharray="4 4" 
+          strokeWidth={1}
         />
         <Line 
           type="monotone" 
