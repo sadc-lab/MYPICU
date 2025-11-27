@@ -22,7 +22,11 @@ const defaultChecklist: ChecklistItem[] = [
   { id: "isolement", label: "Mesures d'isolement", checked: false },
 ];
 
-const STORAGE_KEY = "tour-checklist";
+const STORAGE_KEY_PREFIX = "tour-checklist-";
+
+const getStorageKey = (patientId?: string) => {
+  return patientId ? `${STORAGE_KEY_PREFIX}${patientId}` : `${STORAGE_KEY_PREFIX}global`;
+};
 
 interface TourChecklistProps {
   compact?: boolean;
@@ -32,14 +36,23 @@ interface TourChecklistProps {
 export const TourChecklist = ({ compact = false, patientId }: TourChecklistProps) => {
   const { activeTour, isInTour } = useTourNavigation();
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  const storageKey = getStorageKey(patientId);
+  
   const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(storageKey);
     return saved ? JSON.parse(saved) : defaultChecklist;
   });
 
+  // Reload checklist when patientId changes
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(checklist));
-  }, [checklist]);
+    const saved = localStorage.getItem(storageKey);
+    setChecklist(saved ? JSON.parse(saved) : defaultChecklist);
+  }, [patientId, storageKey]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(checklist));
+  }, [checklist, storageKey]);
 
   // Only show if there's an active tour and the patient is in the tour
   if (patientId && (!activeTour || !isInTour(patientId))) {
