@@ -22,7 +22,7 @@ import {
   Minus,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
 import { useTimeRange } from "@/hooks/useTimeRange";
 
@@ -849,112 +849,96 @@ const Optibrain = () => {
               )}
             </Card>
 
-            {/* PPC Chart with Target Zones */}
+            {/* Monitoring Chart */}
             <Card className="border-2 border-gray-200">
               <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <span>PPC Optimale</span>
-                  <span className="text-sm font-normal text-gray-500">
-                    (calculée aux 15 min)
-                  </span>
-                  <span className="ml-auto text-sm font-normal text-gray-500">
-                    {timeRange === "now"
-                      ? "Maintenant"
-                      : timeRange === "stay"
-                        ? "Séjour complet"
-                        : timeRange.toUpperCase()}
-                  </span>
+                <CardTitle className="text-base">
+                  {timeRange === "now"
+                    ? "Monitoring (Maintenant)"
+                    : timeRange === "stay"
+                      ? "Monitoring (Séjour complet)"
+                      : `Monitoring (${timeRange.toUpperCase()})`}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[350px] border-2 border-gray-200 rounded-lg p-4">
-                  <div className="h-full flex flex-col">
-                    {/* Legend for zones */}
-                    <div className="flex flex-wrap gap-4 mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-3 bg-green-200 border border-green-400 rounded"></div>
-                        <span className="text-xs text-gray-600">Zone optimale (60-70 mmHg)</span>
+                <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
+                  {selectedIndicators.length === 0 ? (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-gray-400">
+                        Sélectionnez des indicateurs ci-dessous pour afficher leurs tendances
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="h-full flex flex-col">
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {selectedIndicators.map((label) => {
+                          const indicator = clinicalIndicators.find((i) => i.label === label);
+                          if (!indicator) return null;
+                          const statusColor =
+                            indicator.status === "critical"
+                              ? "bg-red-500"
+                              : indicator.status === "warning"
+                                ? "bg-orange-400"
+                                : "bg-gray-400";
+                          return (
+                            <div
+                              key={label}
+                              className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-200"
+                            >
+                              <div className={`w-2 h-2 rounded-full ${statusColor}`}></div>
+                              <span className="text-xs text-gray-700">{label}</span>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-3 bg-orange-200 border border-orange-400 rounded"></div>
-                        <span className="text-xs text-gray-600">Zone d'attention</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-3 bg-red-200 border border-red-400 rounded"></div>
-                        <span className="text-xs text-gray-600">Zone critique</span>
-                      </div>
-                      <div className="flex items-center gap-2 ml-auto">
-                        <div className="w-4 h-0.5 bg-blue-600"></div>
-                        <span className="text-xs text-gray-600">PPC mesurée</span>
+                      <div className="flex-1">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                            <XAxis
+                              dataKey="time"
+                              tick={{
+                                fontSize: 12,
+                              }}
+                              stroke="#9ca3af"
+                            />
+                            <YAxis
+                              tick={{
+                                fontSize: 12,
+                              }}
+                              stroke="#9ca3af"
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: "white",
+                                border: "1px solid #e5e7eb",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                              }}
+                            />
+                            <Legend
+                              wrapperStyle={{
+                                fontSize: "12px",
+                              }}
+                            />
+                            {selectedIndicators.map((label) => (
+                              <Line
+                                key={label}
+                                type="monotone"
+                                dataKey={label}
+                                stroke={getIndicatorColor(label)}
+                                strokeWidth={2}
+                                dot={false}
+                                activeDot={{
+                                  r: 4,
+                                }}
+                              />
+                            ))}
+                          </LineChart>
+                        </ResponsiveContainer>
                       </div>
                     </div>
-                    <div className="flex-1">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
-                          {/* Critical zone - too low */}
-                          <ReferenceArea y1={0} y2={50} fill="#fecaca" fillOpacity={0.6} />
-                          {/* Warning zone - low */}
-                          <ReferenceArea y1={50} y2={60} fill="#fed7aa" fillOpacity={0.6} />
-                          {/* Optimal zone */}
-                          <ReferenceArea y1={60} y2={70} fill="#bbf7d0" fillOpacity={0.6} />
-                          {/* Warning zone - high */}
-                          <ReferenceArea y1={70} y2={80} fill="#fed7aa" fillOpacity={0.6} />
-                          {/* Critical zone - too high */}
-                          <ReferenceArea y1={80} y2={100} fill="#fecaca" fillOpacity={0.6} />
-                          
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                          <XAxis
-                            dataKey="time"
-                            tick={{ fontSize: 11 }}
-                            stroke="#9ca3af"
-                            interval="preserveStartEnd"
-                          />
-                          <YAxis
-                            domain={[40, 100]}
-                            tick={{ fontSize: 11 }}
-                            stroke="#9ca3af"
-                            label={{ value: "mmHg", angle: -90, position: "insideLeft", fontSize: 11 }}
-                            ticks={[40, 50, 60, 70, 80, 90, 100]}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "white",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "6px",
-                              fontSize: "12px",
-                            }}
-                            formatter={(value: number) => [`${value} mmHg`, "PPC"]}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="PPC"
-                            stroke="#2563eb"
-                            strokeWidth={2.5}
-                            dot={false}
-                            activeDot={{ r: 5, fill: "#2563eb" }}
-                            name="PPC"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                    {/* Current status */}
-                    <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <span className="text-xs text-gray-500">PPC actuelle</span>
-                          <p className="text-lg font-bold text-orange-600">73 mmHg</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">Cible</span>
-                          <p className="text-lg font-bold text-green-600">60-70 mmHg</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs text-gray-500">Temps dans la cible</span>
-                        <p className="text-lg font-bold text-gray-700">{clinicalAdherence}%</p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
