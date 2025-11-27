@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { LineChart, Line, ResponsiveContainer, ReferenceArea, YAxis, ReferenceLine } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, ReferenceArea, YAxis, ReferenceLine, XAxis, Tooltip } from 'recharts';
 import { brainMetrics, heartMetrics, lungMetrics } from '@/utils/organMetrics';
 
 interface MiniMetricChartProps {
@@ -90,37 +90,61 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={chartData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+      <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: 5 }}>
+        <XAxis 
+          dataKey="time" 
+          tick={{ fontSize: 9 }}
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
+          interval="preserveStartEnd"
+        />
         <YAxis 
           domain={[metric.min, metric.max]} 
-          hide={true}
+          tick={{ fontSize: 9 }}
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
+          width={30}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: 'hsl(var(--background))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '6px',
+            fontSize: '11px',
+            padding: '4px 8px'
+          }}
+          labelStyle={{ color: 'hsl(var(--foreground))' }}
+          formatter={(value: number) => [`${value.toFixed(1)} ${metric.unit}`, metric.label]}
         />
         <ReferenceArea
           y1={metric.targetMin}
           y2={metric.targetMax}
-          fill="hsl(142 76% 36% / 0.15)"
+          fill="hsl(142 76% 36% / 0.1)"
           strokeOpacity={0}
         />
         <ReferenceLine 
           y={metric.targetMin} 
           stroke="hsl(142 76% 36%)" 
-          strokeDasharray="3 3" 
-          strokeWidth={1}
-          strokeOpacity={0.7}
+          strokeDasharray="4 4" 
+          strokeWidth={1.5}
+          label={{ value: metric.targetMin, position: 'right', fontSize: 8, fill: 'hsl(142 76% 36%)' }}
         />
         <ReferenceLine 
           y={metric.targetMax} 
           stroke="hsl(142 76% 36%)" 
-          strokeDasharray="3 3" 
-          strokeWidth={1}
-          strokeOpacity={0.7}
+          strokeDasharray="4 4" 
+          strokeWidth={1.5}
+          label={{ value: metric.targetMax, position: 'right', fontSize: 8, fill: 'hsl(142 76% 36%)' }}
         />
         <Line 
           type="monotone" 
           dataKey="value" 
           stroke={strokeColor} 
-          strokeWidth={1.5}
+          strokeWidth={2}
           dot={false}
+          activeDot={{ r: 3, strokeWidth: 0 }}
         />
       </LineChart>
     </ResponsiveContainer>

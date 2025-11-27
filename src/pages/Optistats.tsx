@@ -348,8 +348,8 @@ const Optistats = () => {
                           {/* Clinical target */}
                           <div className="text-sm text-muted-foreground">{indicator.target}</div>
 
-                          {/* Indicator Analysis - mini chart */}
-                          <div className="h-10 w-32 bg-background border rounded overflow-hidden">
+                          {/* Indicator Analysis - chart */}
+                          <div className="h-24 bg-background border rounded overflow-hidden">
                             <MiniMetricChart 
                               metricLabel={indicator.label.split(':')[0].trim()} 
                               organ={item.module}
