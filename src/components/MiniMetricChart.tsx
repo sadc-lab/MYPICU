@@ -90,7 +90,7 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+      <LineChart data={chartData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
         <YAxis 
           domain={[metric.min, metric.max]} 
           hide={true}
@@ -104,22 +104,22 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
         <ReferenceLine 
           y={metric.targetMin} 
           stroke="hsl(142 76% 36%)" 
-          strokeDasharray="4 4" 
-          strokeWidth={1.5}
-          strokeOpacity={0.8}
+          strokeDasharray="3 3" 
+          strokeWidth={1}
+          strokeOpacity={0.7}
         />
         <ReferenceLine 
           y={metric.targetMax} 
           stroke="hsl(142 76% 36%)" 
-          strokeDasharray="4 4" 
-          strokeWidth={1.5}
-          strokeOpacity={0.8}
+          strokeDasharray="3 3" 
+          strokeWidth={1}
+          strokeOpacity={0.7}
         />
         <Line 
           type="monotone" 
           dataKey="value" 
           stroke={strokeColor} 
-          strokeWidth={3}
+          strokeWidth={1.5}
           dot={false}
         />
       </LineChart>
