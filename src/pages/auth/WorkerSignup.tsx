@@ -36,19 +36,19 @@ const WorkerSignup = () => {
               <Users className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-center">Create Worker Account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Créer un compte Soignant</CardTitle>
           <CardDescription className="text-center">
-            Access to patient care and operational tasks
+            Accès aux soins des patients et aux tâches opérationnelles
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">Nom complet</Label>
               <Input
                 id="fullName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Jean Dupont"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
@@ -59,14 +59,14 @@ const WorkerSignup = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="vous@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mot de passe</Label>
               <Input
                 id="password"
                 type="password"
@@ -77,7 +77,7 @@ const WorkerSignup = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -88,13 +88,13 @@ const WorkerSignup = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creating account...' : 'Create Worker Account'}
+              {isLoading ? 'Création du compte...' : 'Créer le compte Soignant'}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Already have an account?{' '}
+            Vous avez déjà un compte ?{' '}
             <Link to="/auth/login" className="text-primary hover:underline">
-              Log in
+              Se connecter
             </Link>
           </div>
         </CardContent>

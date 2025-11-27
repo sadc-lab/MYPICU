@@ -8,8 +8,8 @@ const Signup = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Create Your Account</h1>
-          <p className="text-muted-foreground">Choose your account type to get started</p>
+          <h1 className="text-3xl font-bold mb-2">Créer votre compte</h1>
+          <p className="text-muted-foreground">Choisissez votre type de compte pour commencer</p>
         </div>
         
         <div className="grid md:grid-cols-2 gap-6">
@@ -20,20 +20,20 @@ const Signup = () => {
                   <UserCog className="h-8 w-8 text-primary" />
                 </div>
               </div>
-              <CardTitle className="text-center">Manager Account</CardTitle>
+              <CardTitle className="text-center">Compte Gestionnaire</CardTitle>
               <CardDescription className="text-center">
-                Full access to manage teams, patients, and system settings
+                Accès complet pour gérer les équipes, les patients et les paramètres du système
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>✓ Manage all patient records</li>
-                <li>✓ Team management capabilities</li>
-                <li>✓ Access to analytics and reports</li>
-                <li>✓ System configuration</li>
+                <li>✓ Gérer tous les dossiers patients</li>
+                <li>✓ Gestion des équipes</li>
+                <li>✓ Accès aux analyses et rapports</li>
+                <li>✓ Configuration du système</li>
               </ul>
               <Link to="/auth/manager-signup" className="block">
-                <Button className="w-full">Sign up as Manager</Button>
+                <Button className="w-full">S'inscrire en tant que Gestionnaire</Button>
               </Link>
             </CardContent>
           </Card>
@@ -45,29 +45,29 @@ const Signup = () => {
                   <Users className="h-8 w-8 text-primary" />
                 </div>
               </div>
-              <CardTitle className="text-center">Worker Account</CardTitle>
+              <CardTitle className="text-center">Compte Soignant</CardTitle>
               <CardDescription className="text-center">
-                Access to patient care and daily operational tasks
+                Accès aux soins des patients et aux tâches opérationnelles quotidiennes
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>✓ View assigned patients</li>
-                <li>✓ Update patient records</li>
-                <li>✓ Log vital signs and metrics</li>
-                <li>✓ Communicate with team</li>
+                <li>✓ Voir les patients assignés</li>
+                <li>✓ Mettre à jour les dossiers patients</li>
+                <li>✓ Enregistrer les signes vitaux</li>
+                <li>✓ Communiquer avec l'équipe</li>
               </ul>
               <Link to="/auth/worker-signup" className="block">
-                <Button className="w-full" variant="outline">Sign up as Worker</Button>
+                <Button className="w-full" variant="outline">S'inscrire en tant que Soignant</Button>
               </Link>
             </CardContent>
           </Card>
         </div>
 
         <div className="mt-6 text-center text-sm">
-          Already have an account?{' '}
+          Vous avez déjà un compte ?{' '}
           <Link to="/auth/login" className="text-primary hover:underline">
-            Log in
+            Se connecter
           </Link>
         </div>
       </div>
