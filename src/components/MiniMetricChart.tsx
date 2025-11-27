@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { LineChart, Line, ResponsiveContainer, ReferenceArea, YAxis, ReferenceLine, XAxis, Tooltip } from 'recharts';
-import { brainMetrics, heartMetrics, lungMetrics } from '@/utils/organMetrics';
+import { brainMetrics, heartMetrics, lungMetrics, brainMonitoringTargets, heartMonitoringTargets } from '@/utils/organMetrics';
 
 interface MiniMetricChartProps {
   metricLabel: string;
@@ -8,18 +8,76 @@ interface MiniMetricChartProps {
   timeRange?: 'now' | '3h' | '6h' | '12h' | '24h' | 'stay';
 }
 
+// Parse target string to get min/max values
+const parseTarget = (target: string): { min: number; max: number } | null => {
+  // Handle "< X" format
+  const lessThanMatch = target.match(/<\s*(\d+(?:\.\d+)?)/);
+  if (lessThanMatch) {
+    return { min: 0, max: parseFloat(lessThanMatch[1]) };
+  }
+  
+  // Handle "> X" format
+  const greaterThanMatch = target.match(/>\s*(\d+(?:\.\d+)?)/);
+  if (greaterThanMatch) {
+    return { min: parseFloat(greaterThanMatch[1]), max: parseFloat(greaterThanMatch[1]) * 2 };
+  }
+  
+  // Handle "X-Y" format
+  const rangeMatch = target.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+  if (rangeMatch) {
+    return { min: parseFloat(rangeMatch[1]), max: parseFloat(rangeMatch[2]) };
+  }
+  
+  return null;
+};
+
 export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniMetricChartProps) => {
-  const chartData = useMemo(() => {
-    // Find the metric
+  // Find metric from all sources
+  const metricData = useMemo(() => {
+    // First try brainMetrics/heartMetrics/lungMetrics
     const allMetrics = [...brainMetrics, ...heartMetrics, ...lungMetrics];
     const metric = allMetrics.find(m => m.label === metricLabel && m.organ === organ);
     
-    if (!metric) return [];
+    if (metric) {
+      return {
+        value: metric.value,
+        min: metric.min,
+        max: metric.max,
+        targetMin: metric.targetMin,
+        targetMax: metric.targetMax,
+        unit: metric.unit,
+        trend: ('trend' in metric ? metric.trend : 'stable') as string
+      };
+    }
+    
+    // Try monitoring targets
+    const allMonitoringTargets = [...brainMonitoringTargets, ...heartMonitoringTargets];
+    const monitoringTarget = allMonitoringTargets.find(m => m.label === metricLabel && m.organ === organ);
+    
+    if (monitoringTarget && typeof monitoringTarget.value === 'number') {
+      const parsedTarget = parseTarget(monitoringTarget.target);
+      const value = monitoringTarget.value;
+      
+      return {
+        value,
+        min: parsedTarget ? Math.min(parsedTarget.min * 0.5, value * 0.5) : value * 0.5,
+        max: parsedTarget ? Math.max(parsedTarget.max * 1.5, value * 1.5) : value * 1.5,
+        targetMin: parsedTarget?.min || value * 0.8,
+        targetMax: parsedTarget?.max || value * 1.2,
+        unit: monitoringTarget.unit || '',
+        trend: (monitoringTarget.trend || 'stable') as string
+      };
+    }
+    
+    return null;
+  }, [metricLabel, organ]);
+
+  const chartData = useMemo(() => {
+    if (!metricData) return [];
 
     const data = [];
     const now = new Date();
     
-    // Determine number of data points and time intervals based on time range
     let dataPoints: number;
     let intervalMinutes: number;
     
@@ -29,23 +87,23 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
         intervalMinutes = 0;
         break;
       case '3h':
-        dataPoints = 18; // One point every 10 minutes
+        dataPoints = 18;
         intervalMinutes = 10;
         break;
       case '6h':
-        dataPoints = 24; // One point every 15 minutes
+        dataPoints = 24;
         intervalMinutes = 15;
         break;
       case '12h':
-        dataPoints = 24; // One point every 30 minutes
+        dataPoints = 24;
         intervalMinutes = 30;
         break;
       case '24h':
-        dataPoints = 24; // One point every hour
+        dataPoints = 24;
         intervalMinutes = 60;
         break;
       case 'stay':
-        dataPoints = 48; // One point every 2 hours for a typical ICU stay
+        dataPoints = 48;
         intervalMinutes = 120;
         break;
       default:
@@ -60,32 +118,33 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
         ? 'Now'
         : `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
       
-      const baseValue = metric.value;
-      // Add realistic variation based on trend
+      const baseValue = metricData.value;
       let variation = (Math.random() - 0.5) * (baseValue * 0.15);
       
-      if ('trend' in metric && metric.trend === 'up') {
+      if (metricData.trend === 'up') {
         variation += (dataPoints - i) * 0.05;
-      } else if ('trend' in metric && metric.trend === 'down') {
+      } else if (metricData.trend === 'down') {
         variation -= (dataPoints - i) * 0.05;
       }
       
       data.push({
         time: timeStr,
-        value: Math.max(metric.min, Math.min(metric.max, baseValue + variation))
+        value: Math.max(metricData.min, Math.min(metricData.max, baseValue + variation))
       });
     }
     
     return data;
-  }, [metricLabel, organ, timeRange]);
+  }, [metricData, timeRange]);
 
-  // Get metric to determine color based on status
-  const allMetrics = [...brainMetrics, ...heartMetrics, ...lungMetrics];
-  const metric = allMetrics.find(m => m.label === metricLabel && m.organ === organ);
-  
-  if (!metric) return null;
+  if (!metricData) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+        Pas de données
+      </div>
+    );
+  }
 
-  const isOutOfRange = metric.value < metric.targetMin || metric.value > metric.targetMax;
+  const isOutOfRange = metricData.value < metricData.targetMin || metricData.value > metricData.targetMax;
   const strokeColor = isOutOfRange ? '#ef4444' : '#9ca3af';
 
   return (
@@ -100,7 +159,7 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
           interval="preserveStartEnd"
         />
         <YAxis 
-          domain={[metric.min, metric.max]} 
+          domain={[metricData.min, metricData.max]} 
           tick={{ fontSize: 9 }}
           stroke="hsl(var(--muted-foreground))"
           tickLine={false}
@@ -116,27 +175,27 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
             padding: '4px 8px'
           }}
           labelStyle={{ color: 'hsl(var(--foreground))' }}
-          formatter={(value: number) => [`${value.toFixed(1)} ${metric.unit}`, metric.label]}
+          formatter={(value: number) => [`${value.toFixed(1)} ${metricData.unit}`, metricLabel]}
         />
         <ReferenceArea
-          y1={metric.targetMin}
-          y2={metric.targetMax}
+          y1={metricData.targetMin}
+          y2={metricData.targetMax}
           fill="hsl(142 76% 36% / 0.1)"
           strokeOpacity={0}
         />
         <ReferenceLine 
-          y={metric.targetMin} 
+          y={metricData.targetMin} 
           stroke="hsl(142 76% 36%)" 
           strokeDasharray="4 4" 
           strokeWidth={1.5}
-          label={{ value: metric.targetMin, position: 'right', fontSize: 8, fill: 'hsl(142 76% 36%)' }}
+          label={{ value: metricData.targetMin, position: 'right', fontSize: 8, fill: 'hsl(142 76% 36%)' }}
         />
         <ReferenceLine 
-          y={metric.targetMax} 
+          y={metricData.targetMax} 
           stroke="hsl(142 76% 36%)" 
           strokeDasharray="4 4" 
           strokeWidth={1.5}
-          label={{ value: metric.targetMax, position: 'right', fontSize: 8, fill: 'hsl(142 76% 36%)' }}
+          label={{ value: metricData.targetMax, position: 'right', fontSize: 8, fill: 'hsl(142 76% 36%)' }}
         />
         <Line 
           type="monotone" 
