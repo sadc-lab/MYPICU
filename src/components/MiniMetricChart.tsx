@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { LineChart, Line, ResponsiveContainer, ReferenceArea, YAxis, ReferenceLine, XAxis, Tooltip } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, ReferenceArea, YAxis, ReferenceLine } from 'recharts';
 import { brainMetrics, heartMetrics, lungMetrics, brainMonitoringTargets, heartMonitoringTargets } from '@/utils/organMetrics';
 
 interface MiniMetricChartProps {
@@ -149,38 +149,15 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: 5 }}>
-        <XAxis 
-          dataKey="time" 
-          tick={{ fontSize: 9 }}
-          stroke="hsl(var(--muted-foreground))"
-          tickLine={false}
-          axisLine={false}
-          interval="preserveStartEnd"
-        />
+      <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
         <YAxis 
           domain={[metricData.min, metricData.max]} 
-          tick={{ fontSize: 9 }}
-          stroke="hsl(var(--muted-foreground))"
-          tickLine={false}
-          axisLine={false}
-          width={30}
-        />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: 'hsl(var(--background))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '6px',
-            fontSize: '11px',
-            padding: '4px 8px'
-          }}
-          labelStyle={{ color: 'hsl(var(--foreground))' }}
-          formatter={(value: number) => [`${value.toFixed(1)} ${metricData.unit}`, metricLabel]}
+          hide={true}
         />
         <ReferenceArea
           y1={metricData.targetMin}
           y2={metricData.targetMax}
-          fill="hsl(142 76% 36% / 0.1)"
+          fill="hsl(142 76% 36% / 0.15)"
           strokeOpacity={0}
         />
         <ReferenceLine 
@@ -188,14 +165,12 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
           stroke="hsl(142 76% 36%)" 
           strokeDasharray="4 4" 
           strokeWidth={1.5}
-          label={{ value: metricData.targetMin, position: 'right', fontSize: 8, fill: 'hsl(142 76% 36%)' }}
         />
         <ReferenceLine 
           y={metricData.targetMax} 
           stroke="hsl(142 76% 36%)" 
           strokeDasharray="4 4" 
           strokeWidth={1.5}
-          label={{ value: metricData.targetMax, position: 'right', fontSize: 8, fill: 'hsl(142 76% 36%)' }}
         />
         <Line 
           type="monotone" 
@@ -203,7 +178,6 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
           stroke={strokeColor} 
           strokeWidth={2}
           dot={false}
-          activeDot={{ r: 3, strokeWidth: 0 }}
         />
       </LineChart>
     </ResponsiveContainer>
