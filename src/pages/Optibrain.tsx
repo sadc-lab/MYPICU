@@ -668,8 +668,12 @@ const Optibrain = () => {
                 </ResponsiveContainer>
               </div>
 
-              <div className="text-sm text-gray-600 border-t pt-4">
-                <span className="font-semibold">Période affichée :</span> 6 dernières heures
+              <div className="border-t pt-4">
+                <div className="text-sm text-gray-600">
+                  PPC actuelle : <span className="font-semibold">65 mmHg</span>
+                  <span className="mx-2">|</span>
+                  PPC visée : <span className="font-semibold">60 mmHg</span>
+                </div>
               </div>
             </div>
           </DialogContent>
