@@ -98,21 +98,22 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
         <ReferenceArea
           y1={metric.targetMin}
           y2={metric.targetMax}
-          fill="hsl(var(--muted))"
-          fillOpacity={0.9}
+          fill="hsl(142 76% 36% / 0.15)"
           strokeOpacity={0}
         />
         <ReferenceLine 
           y={metric.targetMin} 
-          stroke="hsl(var(--muted-foreground))" 
-          strokeDasharray="3 3" 
-          strokeOpacity={0.5}
+          stroke="hsl(142 76% 36%)" 
+          strokeDasharray="4 4" 
+          strokeWidth={1.5}
+          strokeOpacity={0.8}
         />
         <ReferenceLine 
           y={metric.targetMax} 
-          stroke="hsl(var(--muted-foreground))" 
-          strokeDasharray="3 3" 
-          strokeOpacity={0.5}
+          stroke="hsl(142 76% 36%)" 
+          strokeDasharray="4 4" 
+          strokeWidth={1.5}
+          strokeOpacity={0.8}
         />
         <Line 
           type="monotone" 
