@@ -5,16 +5,36 @@ import { TourChecklist } from '@/components/TourChecklist';
 import { TourOrganizer } from '@/components/TourOrganizer';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { usePatients } from '@/hooks/usePatients';
+import { useRealtimePatients } from '@/hooks/useRealtimePatients';
 import { getAllPatients, getPatientsForPed } from '@/utils/patientData';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+
 const Dashboard = () => {
   const [selectedPed, setSelectedPed] = useState<'A' | 'B' | 'C'>('A');
   const [showTourOrganizer, setShowTourOrganizer] = useState(false);
-  const allPatients = getAllPatients();
+  
+  // Enable real-time subscriptions
+  useRealtimePatients();
+  
+  // Fetch patients from Supabase (falls back to static data if empty)
+  const { data: patientResponse, isLoading } = usePatients();
+  const supabasePatients = patientResponse?.patients || [];
+  
+  // Use Supabase data if available, otherwise use static data
+  const allPatients = supabasePatients.length > 0 
+    ? supabasePatients 
+    : getAllPatients();
 
-  // Get patients for selected PED
-  const displayedPatients = getPatientsForPed(selectedPed);
+  // Filter patients by selected PED
+  const displayedPatients = supabasePatients.length > 0
+    ? allPatients.filter(p => {
+        if (selectedPed === 'A') return p.ward === 'pedA' || !p.ward;
+        if (selectedPed === 'B') return p.ward === 'pedB';
+        return false;
+      })
+    : getPatientsForPed(selectedPed);
   
   // Calculate unit average from ALL patients (all 3 PEDs)
   const unitAveragePelod = allPatients.length > 0 
@@ -25,7 +45,9 @@ const Dashboard = () => {
   const averagePelod = displayedPatients.length > 0 
     ? Math.round(displayedPatients.reduce((sum, p) => sum + p.pelodScore, 0) / displayedPatients.length) 
     : 0;
-  return <div className="min-h-screen bg-background">
+
+  return (
+    <div className="min-h-screen bg-background">
       <Header />
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-[1600px]">
@@ -61,6 +83,7 @@ const Dashboard = () => {
                   <SelectItem value="C">PED C</SelectItem>
                 </SelectContent>
               </Select>
+              {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin text-muted-foreground" />}
             </div>
             
             <PatientTable patients={displayedPatients} pedName={`PED ${selectedPed}`} averagePelod={averagePelod} showTitle={false} />
@@ -69,6 +92,8 @@ const Dashboard = () => {
       </main>
 
       <TourOrganizer open={showTourOrganizer} onOpenChange={setShowTourOrganizer} patients={displayedPatients} pedName={`PED ${selectedPed}`} />
-    </div>;
+    </div>
+  );
 };
+
 export default Dashboard;
