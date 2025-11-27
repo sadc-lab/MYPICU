@@ -95,12 +95,12 @@ export const TourChecklist = () => {
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="pt-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+        <CardContent className="pt-2 pb-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1">
             {checklist.map(item => (
               <label
                 key={item.id}
-                className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors ${
+                className={`flex items-center gap-1.5 py-1 px-1.5 rounded cursor-pointer transition-colors text-xs ${
                   item.checked
                     ? 'bg-primary/10 text-muted-foreground line-through'
                     : 'hover:bg-muted'
@@ -109,9 +109,9 @@ export const TourChecklist = () => {
                 <Checkbox
                   checked={item.checked}
                   onCheckedChange={() => toggleItem(item.id)}
-                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  className="h-3.5 w-3.5 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
-                <span className="text-sm">{item.label}</span>
+                <span className="leading-tight">{item.label}</span>
               </label>
             ))}
           </div>
