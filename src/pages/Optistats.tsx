@@ -317,24 +317,22 @@ const Optistats = () => {
                           className="grid grid-cols-[80px_200px_150px_1fr_50px] gap-4 items-center py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors"
                           onClick={() => handleIndicatorClick(item.module, indicator.label)}
                         >
-                          {/* Module icon - only show on first row */}
+                          {/* Module icon - always show */}
                           <div>
-                            {indicatorIndex === 0 && (
-                              <div className={`w-10 h-10 rounded-lg ${
-                                indicator.status === 'red' ? 'bg-red-100 dark:bg-red-950' : 'bg-orange-100 dark:bg-orange-950'
-                              } flex items-center justify-center`}>
-                                {item.module === 'heart' ? (
-                                  <HeartIcon className={`h-6 w-6 ${item.heartColor(indicator.status)}`} />
-                                ) : (
-                                  <img 
-                                    src={item.iconSrc} 
-                                    alt={item.module} 
-                                    className="h-6 w-6"
-                                    style={{ filter: item.colorFilter(indicator.status) }}
-                                  />
-                                )}
-                              </div>
-                            )}
+                            <div className={`w-10 h-10 rounded-lg ${
+                              indicator.status === 'red' ? 'bg-red-100 dark:bg-red-950' : 'bg-orange-100 dark:bg-orange-950'
+                            } flex items-center justify-center`}>
+                              {item.module === 'heart' ? (
+                                <HeartIcon className={`h-6 w-6 ${item.heartColor(indicator.status)}`} />
+                              ) : (
+                                <img 
+                                  src={item.iconSrc} 
+                                  alt={item.module} 
+                                  className="h-6 w-6"
+                                  style={{ filter: item.colorFilter(indicator.status) }}
+                                />
+                              )}
+                            </div>
                           </div>
 
                           {/* Problematic indicator */}
