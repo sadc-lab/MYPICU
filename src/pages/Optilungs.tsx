@@ -11,6 +11,7 @@ import { getPatientById } from '@/utils/patientData';
 import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
+import { useTimeRange } from '@/hooks/useTimeRange';
 
 const Optilungs = () => {
   const [searchParams] = useSearchParams();
@@ -18,6 +19,7 @@ const Optilungs = () => {
   const metricParam = searchParams.get('metric');
   const patient = getPatientById(patientId);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
   const [objectives, setObjectives] = useState<string[]>([
     'Maintain SpO2 > 92%',
     'Lung protective ventilation (TV 6-8 mL/kg IBW)',
