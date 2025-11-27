@@ -1,7 +1,7 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun } from 'lucide-react';
+import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, Patient } from '@/utils/patientData';
@@ -321,6 +321,16 @@ export const Header = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setShowGuide(true)}
+              title="Aide"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </Button>
             
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
               <Bell className="h-5 w-5" />
