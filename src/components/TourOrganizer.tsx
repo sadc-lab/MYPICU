@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Patient } from '@/utils/patientData';
 import {
   Dialog,
@@ -9,7 +9,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, Play } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { GripVertical, Play, ClipboardCheck, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTourNavigation } from '@/hooks/useTourNavigation';
 import { HeartIcon } from '@/components/icons/HeartIcon';
@@ -178,10 +179,49 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
   );
 };
 
+interface ChecklistItem {
+  id: string;
+  label: string;
+  checked: boolean;
+}
+
+const defaultChecklist: ChecklistItem[] = [
+  { id: "bilan", label: "Objectif de Bilan Entrée/Sortie", checked: false },
+  { id: "thrombose", label: "Prophylaxie Thrombose veineuse", checked: false },
+  { id: "ulcere", label: "Prophylaxie Ulcère de stress", checked: false },
+  { id: "radios", label: "Fréquence des radios", checked: false },
+  { id: "labos", label: "Fréquence des labos", checked: false },
+  { id: "equipement", label: "Équipement à retirer", checked: false },
+  { id: "alarmes", label: "Limites d'alarmes et fréquence de surveillance", checked: false },
+  { id: "isolement", label: "Mesures d'isolement", checked: false },
+];
+
+const STORAGE_KEY = "tour-checklist";
+
 export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrganizerProps) => {
   const [orderedPatients, setOrderedPatients] = useState<Patient[]>(patients);
+  const [checklistExpanded, setChecklistExpanded] = useState(false);
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : defaultChecklist;
+  });
   const navigate = useNavigate();
   const { startTour } = useTourNavigation();
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(checklist));
+  }, [checklist]);
+
+  const toggleItem = (id: string) => {
+    setChecklist((prev) => prev.map((item) => (item.id === id ? { ...item, checked: !item.checked } : item)));
+  };
+
+  const resetChecklist = () => {
+    setChecklist(defaultChecklist);
+  };
+
+  const completedCount = checklist.filter((item) => item.checked).length;
+  const progress = Math.round((completedCount / checklist.length) * 100);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -224,11 +264,67 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-white">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Organize Tour - {pedName}</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Organiser tournée - {pedName}</DialogTitle>
           <DialogDescription>
-            Drag and drop patients to reorder your tour sequence. Click "Start Tour" when ready.
+            Glissez et déposez les patients pour réorganiser l'ordre de votre tournée.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Tour Checklist */}
+        <div className="border rounded-lg border-primary/20 bg-card">
+          <div className="p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium text-primary">Liste de contrôle</span>
+                <span className="text-xs text-muted-foreground">
+                  ({completedCount}/{checklist.length})
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetChecklist}
+                  className="h-7 px-2 text-muted-foreground hover:text-primary"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setChecklistExpanded(!checklistExpanded)} className="h-7 px-2">
+                  {checklistExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <div className="mt-2 h-1.5 w-full rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          {checklistExpanded && (
+            <div className="px-3 pb-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                {checklist.map((item) => (
+                  <label
+                    key={item.id}
+                    className={`flex items-center gap-1.5 py-1 px-1.5 rounded cursor-pointer transition-colors text-xs ${
+                      item.checked ? "bg-primary/10 text-muted-foreground line-through" : "hover:bg-muted"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={item.checked}
+                      onCheckedChange={() => toggleItem(item.id)}
+                      className="h-3.5 w-3.5 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <span className="leading-tight">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <DndContext
           sensors={sensors}
@@ -254,15 +350,15 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
 
         <div className="flex justify-between items-center pt-4 border-t">
           <p className="text-sm text-gray-600">
-            {orderedPatients.length} patient{orderedPatients.length !== 1 ? 's' : ''} in tour
+            {orderedPatients.length} patient{orderedPatients.length !== 1 ? 's' : ''} dans la tournée
           </p>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              Annuler
             </Button>
             <Button onClick={handleStartTour} className="gap-2">
               <Play className="h-4 w-4" />
-              Start Tour
+              Démarrer tournée
             </Button>
           </div>
         </div>
