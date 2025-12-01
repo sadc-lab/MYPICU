@@ -254,7 +254,6 @@ const Optibrain = () => {
   const clinicalAdherence = Math.round((normalIndicators / totalIndicators) * 100);
   const outOfRangeCount = clinicalIndicators.filter((i) => i.status !== "normal").length;
 
-  // Generate mock chart data based on selected time range
   // PPC Opt is always calculated at 15-minute intervals
   const chartData = useMemo(() => {
     const data = [];
@@ -345,7 +344,7 @@ const Optibrain = () => {
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">Métriques Cérébrales</CardTitle>
+            <CardTitle className="text-base font-semibold text-gray-900">Métriques cérébrales</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -399,7 +398,7 @@ const Optibrain = () => {
                   <img src={brainIcon} alt="brain" className="h-8 w-8" style={{ filter: 'invert(39%) sepia(95%) saturate(1095%) hue-rotate(196deg) brightness(97%) contrast(94%)' }} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700">Optimisation Cérébrale Actuelle</h3>
+                  <h3 className="text-sm font-semibold text-gray-700">Optimisation cérébrale actuelle</h3>
                   <p className="text-xs text-gray-500 mt-1">Hyperhémie, PIC 26 et PPC optimale 65</p>
                 </div>
               </div>
@@ -520,7 +519,7 @@ const Optibrain = () => {
         <Dialog open={openDialog === "pic"} onOpenChange={(open) => !open && setOpenDialog(null)}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>PIC (Pression Intracrânienne)</DialogTitle>
+              <DialogTitle>PIC (Pression intracrânienne)</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
               {/* PIC Card */}
@@ -595,7 +594,7 @@ const Optibrain = () => {
         <Dialog open={openDialog === "ppc"} onOpenChange={(open) => !open && setOpenDialog(null)}>
           <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle>PPC Optimale - Étude sur 6 heures</DialogTitle>
+              <DialogTitle>PPC optimale - Étude sur 6 heures</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
               <div className="h-80 w-full">
@@ -789,8 +788,8 @@ const Optibrain = () => {
                       {monitoringAdherence}%
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-700">Signes Vitaux</h3>
-                      <p className="text-xs text-gray-500 mt-1">{targetOutOfRangeCount} cibles à surveiller</p>
+                      <h3 className="text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
+                      <p className="text-xs text-gray-500 mt-1">{outOfRangeCount} Indicateurs à surveiller</p>
                     </div>
                   </div>
                   {checklistExpanded ? (
