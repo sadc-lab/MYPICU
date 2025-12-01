@@ -81,33 +81,6 @@ export const getAuthHeaders = () => {
 };
 ```
 
-### Step 4: Enable Lovable Cloud (Recommended)
-
-For the fastest backend setup:
-
-1. Enable Lovable Cloud in your project
-2. Use the built-in Supabase database for patient data
-3. Authentication is already configured with `useAuth` hook
-4. Update service methods to use Supabase client instead of fetch
-
-**Example with Supabase:**
-```typescript
-import { supabase } from '@/integrations/supabase/client';
-
-async getPatients(params?: PatientQueryParams): Promise<PatientResponse> {
-  const { data, error } = await supabase
-    .from('patients')
-    .select('*')
-    .order('pelodScore', { ascending: false });
-    
-  if (error) throw error;
-  
-  return {
-    patients: data || [],
-    total: data?.length || 0
-  };
-}
-```
 
 ## Benefits of Current Architecture
 
@@ -129,7 +102,6 @@ async getPatients(params?: PatientQueryParams): Promise<PatientResponse> {
 
 ## Migration Checklist
 
-- [ ] Set up backend API or enable Lovable Cloud
 - [ ] Create database tables for patients
 - [ ] Update `API_CONFIG.BASE_URL`
 - [ ] Replace service methods with real API calls
