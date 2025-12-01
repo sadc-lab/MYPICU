@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Droplets, MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { Droplets, ArrowUpDown } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { Patient } from '@/types/patient.types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -124,7 +124,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
               <TableHead className="font-medium text-foreground text-xs sm:text-sm hidden xl:table-cell">Examens</TableHead>
               <TableHead className="font-medium text-foreground text-xs sm:text-sm">Alarmes</TableHead>
               <TableHead className="font-medium text-foreground text-xs sm:text-sm hidden md:table-cell">Tournée</TableHead>
-              <TableHead className="hidden sm:table-cell"></TableHead>
+              
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -217,11 +217,6 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                     }
                     return null;
                   })()}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  <button className="text-muted-foreground hover:text-foreground">
-                    <MoreHorizontal className="h-5 w-5" />
-                  </button>
                 </TableCell>
               </TableRow>
             ))}
