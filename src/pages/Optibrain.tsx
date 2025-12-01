@@ -57,99 +57,88 @@ const Optibrain = () => {
       label: "Opioide",
       value: 150,
       unit: "mcg/h",
-      target: "100-200 mcg/h",
+      min: 0,
+      max: 300,
+      targetMin: 100,
+      targetMax: 200,
       status: "normal",
-      trend: "stable",
-      change: 0,
     },
     {
       label: "Hypnotique",
       value: 220,
       unit: "mg/h",
-      target: "150-250 mg/h",
+      min: 0,
+      max: 400,
+      targetMin: 150,
+      targetMax: 250,
       status: "normal",
-      trend: "down",
-      change: -10,
-    },
-    {
-      label: "AntiEpileptique",
-      value: "Non",
-      target: "Aucune",
-      status: "normal",
-      trend: "stable",
     },
     {
       label: "Propofol 48h",
-      value: "10.5",
+      value: 10.5,
       unit: "g",
-      target: "< 12g",
+      min: 0,
+      max: 20,
+      targetMin: 0,
+      targetMax: 12,
       status: "normal",
-      trend: "stable",
-      change: 0,
-    },
-    {
-      label: "Nutrition",
-      value: "Entérale",
-      target: "Entérale/Parentérale",
-      status: "normal",
-      trend: "stable",
     },
     {
       label: "PIC",
       value: 26,
       unit: "mmHg",
-      target: "< 20 mmHg",
+      min: 0,
+      max: 40,
+      targetMin: 0,
+      targetMax: 20,
       status: "warning",
-      trend: "down",
-      change: -3,
     },
     {
       label: "PAM",
       value: 85,
       unit: "mmHg",
-      target: "> 65 mmHg",
+      min: 40,
+      max: 120,
+      targetMin: 65,
+      targetMax: 120,
       status: "normal",
-      trend: "up",
-      change: 2,
     },
     {
       label: "PVC",
       value: 8,
       unit: "mmHg",
-      target: "2-8 mmHg",
+      min: 0,
+      max: 15,
+      targetMin: 2,
+      targetMax: 8,
       status: "normal",
-      trend: "stable",
-      change: 0,
     },
     {
       label: "ETCO2",
       value: 38,
       unit: "mmHg",
-      target: "35-45 mmHg",
+      min: 20,
+      max: 60,
+      targetMin: 35,
+      targetMax: 45,
       status: "normal",
-      trend: "stable",
-      change: 0,
     },
     {
-      label: "Pupille droite",
-      value: "3mm",
-      target: "Réactive",
+      label: "Température",
+      value: 36.5,
+      unit: "°C",
+      min: 34,
+      max: 40,
+      targetMin: 36,
+      targetMax: 38,
       status: "normal",
-      trend: "stable",
-    },
-    {
-      label: "Pupille gauche",
-      value: "3mm",
-      target: "Réactive",
-      status: "normal",
-      trend: "stable",
     },
   ];
 
   const totalTargets = monitoringTargets.length;
-  const normalTargets = monitoringTargets.filter((t) => t.status === "normal").length;
+  const normalTargets = monitoringTargets.filter((t) => t.value >= t.targetMin && t.value <= t.targetMax).length;
   const monitoringAdherence = Math.round((normalTargets / totalTargets) * 100);
-  const targetOutOfRangeCount = monitoringTargets.filter((t) => t.status !== "normal").length;
+  const targetOutOfRangeCount = monitoringTargets.filter((t) => t.value < t.targetMin || t.value > t.targetMax).length;
   if (!patient) {
     return (
       <div className="min-h-screen bg-[#EDF2F9]">
@@ -806,7 +795,7 @@ const Optibrain = () => {
                       {monitoringAdherence}%
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
+                      <h3 className="text-sm font-semibold text-gray-700">Signes Vitaux</h3>
                       <p className="text-xs text-gray-500 mt-1">{targetOutOfRangeCount} cibles à surveiller</p>
                     </div>
                   </div>
@@ -819,28 +808,39 @@ const Optibrain = () => {
               </CardHeader>
               {checklistExpanded && (
                 <CardContent className="pt-0">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-4">
                     {monitoringTargets.map((target, index) => {
-                      const statusColor =
-                        target.status === "critical"
-                          ? "bg-red-500"
-                          : target.status === "warning"
-                            ? "bg-orange-400"
-                            : "bg-gray-400";
+                      const inRange = target.value >= target.targetMin && target.value <= target.targetMax;
+                      const valueColor = inRange ? "text-gray-600" : "text-red-500";
                       return (
-                        <div
-                          key={index}
-                          className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
-                        >
-                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-1">
-                              <p className="text-sm font-medium text-gray-700">
-                                {target.label} : {target.value}
-                                {target.unit || ""}
-                              </p>
+                        <div key={index} className="flex flex-col items-center">
+                          <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">{target.label}</div>
+                          <div className="flex items-center gap-1 mb-3">
+                            <div className={`text-2xl font-bold ${valueColor}`}>{target.value}</div>
+                            <span className="text-sm text-gray-500">{target.unit}</span>
+                          </div>
+
+                          <div className="w-full max-w-[160px]">
+                            <div className="relative h-3 bg-gray-200 rounded-full overflow-visible">
+                              <div
+                                className="absolute top-0 bottom-0 bg-gray-300 rounded-full"
+                                style={{
+                                  left: `${((target.targetMin - target.min) / (target.max - target.min)) * 100}%`,
+                                  width: `${((target.targetMax - target.targetMin) / (target.max - target.min)) * 100}%`,
+                                }}
+                              ></div>
+                              <div
+                                className={`absolute w-3 h-3 rounded-full border-2 ${inRange ? "bg-gray-500 border-gray-600" : "bg-red-500 border-red-600"} z-10 top-0`}
+                                style={{
+                                  left: `${Math.max(0, Math.min(100, ((target.value - target.min) / (target.max - target.min)) * 100))}%`,
+                                  transform: "translateX(-50%)",
+                                }}
+                              ></div>
                             </div>
-                            <p className="text-xs text-gray-500">{target.target}</p>
+                            <div className="flex justify-between items-center mt-1.5 text-xs text-gray-500">
+                              <span>{target.targetMin}</span>
+                              <span>{target.targetMax}</span>
+                            </div>
                           </div>
                         </div>
                       );
