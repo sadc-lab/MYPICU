@@ -118,7 +118,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         <div 
           className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.brainScore)} cursor-pointer hover:opacity-80 transition-opacity`}
           onClick={(e) => handleOrganClick(e, 'brain')}
-          title="View brain details"
+          title="Voir détails du cerveau"
         >
           <img src={brainIcon} alt="brain" className="h-5 w-5" style={{ filter: getColorFilter(patient.brainScore) }} />
           <span className={`text-xs font-semibold ${getColor(patient.brainScore)}`}>
@@ -129,7 +129,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         <div 
           className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.heartScore)} cursor-pointer hover:opacity-80 transition-opacity`}
           onClick={(e) => handleOrganClick(e, 'heart')}
-          title="View heart details"
+          title="Voir détails du cœur"
         >
           <HeartIcon className={`h-5 w-5 ${getColor(patient.heartScore)}`} />
           <span className={`text-xs font-semibold ${getColor(patient.heartScore)}`}>
@@ -140,7 +140,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         <div 
           className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.lungsScore)} cursor-pointer hover:opacity-80 transition-opacity`}
           onClick={(e) => handleOrganClick(e, 'lungs')}
-          title="View lungs details"
+          title="Voir détails des poumons"
         >
           <img src={lungsIcon} alt="lungs" className="h-5 w-5" style={{ filter: getColorFilter(patient.lungsScore) }} />
           <span className={`text-xs font-semibold ${getColor(patient.lungsScore)}`}>
@@ -202,9 +202,9 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-white">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Organize Tour - {pedName}</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Organiser la tournée - {pedName}</DialogTitle>
           <DialogDescription>
-            Drag and drop patients to reorganize your tour order.
+            Glissez et déposez les patients pour réorganiser l'ordre de votre tournée.
           </DialogDescription>
         </DialogHeader>
 
@@ -232,15 +232,15 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
 
         <div className="flex justify-between items-center pt-4 border-t">
           <p className="text-sm text-gray-600">
-            {orderedPatients.length} patient{orderedPatients.length !== 1 ? 's' : ''} in tour
+            {orderedPatients.length} patient{orderedPatients.length !== 1 ? 's' : ''} dans la tournée
           </p>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              Annuler
             </Button>
             <Button onClick={handleStartTour} className="gap-2">
               <Play className="h-4 w-4" />
-              Start Tour
+              Démarrer la tournée
             </Button>
           </div>
         </div>
