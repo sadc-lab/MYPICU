@@ -77,7 +77,7 @@ export const TourChecklist = ({ compact = false, patientId }: TourChecklistProps
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ClipboardCheck className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium text-primary">Checklist tournée</span>
+              <span className="text-xs font-medium text-primary">Liste de contrôle</span>
               <span className="text-xs text-muted-foreground">
                 ({completedCount}/{checklist.length})
               </span>
