@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { useTourNavigation } from '@/hooks/useTourNavigation';
+import { getScoreTextColor, getScoreBgColor, getScoreColorFilter } from '@/utils/colorUtils';
 
 interface PatientTableProps {
   patients: Patient[];
@@ -27,22 +28,8 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
   };
 
   const getOrganIconWithScore = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number, patientId?: string) => {
-    const getColor = (score?: number) => {
-      if (!score || score === 0) return 'text-muted-foreground';
-      if (score === 1) return 'text-orange-600';
-      if (score === 2) return 'text-orange-700';
-      return 'text-red-700 dark:text-red-500';
-    };
-
-    const getBgColor = (score?: number) => {
-      if (!score || score === 0) return 'bg-muted';
-      if (score === 1) return 'bg-orange-50 dark:bg-orange-950';
-      if (score === 2) return 'bg-orange-100 dark:bg-orange-900';
-      return 'bg-red-50 dark:bg-red-950';
-    };
-
-    const color = getColor(score);
-    const bgColor = getBgColor(score);
+    const color = getScoreTextColor(score);
+    const bgColor = getScoreBgColor(score);
     
     let IconComponent;
     switch (organ) {
@@ -53,13 +40,6 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
         IconComponent = Droplets;
         break;
     }
-
-    const getColorFilter = (score?: number) => {
-      if (!score || score === 0) return 'invert(64%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(92%) contrast(88%)'; // grey
-      if (score === 1) return 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)'; // orange
-      if (score === 2) return 'invert(52%) sepia(94%) saturate(635%) hue-rotate(339deg) brightness(101%) contrast(101%)'; // darker orange
-      return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)'; // red
-    };
 
     const getOrganRoute = (organ: 'brain' | 'heart' | 'lungs' | 'kidney') => {
       switch (organ) {
@@ -97,9 +77,9 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
         title={`Voir détails ${organNames[organ] || organ}`}
       >
         {organ === 'brain' ? (
-          <img src={brainIcon} alt="brain" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(score) }} />
+          <img src={brainIcon} alt="brain" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getScoreColorFilter(score) }} />
         ) : organ === 'lungs' ? (
-          <img src={lungsIcon} alt="lungs" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(score) }} />
+          <img src={lungsIcon} alt="lungs" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getScoreColorFilter(score) }} />
         ) : organ === 'heart' ? (
           <HeartIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${color}`} />
         ) : (

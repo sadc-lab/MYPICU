@@ -35,22 +35,36 @@ All colors MUST be HSL.
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
     
-    /* System status colors for organ scores */
-    --status-critical: 0 84% 60%;
-    --status-critical-foreground: 0 0% 100%;
-    --status-critical-bg: 0 100% 97%;
+    /* System status colors for organ scores - Score 3 (Critical/Red) */
+    --score-critical: 0 72% 51%;
+    --score-critical-text: 0 72% 45%;
+    --score-critical-bg: 0 86% 97%;
+    --score-critical-border: 0 72% 51%;
     
-    --status-warning-high: 25 95% 53%;
-    --status-warning-high-foreground: 0 0% 100%;
-    --status-warning-high-bg: 25 100% 95%;
+    /* Score 2 (Warning High/Dark Orange) */
+    --score-warning-high: 25 95% 45%;
+    --score-warning-high-text: 25 95% 40%;
+    --score-warning-high-bg: 33 100% 96%;
+    --score-warning-high-border: 25 95% 53%;
     
-    --status-warning: 33 100% 50%;
-    --status-warning-foreground: 0 0% 100%;
-    --status-warning-bg: 33 100% 96%;
+    /* Score 1 (Warning/Orange) */
+    --score-warning: 25 95% 53%;
+    --score-warning-text: 25 95% 50%;
+    --score-warning-bg: 33 100% 97%;
+    --score-warning-border: 33 100% 50%;
     
-    --status-normal: 0 0% 60%;
-    --status-normal-foreground: 0 0% 100%;
-    --status-normal-bg: 0 0% 96%;
+    /* Score 0 (Normal/Gray) */
+    --score-normal: 0 0% 45%;
+    --score-normal-text: 0 0% 40%;
+    --score-normal-bg: 0 0% 96%;
+    --score-normal-border: 0 0% 60%;
+    
+    /* PELOD colors */
+    --pelod-critical: 0 84% 60%;
+    --pelod-high: 0 79% 63%;
+    --pelod-warning: 25 95% 53%;
+    --pelod-moderate: 33 100% 50%;
+    --pelod-normal: 142 76% 36%;
     
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -109,22 +123,36 @@ All colors MUST be HSL.
     --success: 142 76% 45%;
     --warning: 38 92% 50%;
     
-    /* System status colors for organ scores */
-    --status-critical: 0 84% 60%;
-    --status-critical-foreground: 0 0% 100%;
-    --status-critical-bg: 0 84% 15%;
+    /* System status colors for organ scores - Score 3 (Critical/Red) */
+    --score-critical: 0 72% 55%;
+    --score-critical-text: 0 72% 65%;
+    --score-critical-bg: 0 72% 15%;
+    --score-critical-border: 0 72% 51%;
     
-    --status-warning-high: 25 95% 53%;
-    --status-warning-high-foreground: 0 0% 100%;
-    --status-warning-high-bg: 25 95% 20%;
+    /* Score 2 (Warning High/Dark Orange) */
+    --score-warning-high: 25 95% 50%;
+    --score-warning-high-text: 25 95% 60%;
+    --score-warning-high-bg: 25 95% 20%;
+    --score-warning-high-border: 25 95% 53%;
     
-    --status-warning: 33 100% 50%;
-    --status-warning-foreground: 0 0% 100%;
-    --status-warning-bg: 33 100% 18%;
+    /* Score 1 (Warning/Orange) */
+    --score-warning: 25 95% 60%;
+    --score-warning-text: 25 95% 65%;
+    --score-warning-bg: 33 100% 18%;
+    --score-warning-border: 33 100% 50%;
     
-    --status-normal: 0 0% 60%;
-    --status-normal-foreground: 0 0% 100%;
-    --status-normal-bg: 0 0% 20%;
+    /* Score 0 (Normal/Gray) */
+    --score-normal: 0 0% 60%;
+    --score-normal-text: 0 0% 70%;
+    --score-normal-bg: 0 0% 20%;
+    --score-normal-border: 0 0% 60%;
+    
+    /* PELOD colors */
+    --pelod-critical: 0 84% 60%;
+    --pelod-high: 0 79% 63%;
+    --pelod-warning: 25 95% 53%;
+    --pelod-moderate: 33 100% 50%;
+    --pelod-normal: 142 76% 45%;
     
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;

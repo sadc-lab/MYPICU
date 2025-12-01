@@ -15,6 +15,7 @@ import { useTourNavigation } from '@/hooks/useTourNavigation';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
+import { getScoreTextColor, getScoreBgColor, getScoreColorFilter, getPelodBgColor } from '@/utils/colorUtils';
 import {
   DndContext,
   closestCenter,
@@ -61,26 +62,9 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
     transition,
   };
 
-  const getColorFilter = (score?: number) => {
-    if (!score || score === 0) return 'invert(64%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(92%) contrast(88%)';
-    if (score === 1) return 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)';
-    if (score === 2) return 'invert(52%) sepia(94%) saturate(635%) hue-rotate(339deg) brightness(101%) contrast(101%)';
-    return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)';
-  };
-
-  const getColor = (score?: number) => {
-    if (!score || score === 0) return 'text-gray-500';
-    if (score === 1) return 'text-orange-600';
-    if (score === 2) return 'text-orange-700';
-    return 'text-red-700';
-  };
-
-  const getBgColor = (score?: number) => {
-    if (!score || score === 0) return 'bg-gray-100';
-    if (score === 1) return 'bg-orange-50';
-    if (score === 2) return 'bg-orange-100';
-    return 'bg-red-50';
-  };
+  const getColorFilter = getScoreColorFilter;
+  const getColor = getScoreTextColor;
+  const getBgColor = getScoreBgColor;
 
   const getOrganRoute = (organ: 'brain' | 'heart' | 'lungs') => {
     switch (organ) {
@@ -212,13 +196,7 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
     }
   };
 
-  const getPelodColor = (score: number) => {
-    if (score >= 25) return 'bg-red-500 text-white';
-    if (score >= 20) return 'bg-red-400 text-white';
-    if (score >= 15) return 'bg-orange-500 text-white';
-    if (score >= 12) return 'bg-orange-400 text-white';
-    return 'bg-green-500 text-white';
-  };
+  const getPelodColor = getPelodBgColor;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
