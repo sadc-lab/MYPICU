@@ -2,13 +2,12 @@ import { useSearchParams } from 'react-router-dom';
 import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
-import { TourChecklist } from '@/components/TourChecklist';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getPatientById } from '@/utils/patientData';
-import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp, Bell } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
 import { useTimeRange } from '@/hooks/useTimeRange';
@@ -86,7 +85,6 @@ const Optilungs = () => {
       <PatientHeader currentPage="optilungs" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <TourChecklist compact patientId={patientId} />
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="text-base font-semibold text-gray-900">Métriques Pulmonaires</CardTitle>
@@ -321,6 +319,31 @@ const Optilungs = () => {
                         </div>
                       );
                     })}
+                  </div>
+
+                  {/* Rappels section */}
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Bell className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold text-gray-700">Rappels</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        "Objectif de Bilan Entrée/Sortie",
+                        "Prophylaxie Thrombose veineuse",
+                        "Prophylaxie Ulcère de stress",
+                        "Fréquence des radios",
+                        "Fréquence des labos",
+                        "Équipement à retirer",
+                        "Limites d'alarmes et fréquence de surveillance",
+                        "Mesures d'isolement",
+                      ].map((item, index) => (
+                        <div key={index} className="flex items-start gap-2 p-2 rounded-lg bg-gray-50">
+                          <span className="h-2 w-2 rounded-full bg-primary/60 shrink-0 mt-1" />
+                          <span className="text-xs text-gray-600 leading-tight">{item}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               )}
