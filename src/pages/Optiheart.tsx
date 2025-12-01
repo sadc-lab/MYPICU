@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { heartMetrics as importedHeartMetrics } from '@/utils/organMetrics';
 import { useTimeRange } from '@/hooks/useTimeRange';
+import { getStatusHexColor } from '@/utils/colorUtils';
 
 const Optiheart = () => {
   const [searchParams] = useSearchParams();
@@ -163,7 +164,7 @@ const Optiheart = () => {
   const getIndicatorColor = (label: string) => {
     const indicator = clinicalIndicators.find(i => i.label === label);
     if (!indicator) return '#9ca3af';
-    return indicator.status === 'critical' ? '#ef4444' : indicator.status === 'warning' ? '#fb923c' : '#9ca3af';
+    return getStatusHexColor(indicator.status);
   };
 
   const isInRange = (value: number, min: number, max: number) => {

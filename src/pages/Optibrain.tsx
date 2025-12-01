@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
 import { useTimeRange } from "@/hooks/useTimeRange";
+import { getStatusHexColor } from "@/utils/colorUtils";
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -375,7 +376,7 @@ const Optibrain = () => {
   const getIndicatorColor = (label: string) => {
     const indicator = clinicalIndicators.find((i) => i.label === label);
     if (!indicator) return "#9ca3af";
-    return indicator.status === "critical" ? "#ef4444" : indicator.status === "warning" ? "#fb923c" : "#9ca3af";
+    return getStatusHexColor(indicator.status);
   };
   return (
     <div className="min-h-screen bg-[#EDF2F9]">
