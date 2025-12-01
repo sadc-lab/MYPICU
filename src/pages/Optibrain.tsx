@@ -789,7 +789,7 @@ const Optibrain = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
-                      <p className="text-xs text-gray-500 mt-1">{outOfRangeCount} Indicateurs à surveiller</p>
+                      <p className="text-xs text-gray-500 mt-1">{targetOutOfRangeCount} cibles à surveiller</p>
                     </div>
                   </div>
                   {checklistExpanded ? (
