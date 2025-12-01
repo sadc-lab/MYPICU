@@ -8,11 +8,11 @@ import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getPatientById } from '@/utils/patientData';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
-import statsIcon from '@/assets/stats-icon.svg';
+import stateIcon from '@/assets/stats-icon.svg';
 import { Patient } from '@/types/patient.types';
 
 interface PatientHeaderProps {
-  currentPage: 'optistats' | 'optibrain' | 'optiheart' | 'optilungs';
+  currentPage: 'optistate' | 'optibrain' | 'optiheart' | 'optilungs';
 }
 
 export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
@@ -130,22 +130,22 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   const params = new URLSearchParams();
                   params.set('patient', patientId);
                   if (timeRange) params.set('timeRange', timeRange);
-                  navigate(`/optistats?${params.toString()}`);
+                  navigate(`/optistate?${params.toString()}`);
                 }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage('optistats')
+                  isActivePage('optistate')
                     ? 'bg-primary text-white'
                     : 'hover:bg-gray-100'
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.pelodScore)} text-xs`}>
                   <img 
-                    src={statsIcon} 
-                    alt="stats" 
+                    src={stateIcon} 
+                    alt="state" 
                     className="h-6 w-6 sm:h-7 sm:w-7" 
                     style={{ filter: getColorFilter(patient.pelodScore) }} 
                   />
-                  <span className="ml-1 font-semibold">Stats</span>
+                  <span className="ml-1 font-semibold">State</span>
                 </Badge>
               </button>
 

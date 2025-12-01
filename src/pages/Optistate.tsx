@@ -13,7 +13,7 @@ import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { useTimeRange } from '@/hooks/useTimeRange';
 
-const Optistats = () => {
+const Optistate = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const patientId = searchParams.get('patient') || '#25';
@@ -161,7 +161,7 @@ const Optistats = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <PatientHeader currentPage="optistats" />
+      <PatientHeader currentPage="optistate" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
         <TourChecklist compact patientId={patientId} />
@@ -323,4 +323,4 @@ const Optistats = () => {
   );
 };
 
-export default Optistats;
+export default Optistate;
