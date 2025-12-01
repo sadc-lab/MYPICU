@@ -35,7 +35,7 @@ const Optibrain = () => {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
-  const [optimisationExpanded, setOptimisationExpanded] = useState(false);
+  const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
   const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
   const [objectives, setObjectives] = useState<string[]>([
@@ -424,7 +424,7 @@ const Optibrain = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700">Optimisation Cérébrale Actuelle</h3>
-                  <p className="text-xs text-gray-500 mt-1">3 paramètres d'optimisation</p>
+                  <p className="text-xs text-gray-500 mt-1">Hyperhémie, PIC 26 et PPC optimale 65</p>
                 </div>
               </div>
               {optimisationExpanded ? (
