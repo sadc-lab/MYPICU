@@ -74,10 +74,22 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
           </Button>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <Button variant="outline" size="sm" className="gap-2 text-xs sm:text-sm">
-              <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">UpToDate</span>
-            </Button>
+            <Button
+  asChild
+  variant="outline"
+  size="sm"
+  className="gap-2 text-xs sm:text-sm"
+>
+  <a
+    href="https://www.uptodate.com/login"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <ExternalLink className="size-3 sm:size-4" />
+    <span className="hidden sm:inline">UpToDate</span>
+  </a>
+</Button>
+
           </div>
         </div>
 
