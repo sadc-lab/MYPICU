@@ -314,7 +314,9 @@ const Optiheart = () => {
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Adhérence & Monitorage</CardTitle>
+              <CardTitle className="text-lg">
+                Adhérence & Monitorage {timeRange === 'stay' ? 'sur le séjour' : `moyen sur ${timeRange}`}
+              </CardTitle>
               <div className="flex gap-2">
                 {timeRanges.map((range) => (
                   <button
