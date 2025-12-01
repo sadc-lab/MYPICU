@@ -23,7 +23,7 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: 'body',
       content: (
         <div>
-          <h2 className="text-lg font-bold mb-2">Bienvenue dans myPICU!</h2>
+          <h2 className="text-lg font-bold mb-2">Bienvenue dans MYPICU!</h2>
           <p>Ce guide interactif vous aidera à naviguer dans l'interface. Cliquez sur "Suivant" pour commencer.</p>
         </div>
       ),
@@ -41,9 +41,9 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
           <p className="mb-2">Surveillance neurologique complète du patient :</p>
           <ul className="list-disc list-inside text-sm space-y-1">
             <li><strong>Pression intracrânienne (PIC)</strong> - Monitoring et alertes</li>
-            <li><strong>Pression de perfusion cérébrale (PPC)</strong> - Suivi en temps réel</li>
-            <li><strong>Sédation</strong> - Évaluation et ajustement</li>
-            <li><strong>EEG</strong> - Analyse de l'activité cérébrale</li>
+            <li><strong>Pression de perfusion cérébrale optimale (PPC)</strong> - Suivi en temps réel</li>
+            <li><strong>Indicateurs</strong> - Évaluation et ajustement</li>
+            <li><strong>Lignes directrices</strong> - Analyse de l'activité cérébrale</li>
           </ul>
         </div>
       ),
