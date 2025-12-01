@@ -49,13 +49,13 @@ export const TourChecklist = ({ compact = false, patientId }: TourChecklistProps
 
         {isExpanded && (
           <div className="px-2 pb-2">
-            <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+            <ul className="grid grid-cols-2 gap-x-3 gap-y-1">
               {reminders.map((item, index) => (
                 <li
                   key={index}
-                  className="flex items-center gap-1 py-0.5 px-1 text-[10px] text-muted-foreground"
+                  className="flex items-center gap-1.5 py-0.5 px-1 text-xs text-muted-foreground"
                 >
-                  <span className="h-1 w-1 rounded-full bg-primary/60 shrink-0" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
                   <span className="leading-tight truncate">{item}</span>
                 </li>
               ))}
