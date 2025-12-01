@@ -4,7 +4,7 @@ import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getPatientById } from '@/utils/patientData';
-import { ChevronRight, Bell } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getProblematicIndicators } from '@/utils/organMetrics';
 import { MiniMetricChart } from '@/components/MiniMetricChart';
@@ -215,31 +215,6 @@ const Optistate = () => {
                   </div>
                 );
               })}
-            </div>
-
-            {/* Rappels section */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <div className="flex items-center gap-2 mb-3">
-                <Bell className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-gray-700">Rappels</span>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  "Objectif de Bilan Entrée/Sortie",
-                  "Prophylaxie Thrombose veineuse",
-                  "Prophylaxie Ulcère de stress",
-                  "Fréquence des radios",
-                  "Fréquence des labos",
-                  "Équipement à retirer",
-                  "Limites d'alarmes et fréquence de surveillance",
-                  "Mesures d'isolement",
-                ].map((item, index) => (
-                  <div key={index} className="flex items-start gap-2 p-2 rounded-lg bg-gray-50">
-                    <span className="h-2 w-2 rounded-full bg-primary/60 shrink-0 mt-1" />
-                    <span className="text-xs text-gray-600 leading-tight">{item}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </CardContent>
         </Card>

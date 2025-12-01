@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ExternalLink, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ExternalLink, ChevronDown, Bell } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState } from 'react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
@@ -10,6 +10,17 @@ import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import stateIcon from '@/assets/stats-icon.svg';
 import { Patient } from '@/types/patient.types';
+
+const reminders = [
+  "Objectif de Bilan Entrée/Sortie",
+  "Prophylaxie Thrombose veineuse",
+  "Prophylaxie Ulcère de stress",
+  "Fréquence des radios",
+  "Fréquence des labos",
+  "Équipement à retirer",
+  "Limites d'alarmes et fréquence de surveillance",
+  "Mesures d'isolement",
+];
 
 interface PatientHeaderProps {
   currentPage: 'optistate' | 'optibrain' | 'optiheart' | 'optilungs';
@@ -21,6 +32,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const patientId = searchParams.get('patient') || '#25';
   const patient = getPatientById(patientId);
   const [showVitals, setShowVitals] = useState(false);
+  const [showReminders, setShowReminders] = useState(false);
 
   if (!patient) return null;
 
@@ -112,6 +124,24 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                     <span className="text-muted-foreground block">SpO2</span>
                     <span className="font-semibold text-foreground">98%</span>
                   </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            <Collapsible open={showReminders} onOpenChange={setShowReminders} className="mt-2">
+              <CollapsibleTrigger className="flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors">
+                <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="font-medium">Rappels ({reminders.length})</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${showReminders ? 'rotate-180' : ''}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-border">
+                  {reminders.map((item, index) => (
+                    <div key={index} className="flex items-start gap-2 p-2 rounded-lg bg-muted/50">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0 mt-1.5" />
+                      <span className="text-xs text-muted-foreground leading-tight">{item}</span>
+                    </div>
+                  ))}
                 </div>
               </CollapsibleContent>
             </Collapsible>
