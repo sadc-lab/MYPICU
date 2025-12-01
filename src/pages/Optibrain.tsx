@@ -289,10 +289,6 @@ const Optibrain = () => {
     let intervalMinutes: number;
 
     switch (timeRange) {
-      case "now":
-        dataPoints = 1;
-        intervalMinutes = 0;
-        break;
       case "3h":
         dataPoints = 12; // One point every 15 minutes (aligned with PPC Opt)
         intervalMinutes = 15;
@@ -332,10 +328,7 @@ const Optibrain = () => {
       time.setSeconds(0);
       time.setMilliseconds(0);
       
-      const timeStr =
-        timeRange === "now"
-          ? "Actuel"
-          : `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+      const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
 
       const dataPoint: any = {
         time: timeStr,
@@ -854,11 +847,9 @@ const Optibrain = () => {
             <Card className="border-2 border-gray-200">
               <CardHeader>
                 <CardTitle className="text-base">
-                  {timeRange === "now"
-                    ? "Monitoring (Maintenant)"
-                    : timeRange === "stay"
-                      ? "Monitoring (Séjour complet)"
-                      : `Monitoring (${timeRange.toUpperCase()})`}
+                  {timeRange === "stay"
+                    ? "Monitoring (Séjour complet)"
+                    : `Monitoring (${timeRange.toUpperCase()})`}
                 </CardTitle>
               </CardHeader>
               <CardContent>
