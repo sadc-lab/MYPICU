@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChevronDown, ChevronUp, Bell } from "lucide-react";
 import { useTourNavigation } from "@/hooks/useTourNavigation";
 
@@ -31,71 +30,79 @@ export const TourChecklist = ({ compact = false, patientId }: TourChecklistProps
 
   if (compact) {
     return (
-      <div className="border rounded-lg border-primary/20 bg-card mb-4">
-        <div className="p-2">
+      <Card className="border-2 border-gray-200 mb-4">
+        <CardHeader
+          className="cursor-pointer hover:bg-gray-50 transition-colors py-3"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bell className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium text-primary">Rappels</span>
-              <span className="text-xs text-muted-foreground">
-                ({reminders.length} éléments)
-              </span>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center border-4 border-primary/40 bg-primary/10">
+                <Bell className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700">Rappels</h3>
+                <p className="text-xs text-gray-500 mt-1">{reminders.length} éléments à vérifier</p>
+              </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setIsExpanded(!isExpanded)} className="h-6 w-6 p-0">
-              {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            </Button>
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5 text-gray-400" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-gray-400" />
+            )}
           </div>
-        </div>
+        </CardHeader>
 
         {isExpanded && (
-          <div className="px-2 pb-2">
-            <ul className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
               {reminders.map((item, index) => (
-                <li
-                  key={index}
-                  className="flex items-center gap-1.5 py-0.5 px-1 text-xs text-muted-foreground"
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
-                  <span className="leading-tight truncate">{item}</span>
-                </li>
+                <div key={index} className="flex items-start gap-2 p-2 rounded-lg bg-gray-50">
+                  <span className="h-2 w-2 rounded-full bg-primary/60 shrink-0 mt-1" />
+                  <span className="text-xs text-gray-600 leading-tight">{item}</span>
+                </div>
               ))}
-            </ul>
-          </div>
+            </div>
+          </CardContent>
         )}
-      </div>
+      </Card>
     );
   }
 
   return (
-    <Card className="mb-6 border-primary/20 bg-card">
-      <CardHeader className="pb-2">
+    <Card className="mb-6 border-2 border-gray-200">
+      <CardHeader
+        className="cursor-pointer hover:bg-gray-50 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base font-medium text-primary">Rappels pour la tournée</CardTitle>
-            <span className="text-sm text-muted-foreground">
-              ({reminders.length} éléments)
-            </span>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center border-4 border-primary/40 bg-primary/10">
+              <Bell className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700">Rappels pour la tournée</h3>
+              <p className="text-xs text-gray-500 mt-1">{reminders.length} éléments à vérifier</p>
+            </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setIsExpanded(!isExpanded)} className="h-8 px-2">
-            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
+          {isExpanded ? (
+            <ChevronUp className="h-5 w-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-gray-400" />
+          )}
         </div>
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="pt-2 pb-3">
-          <ul className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1">
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
             {reminders.map((item, index) => (
-              <li
-                key={index}
-                className="flex items-center gap-1.5 py-1 px-1.5 text-xs text-muted-foreground"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
-                <span className="leading-tight">{item}</span>
-              </li>
+              <div key={index} className="flex items-start gap-2 p-2 rounded-lg bg-gray-50">
+                <span className="h-2 w-2 rounded-full bg-primary/60 shrink-0 mt-1" />
+                <span className="text-xs text-gray-600 leading-tight">{item}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         </CardContent>
       )}
     </Card>
