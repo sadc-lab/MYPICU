@@ -68,7 +68,7 @@ export const Header = () => {
       ? '/optiheart'
       : location.pathname.startsWith('/optilungs')
       ? '/optilungs'
-      : '/optistats';
+      : '/optistate';
     const timeRange = searchParams.get('timeRange');
     const params = new URLSearchParams();
     params.set('patient', patientId);
@@ -153,7 +153,7 @@ export const Header = () => {
                         return (
                         <Link
                           key={patient.id}
-                          to={`/optistats?${linkParams.toString()}`}
+                          to={`/optistate?${linkParams.toString()}`}
                           className="block px-4 py-3 hover:bg-accent border-b transition-colors"
                           onClick={() => {
                             setShowDropdown(false);

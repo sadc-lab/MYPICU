@@ -50,9 +50,9 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
         case 'lungs':
           return 'optilungs';
         case 'kidney':
-          return 'optistats'; // Default to stats for kidney
+          return 'optistate'; // Default to state for kidney
         default:
-          return 'optistats';
+          return 'optistate';
       }
     };
 
@@ -132,7 +132,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
               <TableRow 
                 key={patient.id}
                 className="cursor-pointer hover:bg-accent transition-colors border-b"
-                onClick={() => navigate(`/optistats?patient=${encodeURIComponent(patient.id)}`)}
+                onClick={() => navigate(`/optistate?patient=${encodeURIComponent(patient.id)}`)}
               >
                 <TableCell className="py-3 sm:py-4">
                   <div className="font-medium text-sm sm:text-base text-foreground">

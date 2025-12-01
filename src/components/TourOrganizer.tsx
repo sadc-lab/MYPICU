@@ -75,7 +75,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
       case 'lungs':
         return 'optilungs';
       default:
-        return 'optistats';
+        return 'optistate';
     }
   };
 
@@ -191,7 +191,7 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
     // Save tour order and navigate to first patient
     if (orderedPatients.length > 0) {
       startTour(orderedPatients);
-      navigate(`/optistats?patient=${orderedPatients[0].id}`);
+      navigate(`/optistate?patient=${orderedPatients[0].id}`);
       onOpenChange(false);
     }
   };
