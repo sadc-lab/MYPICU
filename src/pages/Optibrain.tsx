@@ -834,8 +834,8 @@ const Optibrain = () => {
               <CardHeader>
                 <CardTitle className="text-base">
                   {timeRange === "stay"
-                    ? "Monitoring (Séjour complet)"
-                    : `Monitoring (${timeRange.toUpperCase()})`}
+                    ? "Monitorage (Séjour complet)"
+                    : `Monitorage (${timeRange.toUpperCase()})`}
                 </CardTitle>
               </CardHeader>
               <CardContent>
