@@ -25,6 +25,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
 import { useTimeRange } from "@/hooks/useTimeRange";
 import { getStatusHexColor } from "@/utils/colorUtils";
+import brainIcon from "@/assets/brain-icon.svg";
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -34,6 +35,7 @@ const Optibrain = () => {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
+  const [optimisationExpanded, setOptimisationExpanded] = useState(false);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
   const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
   const [objectives, setObjectives] = useState<string[]>([
@@ -411,34 +413,57 @@ const Optibrain = () => {
         </Card>
 
         <Card className="bg-white shadow-sm mb-6">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">Optimisation Cérébrale</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-8">
-              {brainOptimisationMetrics.map((metric, index) => {
-                const statusColor = metric.status === "warning" ? "text-orange-500" : "text-gray-600";
-                return (
-                  <div
-                    key={index}
-                    className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
-                    onClick={() => metric.hasDetails && setOpenDialog(metric.dialogKey || null)}
-                  >
-                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">{metric.label}</div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className={`text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
-                    </div>
-                    {metric.hasDetails && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
-                        <Info className="h-3 w-3" />
-                        <span>Voir détails</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+          <CardHeader
+            className="cursor-pointer hover:bg-gray-50 transition-colors"
+            onClick={() => setOptimisationExpanded(!optimisationExpanded)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-blue-400 text-blue-600 bg-blue-50">
+                  <img src={brainIcon} alt="brain" className="h-8 w-8" style={{ filter: 'invert(39%) sepia(95%) saturate(1095%) hue-rotate(196deg) brightness(97%) contrast(94%)' }} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700">Optimisation Cérébrale Actuelle</h3>
+                  <p className="text-xs text-gray-500 mt-1">3 paramètres d'optimisation</p>
+                </div>
+              </div>
+              {optimisationExpanded ? (
+                <ChevronUp className="h-5 w-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-gray-400" />
+              )}
             </div>
-          </CardContent>
+          </CardHeader>
+          {optimisationExpanded && (
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-3 gap-8 pt-4">
+                {brainOptimisationMetrics.map((metric, index) => {
+                  const statusColor = metric.status === "warning" ? "text-orange-500" : "text-gray-600";
+                  return (
+                    <div
+                      key={index}
+                      className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        metric.hasDetails && setOpenDialog(metric.dialogKey || null);
+                      }}
+                    >
+                      <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">{metric.label}</div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
+                      </div>
+                      {metric.hasDetails && (
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
+                          <Info className="h-3 w-3" />
+                          <span>Voir détails</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          )}
         </Card>
 
         {/* Neurological State Dialog */}
