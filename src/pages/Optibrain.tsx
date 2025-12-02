@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { PatientHeader } from "@/components/PatientHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  Loader2,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -26,6 +27,17 @@ import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
 import { useTimeRange } from "@/hooks/useTimeRange";
 import { getStatusHexColor } from "@/utils/colorUtils";
 import brainIcon from "@/assets/brain-icon.svg";
+import { 
+  loadPatientFileData, 
+  hasPatientFileData, 
+  getTimeSeriesForRange,
+  getLatestValue,
+  calculateAverage,
+  calculateTimeInRanges,
+  getAvailableVariables,
+  PatientFileData,
+  TimeSeriesDataPoint
+} from "@/services/patientFileData.service";
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -53,6 +65,23 @@ const Optibrain = () => {
   const [editedObjectives, setEditedObjectives] = useState<string[]>([]);
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
+  
+  // Patient file data state
+  const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
+  const [fileDataLoading, setFileDataLoading] = useState(false);
+  const hasFileData = hasPatientFileData(patientId);
+  
+  // Load patient file data
+  useEffect(() => {
+    if (hasFileData) {
+      setFileDataLoading(true);
+      loadPatientFileData(patientId)
+        .then(data => setPatientFileData(data))
+        .finally(() => setFileDataLoading(false));
+    } else {
+      setPatientFileData(null);
+    }
+  }, [patientId, hasFileData]);
   const monitoringTargets = [
     {
       label: "Opioide",
@@ -254,11 +283,93 @@ const Optibrain = () => {
   const clinicalAdherence = Math.round((normalIndicators / totalIndicators) * 100);
   const outOfRangeCount = clinicalIndicators.filter((i) => i.status !== "normal").length;
 
-  // PPC Opt is always calculated at 15-minute intervals
+  // Map time range to hours
+  const getHoursFromTimeRange = (range: string): number => {
+    switch (range) {
+      case "3h": return 3;
+      case "6h": return 6;
+      case "12h": return 12;
+      case "24h": return 24;
+      case "stay": return 96; // ~4 days
+      default: return 24;
+    }
+  };
+
+  // Real data time series for charts (when patient file data is available)
+  const realTimeSeriesData = useMemo(() => {
+    if (!patientFileData) return null;
+    
+    const hoursBack = getHoursFromTimeRange(timeRange);
+    const availableVars = getAvailableVariables(patientFileData);
+    
+    // Map variable names to our indicator labels
+    const varMapping: Record<string, string> = {
+      'Variable_FC': 'FC',
+      'Variable_PIC': 'PIC',
+      'Variable_PPC': 'PPC',
+      'Variable_PAM': 'PAM',
+      'Variable_PVC': 'PVC',
+      'Variable_Temperature': 'Temp.',
+      'Variable_ETCO2': 'ETCO2',
+    };
+    
+    const result: Record<string, TimeSeriesDataPoint[]> = {};
+    
+    Object.entries(varMapping).forEach(([varKey, label]) => {
+      if (availableVars.includes(varKey)) {
+        result[label] = getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15);
+      }
+    });
+    
+    return result;
+  }, [patientFileData, timeRange]);
+
+  // Chart data - use real data when available, otherwise use mock
   const chartData = useMemo(() => {
+    // If we have real data, use it
+    if (realTimeSeriesData && Object.keys(realTimeSeriesData).length > 0) {
+      // Find the variable with the most data points to use as base timeline
+      const baseVar = Object.entries(realTimeSeriesData)
+        .sort((a, b) => b[1].length - a[1].length)[0];
+      
+      if (baseVar && baseVar[1].length > 0) {
+        return baseVar[1].map((point, idx) => {
+          const time = new Date(point.charttime);
+          const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+          
+          const dataPoint: any = {
+            time: timeStr,
+            timestamp: time.getTime(),
+          };
+          
+          // Add all available variables
+          Object.entries(realTimeSeriesData).forEach(([label, data]) => {
+            // Find closest data point by time
+            const closest = data.find((d, i) => i === idx) || data[data.length - 1];
+            if (closest) {
+              dataPoint[label] = closest.valeur;
+            }
+          });
+          
+          // Add mock data for indicators without real data
+          clinicalIndicators.forEach((indicator) => {
+            if (!(indicator.label in dataPoint)) {
+              const baseValue = indicator.value;
+              const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
+              const x = Math.sin(seed) * 10000;
+              const variation = ((x - Math.floor(x)) - 0.5) * (baseValue * 0.2);
+              dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
+            }
+          });
+          
+          return dataPoint;
+        });
+      }
+    }
+    
+    // Fallback to mock data generation
     const data = [];
     const now = new Date();
-    const PPC_OPT_INTERVAL = 15; // PPC optimal is always calculated at 15-minute intervals
 
     // Determine number of data points and time intervals based on time range
     let dataPoints: number;
@@ -266,23 +377,23 @@ const Optibrain = () => {
 
     switch (timeRange) {
       case "3h":
-        dataPoints = 12; // One point every 15 minutes (aligned with PPC Opt)
+        dataPoints = 12;
         intervalMinutes = 15;
         break;
       case "6h":
-        dataPoints = 24; // One point every 15 minutes
+        dataPoints = 24;
         intervalMinutes = 15;
         break;
       case "12h":
-        dataPoints = 48; // One point every 15 minutes
+        dataPoints = 48;
         intervalMinutes = 15;
         break;
       case "24h":
-        dataPoints = 96; // One point every 15 minutes
+        dataPoints = 96;
         intervalMinutes = 15;
         break;
       case "stay":
-        dataPoints = 192; // One point every 15 minutes for ~48h stay
+        dataPoints = 192;
         intervalMinutes = 15;
         break;
       default:
@@ -291,7 +402,6 @@ const Optibrain = () => {
         break;
     }
 
-    // Generate seed for consistent random values per timestamp
     const getSeededRandom = (seed: number) => {
       const x = Math.sin(seed) * 10000;
       return x - Math.floor(x);
@@ -299,7 +409,6 @@ const Optibrain = () => {
 
     for (let i = dataPoints - 1; i >= 0; i--) {
       const time = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
-      // Round to nearest 15 minutes for consistency
       time.setMinutes(Math.floor(time.getMinutes() / 15) * 15);
       time.setSeconds(0);
       time.setMilliseconds(0);
@@ -313,7 +422,6 @@ const Optibrain = () => {
 
       clinicalIndicators.forEach((indicator) => {
         const baseValue = indicator.value;
-        // Use seeded random for consistent values based on timestamp and indicator
         const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
         const variation = (getSeededRandom(seed) - 0.5) * (baseValue * 0.2);
         dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
@@ -322,13 +430,12 @@ const Optibrain = () => {
       data.push(dataPoint);
     }
 
-    // Remove duplicates based on timestamp
     const uniqueData = data.filter((item, index, self) =>
       index === self.findIndex((t) => t.timestamp === item.timestamp)
     );
 
     return uniqueData;
-  }, [timeRange]);
+  }, [timeRange, realTimeSeriesData, clinicalIndicators]);
 
   // Color mapping for chart lines based on status
   const getIndicatorColor = (label: string) => {
@@ -832,11 +939,27 @@ const Optibrain = () => {
             {/* Monitoring Chart */}
             <Card className="border-2 border-gray-200">
               <CardHeader>
-                <CardTitle className="text-base">
-                  {timeRange === "stay"
-                    ? "Monitorage (Séjour complet)"
-                    : `Monitorage (${timeRange.toUpperCase()})`}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">
+                    {timeRange === "stay"
+                      ? "Monitorage (Séjour complet)"
+                      : `Monitorage (${timeRange.toUpperCase()})`}
+                  </CardTitle>
+                  {hasFileData && (
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                      {fileDataLoading ? (
+                        <span className="flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Chargement...
+                        </span>
+                      ) : patientFileData ? (
+                        "Données réelles"
+                      ) : (
+                        "Données simulées"
+                      )}
+                    </Badge>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
