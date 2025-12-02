@@ -27,16 +27,16 @@ import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
 import { useTimeRange } from "@/hooks/useTimeRange";
 import { getStatusHexColor } from "@/utils/colorUtils";
 import brainIcon from "@/assets/brain-icon.svg";
-import { 
-  loadPatientFileData, 
-  hasPatientFileData, 
+import {
+  loadPatientFileData,
+  hasPatientFileData,
   getTimeSeriesForRange,
   getLatestValue,
   calculateAverage,
   calculateTimeInRanges,
   getAvailableVariables,
   PatientFileData,
-  TimeSeriesDataPoint
+  TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
 
 const Optibrain = () => {
@@ -65,18 +65,18 @@ const Optibrain = () => {
   const [editedObjectives, setEditedObjectives] = useState<string[]>([]);
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
-  
+
   // Patient file data state
   const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
   const [fileDataLoading, setFileDataLoading] = useState(false);
   const hasFileData = hasPatientFileData(patientId);
-  
+
   // Load patient file data
   useEffect(() => {
     if (hasFileData) {
       setFileDataLoading(true);
       loadPatientFileData(patientId)
-        .then(data => setPatientFileData(data))
+        .then((data) => setPatientFileData(data))
         .finally(() => setFileDataLoading(false));
     } else {
       setPatientFileData(null);
@@ -85,57 +85,57 @@ const Optibrain = () => {
   const monitoringTargets = [
     {
       label: "Opioide",
-      value: 150,
-      unit: "mcg/h",
+      value: "",
+      unit: "",
       target: "100-200 mcg/h",
       status: "normal",
     },
     {
       label: "Hypnotique",
-      value: 220,
-      unit: "mg/h",
+      value: "",
+      unit: "",
       target: "150-250 mg/h",
       status: "normal",
     },
     {
       label: "Propofol 48h",
-      value: 10.5,
-      unit: "g",
+      value: "",
+      unit: "",
       target: "< 12 g",
       status: "normal",
     },
     {
       label: "PIC",
-      value: 26,
-      unit: "mmHg",
+      value: "",
+      unit: "",
       target: "< 20 mmHg",
       status: "warning",
     },
     {
       label: "PAM",
-      value: 85,
-      unit: "mmHg",
+      value: "",
+      unit: "",
       target: "65-120 mmHg",
       status: "normal",
     },
     {
       label: "PVC",
-      value: 8,
-      unit: "mmHg",
+      value: "",
+      unit: "",
       target: "2-8 mmHg",
       status: "normal",
     },
     {
       label: "ETCO2",
-      value: 38,
-      unit: "mmHg",
+      value: "",
+      unit: "",
       target: "35-45 mmHg",
       status: "normal",
     },
     {
       label: "Température",
-      value: 36.5,
-      unit: "°C",
+      value: "",
+      unit: "",
       target: "36-38 °C",
       status: "normal",
     },
@@ -196,8 +196,8 @@ const Optibrain = () => {
   const clinicalIndicators = [
     {
       label: "Tête",
-      value: 32,
-      unit: "°",
+      value: "",
+      unit: "",
       target: "0-30°",
       status: "warning",
       trend: "stable",
@@ -205,8 +205,8 @@ const Optibrain = () => {
     },
     {
       label: "PIC",
-      value: 27,
-      unit: "mmHg",
+      value: "",
+      unit: "",
       target: "< 20mmHg",
       status: "critical",
       trend: "down",
@@ -214,8 +214,8 @@ const Optibrain = () => {
     },
     {
       label: "PPC",
-      value: 73,
-      unit: "mmHg",
+      value: "",
+      unit: "",
       target: "60-70 mmHg",
       status: "warning",
       trend: "up",
@@ -223,8 +223,8 @@ const Optibrain = () => {
     },
     {
       label: "Temp.",
-      value: 35.8,
-      unit: "°C",
+      value: "",
+      unit: "",
       target: "35-38°C",
       status: "normal",
       trend: "up",
@@ -232,8 +232,8 @@ const Optibrain = () => {
     },
     {
       label: "PaCO2",
-      value: 38,
-      unit: "mmHg",
+      value: "",
+      unit: "",
       target: "35-45mmHg",
       status: "normal",
       trend: "down",
@@ -242,16 +242,16 @@ const Optibrain = () => {
     {
       label: "Glycémie",
       value: 5.9,
-      unit: "mmol/L",
-      target: "5-11 mmol/L",
+      unit: "",
+      target: "",
       status: "normal",
       trend: "stable",
       change: 0,
     },
     {
       label: "Hb",
-      value: 8,
-      unit: "g/dL",
+      value: "",
+      unit: "",
       target: "> 7g/dl",
       status: "normal",
       trend: "stable",
@@ -259,7 +259,7 @@ const Optibrain = () => {
     },
     {
       label: "INR",
-      value: 1.54,
+      value: "",
       unit: "",
       target: "< 1.2",
       status: "critical",
@@ -268,8 +268,8 @@ const Optibrain = () => {
     },
     {
       label: "Plaquettes",
-      value: 179,
-      unit: "g/L",
+      value: "",
+      unit: "",
       target: "> 100 g/L",
       status: "normal",
       trend: "down",
@@ -286,41 +286,47 @@ const Optibrain = () => {
   // Map time range to hours
   const getHoursFromTimeRange = (range: string): number => {
     switch (range) {
-      case "3h": return 3;
-      case "6h": return 6;
-      case "12h": return 12;
-      case "24h": return 24;
-      case "stay": return 96; // ~4 days
-      default: return 24;
+      case "3h":
+        return 3;
+      case "6h":
+        return 6;
+      case "12h":
+        return 12;
+      case "24h":
+        return 24;
+      case "stay":
+        return 96; // ~4 days
+      default:
+        return 24;
     }
   };
 
   // Real data time series for charts (when patient file data is available)
   const realTimeSeriesData = useMemo(() => {
     if (!patientFileData) return null;
-    
+
     const hoursBack = getHoursFromTimeRange(timeRange);
     const availableVars = getAvailableVariables(patientFileData);
-    
+
     // Map variable names to our indicator labels
     const varMapping: Record<string, string> = {
-      'Variable_FC': 'FC',
-      'Variable_PIC': 'PIC',
-      'Variable_PPC': 'PPC',
-      'Variable_PAM': 'PAM',
-      'Variable_PVC': 'PVC',
-      'Variable_Temperature': 'Temp.',
-      'Variable_ETCO2': 'ETCO2',
+      Variable_FC: "FC",
+      Variable_PIC: "PIC",
+      Variable_PPC: "PPC",
+      Variable_PAM: "PAM",
+      Variable_PVC: "PVC",
+      Variable_Temperature: "Temp.",
+      Variable_ETCO2: "ETCO2",
     };
-    
+
     const result: Record<string, TimeSeriesDataPoint[]> = {};
-    
+
     Object.entries(varMapping).forEach(([varKey, label]) => {
       if (availableVars.includes(varKey)) {
         result[label] = getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15);
       }
     });
-    
+
     return result;
   }, [patientFileData, timeRange]);
 
@@ -329,19 +335,18 @@ const Optibrain = () => {
     // If we have real data, use it
     if (realTimeSeriesData && Object.keys(realTimeSeriesData).length > 0) {
       // Find the variable with the most data points to use as base timeline
-      const baseVar = Object.entries(realTimeSeriesData)
-        .sort((a, b) => b[1].length - a[1].length)[0];
-      
+      const baseVar = Object.entries(realTimeSeriesData).sort((a, b) => b[1].length - a[1].length)[0];
+
       if (baseVar && baseVar[1].length > 0) {
         return baseVar[1].map((point, idx) => {
           const time = new Date(point.charttime);
           const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
-          
+
           const dataPoint: any = {
             time: timeStr,
             timestamp: time.getTime(),
           };
-          
+
           // Add all available variables
           Object.entries(realTimeSeriesData).forEach(([label, data]) => {
             // Find closest data point by time
@@ -350,23 +355,23 @@ const Optibrain = () => {
               dataPoint[label] = closest.valeur;
             }
           });
-          
+
           // Add mock data for indicators without real data
           clinicalIndicators.forEach((indicator) => {
             if (!(indicator.label in dataPoint)) {
               const baseValue = indicator.value;
               const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
               const x = Math.sin(seed) * 10000;
-              const variation = ((x - Math.floor(x)) - 0.5) * (baseValue * 0.2);
+              const variation = (x - Math.floor(x) - 0.5) * (baseValue * 0.2);
               dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
             }
           });
-          
+
           return dataPoint;
         });
       }
     }
-    
+
     // Fallback to mock data generation
     const data = [];
     const now = new Date();
@@ -412,7 +417,7 @@ const Optibrain = () => {
       time.setMinutes(Math.floor(time.getMinutes() / 15) * 15);
       time.setSeconds(0);
       time.setMilliseconds(0);
-      
+
       const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
 
       const dataPoint: any = {
@@ -430,8 +435,8 @@ const Optibrain = () => {
       data.push(dataPoint);
     }
 
-    const uniqueData = data.filter((item, index, self) =>
-      index === self.findIndex((t) => t.timestamp === item.timestamp)
+    const uniqueData = data.filter(
+      (item, index, self) => index === self.findIndex((t) => t.timestamp === item.timestamp),
     );
 
     return uniqueData;
@@ -502,7 +507,14 @@ const Optibrain = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-blue-400 text-blue-600 bg-blue-50">
-                  <img src={brainIcon} alt="brain" className="h-8 w-8" style={{ filter: 'invert(39%) sepia(95%) saturate(1095%) hue-rotate(196deg) brightness(97%) contrast(94%)' }} />
+                  <img
+                    src={brainIcon}
+                    alt="brain"
+                    className="h-8 w-8"
+                    style={{
+                      filter: "invert(39%) sepia(95%) saturate(1095%) hue-rotate(196deg) brightness(97%) contrast(94%)",
+                    }}
+                  />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700">Optimisation cérébrale actuelle</h3>
@@ -530,7 +542,9 @@ const Optibrain = () => {
                         metric.hasDetails && setOpenDialog(metric.dialogKey || null);
                       }}
                     >
-                      <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">{metric.label}</div>
+                      <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                        {metric.label}
+                      </div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className={`text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
                       </div>
@@ -608,7 +622,8 @@ const Optibrain = () => {
                 <div className="border-t mt-6 pt-4">
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <div>
-                      État : <span className="font-semibold text-red-500">Hyperhémie</span> <span className="text-gray-500">depuis 3am</span>
+                      État : <span className="font-semibold text-red-500">Hyperhémie</span>{" "}
+                      <span className="text-gray-500">depuis 3am</span>
                     </div>
                     <div>
                       PPC actuel : <span className="font-semibold">65 mmHg</span>
@@ -786,7 +801,7 @@ const Optibrain = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">
-                Adhérence & Monitorage {timeRange === 'stay' ? 'sur le séjour' : `moyen sur ${timeRange}`}
+                Adhérence & Monitorage {timeRange === "stay" ? "sur le séjour" : `moyen sur ${timeRange}`}
               </CardTitle>
               <div className="flex gap-2">
                 {timeRanges.map((range) => (
@@ -924,7 +939,8 @@ const Optibrain = () => {
                           <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-700">
-                              {target.label} : {target.value}{target.unit}
+                              {target.label} : {target.value}
+                              {target.unit}
                             </p>
                             <p className="text-xs text-gray-500">{target.target}</p>
                           </div>
@@ -941,9 +957,7 @@ const Optibrain = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">
-                    {timeRange === "stay"
-                      ? "Monitorage (Séjour complet)"
-                      : `Monitorage (${timeRange.toUpperCase()})`}
+                    {timeRange === "stay" ? "Monitorage (Séjour complet)" : `Monitorage (${timeRange.toUpperCase()})`}
                   </CardTitle>
                   {hasFileData && (
                     <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
