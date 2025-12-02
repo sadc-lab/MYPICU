@@ -6,6 +6,40 @@ export type { Patient };
 
 export const pedAPatients: Patient[] = [
   {
+    id: "#8448",
+    name: "Patient 8448 (M)",
+    age: "6y 3m 20d",
+    weight: "22.5 kg",
+    picuId: "D1",
+    pelodScore: 28,
+    adherence: 65,
+    diagnosis: "Traumatisme crânien avec hypertension intracrânienne",
+    exam: "CT SCAN, EEG",
+    priority: "Élevée",
+    tour: "Prioritaire",
+    brainScore: 3,
+    heartScore: 2,
+    lungsScore: 1,
+    kidneyScore: 0
+  },
+  {
+    id: "#6312",
+    name: "Patient 6312 (F)",
+    age: "8y 11m 18d",
+    weight: "28.3 kg",
+    picuId: "D4",
+    pelodScore: 24,
+    adherence: 72,
+    diagnosis: "État de mal épileptique réfractaire",
+    exam: "EEG continu, IRM",
+    priority: "Élevée",
+    tour: "Prioritaire",
+    brainScore: 3,
+    heartScore: 1,
+    lungsScore: 2,
+    kidneyScore: 1
+  },
+  {
     id: "#25",
     name: "Dave, Alex (M)",
     age: "4y 4m 12d",
