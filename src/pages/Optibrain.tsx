@@ -895,7 +895,7 @@ const Optibrain = () => {
                         className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
                       >
                         <div
-                          className={`w-3 h-3 rounded-full ${target.isAdherent ? "bg-green-500" : "bg-red-500"}`}
+                          className={`w-3 h-3 rounded-full ${target.isAdherent ? "bg-gray-400" : "bg-red-500"}`}
                         ></div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-700">{target.label}</p>
