@@ -899,7 +899,7 @@ const Optibrain = () => {
                         ></div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-700">{target.label}</p>
-                          <p className={`text-xs font-medium ${target.isAdherent ? "text-green-600" : "text-red-600"}`}>
+                          <p className={`text-xs font-medium ${target.isAdherent ? "text-gray-400" : "text-red-600"}`}>
                             {target.isAdherent ? "Adhérent" : "Non adhérent"}
                           </p>
                         </div>
