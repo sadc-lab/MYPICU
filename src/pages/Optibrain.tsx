@@ -914,7 +914,7 @@ const Optibrain = () => {
             <Card className="border-2 border-gray-200">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">
+                  <CardTitle className="text-lg">
                     {timeRange === "stay" ? "Monitorage (Séjour complet)" : `Monitorage (${timeRange.toUpperCase()})`}
                   </CardTitle>
                   {hasFileData && (
