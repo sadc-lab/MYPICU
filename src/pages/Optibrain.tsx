@@ -281,6 +281,8 @@ const Optibrain = () => {
       Variable_PVC: "PVC",
       Variable_Temperature: "Temp.",
       Variable_ETCO2: "ETCO2",
+      Variable_ETCO2: "ETCO2",
+      Variable_Hemoglobin: "hb",
     };
 
     const result: Record<string, TimeSeriesDataPoint[]> = {};
