@@ -205,8 +205,8 @@ const Optibrain = () => {
     },
     {
       label: "Glycémie",
-      value: 5.9,
-      unit: "",
+      value: "",
+      unit: "6-11 mmol/L",
       target: "",
       status: "normal",
       trend: "stable",
@@ -280,7 +280,6 @@ const Optibrain = () => {
       Variable_PAM: "PAM",
       Variable_PVC: "PVC",
       Variable_Temperature: "Temp.",
-      Variable_ETCO2: "ETCO2",
       Variable_ETCO2: "ETCO2",
       Variable_Hemoglobin: "hb",
     };
