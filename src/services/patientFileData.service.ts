@@ -222,3 +222,116 @@ export function getAvailableVariables(patientData: PatientFileData): string[] {
     (patientData[key] as any[])[0]?.charttime !== undefined
   );
 }
+
+// Validity data keys mapping for monitoring interventions
+export const VALIDITY_DATA_KEYS = {
+  PicMonitorage: 'PicMonitorageData_validite',
+  Temperature: 'TemperatureData_validite',
+  PPC: 'PPCData_validite',
+  PaCO2: 'PaCO2Data_validite',
+  INR: 'INRData_validite',
+  PupilleDroite: 'PupilleDroiteData_validite',
+  PAM: 'PAMData_validite',
+  Hypnotique: 'HypnotiqueData_validite',
+  PupilleGauche: 'PupilleGaucheData_validite',
+  PositionTete: 'PositionTeteData_validite',
+  Glycemie: 'GlycemieData_validite',
+  Propofol: 'PropofolData_validite',
+  PicHtic: 'PicHticData_validite',
+  PVC: 'PVCData_validite',
+  AntiEpileptique: 'AntiEpileptiqueData_validite',
+  Opioides: 'OpioidesData_validite',
+  Plaquettes: 'PlaquettesData_validite',
+  Nutrition: 'NutritionData_validite',
+  EtCO2: 'EtCO2Data_validite',
+  Hemoglobine: 'HemoglobineData_validite',
+} as const;
+
+export interface ValidityData {
+  id_patient: number;
+  [key: string]: number; // H0, H1, H2, etc.
+}
+
+// Get validity data for a specific monitoring item
+export function getValidityData(
+  patientData: PatientFileData,
+  validityKey: string
+): ValidityData | null {
+  const data = patientData[validityKey];
+  if (!Array.isArray(data) || data.length === 0) return null;
+  return data[0] as ValidityData;
+}
+
+// Calculate adherence percentage from validity data
+export function calculateValidityAdherence(validityData: ValidityData | null): {
+  adherent: number;
+  total: number;
+  percentage: number;
+} {
+  if (!validityData) return { adherent: 0, total: 0, percentage: 0 };
+  
+  const hourKeys = Object.keys(validityData).filter(k => k.startsWith('H'));
+  const total = hourKeys.length;
+  const adherent = hourKeys.filter(k => validityData[k] === 1).length;
+  
+  return {
+    adherent,
+    total,
+    percentage: total > 0 ? Math.round((adherent / total) * 100) : 0
+  };
+}
+
+// Get latest validity status (checks last N hours, default 24)
+export function getLatestValidityStatus(
+  validityData: ValidityData | null,
+  lastNHours: number = 24
+): 'normal' | 'warning' | 'critical' {
+  if (!validityData) return 'normal';
+  
+  const hourKeys = Object.keys(validityData)
+    .filter(k => k.startsWith('H'))
+    .sort((a, b) => parseInt(b.replace('H', '')) - parseInt(a.replace('H', '')))
+    .slice(0, lastNHours);
+  
+  if (hourKeys.length === 0) return 'normal';
+  
+  const adherentCount = hourKeys.filter(k => validityData[k] === 1).length;
+  const percentage = (adherentCount / hourKeys.length) * 100;
+  
+  if (percentage >= 80) return 'normal';
+  if (percentage >= 50) return 'warning';
+  return 'critical';
+}
+
+// Get all monitoring interventions status from patient data
+export function getMonitoringInterventionsStatus(patientData: PatientFileData): Array<{
+  key: string;
+  label: string;
+  status: 'normal' | 'warning' | 'critical';
+  adherencePercentage: number;
+}> {
+  const mappings: Array<{ key: keyof typeof VALIDITY_DATA_KEYS; label: string }> = [
+    { key: 'Opioides', label: 'Opioide' },
+    { key: 'Hypnotique', label: 'Hypnotique' },
+    { key: 'Propofol', label: 'Propofol 48h' },
+    { key: 'PicMonitorage', label: 'PIC' },
+    { key: 'PAM', label: 'PAM' },
+    { key: 'PVC', label: 'PVC' },
+    { key: 'EtCO2', label: 'ETCO2' },
+    { key: 'Temperature', label: 'Température' },
+  ];
+  
+  return mappings.map(({ key, label }) => {
+    const validityKey = VALIDITY_DATA_KEYS[key];
+    const validityData = getValidityData(patientData, validityKey);
+    const { percentage } = calculateValidityAdherence(validityData);
+    const status = getLatestValidityStatus(validityData);
+    
+    return {
+      key,
+      label,
+      status,
+      adherencePercentage: percentage
+    };
+  });
+}

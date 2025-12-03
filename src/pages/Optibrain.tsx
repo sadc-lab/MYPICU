@@ -35,6 +35,7 @@ import {
   calculateAverage,
   calculateTimeInRanges,
   getAvailableVariables,
+  getMonitoringInterventionsStatus,
   PatientFileData,
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
@@ -82,64 +83,37 @@ const Optibrain = () => {
       setPatientFileData(null);
     }
   }, [patientId, hasFileData]);
-  const monitoringTargets = [
-    {
-      label: "Opioide",
-      value: "",
-      unit: "",
-      target: "100-200 mcg/h",
-      status: "normal",
-    },
-    {
-      label: "Hypnotique",
-      value: "",
-      unit: "",
-      target: "150-250 mg/h",
-      status: "normal",
-    },
-    {
-      label: "Propofol 48h",
-      value: "",
-      unit: "",
-      target: "< 12 g",
-      status: "normal",
-    },
-    {
-      label: "PIC",
-      value: "",
-      unit: "",
-      target: "< 20 mmHg",
-      status: "warning",
-    },
-    {
-      label: "PAM",
-      value: "",
-      unit: "",
-      target: "65-120 mmHg",
-      status: "normal",
-    },
-    {
-      label: "PVC",
-      value: "",
-      unit: "",
-      target: "2-8 mmHg",
-      status: "normal",
-    },
-    {
-      label: "ETCO2",
-      value: "",
-      unit: "",
-      target: "35-45 mmHg",
-      status: "normal",
-    },
-    {
-      label: "Température",
-      value: "",
-      unit: "",
-      target: "36-38 °C",
-      status: "normal",
-    },
-  ];
+
+  // Get real monitoring interventions status from JSON data
+  const monitoringTargets = useMemo(() => {
+    const defaultTargets = [
+      { label: "Opioide", value: "", unit: "", target: "100-200 mcg/h", status: "normal" as const },
+      { label: "Hypnotique", value: "", unit: "", target: "150-250 mg/h", status: "normal" as const },
+      { label: "Propofol 48h", value: "", unit: "", target: "< 12 g", status: "normal" as const },
+      { label: "PIC", value: "", unit: "", target: "< 20 mmHg", status: "warning" as const },
+      { label: "PAM", value: "", unit: "", target: "65-120 mmHg", status: "normal" as const },
+      { label: "PVC", value: "", unit: "", target: "2-8 mmHg", status: "normal" as const },
+      { label: "ETCO2", value: "", unit: "", target: "35-45 mmHg", status: "normal" as const },
+      { label: "Température", value: "", unit: "", target: "36-38 °C", status: "normal" as const },
+    ];
+
+    if (!patientFileData) return defaultTargets;
+
+    // Get real status from JSON validity data
+    const realStatus = getMonitoringInterventionsStatus(patientFileData);
+    
+    return defaultTargets.map(target => {
+      const realData = realStatus.find(s => s.label === target.label);
+      if (realData) {
+        return {
+          ...target,
+          status: realData.status,
+          value: `${realData.adherencePercentage}%`,
+        };
+      }
+      return target;
+    });
+  }, [patientFileData]);
 
   const totalTargets = monitoringTargets.length;
   const normalTargets = monitoringTargets.filter((t) => t.status === "normal").length;
@@ -359,7 +333,7 @@ const Optibrain = () => {
           // Add mock data for indicators without real data
           clinicalIndicators.forEach((indicator) => {
             if (!(indicator.label in dataPoint)) {
-              const baseValue = indicator.value;
+              const baseValue = typeof indicator.value === 'number' ? indicator.value : 0;
               const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
               const x = Math.sin(seed) * 10000;
               const variation = (x - Math.floor(x) - 0.5) * (baseValue * 0.2);
@@ -426,7 +400,7 @@ const Optibrain = () => {
       };
 
       clinicalIndicators.forEach((indicator) => {
-        const baseValue = indicator.value;
+        const baseValue = typeof indicator.value === 'number' ? indicator.value : 0;
         const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
         const variation = (getSeededRandom(seed) - 0.5) * (baseValue * 0.2);
         dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
