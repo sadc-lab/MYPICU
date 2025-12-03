@@ -263,6 +263,7 @@ export function getValidityData(
 }
 
 // Calculate adherence percentage from validity data
+// In JSON: 0 = adhérent, 1 = non adhérent
 export function calculateValidityAdherence(validityData: ValidityData | null): {
   adherent: number;
   total: number;
@@ -272,7 +273,8 @@ export function calculateValidityAdherence(validityData: ValidityData | null): {
   
   const hourKeys = Object.keys(validityData).filter(k => k.startsWith('H'));
   const total = hourKeys.length;
-  const adherent = hourKeys.filter(k => validityData[k] === 1).length;
+  // 0 = adhérent, 1 = non adhérent
+  const adherent = hourKeys.filter(k => validityData[k] === 0).length;
   
   return {
     adherent,
@@ -282,6 +284,7 @@ export function calculateValidityAdherence(validityData: ValidityData | null): {
 }
 
 // Get latest validity status (checks last N hours, default 24)
+// In JSON: 0 = adhérent, 1 = non adhérent
 export function getLatestValidityStatus(
   validityData: ValidityData | null,
   lastNHours: number = 24
@@ -295,7 +298,8 @@ export function getLatestValidityStatus(
   
   if (hourKeys.length === 0) return 'normal';
   
-  const adherentCount = hourKeys.filter(k => validityData[k] === 1).length;
+  // 0 = adhérent, 1 = non adhérent
+  const adherentCount = hourKeys.filter(k => validityData[k] === 0).length;
   const percentage = (adherentCount / hourKeys.length) * 100;
   
   if (percentage >= 80) return 'normal';
