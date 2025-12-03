@@ -84,41 +84,31 @@ const Optibrain = () => {
     }
   }, [patientId, hasFileData]);
 
-  // Get real monitoring interventions status from JSON data
+  // Get real monitoring interventions status from JSON data (binary: adherent or not)
   const monitoringTargets = useMemo(() => {
-    const defaultTargets = [
-      { label: "Opioide", value: "", unit: "", target: "100-200 mcg/h", status: "normal" as const },
-      { label: "Hypnotique", value: "", unit: "", target: "150-250 mg/h", status: "normal" as const },
-      { label: "Propofol 48h", value: "", unit: "", target: "< 12 g", status: "normal" as const },
-      { label: "PIC", value: "", unit: "", target: "< 20 mmHg", status: "warning" as const },
-      { label: "PAM", value: "", unit: "", target: "65-120 mmHg", status: "normal" as const },
-      { label: "PVC", value: "", unit: "", target: "2-8 mmHg", status: "normal" as const },
-      { label: "ETCO2", value: "", unit: "", target: "35-45 mmHg", status: "normal" as const },
-      { label: "Température", value: "", unit: "", target: "36-38 °C", status: "normal" as const },
+    const defaultLabels = [
+      "Opioide", "Hypnotique", "Propofol 48h", "PIC", "PAM", "PVC", "ETCO2", "Température"
     ];
 
-    if (!patientFileData) return defaultTargets;
+    if (!patientFileData) {
+      return defaultLabels.map(label => ({ label, isAdherent: true }));
+    }
 
-    // Get real status from JSON validity data
+    // Get real status from JSON validity data - binary adherent/non-adherent
     const realStatus = getMonitoringInterventionsStatus(patientFileData);
     
-    return defaultTargets.map(target => {
-      const realData = realStatus.find(s => s.label === target.label);
-      if (realData) {
-        return {
-          ...target,
-          status: realData.status,
-          value: `${realData.adherencePercentage}%`,
-        };
-      }
-      return target;
+    return defaultLabels.map(label => {
+      const realData = realStatus.find(s => s.label === label);
+      // Adherent if percentage is 100% (or status is normal)
+      const isAdherent = realData ? realData.adherencePercentage >= 80 : true;
+      return { label, isAdherent };
     });
   }, [patientFileData]);
 
   const totalTargets = monitoringTargets.length;
-  const normalTargets = monitoringTargets.filter((t) => t.status === "normal").length;
-  const monitoringAdherence = Math.round((normalTargets / totalTargets) * 100);
-  const targetOutOfRangeCount = monitoringTargets.filter((t) => t.status !== "normal").length;
+  const adherentCount = monitoringTargets.filter((t) => t.isAdherent).length;
+  const monitoringAdherence = Math.round((adherentCount / totalTargets) * 100);
+  const nonAdherentCount = monitoringTargets.filter((t) => !t.isAdherent).length;
   if (!patient) {
     return (
       <div className="min-h-screen bg-[#EDF2F9]">
@@ -885,7 +875,7 @@ const Optibrain = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
-                      <p className="text-xs text-gray-500 mt-1">{targetOutOfRangeCount} cibles à surveiller</p>
+                      <p className="text-xs text-gray-500 mt-1">{nonAdherentCount} non adhérent{nonAdherentCount > 1 ? 's' : ''}</p>
                     </div>
                   </div>
                   {checklistExpanded ? (
@@ -898,29 +888,20 @@ const Optibrain = () => {
               {checklistExpanded && (
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-4 gap-4 pt-4">
-                    {monitoringTargets.map((target, index) => {
-                      const statusColor =
-                        target.status === "critical"
-                          ? "bg-red-500"
-                          : target.status === "warning"
-                            ? "bg-orange-400"
-                            : "bg-gray-400";
-                      return (
-                        <div
-                          key={index}
-                          className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
-                        >
-                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-700">
-                              {target.label} : {target.value}
-                              {target.unit}
-                            </p>
-                            <p className="text-xs text-gray-500">{target.target}</p>
-                          </div>
+                    {monitoringTargets.map((target, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
+                      >
+                        <div className={`w-3 h-3 rounded-full ${target.isAdherent ? "bg-green-500" : "bg-red-500"}`}></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-700">{target.label}</p>
+                          <p className={`text-xs font-medium ${target.isAdherent ? "text-green-600" : "text-red-600"}`}>
+                            {target.isAdherent ? "Adhérent" : "Non adhérent"}
+                          </p>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               )}
