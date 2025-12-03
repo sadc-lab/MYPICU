@@ -86,19 +86,17 @@ const Optibrain = () => {
 
   // Get real monitoring interventions status from JSON data (binary: adherent or not)
   const monitoringTargets = useMemo(() => {
-    const defaultLabels = [
-      "Opioide", "Hypnotique", "Propofol 48h", "PIC", "PAM", "PVC", "ETCO2", "Température"
-    ];
+    const defaultLabels = ["Opioide", "Hypnotique", "Propofol 48h", "PIC", "PAM", "PVC", "ETCO2", "Température"];
 
     if (!patientFileData) {
-      return defaultLabels.map(label => ({ label, isAdherent: true }));
+      return defaultLabels.map((label) => ({ label, isAdherent: true }));
     }
 
     // Get real status from JSON validity data - binary adherent/non-adherent
     const realStatus = getMonitoringInterventionsStatus(patientFileData);
-    
-    return defaultLabels.map(label => {
-      const realData = realStatus.find(s => s.label === label);
+
+    return defaultLabels.map((label) => {
+      const realData = realStatus.find((s) => s.label === label);
       // Adherent if percentage is 100% (or status is normal)
       const isAdherent = realData ? realData.adherencePercentage >= 80 : true;
       return { label, isAdherent };
@@ -206,8 +204,8 @@ const Optibrain = () => {
     {
       label: "Glycémie",
       value: "",
-      unit: "6-11 mmol/L",
-      target: "",
+      unit: "",
+      target: "6-11 mmol/L",
       status: "normal",
       trend: "stable",
       change: 0,
@@ -324,7 +322,7 @@ const Optibrain = () => {
           // Add mock data for indicators without real data
           clinicalIndicators.forEach((indicator) => {
             if (!(indicator.label in dataPoint)) {
-              const baseValue = typeof indicator.value === 'number' ? indicator.value : 0;
+              const baseValue = typeof indicator.value === "number" ? indicator.value : 0;
               const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
               const x = Math.sin(seed) * 10000;
               const variation = (x - Math.floor(x) - 0.5) * (baseValue * 0.2);
@@ -391,7 +389,7 @@ const Optibrain = () => {
       };
 
       clinicalIndicators.forEach((indicator) => {
-        const baseValue = typeof indicator.value === 'number' ? indicator.value : 0;
+        const baseValue = typeof indicator.value === "number" ? indicator.value : 0;
         const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
         const variation = (getSeededRandom(seed) - 0.5) * (baseValue * 0.2);
         dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
@@ -876,7 +874,9 @@ const Optibrain = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
-                      <p className="text-xs text-gray-500 mt-1">{nonAdherentCount} non adhérent{nonAdherentCount > 1 ? 's' : ''}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {nonAdherentCount} non adhérent{nonAdherentCount > 1 ? "s" : ""}
+                      </p>
                     </div>
                   </div>
                   {checklistExpanded ? (
@@ -894,7 +894,9 @@ const Optibrain = () => {
                         key={index}
                         className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
                       >
-                        <div className={`w-3 h-3 rounded-full ${target.isAdherent ? "bg-green-500" : "bg-red-500"}`}></div>
+                        <div
+                          className={`w-3 h-3 rounded-full ${target.isAdherent ? "bg-green-500" : "bg-red-500"}`}
+                        ></div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-700">{target.label}</p>
                           <p className={`text-xs font-medium ${target.isAdherent ? "text-green-600" : "text-red-600"}`}>
