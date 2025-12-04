@@ -86,6 +86,26 @@ const Optibrain = () => {
     }
   }, [patientId, hasFileData]);
 
+  // Map time range to hours for adherence calculation
+  const getHoursFromTimeRangeForAdherence = (range: string): number => {
+    switch (range) {
+      case "3h":
+        return 3;
+      case "6h":
+        return 6;
+      case "12h":
+        return 12;
+      case "24h":
+        return 24;
+      case "stay":
+        return 96; // ~4 days, or use undefined for all data
+      default:
+        return 24;
+    }
+  };
+
+  const hoursForAdherence = getHoursFromTimeRangeForAdherence(timeRange);
+
   // Get real monitoring interventions status from JSON data with adherence percentage
   const monitoringTargets = useMemo(() => {
     const defaultLabels = ["Opioide", "Hypnotique", "Propofol 48h", "PIC", "PAM", "PVC", "ETCO2", "Température"];
@@ -94,7 +114,7 @@ const Optibrain = () => {
       return defaultLabels.map((label) => ({ label, adherencePercentage: 100, status: 'normal' as const }));
     }
 
-    const realStatus = getMonitoringInterventionsStatus(patientFileData);
+    const realStatus = getMonitoringInterventionsStatus(patientFileData, hoursForAdherence);
 
     return defaultLabels.map((label) => {
       const realData = realStatus.find((s) => s.label === label);
@@ -104,13 +124,13 @@ const Optibrain = () => {
         status: realData?.status ?? 'normal'
       };
     });
-  }, [patientFileData]);
+  }, [patientFileData, hoursForAdherence]);
 
   // Get real clinical indicators status from JSON data
   const clinicalIndicatorsData = useMemo(() => {
     if (!patientFileData) return null;
-    return getClinicalIndicatorsStatus(patientFileData);
-  }, [patientFileData]);
+    return getClinicalIndicatorsStatus(patientFileData, hoursForAdherence);
+  }, [patientFileData, hoursForAdherence]);
 
   // Calculate overall monitoring adherence (average of all targets)
   const monitoringAdherence = useMemo(() => {

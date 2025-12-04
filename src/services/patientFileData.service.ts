@@ -264,16 +264,26 @@ export function getValidityData(
   return data[0] as ValidityData;
 }
 
-// Calculate adherence percentage from validity data
+// Calculate adherence percentage from validity data for a specific time range
 // In JSON: 0 = adhérent, 1 = non adhérent
-export function calculateValidityAdherence(validityData: ValidityData | null): {
+// hoursBack: number of hours to look back (e.g., 3, 6, 12, 24, 96 for stay)
+export function calculateValidityAdherence(validityData: ValidityData | null, hoursBack?: number): {
   adherent: number;
   total: number;
   percentage: number;
 } {
   if (!validityData) return { adherent: 0, total: 0, percentage: 0 };
   
-  const hourKeys = Object.keys(validityData).filter(k => k.startsWith('H'));
+  let hourKeys = Object.keys(validityData)
+    .filter(k => k.startsWith('H'))
+    .sort((a, b) => parseInt(a.replace('H', '')) - parseInt(b.replace('H', '')));
+  
+  // If hoursBack is specified, only take the last N hours
+  if (hoursBack && hoursBack > 0) {
+    // Get the latest hours (from the end of the array)
+    hourKeys = hourKeys.slice(-hoursBack);
+  }
+  
   const total = hourKeys.length;
   // 0 = adhérent, 1 = non adhérent
   const adherent = hourKeys.filter(k => validityData[k] === 0).length;
@@ -318,7 +328,7 @@ export function getAdherenceStatus(percentage: number): 'normal' | 'warning' | '
 }
 
 // Get all monitoring interventions status from patient data
-export function getMonitoringInterventionsStatus(patientData: PatientFileData): Array<{
+export function getMonitoringInterventionsStatus(patientData: PatientFileData, hoursBack?: number): Array<{
   key: string;
   label: string;
   status: 'normal' | 'warning' | 'critical';
@@ -338,7 +348,7 @@ export function getMonitoringInterventionsStatus(patientData: PatientFileData): 
   return mappings.map(({ key, label }) => {
     const validityKey = VALIDITY_DATA_KEYS[key];
     const validityData = getValidityData(patientData, validityKey);
-    const { percentage } = calculateValidityAdherence(validityData);
+    const { percentage } = calculateValidityAdherence(validityData, hoursBack);
     const status = getAdherenceStatus(percentage);
     
     return {
@@ -351,7 +361,7 @@ export function getMonitoringInterventionsStatus(patientData: PatientFileData): 
 }
 
 // Get all clinical indicators status from patient data
-export function getClinicalIndicatorsStatus(patientData: PatientFileData): Array<{
+export function getClinicalIndicatorsStatus(patientData: PatientFileData, hoursBack?: number): Array<{
   key: string;
   label: string;
   status: 'normal' | 'warning' | 'critical';
@@ -372,7 +382,7 @@ export function getClinicalIndicatorsStatus(patientData: PatientFileData): Array
   return mappings.map(({ key, label }) => {
     const validityKey = VALIDITY_DATA_KEYS[key];
     const validityData = getValidityData(patientData, validityKey);
-    const { percentage } = calculateValidityAdherence(validityData);
+    const { percentage } = calculateValidityAdherence(validityData, hoursBack);
     const status = getAdherenceStatus(percentage);
     
     return {
