@@ -1,5 +1,5 @@
 // Import centralized Patient type
-import { Patient } from '@/types/patient.types';
+import { Patient } from "@/types/patient.types";
 
 // Re-export Patient type for backward compatibility
 export type { Patient };
@@ -20,7 +20,7 @@ export const pedAPatients: Patient[] = [
     brainScore: 3,
     heartScore: 2,
     lungsScore: 1,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#6312",
@@ -37,7 +37,7 @@ export const pedAPatients: Patient[] = [
     brainScore: 3,
     heartScore: 1,
     lungsScore: 2,
-    kidneyScore: 1
+    kidneyScore: 1,
   },
   {
     id: "#25",
@@ -54,7 +54,7 @@ export const pedAPatients: Patient[] = [
     brainScore: 3,
     heartScore: 2,
     lungsScore: 0,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#23",
@@ -70,7 +70,7 @@ export const pedAPatients: Patient[] = [
     brainScore: 0,
     heartScore: 1,
     lungsScore: 3,
-    kidneyScore: 1
+    kidneyScore: 1,
   },
   {
     id: "#24",
@@ -86,7 +86,7 @@ export const pedAPatients: Patient[] = [
     brainScore: 2,
     heartScore: 1,
     lungsScore: 2,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#22",
@@ -102,7 +102,7 @@ export const pedAPatients: Patient[] = [
     brainScore: 3,
     heartScore: 0,
     lungsScore: 0,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#21",
@@ -118,7 +118,7 @@ export const pedAPatients: Patient[] = [
     brainScore: 0,
     heartScore: 0,
     lungsScore: 1,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#17",
@@ -135,7 +135,7 @@ export const pedAPatients: Patient[] = [
     brainScore: 0,
     heartScore: 2,
     lungsScore: 0,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#16",
@@ -151,7 +151,7 @@ export const pedAPatients: Patient[] = [
     brainScore: 0,
     heartScore: 3,
     lungsScore: 1,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#14",
@@ -167,7 +167,7 @@ export const pedAPatients: Patient[] = [
     brainScore: 0,
     heartScore: 0,
     lungsScore: 2,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#8",
@@ -183,8 +183,8 @@ export const pedAPatients: Patient[] = [
     brainScore: 1,
     heartScore: 2,
     lungsScore: 1,
-    kidneyScore: 2
-  }
+    kidneyScore: 2,
+  },
 ];
 
 export const pedBPatients: Patient[] = [
@@ -202,7 +202,7 @@ export const pedBPatients: Patient[] = [
     brainScore: 3,
     heartScore: 2,
     lungsScore: 1,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#5",
@@ -218,7 +218,7 @@ export const pedBPatients: Patient[] = [
     brainScore: 0,
     heartScore: 3,
     lungsScore: 1,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#6",
@@ -234,7 +234,7 @@ export const pedBPatients: Patient[] = [
     brainScore: 0,
     heartScore: 1,
     lungsScore: 3,
-    kidneyScore: 0
+    kidneyScore: 0,
   },
   {
     id: "#7",
@@ -250,7 +250,7 @@ export const pedBPatients: Patient[] = [
     brainScore: 2,
     heartScore: 0,
     lungsScore: 0,
-    kidneyScore: 1
+    kidneyScore: 1,
   },
   {
     id: "#9",
@@ -266,8 +266,8 @@ export const pedBPatients: Patient[] = [
     brainScore: 0,
     heartScore: 1,
     lungsScore: 0,
-    kidneyScore: 3
-  }
+    kidneyScore: 3,
+  },
 ];
 
 export const pedCPatients: Patient[] = [
@@ -284,17 +284,17 @@ export const pedCPatients: Patient[] = [
     priority: "Critique",
     brainScore: 3,
     heartScore: 3,
-    lungsScore: 3
-  }
+    lungsScore: 3,
+  },
 ];
 
-export const getPatientsForPed = (ped: 'A' | 'B' | 'C'): Patient[] => {
+export const getPatientsForPed = (ped: "A" | "B" | "C"): Patient[] => {
   switch (ped) {
-    case 'A':
+    case "A":
       return pedAPatients;
-    case 'B':
+    case "B":
       return pedBPatients;
-    case 'C':
+    case "C":
       return pedCPatients;
     default:
       return [];
@@ -306,5 +306,5 @@ export const getAllPatients = (): Patient[] => {
 };
 
 export const getPatientById = (id: string): Patient | undefined => {
-  return getAllPatients().find(p => p.id === id);
+  return getAllPatients().find((p) => p.id === id);
 };
