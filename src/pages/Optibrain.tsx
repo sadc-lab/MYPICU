@@ -105,8 +105,6 @@ const Optibrain = () => {
   };
 
   const hoursForAdherence = getHoursFromTimeRangeForAdherence(timeRange);
-
-  // Get real monitoring interventions status from JSON data with adherence percentage
   const monitoringTargets = useMemo(() => {
     const defaultIndicators = [
       { label: "Opioide", description: "Opioid monitoring compliance" },
@@ -120,15 +118,20 @@ const Optibrain = () => {
     ];
 
     if (!patientFileData) {
-      return defaultLabels.map((label) => ({ label, adherencePercentage: 100, status: "normal" as const }));
+      return defaultIndicators.map((indicator) => ({
+        ...indicator,
+        adherencePercentage: 100,
+        status: "normal" as const,
+      }));
     }
 
     const realStatus = getMonitoringInterventionsStatus(patientFileData, hoursForAdherence);
 
-    return defaultLabels.map((label) => {
-      const realData = realStatus.find((s) => s.label === label);
+    return defaultIndicators.map((indicator) => {
+      const realData = realStatus.find((s) => s.label === indicator.label);
+
       return {
-        label,
+        ...indicator, // keep label + description
         adherencePercentage: realData?.adherencePercentage ?? 100,
         status: realData?.status ?? "normal",
       };
