@@ -1027,15 +1027,16 @@ const Optibrain = () => {
                             : "text-red-600";
                       return (
                         <div
-                          key={index}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
-                        >
-                          <div className={`w-3 h-3 rounded-full ${dotColor}`}></div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-700">{target.label} </p>
-                            <p className={`text-xs font-medium ${textColor}`}></p>
-                          </div>
-                        </div>
+      key={index}
+      className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
+    >
+      <div className={`w-3 h-3 rounded-full ${dotColor}`}></div>
+      <div className="flex-1">
+        <p className="text-sm font-medium text-gray-700">{target.label}</p>
+        <p className={`text-xs font-medium ${textColor}`}>
+          {target.description}  {/* <-- add description here */}
+        </p>
+      </div>
                       );
                     })}
                   </div>
