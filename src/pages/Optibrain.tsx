@@ -139,6 +139,20 @@ const Optibrain = () => {
   }, [monitoringTargets]);
 
   const nonAdherentCount = monitoringTargets.filter((t) => t.status !== 'normal').length;
+
+  // Get real PIC and PPC values from patient file data
+  const realBrainValues = useMemo(() => {
+    if (!patientFileData) {
+      return { pic: null, ppc: null };
+    }
+    const picLatest = getLatestValue(patientFileData, 'Variable_PIC');
+    const ppcLatest = getLatestValue(patientFileData, 'Variable_PPC');
+    return {
+      pic: picLatest?.value ?? null,
+      ppc: ppcLatest?.value ?? null
+    };
+  }, [patientFileData]);
+
   if (!patient) {
     return (
       <div className="min-h-screen bg-[#EDF2F9]">
@@ -150,6 +164,26 @@ const Optibrain = () => {
     );
   }
   const brainMetrics = importedBrainMetrics;
+
+  // Get PIC status based on value (target < 20 mmHg)
+  const getPicStatus = (value: number | null): string => {
+    if (value === null) return "normal";
+    if (value >= 25) return "critical";
+    if (value >= 20) return "warning";
+    return "normal";
+  };
+
+  // Get PPC status based on value (target 60-70 mmHg)
+  const getPpcStatus = (value: number | null): string => {
+    if (value === null) return "normal";
+    if (value < 50 || value > 80) return "critical";
+    if (value < 60 || value > 70) return "warning";
+    return "normal";
+  };
+
+  const picValue = realBrainValues.pic;
+  const ppcValue = realBrainValues.ppc;
+
   const brainOptimisationMetrics = [
     {
       label: "État Neuro",
@@ -163,10 +197,10 @@ const Optibrain = () => {
     },
     {
       label: "PIC",
-      value: "26 mmHg",
-      displayValue: "26",
+      value: picValue !== null ? `${Math.round(picValue)} mmHg` : "-- mmHg",
+      displayValue: picValue !== null ? `${Math.round(picValue)}` : "--",
       unit: "mmHg",
-      status: "warning",
+      status: getPicStatus(picValue),
       hasDetails: true,
       dialogKey: "pic",
       trend: "down",
@@ -174,10 +208,10 @@ const Optibrain = () => {
     },
     {
       label: "PPC Opt",
-      value: "65 mmHg",
-      displayValue: "65",
+      value: ppcValue !== null ? `${Math.round(ppcValue)} mmHg` : "-- mmHg",
+      displayValue: ppcValue !== null ? `${Math.round(ppcValue)}` : "--",
       unit: "mmHg",
-      status: "normal",
+      status: getPpcStatus(ppcValue),
       hasDetails: true,
       dialogKey: "ppc",
       trend: "up",
