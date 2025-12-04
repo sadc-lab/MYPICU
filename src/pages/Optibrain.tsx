@@ -894,9 +894,11 @@ const Optibrain = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
-                  {selectedIndicators.length === 0 ? (
-                    <div className="h-full flex items-center justify-center">
+               <div
+  className={`border-2 border-gray-200 rounded-lg p-4 ${
+    selectedIndicators.length === 0 ? "h-32" : "h-[300px]"
+  }`}
+>
                       <p className="text-gray-400">
                         Sélectionnez des indicateurs ci-dessus pour afficher leurs tendances
                       </p>
