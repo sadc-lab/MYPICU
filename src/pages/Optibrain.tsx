@@ -883,6 +883,9 @@ const Optibrain = () => {
                       <h3 className="text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
                       <p className="text-xs text-gray-500 mt-1">
                         {nonAdherentCount} non adhérent{nonAdherentCount > 1 ? "s" : ""}
+                        <p className="text-sm font-medium text-gray-700">
+                          {indicator.label} : {indicator.adherencePercentage}%
+                        </p>
                       </p>
                     </div>
                   </div>
