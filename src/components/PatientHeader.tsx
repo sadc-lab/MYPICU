@@ -1,15 +1,15 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ExternalLink, ChevronDown, Bell } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useState } from 'react';
-import { HeartIcon } from '@/components/icons/HeartIcon';
-import { getPatientById } from '@/utils/patientData';
-import brainIcon from '@/assets/brain-icon.svg';
-import lungsIcon from '@/assets/lungs-icon.svg';
-import stateIcon from '@/assets/stats-icon.svg';
-import { Patient } from '@/types/patient.types';
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ChevronLeft, ExternalLink, ChevronDown, Bell } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useState } from "react";
+import { HeartIcon } from "@/components/icons/HeartIcon";
+import { getPatientById } from "@/utils/patientData";
+import brainIcon from "@/assets/brain-icon.svg";
+import lungsIcon from "@/assets/lungs-icon.svg";
+import stateIcon from "@/assets/stats-icon.svg";
+import { Patient } from "@/types/patient.types";
 
 const reminders = [
   "Objectif de Bilan Entrée/Sortie",
@@ -23,13 +23,13 @@ const reminders = [
 ];
 
 interface PatientHeaderProps {
-  currentPage: 'optistate' | 'optibrain' | 'optiheart' | 'optilungs';
+  currentPage: "optistate" | "optibrain" | "optiheart" | "optilungs";
 }
 
 export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const patientId = searchParams.get('patient') || '#25';
+  const patientId = searchParams.get("patient") || "#25";
   const patient = getPatientById(patientId);
   const [showVitals, setShowVitals] = useState(false);
   const [showReminders, setShowReminders] = useState(false);
@@ -37,24 +37,25 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   if (!patient) return null;
 
   const getOrganBadgeClass = (score?: number) => {
-    if (!score || score === 0) return 'bg-gray-100 text-gray-500 border border-gray-300';
-    if (score === 1) return 'bg-orange-100 text-orange-600 border border-orange-300';
-    if (score === 2) return 'bg-orange-200 text-orange-700 border border-orange-400';
-    return 'bg-red-200 text-red-700 border border-red-400';
+    if (!score || score === 0) return "bg-gray-100 text-gray-500 border border-gray-300";
+    if (score === 1) return "bg-orange-100 text-orange-600 border border-orange-300";
+    if (score === 2) return "bg-orange-200 text-orange-700 border border-orange-400";
+    return "bg-red-200 text-red-700 border border-red-400";
   };
 
   const getColorFilter = (score?: number) => {
-    if (!score || score === 0) return 'invert(64%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(92%) contrast(88%)'; // grey
-    if (score === 1) return 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)'; // orange
-    if (score === 2) return 'invert(52%) sepia(94%) saturate(635%) hue-rotate(339deg) brightness(101%) contrast(101%)'; // darker orange
-    return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)'; // red
+    if (!score || score === 0)
+      return "invert(64%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(92%) contrast(88%)"; // grey
+    if (score === 1) return "invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)"; // orange
+    if (score === 2) return "invert(52%) sepia(94%) saturate(635%) hue-rotate(339deg) brightness(101%) contrast(101%)"; // darker orange
+    return "invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)"; // red
   };
 
   const getTextColor = (score?: number) => {
-    if (!score || score === 0) return 'text-gray-500';
-    if (score === 1) return 'text-orange-600';
-    if (score === 2) return 'text-orange-700';
-    return 'text-red-700';
+    if (!score || score === 0) return "text-gray-500";
+    if (score === 1) return "text-orange-600";
+    if (score === 2) return "text-orange-700";
+    return "text-red-700";
   };
 
   const isActivePage = (page: string) => currentPage === page;
@@ -65,7 +66,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
           <Button
             variant="ghost"
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="text-muted-foreground hover:text-foreground text-sm self-start"
             size="sm"
           >
@@ -74,22 +75,12 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
           </Button>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <Button
-  asChild
-  variant="outline"
-  size="sm"
-  className="gap-2 text-xs sm:text-sm"
->
-  <a
-    href="https://www.uptodate.com/login"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <ExternalLink className="size-3 sm:size-4" />
-    <span className="hidden sm:inline">UpToDate</span>
-  </a>
-</Button>
-
+            <Button asChild variant="outline" size="sm" className="gap-2 text-xs sm:text-sm">
+              <a href="https://www.uptodate.com/login" target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="size-3 sm:size-4" />
+                <span className="hidden sm:inline">UpToDate</span>
+              </a>
+            </Button>
           </div>
         </div>
 
@@ -108,11 +99,11 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             <p className="text-xs sm:text-sm text-foreground mt-2">
               <strong>Diagnostic:</strong> {patient.diagnosis}
             </p>
-            
+
             <Collapsible open={showVitals} onOpenChange={setShowVitals} className="mt-3">
               <CollapsibleTrigger className="flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors">
                 <span className="font-medium">Signes vitaux</span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${showVitals ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 w-4 transition-transform ${showVitals ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-2 border-t border-border">
@@ -143,8 +134,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             <Collapsible open={showReminders} onOpenChange={setShowReminders} className="mt-2">
               <CollapsibleTrigger className="flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors">
                 <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="font-medium">Rappels ({reminders.length})</span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${showReminders ? 'rotate-180' : ''}`} />
+                <span className="font-medium">Rappels des objectifs quotidien({reminders.length})</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${showReminders ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-border">
@@ -168,24 +159,22 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             <div className="flex gap-1 flex-wrap">
               <button
                 onClick={() => {
-                  const timeRange = searchParams.get('timeRange');
+                  const timeRange = searchParams.get("timeRange");
                   const params = new URLSearchParams();
-                  params.set('patient', patientId);
-                  if (timeRange) params.set('timeRange', timeRange);
+                  params.set("patient", patientId);
+                  if (timeRange) params.set("timeRange", timeRange);
                   navigate(`/optistate?${params.toString()}`);
                 }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage('optistate')
-                    ? 'bg-primary text-white'
-                    : 'hover:bg-gray-100'
+                  isActivePage("optistate") ? "bg-primary text-white" : "hover:bg-gray-100"
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.pelodScore)} text-xs`}>
-                  <img 
-                    src={stateIcon} 
-                    alt="state" 
-                    className="h-6 w-6 sm:h-7 sm:w-7" 
-                    style={{ filter: getColorFilter(patient.pelodScore) }} 
+                  <img
+                    src={stateIcon}
+                    alt="state"
+                    className="h-6 w-6 sm:h-7 sm:w-7"
+                    style={{ filter: getColorFilter(patient.pelodScore) }}
                   />
                   <span className="ml-1 font-semibold">State</span>
                 </Badge>
@@ -193,24 +182,22 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
 
               <button
                 onClick={() => {
-                  const timeRange = searchParams.get('timeRange');
+                  const timeRange = searchParams.get("timeRange");
                   const params = new URLSearchParams();
-                  params.set('patient', patientId);
-                  if (timeRange) params.set('timeRange', timeRange);
+                  params.set("patient", patientId);
+                  if (timeRange) params.set("timeRange", timeRange);
                   navigate(`/optibrain?${params.toString()}`);
                 }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage('optibrain')
-                    ? 'bg-primary text-white'
-                    : 'hover:bg-gray-100'
+                  isActivePage("optibrain") ? "bg-primary text-white" : "hover:bg-gray-100"
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.brainScore)} text-xs`}>
-                  <img 
-                    src={brainIcon} 
-                    alt="brain" 
-                    className="h-6 w-6 sm:h-7 sm:w-7" 
-                    style={{ filter: getColorFilter(patient.brainScore) }} 
+                  <img
+                    src={brainIcon}
+                    alt="brain"
+                    className="h-6 w-6 sm:h-7 sm:w-7"
+                    style={{ filter: getColorFilter(patient.brainScore) }}
                   />
                   <span className="ml-1 font-semibold">{patient.brainScore || 0}</span>
                 </Badge>
@@ -218,16 +205,14 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
 
               <button
                 onClick={() => {
-                  const timeRange = searchParams.get('timeRange');
+                  const timeRange = searchParams.get("timeRange");
                   const params = new URLSearchParams();
-                  params.set('patient', patientId);
-                  if (timeRange) params.set('timeRange', timeRange);
+                  params.set("patient", patientId);
+                  if (timeRange) params.set("timeRange", timeRange);
                   navigate(`/optiheart?${params.toString()}`);
                 }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage('optiheart')
-                    ? 'bg-primary text-white'
-                    : 'hover:bg-gray-100'
+                  isActivePage("optiheart") ? "bg-primary text-white" : "hover:bg-gray-100"
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.heartScore)} text-xs`}>
@@ -238,24 +223,22 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
 
               <button
                 onClick={() => {
-                  const timeRange = searchParams.get('timeRange');
+                  const timeRange = searchParams.get("timeRange");
                   const params = new URLSearchParams();
-                  params.set('patient', patientId);
-                  if (timeRange) params.set('timeRange', timeRange);
+                  params.set("patient", patientId);
+                  if (timeRange) params.set("timeRange", timeRange);
                   navigate(`/optilungs?${params.toString()}`);
                 }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage('optilungs')
-                    ? 'bg-primary text-white'
-                    : 'hover:bg-gray-100'
+                  isActivePage("optilungs") ? "bg-primary text-white" : "hover:bg-gray-100"
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.lungsScore)} text-xs`}>
-                  <img 
-                    src={lungsIcon} 
-                    alt="lungs" 
-                    className="h-6 w-6 sm:h-7 sm:w-7" 
-                    style={{ filter: getColorFilter(patient.lungsScore) }} 
+                  <img
+                    src={lungsIcon}
+                    alt="lungs"
+                    className="h-6 w-6 sm:h-7 sm:w-7"
+                    style={{ filter: getColorFilter(patient.lungsScore) }}
                   />
                   <span className="ml-1 font-semibold">{patient.lungsScore || 0}</span>
                 </Badge>
