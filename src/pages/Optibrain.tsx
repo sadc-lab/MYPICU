@@ -858,6 +858,112 @@ const Optibrain = () => {
               )}
             </Card>
 
+            {/* Monitoring Chart */}
+            <Card className="border-2 border-gray-200">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">
+                    {timeRange === "stay" ? "Monitorage (Séjour complet)" : `Monitorage (${timeRange.toUpperCase()})`}
+                  </CardTitle>
+                  {hasFileData && (
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                      {fileDataLoading ? (
+                        <span className="flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Chargement...
+                        </span>
+                      ) : patientFileData ? (
+                        "Données réelles"
+                      ) : (
+                        "Données simulées"
+                      )}
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
+                  {selectedIndicators.length === 0 ? (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-gray-400">
+                        Sélectionnez des indicateurs ci-dessous pour afficher leurs tendances
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="h-full flex flex-col">
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {selectedIndicators.map((label) => {
+                          const indicator = clinicalIndicators.find((i) => i.label === label);
+                          if (!indicator) return null;
+                          const statusColor =
+                            indicator.status === "critical"
+                              ? "bg-red-500"
+                              : indicator.status === "warning"
+                                ? "bg-orange-400"
+                                : "bg-gray-400";
+                          return (
+                            <div
+                              key={label}
+                              className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-200"
+                            >
+                              <div className={`w-2 h-2 rounded-full ${statusColor}`}></div>
+                              <span className="text-xs text-gray-700">{label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="flex-1">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                            <XAxis
+                              dataKey="time"
+                              tick={{
+                                fontSize: 12,
+                              }}
+                              stroke="#9ca3af"
+                            />
+                            <YAxis
+                              tick={{
+                                fontSize: 12,
+                              }}
+                              stroke="#9ca3af"
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: "white",
+                                border: "1px solid #e5e7eb",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                              }}
+                            />
+                            <Legend
+                              wrapperStyle={{
+                                fontSize: "12px",
+                              }}
+                            />
+                            {selectedIndicators.map((label) => (
+                              <Line
+                                key={label}
+                                type="monotone"
+                                dataKey={label}
+                                stroke={getIndicatorColor(label)}
+                                strokeWidth={2}
+                                dot={false}
+                                activeDot={{
+                                  r: 4,
+                                }}
+                              />
+                            ))}
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Monitoring Targets */}
             <Card className="border-2 border-gray-200">
               <CardHeader
@@ -924,8 +1030,6 @@ const Optibrain = () => {
                 </CardContent>
               )}
             </Card>
-
-            {/* Monitoring Chart */}
           </CardContent>
         </Card>
       </main>
