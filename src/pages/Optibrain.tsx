@@ -234,18 +234,22 @@ const Optibrain = () => {
     return value >= min && value <= max;
   };
 
-  // Base clinical indicators with targets
-  const baseClinicalIndicators = [
-    { label: "Tête", target: "0-30°" },
-    { label: "PIC", target: "< 20mmHg" },
-    { label: "PPC", target: "60-70 mmHg" },
-    { label: "Temp.", target: "35-38°C" },
-    { label: "PaCO2", target: "35-45mmHg" },
-    { label: "Glycémie", target: "6-11 mmol/L" },
-    { label: "Hb", target: "> 7g/dl" },
-    { label: "INR", target: "< 1.2" },
-    { label: "Plaquettes", target: "> 100 g/L" },
-  ];
+  const baseVarMapping: Record<string, string[]> = {
+    // clé JSON possible -> labels UI (ordre = préférence)
+    Variable_FC: ["FC", "FrequenceCardiaque", "fc"],
+    Variable_PIC: ["PIC", "IntracranialPressure"],
+    Variable_PPC: ["PPC", "CPP"],
+    Variable_PAM: ["PAM", "PAM", "MAP"],
+    Variable_PVC: ["PVC", "CVP"],
+    Variable_temperature: ["Temp.", "Temperature"],
+    Variable_ETCO2: ["ETCO2", "PaCO2", "EtCO2"],
+    Variable_Hemoglobin: ["Hb", "Hemoglobin"],
+    // nouveaux : on ajoute des candidats — on utilisera findVarKey pour trouver la vraie clé
+    Variable_position_tete: ["Tete", "Tête", "position_tete"],
+    Variable_glycemie: ["Glycemie", "Glycémie", "Glucose"],
+    Variable_plaquettes: ["Plaquettes", "Platelets"],
+    Variable_INR: ["INR", "Inr"],
+  };
 
   // Merge with real data from JSON
   const clinicalIndicators = useMemo(() => {
