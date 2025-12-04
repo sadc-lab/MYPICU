@@ -108,7 +108,16 @@ const Optibrain = () => {
 
   // Get real monitoring interventions status from JSON data with adherence percentage
   const monitoringTargets = useMemo(() => {
-    const defaultLabels = ["Opioide", "Hypnotique", "Propofol 48h", "PIC", "PAM", "PVC", "ETCO2", "Température"];
+    const defaultIndicators = [
+      { label: "Opioide", description: "Opioid monitoring compliance" },
+      { label: "Hypnotique", description: "Sedative adherence tracking" },
+      { label: "Propofol 48h", description: "Propofol duration check" },
+      { label: "PIC", description: "Intracranial pressure" },
+      { label: "PAM", description: "Mean arterial pressure" },
+      { label: "PVC", description: "Central venous pressure" },
+      { label: "ETCO2", description: "End-tidal CO₂ monitoring" },
+      { label: "Température", description: "Temperature control" },
+    ];
 
     if (!patientFileData) {
       return defaultLabels.map((label) => ({ label, adherencePercentage: 100, status: "normal" as const }));
