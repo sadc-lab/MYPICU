@@ -36,6 +36,8 @@ import {
   calculateTimeInRanges,
   getAvailableVariables,
   getMonitoringInterventionsStatus,
+  getClinicalIndicatorsStatus,
+  getAdherenceStatus,
   PatientFileData,
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
@@ -84,29 +86,39 @@ const Optibrain = () => {
     }
   }, [patientId, hasFileData]);
 
-  // Get real monitoring interventions status from JSON data (binary: adherent or not)
+  // Get real monitoring interventions status from JSON data with adherence percentage
   const monitoringTargets = useMemo(() => {
     const defaultLabels = ["Opioide", "Hypnotique", "Propofol 48h", "PIC", "PAM", "PVC", "ETCO2", "Température"];
 
     if (!patientFileData) {
-      return defaultLabels.map((label) => ({ label, isAdherent: true }));
+      return defaultLabels.map((label) => ({ label, adherencePercentage: 100, status: 'normal' as const }));
     }
 
-    // Get real status from JSON validity data - binary adherent/non-adherent
     const realStatus = getMonitoringInterventionsStatus(patientFileData);
 
     return defaultLabels.map((label) => {
       const realData = realStatus.find((s) => s.label === label);
-      // Adherent if percentage is 100% (or status is normal)
-      const isAdherent = realData ? realData.adherencePercentage >= 80 : true;
-      return { label, isAdherent };
+      return {
+        label,
+        adherencePercentage: realData?.adherencePercentage ?? 100,
+        status: realData?.status ?? 'normal'
+      };
     });
   }, [patientFileData]);
 
-  const totalTargets = monitoringTargets.length;
-  const adherentCount = monitoringTargets.filter((t) => t.isAdherent).length;
-  const monitoringAdherence = Math.round((adherentCount / totalTargets) * 100);
-  const nonAdherentCount = monitoringTargets.filter((t) => !t.isAdherent).length;
+  // Get real clinical indicators status from JSON data
+  const clinicalIndicatorsData = useMemo(() => {
+    if (!patientFileData) return null;
+    return getClinicalIndicatorsStatus(patientFileData);
+  }, [patientFileData]);
+
+  // Calculate overall monitoring adherence (average of all targets)
+  const monitoringAdherence = useMemo(() => {
+    const totalPercentage = monitoringTargets.reduce((sum, t) => sum + t.adherencePercentage, 0);
+    return Math.round(totalPercentage / monitoringTargets.length);
+  }, [monitoringTargets]);
+
+  const nonAdherentCount = monitoringTargets.filter((t) => t.status !== 'normal').length;
   if (!patient) {
     return (
       <div className="min-h-screen bg-[#EDF2F9]">
@@ -155,94 +167,38 @@ const Optibrain = () => {
   const isInRange = (value: number, min: number, max: number) => {
     return value >= min && value <= max;
   };
-  const clinicalIndicators = [
-    {
-      label: "Tête",
-      value: "",
-      unit: "",
-      target: "0-30°",
-      status: "warning",
-      trend: "stable",
-      change: 0,
-    },
-    {
-      label: "PIC",
-      value: "",
-      unit: "",
-      target: "< 20mmHg",
-      status: "critical",
-      trend: "down",
-      change: -2,
-    },
-    {
-      label: "PPC",
-      value: "",
-      unit: "",
-      target: "60-70 mmHg",
-      status: "warning",
-      trend: "up",
-      change: 4,
-    },
-    {
-      label: "Temp.",
-      value: "",
-      unit: "",
-      target: "35-38°C",
-      status: "normal",
-      trend: "up",
-      change: 0.3,
-    },
-    {
-      label: "PaCO2",
-      value: "",
-      unit: "",
-      target: "35-45mmHg",
-      status: "normal",
-      trend: "down",
-      change: -1,
-    },
-    {
-      label: "Glycémie",
-      value: "",
-      unit: "",
-      target: "6-11 mmol/L",
-      status: "normal",
-      trend: "stable",
-      change: 0,
-    },
-    {
-      label: "Hb",
-      value: "",
-      unit: "",
-      target: "> 7g/dl",
-      status: "normal",
-      trend: "stable",
-      change: 0,
-    },
-    {
-      label: "INR",
-      value: "",
-      unit: "",
-      target: "< 1.2",
-      status: "critical",
-      trend: "up",
-      change: 0.12,
-    },
-    {
-      label: "Plaquettes",
-      value: "",
-      unit: "",
-      target: "> 100 g/L",
-      status: "normal",
-      trend: "down",
-      change: -8,
-    },
+
+  // Base clinical indicators with targets
+  const baseClinicalIndicators = [
+    { label: "Tête", target: "0-30°" },
+    { label: "PIC", target: "< 20mmHg" },
+    { label: "PPC", target: "60-70 mmHg" },
+    { label: "Temp.", target: "35-38°C" },
+    { label: "PaCO2", target: "35-45mmHg" },
+    { label: "Glycémie", target: "6-11 mmol/L" },
+    { label: "Hb", target: "> 7g/dl" },
+    { label: "INR", target: "< 1.2" },
+    { label: "Plaquettes", target: "> 100 g/L" },
   ];
 
-  // Calculate clinical adherence
-  const totalIndicators = clinicalIndicators.length;
-  const normalIndicators = clinicalIndicators.filter((i) => i.status === "normal").length;
-  const clinicalAdherence = Math.round((normalIndicators / totalIndicators) * 100);
+  // Merge with real data from JSON
+  const clinicalIndicators = useMemo(() => {
+    return baseClinicalIndicators.map((base) => {
+      const realData = clinicalIndicatorsData?.find((d) => d.label === base.label);
+      return {
+        label: base.label,
+        target: base.target,
+        status: realData?.status ?? 'normal',
+        adherencePercentage: realData?.adherencePercentage ?? 100,
+      };
+    });
+  }, [clinicalIndicatorsData]);
+
+  // Calculate clinical adherence (average of all indicators)
+  const clinicalAdherence = useMemo(() => {
+    const totalPercentage = clinicalIndicators.reduce((sum, i) => sum + i.adherencePercentage, 0);
+    return Math.round(totalPercentage / clinicalIndicators.length);
+  }, [clinicalIndicators]);
   const outOfRangeCount = clinicalIndicators.filter((i) => i.status !== "normal").length;
 
   // Map time range to hours
@@ -322,11 +278,10 @@ const Optibrain = () => {
           // Add mock data for indicators without real data
           clinicalIndicators.forEach((indicator) => {
             if (!(indicator.label in dataPoint)) {
-              const baseValue = typeof indicator.value === "number" ? indicator.value : 0;
               const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
               const x = Math.sin(seed) * 10000;
-              const variation = (x - Math.floor(x) - 0.5) * (baseValue * 0.2);
-              dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
+              const variation = (x - Math.floor(x) - 0.5) * 10;
+              dataPoint[indicator.label] = Math.round(variation * 100) / 100;
             }
           });
 
@@ -389,10 +344,9 @@ const Optibrain = () => {
       };
 
       clinicalIndicators.forEach((indicator) => {
-        const baseValue = typeof indicator.value === "number" ? indicator.value : 0;
         const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
-        const variation = (getSeededRandom(seed) - 0.5) * (baseValue * 0.2);
-        dataPoint[indicator.label] = Math.round((baseValue + variation) * 100) / 100;
+        const variation = (getSeededRandom(seed) - 0.5) * 10;
+        dataPoint[indicator.label] = Math.round(variation * 100) / 100;
       });
 
       data.push(dataPoint);
@@ -830,19 +784,18 @@ const Optibrain = () => {
                             );
                           }}
                         >
-                          <div
-                            className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}
-                          ></div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-1">
-                              <p className="text-sm font-medium text-gray-700">
-                                {indicator.label} : {indicator.value}
-                                {indicator.unit}
-                              </p>
-                            </div>
-                            <p className="text-xs text-gray-500">{indicator.target}</p>
+                        <div
+                          className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}
+                        ></div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-1">
+                            <p className="text-sm font-medium text-gray-700">
+                              {indicator.label} : {indicator.adherencePercentage}%
+                            </p>
                           </div>
+                          <p className="text-xs text-gray-500">{indicator.target}</p>
                         </div>
+                      </div>
                       );
                     })}
                   </div>
@@ -889,22 +842,24 @@ const Optibrain = () => {
               {checklistExpanded && (
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-4 gap-4 pt-4">
-                    {monitoringTargets.map((target, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
-                      >
+                    {monitoringTargets.map((target, index) => {
+                      const dotColor = target.status === 'normal' ? 'bg-gray-400' : target.status === 'warning' ? 'bg-orange-400' : 'bg-red-500';
+                      const textColor = target.status === 'normal' ? 'text-gray-500' : target.status === 'warning' ? 'text-orange-600' : 'text-red-600';
+                      return (
                         <div
-                          className={`w-3 h-3 rounded-full ${target.isAdherent ? "bg-gray-400" : "bg-red-500"}`}
-                        ></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-700">{target.label}</p>
-                          <p className={`text-xs font-medium ${target.isAdherent ? "text-gray-400" : "text-red-600"}`}>
-                            {target.isAdherent ? "Adhérent" : "Non adhérent"}
-                          </p>
+                          key={index}
+                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
+                        >
+                          <div className={`w-3 h-3 rounded-full ${dotColor}`}></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-700">{target.label}</p>
+                            <p className={`text-xs font-medium ${textColor}`}>
+                              {target.adherencePercentage}%
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               )}

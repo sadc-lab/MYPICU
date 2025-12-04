@@ -223,28 +223,30 @@ export function getAvailableVariables(patientData: PatientFileData): string[] {
   );
 }
 
-// Validity data keys mapping for monitoring interventions
+// Validity data keys mapping for all indicators
 export const VALIDITY_DATA_KEYS = {
-  PicMonitorage: 'PicMonitorageData_validite',
-  Temperature: 'TemperatureData_validite',
+  // Clinical indicators (Adhérence aux cibles recommandées)
+  PositionTete: 'PositionTeteData_validite',
+  PicHtic: 'PicHticData_validite',
   PPC: 'PPCData_validite',
+  Temperature: 'TemperatureData_validite',
   PaCO2: 'PaCO2Data_validite',
+  Glycemie: 'GlycemieData_validite',
+  Hemoglobine: 'HemoglobineData_validite',
   INR: 'INRData_validite',
+  Plaquettes: 'PlaquettesData_validite',
+  // Monitoring interventions (Monitorage et interventions en place)
+  PicMonitorage: 'PicMonitorageData_validite',
   PupilleDroite: 'PupilleDroiteData_validite',
   PAM: 'PAMData_validite',
   Hypnotique: 'HypnotiqueData_validite',
   PupilleGauche: 'PupilleGaucheData_validite',
-  PositionTete: 'PositionTeteData_validite',
-  Glycemie: 'GlycemieData_validite',
   Propofol: 'PropofolData_validite',
-  PicHtic: 'PicHticData_validite',
   PVC: 'PVCData_validite',
   AntiEpileptique: 'AntiEpileptiqueData_validite',
   Opioides: 'OpioidesData_validite',
-  Plaquettes: 'PlaquettesData_validite',
   Nutrition: 'NutritionData_validite',
   EtCO2: 'EtCO2Data_validite',
-  Hemoglobine: 'HemoglobineData_validite',
 } as const;
 
 export interface ValidityData {
@@ -307,6 +309,14 @@ export function getLatestValidityStatus(
   return 'critical';
 }
 
+// Get adherence status color based on percentage
+// ≥90% → grey (normal), 80-90% → orange (warning), <80% → red (critical)
+export function getAdherenceStatus(percentage: number): 'normal' | 'warning' | 'critical' {
+  if (percentage >= 90) return 'normal';
+  if (percentage >= 80) return 'warning';
+  return 'critical';
+}
+
 // Get all monitoring interventions status from patient data
 export function getMonitoringInterventionsStatus(patientData: PatientFileData): Array<{
   key: string;
@@ -329,7 +339,41 @@ export function getMonitoringInterventionsStatus(patientData: PatientFileData): 
     const validityKey = VALIDITY_DATA_KEYS[key];
     const validityData = getValidityData(patientData, validityKey);
     const { percentage } = calculateValidityAdherence(validityData);
-    const status = getLatestValidityStatus(validityData);
+    const status = getAdherenceStatus(percentage);
+    
+    return {
+      key,
+      label,
+      status,
+      adherencePercentage: percentage
+    };
+  });
+}
+
+// Get all clinical indicators status from patient data
+export function getClinicalIndicatorsStatus(patientData: PatientFileData): Array<{
+  key: string;
+  label: string;
+  status: 'normal' | 'warning' | 'critical';
+  adherencePercentage: number;
+}> {
+  const mappings: Array<{ key: keyof typeof VALIDITY_DATA_KEYS; label: string }> = [
+    { key: 'PositionTete', label: 'Tête' },
+    { key: 'PicHtic', label: 'PIC' },
+    { key: 'PPC', label: 'PPC' },
+    { key: 'Temperature', label: 'Temp.' },
+    { key: 'PaCO2', label: 'PaCO2' },
+    { key: 'Glycemie', label: 'Glycémie' },
+    { key: 'Hemoglobine', label: 'Hb' },
+    { key: 'INR', label: 'INR' },
+    { key: 'Plaquettes', label: 'Plaquettes' },
+  ];
+  
+  return mappings.map(({ key, label }) => {
+    const validityKey = VALIDITY_DATA_KEYS[key];
+    const validityData = getValidityData(patientData, validityKey);
+    const { percentage } = calculateValidityAdherence(validityData);
+    const status = getAdherenceStatus(percentage);
     
     return {
       key,
