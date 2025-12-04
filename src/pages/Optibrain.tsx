@@ -772,7 +772,7 @@ const Optibrain = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">
-                Adhérence & Monitorage {timeRange === "stay" ? "sur le séjour" : `moyen sur ${timeRange}`}
+                Adhérence & Monitorage {timeRange === "stay" ? "sur le séjour" : ${timeRange}`}
               </CardTitle>
               <div className="flex gap-2">
                 {timeRanges.map((range) => (
