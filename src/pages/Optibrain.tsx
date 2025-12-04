@@ -1016,7 +1016,7 @@ const Optibrain = () => {
               </CardHeader>
               {checklistExpanded && (
                 <CardContent className="pt-0">
-                  <div className="grid grid-cols-4 gap-4 pt-4">
+                  <div className="grid grid-cols-5 gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
                       const dotColor =
                         target.status === "normal"
