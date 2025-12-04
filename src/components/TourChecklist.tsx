@@ -12,6 +12,8 @@ const reminders = [
   "Équipement à retirer",
   "Limites d'alarmes et fréquence de surveillance",
   "Mesures d'isolement",
+  "Plan de mobilisation",
+  "Transition vers traitement peros",
 ];
 
 interface TourChecklistProps {
