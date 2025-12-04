@@ -107,14 +107,15 @@ const Optibrain = () => {
   const hoursForAdherence = getHoursFromTimeRangeForAdherence(timeRange);
   const monitoringTargets = useMemo(() => {
     const defaultIndicators = [
-      { label: "Opioide", description: "Opioid monitoring compliance" },
-      { label: "Hypnotique", description: "Sedative adherence tracking" },
-      { label: "Propofol 48h", description: "Propofol duration check" },
-      { label: "PIC", description: "Intracranial pressure" },
-      { label: "PAM", description: "Mean arterial pressure" },
-      { label: "PVC", description: "Central venous pressure" },
-      { label: "ETCO2", description: "End-tidal CO₂ monitoring" },
-      { label: "Température", description: "Temperature control" },
+      { label: "Opioide", description: "En cours" },
+      { label: "Hypnotique", description: "En cours" },
+      { label: "Propofol 48h", description: "<48h" },
+      { label: "Anti-Epileptique", description: "Monitorée" },
+      { label: "PIC", description: "Monitorée" },
+      { label: "PAM", description: "Monitorée" },
+      { label: "PVC", description: "Monitorée" },
+      { label: "ETCO2", description: "Monitorée" },
+      { label: "Température", description: "Monitorée" },
     ];
 
     if (!patientFileData) {
