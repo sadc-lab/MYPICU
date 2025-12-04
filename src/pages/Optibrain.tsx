@@ -111,7 +111,7 @@ const Optibrain = () => {
     const defaultLabels = ["Opioide", "Hypnotique", "Propofol 48h", "PIC", "PAM", "PVC", "ETCO2", "Température"];
 
     if (!patientFileData) {
-      return defaultLabels.map((label) => ({ label, adherencePercentage: 100, status: 'normal' as const }));
+      return defaultLabels.map((label) => ({ label, adherencePercentage: 100, status: "normal" as const }));
     }
 
     const realStatus = getMonitoringInterventionsStatus(patientFileData, hoursForAdherence);
@@ -121,7 +121,7 @@ const Optibrain = () => {
       return {
         label,
         adherencePercentage: realData?.adherencePercentage ?? 100,
-        status: realData?.status ?? 'normal'
+        status: realData?.status ?? "normal",
       };
     });
   }, [patientFileData, hoursForAdherence]);
@@ -138,18 +138,18 @@ const Optibrain = () => {
     return Math.round(totalPercentage / monitoringTargets.length);
   }, [monitoringTargets]);
 
-  const nonAdherentCount = monitoringTargets.filter((t) => t.status !== 'normal').length;
+  const nonAdherentCount = monitoringTargets.filter((t) => t.status !== "normal").length;
 
   // Get real PIC and PPC values from patient file data
   const realBrainValues = useMemo(() => {
     if (!patientFileData) {
       return { pic: null, ppc: null };
     }
-    const picLatest = getLatestValue(patientFileData, 'Variable_PIC');
-    const ppcLatest = getLatestValue(patientFileData, 'Variable_PPC');
+    const picLatest = getLatestValue(patientFileData, "Variable_PIC");
+    const ppcLatest = getLatestValue(patientFileData, "Variable_PPC");
     return {
       pic: picLatest?.value ?? null,
-      ppc: ppcLatest?.value ?? null
+      ppc: ppcLatest?.value ?? null,
     };
   }, [patientFileData]);
 
@@ -242,7 +242,7 @@ const Optibrain = () => {
       return {
         label: base.label,
         target: base.target,
-        status: realData?.status ?? 'normal',
+        status: realData?.status ?? "normal",
         adherencePercentage: realData?.adherencePercentage ?? 100,
       };
     });
@@ -838,18 +838,18 @@ const Optibrain = () => {
                             );
                           }}
                         >
-                        <div
-                          className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}
-                        ></div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-1">
-                            <p className="text-sm font-medium text-gray-700">
-                              {indicator.label} : {indicator.adherencePercentage}%
-                            </p>
+                          <div
+                            className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}
+                          ></div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-1">
+                              <p className="text-sm font-medium text-gray-700">
+                                {indicator.label} : {indicator.adherencePercentage}%
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500">{indicator.target}</p>
                           </div>
-                          <p className="text-xs text-gray-500">{indicator.target}</p>
                         </div>
-                      </div>
                       );
                     })}
                   </div>
@@ -897,8 +897,18 @@ const Optibrain = () => {
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-4 gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
-                      const dotColor = target.status === 'normal' ? 'bg-gray-400' : target.status === 'warning' ? 'bg-orange-400' : 'bg-red-500';
-                      const textColor = target.status === 'normal' ? 'text-gray-500' : target.status === 'warning' ? 'text-orange-600' : 'text-red-600';
+                      const dotColor =
+                        target.status === "normal"
+                          ? "bg-gray-400"
+                          : target.status === "warning"
+                            ? "bg-orange-400"
+                            : "bg-red-500";
+                      const textColor =
+                        target.status === "normal"
+                          ? "text-gray-500"
+                          : target.status === "warning"
+                            ? "text-orange-600"
+                            : "text-red-600";
                       return (
                         <div
                           key={index}
@@ -907,9 +917,7 @@ const Optibrain = () => {
                           <div className={`w-3 h-3 rounded-full ${dotColor}`}></div>
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-700">{target.label}</p>
-                            <p className={`text-xs font-medium ${textColor}`}>
-                              {target.adherencePercentage}%
-                            </p>
+                            <p className={`text-xs font-medium ${textColor}`}></p>
                           </div>
                         </div>
                       );
