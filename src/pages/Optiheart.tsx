@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,15 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { heartMetrics as importedHeartMetrics } from '@/utils/organMetrics';
 import { useTimeRange } from '@/hooks/useTimeRange';
 import { getStatusHexColor } from '@/utils/colorUtils';
+import {
+  loadPatientFileData,
+  hasPatientFileData,
+  getAdherenceStatus,
+  getValidityData,
+  calculateValidityAdherence,
+  PatientFileData,
+  VALIDITY_DATA_KEYS,
+} from '@/services/patientFileData.service';
 
 const Optiheart = () => {
   const [searchParams] = useSearchParams();
@@ -39,20 +48,96 @@ const Optiheart = () => {
   const [editedObjectives, setEditedObjectives] = useState<string[]>([]);
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
-  const monitoringTargets = [
-    { label: 'PAM', value: 72, unit: 'mmHg', target: '> 65 mmHg', status: 'normal', trend: 'up', change: 3 },
-    { label: 'Débit cardiaque', value: 3.2, unit: 'L/min', target: '4.5-6.0 L/min', status: 'critical', trend: 'up', change: 0.4 },
-    { label: 'Lactates', value: 1.2, unit: 'mmol/L', target: '< 2 mmol/L', status: 'normal', trend: 'down', change: -0.2 },
-    { label: 'ScvO2', value: 72, unit: '%', target: '> 70%', status: 'normal', trend: 'up', change: 2 },
-    { label: 'Bilan hydrique', value: '+500', unit: 'mL', target: 'Équilibré', status: 'warning', trend: 'stable', change: 0 },
-    { label: 'Support inotrope', value: 'Dobutamine 5', unit: 'mcg/kg/min', target: 'Selon besoin', status: 'normal', trend: 'stable' },
-    { label: 'Vasopresseurs', value: 'Noradré 0.15', unit: 'mcg/kg/min', target: 'Selon MAP', status: 'normal', trend: 'down', change: -0.05 },
-    { label: 'Échocardiographie', value: 'FEVG 35%', target: 'Contrôle régulier', status: 'critical', trend: 'stable' }
+
+  // Patient file data state
+  const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
+  const [fileDataLoading, setFileDataLoading] = useState(false);
+  const hasFileData = hasPatientFileData(patientId);
+
+  // Load patient file data
+  useEffect(() => {
+    if (hasFileData) {
+      setFileDataLoading(true);
+      loadPatientFileData(patientId)
+        .then((data) => setPatientFileData(data))
+        .finally(() => setFileDataLoading(false));
+    } else {
+      setPatientFileData(null);
+    }
+  }, [patientId, hasFileData]);
+
+  // Map time range to hours for adherence calculation
+  const getHoursFromTimeRange = (range: string): number => {
+    switch (range) {
+      case '3h': return 3;
+      case '6h': return 6;
+      case '12h': return 12;
+      case '24h': return 24;
+      case 'stay': return 96;
+      default: return 24;
+    }
+  };
+
+  const hoursForAdherence = getHoursFromTimeRange(timeRange);
+
+  // Heart-specific validity keys mapping
+  const heartValidityMapping: Array<{ label: string; validityKey: string | null }> = [
+    { label: 'PAM', validityKey: 'PAMData_validite' },
+    { label: 'Débit cardiaque', validityKey: null }, // No validity data available
+    { label: 'Lactates', validityKey: null },
+    { label: 'ScvO2', validityKey: null },
+    { label: 'Bilan hydrique', validityKey: null },
+    { label: 'Support inotrope', validityKey: null },
+    { label: 'Vasopresseurs', validityKey: null },
+    { label: 'Échocardiographie', validityKey: null },
   ];
+
+  const monitoringTargets = useMemo(() => {
+    const defaultIndicators = [
+      { label: 'PAM', value: 72, unit: 'mmHg', target: '> 65 mmHg', trend: 'up', change: 3 },
+      { label: 'Débit cardiaque', value: 3.2, unit: 'L/min', target: '4.5-6.0 L/min', trend: 'up', change: 0.4 },
+      { label: 'Lactates', value: 1.2, unit: 'mmol/L', target: '< 2 mmol/L', trend: 'down', change: -0.2 },
+      { label: 'ScvO2', value: 72, unit: '%', target: '> 70%', trend: 'up', change: 2 },
+      { label: 'Bilan hydrique', value: '+500', unit: 'mL', target: 'Équilibré', trend: 'stable', change: 0 },
+      { label: 'Support inotrope', value: 'Dobutamine 5', unit: 'mcg/kg/min', target: 'Selon besoin', trend: 'stable' },
+      { label: 'Vasopresseurs', value: 'Noradré 0.15', unit: 'mcg/kg/min', target: 'Selon MAP', trend: 'down', change: -0.05 },
+      { label: 'Échocardiographie', value: 'FEVG 35%', target: 'Contrôle régulier', trend: 'stable' },
+    ];
+
+    return defaultIndicators.map((indicator) => {
+      const mapping = heartValidityMapping.find(m => m.label === indicator.label);
+      
+      if (patientFileData && mapping?.validityKey) {
+        const validityData = getValidityData(patientFileData, mapping.validityKey);
+        const { percentage, hasData } = calculateValidityAdherence(validityData, hoursForAdherence);
+        
+        if (hasData) {
+          return {
+            ...indicator,
+            adherencePercentage: percentage,
+            status: getAdherenceStatus(percentage),
+          };
+        }
+      }
+      
+      // Default status based on mock values
+      const defaultStatus = indicator.label === 'Débit cardiaque' || indicator.label === 'Échocardiographie' 
+        ? 'critical' 
+        : indicator.label === 'Bilan hydrique' 
+          ? 'warning' 
+          : 'normal';
+      
+      return {
+        ...indicator,
+        adherencePercentage: defaultStatus === 'normal' ? 100 : defaultStatus === 'warning' ? 85 : 70,
+        status: defaultStatus as 'normal' | 'warning' | 'critical',
+      };
+    });
+  }, [patientFileData, hoursForAdherence]);
   
   const totalTargets = monitoringTargets.length;
   const normalTargets = monitoringTargets.filter(t => t.status === 'normal').length;
-  const monitoringAdherence = Math.round(normalTargets / totalTargets * 100);
+  const monitoringAdherence = Math.round(monitoringTargets.reduce((sum, t) => sum + t.adherencePercentage, 0) / totalTargets);
   const targetOutOfRangeCount = monitoringTargets.filter(t => t.status !== 'normal').length;
 
   if (!patient) {
@@ -436,10 +521,16 @@ const Optiheart = () => {
                         >
                           <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
                           <div className="flex-1">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center justify-between gap-1">
                               <p className="text-sm font-medium text-gray-700">
                                 {target.label} : {target.value}{target.unit || ''}
                               </p>
+                              <span className={`text-xs font-medium ${
+                                target.status === 'critical' ? 'text-red-500' : 
+                                target.status === 'warning' ? 'text-orange-500' : 'text-gray-500'
+                              }`}>
+                                {target.adherencePercentage}%
+                              </span>
                             </div>
                             <p className="text-xs text-gray-500">{target.target}</p>
                           </div>
