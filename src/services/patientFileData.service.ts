@@ -224,17 +224,18 @@ export function getAvailableVariables(patientData: PatientFileData): string[] {
 }
 
 // Validity data keys mapping for all indicators
+// Keys must match EXACTLY the JSON file structure
 export const VALIDITY_DATA_KEYS = {
   // Clinical indicators (Adhérence aux cibles recommandées)
-  PositionTete: 'PositionTeteData_validite',
-  PicHtic: 'PicHticData_validite',
-  PPC: 'PPCData_validite',
-  Temperature: 'TemperatureData_validite',
-  PaCO2: 'PaCO2Data_validite',
-  Glycemie: 'GlycemieData_validite',
-  Hemoglobine: 'HemoglobineData_validite',
-  INR: 'INRData_validite',
-  Plaquettes: 'PlaquettesData_validite',
+  PositionTete: 'PositionTeteData_validite',      // Tête - matches JSON
+  PicHtic: 'PicHticData_validite',                 // PIC 
+  PPC: 'PPCData_validite',                         // PPC
+  Temperature: 'TemperatureData_validite',         // Temp - matches JSON
+  PaCO2: 'PaCO2Data_validite',                     // PaCO2 - matches JSON
+  Glycemie: 'GlycemieData_validite',               // Glycémie
+  Hemoglobine: 'HemoglobineData_validite',         // Hb - matches JSON
+  INR: 'INRData_validite',                         // INR - matches JSON
+  Plaquettes: 'PlaquettesData_validite',           // Plaquettes - matches JSON
   // Monitoring interventions (Monitorage et interventions en place)
   PicMonitorage: 'PicMonitorageData_validite',
   PupilleDroite: 'PupilleDroiteData_validite',
@@ -267,16 +268,20 @@ export function getValidityData(
 // Calculate adherence percentage from validity data for a specific time range
 // In JSON: 0 = adhérent, 1 = non adhérent
 // hoursBack: number of hours to look back (e.g., 3, 6, 12, 24, 96 for stay)
+// Returns null if no data available
 export function calculateValidityAdherence(validityData: ValidityData | null, hoursBack?: number): {
   adherent: number;
   total: number;
   percentage: number;
+  hasData: boolean;
 } {
-  if (!validityData) return { adherent: 0, total: 0, percentage: 0 };
+  if (!validityData) return { adherent: 0, total: 0, percentage: 100, hasData: false };
   
   let hourKeys = Object.keys(validityData)
     .filter(k => k.startsWith('H'))
     .sort((a, b) => parseInt(a.replace('H', '')) - parseInt(b.replace('H', '')));
+  
+  if (hourKeys.length === 0) return { adherent: 0, total: 0, percentage: 100, hasData: false };
   
   // If hoursBack is specified, only take the last N hours
   if (hoursBack && hoursBack > 0) {
@@ -291,7 +296,8 @@ export function calculateValidityAdherence(validityData: ValidityData | null, ho
   return {
     adherent,
     total,
-    percentage: total > 0 ? Math.round((adherent / total) * 100) : 0
+    percentage: total > 0 ? Math.round((adherent / total) * 100) : 100,
+    hasData: true
   };
 }
 
