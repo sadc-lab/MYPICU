@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,14 @@ import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronU
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
 import { useTimeRange } from '@/hooks/useTimeRange';
+import {
+  loadPatientFileData,
+  hasPatientFileData,
+  getAdherenceStatus,
+  getValidityData,
+  calculateValidityAdherence,
+  PatientFileData,
+} from '@/services/patientFileData.service';
 
 const Optilungs = () => {
   const [searchParams] = useSearchParams();
@@ -37,6 +45,101 @@ const Optilungs = () => {
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
 
+  // Patient file data state
+  const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
+  const [fileDataLoading, setFileDataLoading] = useState(false);
+  const hasFileData = hasPatientFileData(patientId);
+
+  // Load patient file data
+  useEffect(() => {
+    if (hasFileData) {
+      setFileDataLoading(true);
+      loadPatientFileData(patientId)
+        .then((data) => setPatientFileData(data))
+        .finally(() => setFileDataLoading(false));
+    } else {
+      setPatientFileData(null);
+    }
+  }, [patientId, hasFileData]);
+
+  // Map time range to hours for adherence calculation
+  const getHoursFromTimeRange = (range: string): number => {
+    switch (range) {
+      case '3h': return 3;
+      case '6h': return 6;
+      case '12h': return 12;
+      case '24h': return 24;
+      case 'stay': return 96;
+      default: return 24;
+    }
+  };
+
+  const hoursForAdherence = getHoursFromTimeRange(timeRange);
+
+  // Lung-specific validity keys mapping
+  const lungValidityMapping: Array<{ label: string; validityKey: string | null }> = [
+    { label: 'SpO2', validityKey: null },
+    { label: 'PaO2', validityKey: null },
+    { label: 'PaCO2', validityKey: 'PaCO2Data_validite' },
+    { label: 'pH', validityKey: null },
+    { label: 'FiO2', validityKey: null },
+    { label: 'P/F Ratio', validityKey: null },
+    { label: 'Pplat', validityKey: null },
+    { label: 'Driving P', validityKey: null },
+    { label: 'Compliance', validityKey: null },
+    { label: 'ETCO2', validityKey: 'EtCO2Data_validite' },
+    { label: 'Température', validityKey: 'TemperatureData_validite' },
+  ];
+
+  // Clinical indicators with adherence data
+  const clinicalIndicators = useMemo(() => {
+    const baseIndicators = [
+      { label: 'SpO2', value: 95, unit: '%', target: '> 92%', trend: 'stable', change: 0 },
+      { label: 'PaO2', value: 75, unit: 'mmHg', target: '80-100 mmHg', trend: 'up', change: 3 },
+      { label: 'PaCO2', value: 42, unit: 'mmHg', target: '35-45 mmHg', trend: 'stable', change: 0 },
+      { label: 'pH', value: 7.38, unit: '', target: '7.35-7.45', trend: 'stable', change: 0 },
+      { label: 'FiO2', value: 45, unit: '%', target: '< 40%', trend: 'down', change: -5 },
+      { label: 'P/F Ratio', value: 167, unit: '', target: '> 300', trend: 'up', change: 12 },
+      { label: 'Pplat', value: 28, unit: 'cmH2O', target: '< 30 cmH2O', trend: 'stable', change: 0 },
+      { label: 'Driving P', value: 14, unit: 'cmH2O', target: '< 15 cmH2O', trend: 'down', change: -1 },
+      { label: 'Compliance', value: 32, unit: 'mL/cmH2O', target: '> 40 mL/cmH2O', trend: 'up', change: 2 },
+    ];
+
+    return baseIndicators.map((indicator) => {
+      const mapping = lungValidityMapping.find(m => m.label === indicator.label);
+      
+      if (patientFileData && mapping?.validityKey) {
+        const validityData = getValidityData(patientFileData, mapping.validityKey);
+        const { percentage, hasData } = calculateValidityAdherence(validityData, hoursForAdherence);
+        
+        if (hasData) {
+          return {
+            ...indicator,
+            adherencePercentage: percentage,
+            status: getAdherenceStatus(percentage),
+          };
+        }
+      }
+      
+      // Default status based on indicator value ranges
+      let defaultStatus: 'normal' | 'warning' | 'critical' = 'normal';
+      if (indicator.label === 'PaO2' || indicator.label === 'FiO2' || indicator.label === 'Compliance') {
+        defaultStatus = 'warning';
+      } else if (indicator.label === 'P/F Ratio') {
+        defaultStatus = 'critical';
+      }
+      
+      return {
+        ...indicator,
+        adherencePercentage: defaultStatus === 'normal' ? 100 : defaultStatus === 'warning' ? 85 : 70,
+        status: defaultStatus,
+      };
+    });
+  }, [patientFileData, hoursForAdherence]);
+
+  const totalIndicators = clinicalIndicators.length;
+  const outOfRangeCount = clinicalIndicators.filter(i => i.status !== 'normal').length;
+
   if (!patient) {
     return (
       <div className="min-h-screen bg-[#EDF2F9]">
@@ -62,21 +165,6 @@ const Optilungs = () => {
     { label: 'Pression crête', value: '22 cmH2O' },
     { label: 'Compliance', value: '45 mL/cmH2O' },
   ];
-
-  const clinicalIndicators = [
-    { label: 'SpO2', value: 95, unit: '%', target: '> 92%', status: 'normal', trend: 'stable', change: 0 },
-    { label: 'PaO2', value: 75, unit: 'mmHg', target: '80-100 mmHg', status: 'warning', trend: 'up', change: 3 },
-    { label: 'PaCO2', value: 42, unit: 'mmHg', target: '35-45 mmHg', status: 'normal', trend: 'stable', change: 0 },
-    { label: 'pH', value: 7.38, unit: '', target: '7.35-7.45', status: 'normal', trend: 'stable', change: 0 },
-    { label: 'FiO2', value: 45, unit: '%', target: '< 40%', status: 'warning', trend: 'down', change: -5 },
-    { label: 'P/F Ratio', value: 167, unit: '', target: '> 300', status: 'critical', trend: 'up', change: 12 },
-    { label: 'Pplat', value: 28, unit: 'cmH2O', target: '< 30 cmH2O', status: 'normal', trend: 'stable', change: 0 },
-    { label: 'Driving P', value: 14, unit: 'cmH2O', target: '< 15 cmH2O', status: 'normal', trend: 'down', change: -1 },
-    { label: 'Compliance', value: 32, unit: 'mL/cmH2O', target: '> 40 mL/cmH2O', status: 'warning', trend: 'up', change: 2 },
-  ];
-
-  const totalIndicators = clinicalIndicators.length;
-  const outOfRangeCount = clinicalIndicators.filter(i => i.status !== 'normal').length;
 
 
   return (
@@ -309,10 +397,16 @@ const Optilungs = () => {
                         >
                           <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}></div>
                           <div className="flex-1">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center justify-between gap-1">
                               <p className="text-sm font-medium text-gray-700">
                                 {indicator.label} : {indicator.value}{indicator.unit}
                               </p>
+                              <span className={`text-xs font-medium ${
+                                indicator.status === 'critical' ? 'text-red-500' : 
+                                indicator.status === 'warning' ? 'text-orange-500' : 'text-gray-500'
+                              }`}>
+                                {indicator.adherencePercentage}%
+                              </span>
                             </div>
                             <p className="text-xs text-gray-500">{indicator.target}</p>
                           </div>
