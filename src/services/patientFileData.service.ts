@@ -82,6 +82,9 @@ export function extractTimeSeriesData(
     }));
 }
 
+// Variables where 0 is not a clinically valid value (sensor error/disconnection)
+const EXCLUDE_ZERO_VARIABLES = ['Variable_PIC', 'Variable_PPC'];
+
 // Get latest value for a variable
 export function getLatestValue(
   patientData: PatientFileData,
@@ -95,9 +98,19 @@ export function getLatestValue(
     return null;
   }
   
+  // Check if this variable should exclude zero values
+  const excludeZero = EXCLUDE_ZERO_VARIABLES.includes(variableKey);
+  
   // Filter valid entries and ensure valeur is a number
   const validEntries = data
-    .filter((item: any) => item.charttime && (typeof item.valeur === 'number' || !isNaN(Number(item.valeur))))
+    .filter((item: any) => {
+      if (!item.charttime) return false;
+      const valeur = typeof item.valeur === 'number' ? item.valeur : Number(item.valeur);
+      if (isNaN(valeur)) return false;
+      // Exclude zero values for PIC/PPC as they indicate sensor errors
+      if (excludeZero && valeur === 0) return false;
+      return true;
+    })
     .map((item: any) => ({
       charttime: item.charttime,
       valeur: typeof item.valeur === 'number' ? item.valeur : Number(item.valeur)
