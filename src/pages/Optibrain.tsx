@@ -240,10 +240,10 @@ const Optibrain = () => {
     { label: "Tête", target: "0-30°" },
     { label: "PIC", target: "< 20mmHg" },
     { label: "PPC", target: "60-70 mmHg" },
-    { label: "Temp.", target: "35-38°C" },
+    { label: "Température", target: "35-38°C" },
     { label: "PaCO2", target: "35-45mmHg" },
     { label: "Glycémie", target: "6-11 mmol/L" },
-    { label: "Hb", target: "> 7g/dl" },
+    { label: "Hémoglobine", target: "> 7g/dl" },
     { label: "INR", target: "< 1.2" },
     { label: "Plaquettes", target: "> 100 g/L" },
   ];
@@ -300,9 +300,14 @@ const Optibrain = () => {
       Variable_PPC: "PPC",
       Variable_PAM: "PAM",
       Variable_PVC: "PVC",
-      Variable_Temperature: "Temp.",
+      Variable_temperature: "Température",
       Variable_ETCO2: "ETCO2",
-      Variable_Hemoglobin: "hb",
+      Variable_position_tete: "Tête",
+      Variable_paco2: "PaC02",
+      Variable_glycemie: "Glycémie",
+      Variable_INR: "glycémie",
+      Variable_plaquettes: "Plaquettes",
+      Variable_hemoglobine: "Hémoglobine",
     };
 
     const result: Record<string, TimeSeriesDataPoint[]> = {};
