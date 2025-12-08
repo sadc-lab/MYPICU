@@ -87,13 +87,33 @@ export function getLatestValue(
   patientData: PatientFileData,
   variableKey: string
 ): { value: number; timestamp: string } | null {
-  const timeSeries = extractTimeSeriesData(patientData, variableKey);
-  if (timeSeries.length === 0) return null;
+  const data = patientData[variableKey];
   
-  // Sort by timestamp descending
-  const sorted = [...timeSeries].sort((a, b) => 
+  // Direct access to array - handle both number and numeric string valeurs
+  if (!Array.isArray(data) || data.length === 0) {
+    console.log(`getLatestValue: No data found for ${variableKey}`);
+    return null;
+  }
+  
+  // Filter valid entries and ensure valeur is a number
+  const validEntries = data
+    .filter((item: any) => item.charttime && (typeof item.valeur === 'number' || !isNaN(Number(item.valeur))))
+    .map((item: any) => ({
+      charttime: item.charttime,
+      valeur: typeof item.valeur === 'number' ? item.valeur : Number(item.valeur)
+    }));
+  
+  if (validEntries.length === 0) {
+    console.log(`getLatestValue: No valid entries for ${variableKey}`);
+    return null;
+  }
+  
+  // Sort by timestamp descending to get most recent
+  const sorted = [...validEntries].sort((a, b) => 
     new Date(b.charttime).getTime() - new Date(a.charttime).getTime()
   );
+  
+  console.log(`getLatestValue for ${variableKey}: Latest value = ${sorted[0].valeur} at ${sorted[0].charttime}`);
   
   return {
     value: sorted[0].valeur,
