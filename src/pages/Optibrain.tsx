@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getPatientById } from "@/utils/patientData";
-import { useEffect, useState } from "react";
 import {
   Info,
   ChevronDown,
@@ -881,14 +880,22 @@ const Optibrain = () => {
             <Card className="border-2 border-gray-200">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  {/* Title */}
                   <CardTitle className="text-lg">
                     {timeRange === "stay" ? "Monitorage (Séjour complet)" : `Monitorage (${timeRange.toUpperCase()})`}
                   </CardTitle>
-
-                  {/* Status Badge */}
                   {hasFileData && (
-                    <MontrealTimeBadge fileDataLoading={fileDataLoading} patientFileData={patientFileData} />
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                      {fileDataLoading ? (
+                        <span className="flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Chargement...
+                        </span>
+                      ) : patientFileData ? (
+                        "Données réelles"
+                      ) : (
+                        "Données simulées"
+                      )}
+                    </Badge>
                   )}
                 </div>
               </CardHeader>
