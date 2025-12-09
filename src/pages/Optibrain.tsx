@@ -27,6 +27,7 @@ import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
 import { useTimeRange } from "@/hooks/useTimeRange";
 import { getStatusHexColor } from "@/utils/colorUtils";
 import brainIcon from "@/assets/brain-icon.svg";
+import { getTimeRangeDisplayLabel } from "@/utils/timeRangeUtils";
 import {
   loadPatientFileData,
   hasPatientFileData,
@@ -883,20 +884,16 @@ const Optibrain = () => {
                   <CardTitle className="text-lg">
                     {timeRange === "stay" ? "Monitorage (Séjour complet)" : `Monitorage (${timeRange.toUpperCase()})`}
                   </CardTitle>
-                  {hasFileData && (
-                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                      {fileDataLoading ? (
-                        <span className="flex items-center gap-1">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          Chargement...
-                        </span>
-                      ) : patientFileData ? (
-                        "Données réelles"
-                      ) : (
-                        "Données simulées"
-                      )}
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                    {fileDataLoading ? (
+                      <span className="flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Chargement...
+                      </span>
+                    ) : (
+                      getTimeRangeDisplayLabel(timeRange)
+                    )}
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
