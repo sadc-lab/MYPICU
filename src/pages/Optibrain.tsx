@@ -154,16 +154,18 @@ const Optibrain = () => {
 
   const nonAdherentCount = monitoringTargets.filter((t) => t.status !== "normal").length;
 
-  // Get real PIC and PPC values from patient file data
+  // Get real PIC, PPC and PACO2 values from patient file data
   const realBrainValues = useMemo(() => {
     if (!patientFileData) {
-      return { pic: null, ppc: null };
+      return { pic: null, ppc: null, paco2: null };
     }
     const picLatest = getLatestValue(patientFileData, "Variable_PIC");
     const ppcLatest = getLatestValue(patientFileData, "Variable_PPC");
+    const paco2Latest = getLatestValue(patientFileData, "Variable_paco2");
     return {
       pic: picLatest?.value ?? null,
       ppc: ppcLatest?.value ?? null,
+      paco2: paco2Latest?.value ?? null,
     };
   }, [patientFileData]);
 
@@ -177,7 +179,18 @@ const Optibrain = () => {
       </div>
     );
   }
-  const brainMetrics = importedBrainMetrics;
+  // Override brainMetrics with real data when available
+  const brainMetrics = useMemo(() => {
+    return importedBrainMetrics.map((metric) => {
+      if (metric.label === "PaCO2" && realBrainValues.paco2 !== null) {
+        return {
+          ...metric,
+          value: Math.round(realBrainValues.paco2 * 10) / 10,
+        };
+      }
+      return metric;
+    });
+  }, [realBrainValues.paco2]);
 
   // Get PIC status based on value (target < 20 mmHg)
   const getPicStatus = (value: number | null): string => {
