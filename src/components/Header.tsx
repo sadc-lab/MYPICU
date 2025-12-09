@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
-import { getAllPatients, Patient } from '@/utils/patientData';
+import { getAllPatients, getPatientsForPed, Patient } from '@/utils/patientData';
 import { useTourNavigation, VisitStatus } from '@/hooks/useTourNavigation';
 import {
   DropdownMenu,
@@ -54,12 +54,24 @@ export const Header = () => {
     isInTour,
   } = useTourNavigation();
 
-  const hasActiveTour = Boolean(activeTour?.length);
-  const isOnTourPatient = hasActiveTour && currentPatientId ? isInTour(currentPatientId) : false;
+  // Use active tour if set, otherwise default to PED A patients
+  const pedAPatients = getPatientsForPed('A');
+  const displayedPatients = activeTour?.length ? activeTour : pedAPatients;
+  const hasPatients = Boolean(displayedPatients?.length);
+  
+  const isOnDisplayedPatient = hasPatients && currentPatientId 
+    ? displayedPatients.some(p => p.id === currentPatientId) 
+    : false;
 
-  const currentIndex = isOnTourPatient ? getCurrentPatientIndex(currentPatientId!) : -1;
-  const nextPatient = isOnTourPatient ? getNextPatient(currentPatientId!) : null;
-  const previousPatient = isOnTourPatient ? getPreviousPatient(currentPatientId!) : null;
+  const currentIndex = isOnDisplayedPatient 
+    ? displayedPatients.findIndex(p => p.id === currentPatientId) 
+    : -1;
+  const nextPatient = isOnDisplayedPatient && currentIndex < displayedPatients.length - 1 
+    ? displayedPatients[currentIndex + 1] 
+    : null;
+  const previousPatient = isOnDisplayedPatient && currentIndex > 0 
+    ? displayedPatients[currentIndex - 1] 
+    : null;
 
   const handleNavigateToPatient = (patientId: string) => {
     const basePath = location.pathname.startsWith('/optibrain')
@@ -186,10 +198,10 @@ export const Header = () => {
           </div>
 
           <nav className="hidden md:flex gap-2 items-center" data-guide="patient-nav">
-            {hasActiveTour && (
+            {hasPatients && (
               <>
                 <Badge variant="default" className="bg-primary text-white text-xs" data-guide="tour-info">
-                  {isOnTourPatient ? `${currentIndex + 1}/${activeTour!.length}` : `${activeTour!.length} patients`}
+                  {isOnDisplayedPatient ? `${currentIndex + 1}/${displayedPatients.length}` : `${displayedPatients.length} patients`}
                 </Badge>
                 
                 <div className="flex items-center gap-1 bg-muted rounded-lg border p-0.5">
@@ -210,7 +222,7 @@ export const Header = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="center" className="w-64 max-h-[400px] overflow-y-auto z-50">
-                      {activeTour?.map((patient, index) => (
+                      {displayedPatients?.map((patient, index) => (
                         <DropdownMenuItem
                           key={patient.id}
                           onClick={() => handleNavigateToPatient(patient.id)}
@@ -241,7 +253,7 @@ export const Header = () => {
                   </Button>
                 </div>
 
-                {isOnTourPatient && currentPatientId && (
+                {isOnDisplayedPatient && currentPatientId && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
