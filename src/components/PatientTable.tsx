@@ -136,7 +136,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
               >
                 <TableCell className="py-3 sm:py-4">
                   <div className="font-medium text-sm sm:text-base text-foreground">
-                    {patient.id} {patient.name}
+                    {patient.name}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground">{patient.weight}</div>
                 </TableCell>
