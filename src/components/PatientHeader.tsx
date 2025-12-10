@@ -89,14 +89,12 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 mb-3 sm:mb-4">
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
-              {patient.id} {patient.name}
+              Chambre {patient.picuId} - {patient.name}
             </h1>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
               <span>{patient.age}</span>
               <span>•</span>
               <span>{patient.weight}</span>
-              <span>•</span>
-              <span>PICU: {patient.picuId}</span>
             </div>
             <p className="text-xs sm:text-sm text-foreground mt-2">
               <strong>Diagnostic:</strong> {patient.diagnosis}
