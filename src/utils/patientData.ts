@@ -6,7 +6,7 @@ export type { Patient };
 
 export const pedAPatients: Patient[] = [
   {
-    id: "#8448",
+    id: "#12",
     name: "John Doe (M)",
     age: "11y 3m 20d",
     weight: "55.5 kg",
@@ -23,7 +23,7 @@ export const pedAPatients: Patient[] = [
     kidneyScore: 0,
   },
   {
-    id: "#6312",
+    id: "#13",
     name: "Lucy Hale (F)",
     age: "16y 11m 18d",
     weight: "38.3 kg",
