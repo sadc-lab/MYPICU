@@ -226,7 +226,7 @@ const Optibrain = () => {
 
   const brainOptimisationMetrics = [
     {
-      label: "État Neuro (données artificielles)",
+      label: "État Neuro",
       value: "Contrôlé",
       displayValue: "Contrôlé",
       unit: "",
