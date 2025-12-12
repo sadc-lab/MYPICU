@@ -247,14 +247,15 @@ const Optibrain = () => {
     },
     {
       label: "PPC Opt",
-      value: ppcValue !== null ? `${Math.round(ppcValue)} mmHg` : "-- mmHg",
-      displayValue: ppcValue !== null ? `${Math.round(ppcValue)}` : "--",
+      value: "65 mmHg",
+      displayValue: "65",
       unit: "mmHg",
-      status: getPpcStatus(ppcValue),
+      status: "normal",
       hasDetails: true,
       dialogKey: "ppc",
-      trend: "up",
-      change: 2,
+      trend: "stable",
+      change: 0,
+      description: "Cible 60-70 mmHg",
     },
   ];
   const isInRange = (value: number, min: number, max: number) => {
