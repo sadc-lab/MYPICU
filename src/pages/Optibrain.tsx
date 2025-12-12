@@ -295,6 +295,96 @@ const Optibrain = () => {
   }, [clinicalIndicators]);
   const outOfRangeCount = clinicalIndicators.filter((i) => i.status !== "normal").length;
 
+  // Calculate time spent in each PIC range from real data
+  const picRangeData = useMemo(() => {
+    if (!patientFileData) {
+      return {
+        ranges: [
+          { label: "25 - 30 mmHg", minutes: 0, percentage: 0, color: "orange", status: "warning" },
+          { label: "20 - 25 mmHg", minutes: 0, percentage: 0, color: "orange", status: "warning" },
+          { label: "> 30 mmHg", minutes: 0, percentage: 0, color: "red", status: "critical" },
+          { label: "< 20 mmHg", minutes: 0, percentage: 0, color: "gray", status: "normal" },
+        ],
+        currentPic: null,
+        averagePic: null,
+        totalMinutes: 0,
+      };
+    }
+
+    const picTimeSeries = getTimeSeriesForRange(patientFileData, "Variable_PIC", 96, 1); // Get all data, 1 min sampling
+    
+    if (picTimeSeries.length === 0) {
+      return {
+        ranges: [
+          { label: "25 - 30 mmHg", minutes: 0, percentage: 0, color: "orange", status: "warning" },
+          { label: "20 - 25 mmHg", minutes: 0, percentage: 0, color: "orange", status: "warning" },
+          { label: "> 30 mmHg", minutes: 0, percentage: 0, color: "red", status: "critical" },
+          { label: "< 20 mmHg", minutes: 0, percentage: 0, color: "gray", status: "normal" },
+        ],
+        currentPic: null,
+        averagePic: null,
+        totalMinutes: 0,
+      };
+    }
+
+    // Filter out zero values (sensor errors)
+    const validData = picTimeSeries.filter(d => d.valeur > 0);
+    
+    // Count time in each range
+    const counts = {
+      below20: 0,
+      range20_25: 0,
+      range25_30: 0,
+      above30: 0,
+    };
+
+    validData.forEach(d => {
+      if (d.valeur < 20) counts.below20++;
+      else if (d.valeur >= 20 && d.valeur < 25) counts.range20_25++;
+      else if (d.valeur >= 25 && d.valeur <= 30) counts.range25_30++;
+      else if (d.valeur > 30) counts.above30++;
+    });
+
+    const total = validData.length;
+    const averagePic = total > 0 ? calculateAverage(validData) : null;
+
+    return {
+      ranges: [
+        { 
+          label: "25 - 30 mmHg", 
+          minutes: counts.range25_30, 
+          percentage: total > 0 ? Math.round((counts.range25_30 / total) * 100) : 0,
+          color: "orange",
+          status: "warning"
+        },
+        { 
+          label: "20 - 25 mmHg", 
+          minutes: counts.range20_25, 
+          percentage: total > 0 ? Math.round((counts.range20_25 / total) * 100) : 0,
+          color: "orange",
+          status: "warning"
+        },
+        { 
+          label: "> 30 mmHg", 
+          minutes: counts.above30, 
+          percentage: total > 0 ? Math.round((counts.above30 / total) * 100) : 0,
+          color: "red",
+          status: "critical"
+        },
+        { 
+          label: "< 20 mmHg", 
+          minutes: counts.below20, 
+          percentage: total > 0 ? Math.round((counts.below20 / total) * 100) : 0,
+          color: "gray",
+          status: "normal"
+        },
+      ],
+      currentPic: realBrainValues.pic,
+      averagePic,
+      totalMinutes: total,
+    };
+  }, [patientFileData, realBrainValues.pic]);
+
   // Map time range to hours
   const getHoursFromTimeRange = (range: string): number => {
     switch (range) {
@@ -666,61 +756,47 @@ const Optibrain = () => {
                   <h3 className="text-base font-semibold text-gray-700">
                     <span className="text-orange-500">Répartition du temps</span> par niveau de PIC
                   </h3>
+                  {picRangeData.totalMinutes > 0 && (
+                    <span className="text-sm text-gray-500">
+                      Total: {picRangeData.totalMinutes} min
+                    </span>
+                  )}
                 </div>
 
                 {/* Individual Bars */}
                 <div className="space-y-6">
-                  {/* 25 - 30 mmHg */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">25 - 30 mmHg</span>
-                      <span className="text-xl font-semibold text-orange-500">128 min</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: "71%" }}></div>
-                    </div>
-                  </div>
-
-                  {/* 20 - 25 mmHg */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">20 - 25 mmHg</span>
-                      <span className="text-xl font-semibold text-orange-500">30 min</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: "17%" }}></div>
-                    </div>
-                  </div>
-
-                  {/* > 30 mmHg */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">&gt; 30 mmHg</span>
-                      <span className="text-xl font-semibold text-red-500">2 min</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-red-400 h-3 rounded-full" style={{ width: "1%" }}></div>
-                    </div>
-                  </div>
-
-                  {/* < 20 mmHg */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">&lt; 20 mmHg</span>
-                      <span className="text-xl font-semibold text-gray-500">20 min</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-gray-400 h-3 rounded-full" style={{ width: "11%" }}></div>
-                    </div>
-                  </div>
+                  {picRangeData.ranges.map((range, idx) => {
+                    const textColor = range.color === "red" ? "text-red-500" : 
+                                      range.color === "orange" ? "text-orange-500" : "text-gray-500";
+                    const bgColor = range.color === "red" ? "bg-red-400" : 
+                                    range.color === "orange" ? "bg-orange-400" : "bg-gray-400";
+                    return (
+                      <div key={idx}>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-gray-700">{range.label}</span>
+                          <span className={`text-xl font-semibold ${textColor}`}>{range.minutes} min</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div 
+                            className={`${bgColor} h-3 rounded-full`} 
+                            style={{ width: `${Math.max(range.percentage, 1)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Metrics Footer */}
                 <div className="border-t mt-6 pt-4">
                   <div className="text-sm text-gray-600">
-                    Intensité actuelle : <span className="font-semibold">26 mmHg</span>
+                    PIC actuelle : <span className="font-semibold">
+                      {picRangeData.currentPic !== null ? `${Math.round(picRangeData.currentPic)} mmHg` : "-- mmHg"}
+                    </span>
                     <span className="mx-2">|</span>
-                    Intensité moyenne : <span className="font-semibold">28 mmHg</span>
+                    PIC moyenne : <span className="font-semibold">
+                      {picRangeData.averagePic !== null ? `${Math.round(picRangeData.averagePic)} mmHg` : "-- mmHg"}
+                    </span>
                   </div>
                 </div>
               </div>
