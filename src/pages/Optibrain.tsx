@@ -224,6 +224,40 @@ const Optibrain = () => {
   const picValue = realBrainValues.pic;
   const ppcValue = realBrainValues.ppc;
 
+  // 1. Tu récupères l’ID du patient
+  const patientId = searchParams.get("patient") || "#25";
+
+  // 2. Tu mets TON MOCK ici ⬇⬇⬇
+  const neurologicalMockByPatient = {
+    "#25": {
+      hyperhemie: 20,
+      htic: 0,
+      ischemie: 0,
+      controle: 80,
+      etat: "Hypertension intracrânienne",
+      depuis: "6h00",
+      ppcActuel: 65,
+      ppcMoyen: 68,
+    },
+    "#10": {
+      hyperhemie: 5,
+      htic: 10,
+      ischemie: 15,
+      controle: 70,
+      etat: "Ischémie cérébrale",
+      depuis: "4h30",
+      ppcActuel: 58,
+      ppcMoyen: 62,
+    },
+  };
+
+  // 3. La sélection automatique du bon mock
+  const neuro = neurologicalMockByPatient[patientId] || neurologicalMockByPatient["#25"];
+
+  // 4. Puis APRÈS tu mets tes valeurs PIC/PPC
+  const picValue = realBrainValues?.pic ?? neuro.htic;
+  const ppcValue = realBrainValues?.ppc ?? neuro.ppcActuel;
+
   const brainOptimisationMetrics = [
     {
       label: "État Neuro",
