@@ -2,7 +2,7 @@
 
 export const brainMetrics = [
   {
-    label: 'ICP',
+    label: 'PIC',
     value: 15,
     unit: 'mmHg',
     min: 0,
@@ -14,7 +14,7 @@ export const brainMetrics = [
     organ: 'brain'
   },
   {
-    label: 'CPP',
+    label: 'PPC',
     value: 65,
     unit: 'mmHg',
     min: 30,
