@@ -855,24 +855,6 @@ const Optibrain = () => {
               <DialogTitle>PPC optimale - Étude sur 6 heures</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
-              {/* Time Range Selector */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Période :</span>
-                <div className="flex gap-2">
-                  {["3h", "6h", "12h", "24h", "stay"].map((range) => (
-                    <button
-                      key={range}
-                      onClick={() => setPicDialogTimeRange(range)}
-                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                        picDialogTimeRange === range
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                    >
-                      {range === "stay" ? "Séjour" : range}
-                    </button>
-                  ))}
-                </div>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
