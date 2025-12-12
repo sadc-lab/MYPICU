@@ -8,7 +8,7 @@ export const pedAPatients: Patient[] = [
   {
     id: "#8448",
     name: "John Doe (M)",
-    age: "11y 3m 20d",
+    age: "6y 3m 20d",
     weight: "55.5 kg",
     picuId: "D1",
     pelodScore: 28,
@@ -24,8 +24,8 @@ export const pedAPatients: Patient[] = [
   },
   {
     id: "#6312",
-    name: "Lucy Hale (F)",
-    age: "16y 11m 18d",
+    name: "Jules Moreault (M)",
+    age: "9y 11m 18d",
     weight: "38.3 kg",
     picuId: "D4",
     pelodScore: 24,
