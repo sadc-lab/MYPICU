@@ -69,6 +69,7 @@ const Optibrain = () => {
   const [editedObjectives, setEditedObjectives] = useState<string[]>([]);
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
+  const [picDialogTimeRange, setPicDialogTimeRange] = useState<string>("24h");
 
   // Patient file data state
   const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
@@ -297,6 +298,19 @@ const Optibrain = () => {
 
   // Calculate time spent in each PIC range from real data
   const picRangeData = useMemo(() => {
+    // Map picDialogTimeRange to hours
+    const getHoursForPicDialog = (range: string): number => {
+      switch (range) {
+        case "3h": return 3;
+        case "6h": return 6;
+        case "12h": return 12;
+        case "24h": return 24;
+        case "stay": return 96;
+        default: return 24;
+      }
+    };
+    const hoursBack = getHoursForPicDialog(picDialogTimeRange);
+
     if (!patientFileData) {
       return {
         ranges: [
@@ -311,7 +325,7 @@ const Optibrain = () => {
       };
     }
 
-    const picTimeSeries = getTimeSeriesForRange(patientFileData, "Variable_PIC", 96, 1); // Get all data, 1 min sampling
+    const picTimeSeries = getTimeSeriesForRange(patientFileData, "Variable_PIC", hoursBack, 1); // Use selected time range
     
     if (picTimeSeries.length === 0) {
       return {
@@ -383,7 +397,7 @@ const Optibrain = () => {
       averagePic,
       totalMinutes: total,
     };
-  }, [patientFileData, realBrainValues.pic]);
+  }, [patientFileData, realBrainValues.pic, picDialogTimeRange]);
 
   // Map time range to hours
   const getHoursFromTimeRange = (range: string): number => {
@@ -750,6 +764,26 @@ const Optibrain = () => {
               <DialogTitle>PIC (Pression intracrânienne)</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
+              {/* Time Range Selector */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-600">Période :</span>
+                <div className="flex gap-2">
+                  {["3h", "6h", "12h", "24h", "stay"].map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setPicDialogTimeRange(range)}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                        picDialogTimeRange === range
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {range === "stay" ? "Séjour" : range}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* PIC Card */}
               <div className="border rounded-lg p-6 bg-white shadow-sm">
                 <div className="flex items-center justify-between mb-6">
