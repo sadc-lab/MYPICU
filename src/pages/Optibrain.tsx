@@ -229,7 +229,7 @@ const Optibrain = () => {
 
   // 2. Tu mets TON MOCK ici ⬇⬇⬇
   const neurologicalMockByPatient = {
-    "#25": {
+    "#6312": {
       hyperhemie: 20,
       htic: 0,
       ischemie: 0,
@@ -239,7 +239,7 @@ const Optibrain = () => {
       ppcActuel: 65,
       ppcMoyen: 68,
     },
-    "#10": {
+    "#8448": {
       hyperhemie: 5,
       htic: 10,
       ischemie: 15,
