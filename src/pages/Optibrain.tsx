@@ -706,7 +706,7 @@ const Optibrain = () => {
                       <span className="text-xl font-semibold text-red-500">20%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-red-400 h-3 rounded-full" style={{ width: "40%" }}></div>
+                      <div className="bg-red-400 h-3 rounded-full" style={{ width: "20%" }}></div>
                     </div>
                   </div>
 
@@ -717,7 +717,7 @@ const Optibrain = () => {
                       <span className="text-xl font-semibold text-orange-500">0%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: "30%" }}></div>
+                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: "0%" }}></div>
                     </div>
                   </div>
 
@@ -728,7 +728,7 @@ const Optibrain = () => {
                       <span className="text-xl font-semibold text-orange-500">0%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: "10%" }}></div>
+                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: "0%" }}></div>
                     </div>
                   </div>
 
@@ -739,7 +739,7 @@ const Optibrain = () => {
                       <span className="text-xl font-semibold text-gray-500">80%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-gray-400 h-3 rounded-full" style={{ width: "20%" }}></div>
+                      <div className="bg-gray-400 h-3 rounded-full" style={{ width: "80%" }}></div>
                     </div>
                   </div>
                 </div>
@@ -855,6 +855,24 @@ const Optibrain = () => {
               <DialogTitle>PPC optimale - Étude sur 6 heures</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
+              {/* Time Range Selector */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-600">Période :</span>
+                <div className="flex gap-2">
+                  {["3h", "6h", "12h", "24h", "stay"].map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setPicDialogTimeRange(range)}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                        picDialogTimeRange === range
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {range === "stay" ? "Séjour" : range}
+                    </button>
+                  ))}
+                </div>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
