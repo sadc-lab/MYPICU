@@ -703,7 +703,7 @@ const Optibrain = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">Hyperhémie</span>
-                      <span className="text-xl font-semibold text-red-500">40%</span>
+                      <span className="text-xl font-semibold text-red-500">20%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div className="bg-red-400 h-3 rounded-full" style={{ width: "40%" }}></div>
@@ -714,7 +714,7 @@ const Optibrain = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">HTIC / Hyp.</span>
-                      <span className="text-xl font-semibold text-orange-500">30%</span>
+                      <span className="text-xl font-semibold text-orange-500">0%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div className="bg-orange-400 h-3 rounded-full" style={{ width: "30%" }}></div>
@@ -725,7 +725,7 @@ const Optibrain = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">Ischémie</span>
-                      <span className="text-xl font-semibold text-orange-500">10%</span>
+                      <span className="text-xl font-semibold text-orange-500">0%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div className="bg-orange-400 h-3 rounded-full" style={{ width: "10%" }}></div>
@@ -736,7 +736,7 @@ const Optibrain = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">Contrôlé</span>
-                      <span className="text-xl font-semibold text-gray-500">20%</span>
+                      <span className="text-xl font-semibold text-gray-500">80%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div className="bg-gray-400 h-3 rounded-full" style={{ width: "20%" }}></div>
@@ -748,8 +748,8 @@ const Optibrain = () => {
                 <div className="border-t mt-6 pt-4">
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <div>
-                      État : <span className="font-semibold text-red-500">Hyperhémie</span>{" "}
-                      <span className="text-gray-500">depuis 3am</span>
+                      État : <span className="font-semibold text-red-500">Hypertension intracranienne</span>{" "}
+                      <span className="text-gray-500">depuis 6am</span>
                     </div>
                     <div>
                       PPC actuel : <span className="font-semibold">65 mmHg</span>
