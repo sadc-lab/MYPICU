@@ -182,6 +182,18 @@ const Optibrain = () => {
   // Override brainMetrics with real data when available
   const brainMetrics = useMemo(() => {
     return importedBrainMetrics.map((metric) => {
+      if (metric.label === "PIC" && realBrainValues.pic !== null) {
+        return {
+          ...metric,
+          value: Math.round(realBrainValues.pic * 10) / 10,
+        };
+      }
+      if (metric.label === "PPC" && realBrainValues.ppc !== null) {
+        return {
+          ...metric,
+          value: Math.round(realBrainValues.ppc * 10) / 10,
+        };
+      }
       if (metric.label === "PaCO2" && realBrainValues.paco2 !== null) {
         return {
           ...metric,
@@ -190,7 +202,7 @@ const Optibrain = () => {
       }
       return metric;
     });
-  }, [realBrainValues.paco2]);
+  }, [realBrainValues.pic, realBrainValues.ppc, realBrainValues.paco2]);
 
   // Get PIC status based on value (target < 20 mmHg)
   const getPicStatus = (value: number | null): string => {
