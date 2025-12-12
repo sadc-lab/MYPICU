@@ -226,11 +226,11 @@ const Optibrain = () => {
 
   const brainOptimisationMetrics = [
     {
-      label: "État Neuro",
-      value: "Hyperhémie",
-      displayValue: "Hyperhémie",
+      label: "État Neuro (données artificielles)",
+      value: "Contrôlé",
+      displayValue: "Contrôlé",
       unit: "",
-      status: "warning",
+      status: "normal",
       hasDetails: true,
       dialogKey: "neuro",
       trend: "stable",
@@ -301,12 +301,18 @@ const Optibrain = () => {
     // Map picDialogTimeRange to hours
     const getHoursForPicDialog = (range: string): number => {
       switch (range) {
-        case "3h": return 3;
-        case "6h": return 6;
-        case "12h": return 12;
-        case "24h": return 24;
-        case "stay": return 96;
-        default: return 24;
+        case "3h":
+          return 3;
+        case "6h":
+          return 6;
+        case "12h":
+          return 12;
+        case "24h":
+          return 24;
+        case "stay":
+          return 96;
+        default:
+          return 24;
       }
     };
     const hoursBack = getHoursForPicDialog(picDialogTimeRange);
@@ -326,7 +332,7 @@ const Optibrain = () => {
     }
 
     const picTimeSeries = getTimeSeriesForRange(patientFileData, "Variable_PIC", hoursBack, 1); // Use selected time range
-    
+
     if (picTimeSeries.length === 0) {
       return {
         ranges: [
@@ -342,8 +348,8 @@ const Optibrain = () => {
     }
 
     // Filter out zero values (sensor errors)
-    const validData = picTimeSeries.filter(d => d.valeur > 0);
-    
+    const validData = picTimeSeries.filter((d) => d.valeur > 0);
+
     // Count time in each range
     const counts = {
       below20: 0,
@@ -352,7 +358,7 @@ const Optibrain = () => {
       above30: 0,
     };
 
-    validData.forEach(d => {
+    validData.forEach((d) => {
       if (d.valeur < 20) counts.below20++;
       else if (d.valeur >= 20 && d.valeur < 25) counts.range20_25++;
       else if (d.valeur >= 25 && d.valeur <= 30) counts.range25_30++;
@@ -364,33 +370,33 @@ const Optibrain = () => {
 
     return {
       ranges: [
-        { 
-          label: "25 - 30 mmHg", 
-          minutes: counts.range25_30, 
+        {
+          label: "25 - 30 mmHg",
+          minutes: counts.range25_30,
           percentage: total > 0 ? Math.round((counts.range25_30 / total) * 100) : 0,
           color: "orange",
-          status: "warning"
+          status: "warning",
         },
-        { 
-          label: "20 - 25 mmHg", 
-          minutes: counts.range20_25, 
+        {
+          label: "20 - 25 mmHg",
+          minutes: counts.range20_25,
           percentage: total > 0 ? Math.round((counts.range20_25 / total) * 100) : 0,
           color: "orange",
-          status: "warning"
+          status: "warning",
         },
-        { 
-          label: "> 30 mmHg", 
-          minutes: counts.above30, 
+        {
+          label: "> 30 mmHg",
+          minutes: counts.above30,
           percentage: total > 0 ? Math.round((counts.above30 / total) * 100) : 0,
           color: "red",
-          status: "critical"
+          status: "critical",
         },
-        { 
-          label: "< 20 mmHg", 
-          minutes: counts.below20, 
+        {
+          label: "< 20 mmHg",
+          minutes: counts.below20,
           percentage: total > 0 ? Math.round((counts.below20 / total) * 100) : 0,
           color: "gray",
-          status: "normal"
+          status: "normal",
         },
       ],
       currentPic: realBrainValues.pic,
@@ -791,19 +797,21 @@ const Optibrain = () => {
                     <span className="text-orange-500">Répartition du temps</span> par niveau de PIC
                   </h3>
                   {picRangeData.totalMinutes > 0 && (
-                    <span className="text-sm text-gray-500">
-                      Total: {picRangeData.totalMinutes} min
-                    </span>
+                    <span className="text-sm text-gray-500">Total: {picRangeData.totalMinutes} min</span>
                   )}
                 </div>
 
                 {/* Individual Bars */}
                 <div className="space-y-6">
                   {picRangeData.ranges.map((range, idx) => {
-                    const textColor = range.color === "red" ? "text-red-500" : 
-                                      range.color === "orange" ? "text-orange-500" : "text-gray-500";
-                    const bgColor = range.color === "red" ? "bg-red-400" : 
-                                    range.color === "orange" ? "bg-orange-400" : "bg-gray-400";
+                    const textColor =
+                      range.color === "red"
+                        ? "text-red-500"
+                        : range.color === "orange"
+                          ? "text-orange-500"
+                          : "text-gray-500";
+                    const bgColor =
+                      range.color === "red" ? "bg-red-400" : range.color === "orange" ? "bg-orange-400" : "bg-gray-400";
                     return (
                       <div key={idx}>
                         <div className="flex justify-between items-center mb-2">
@@ -811,8 +819,8 @@ const Optibrain = () => {
                           <span className={`text-xl font-semibold ${textColor}`}>{range.minutes} min</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-3">
-                          <div 
-                            className={`${bgColor} h-3 rounded-full`} 
+                          <div
+                            className={`${bgColor} h-3 rounded-full`}
                             style={{ width: `${Math.max(range.percentage, 1)}%` }}
                           ></div>
                         </div>
@@ -824,11 +832,13 @@ const Optibrain = () => {
                 {/* Metrics Footer */}
                 <div className="border-t mt-6 pt-4">
                   <div className="text-sm text-gray-600">
-                    PIC actuelle : <span className="font-semibold">
+                    PIC actuelle :{" "}
+                    <span className="font-semibold">
                       {picRangeData.currentPic !== null ? `${Math.round(picRangeData.currentPic)} mmHg` : "-- mmHg"}
                     </span>
                     <span className="mx-2">|</span>
-                    PIC moyenne : <span className="font-semibold">
+                    PIC moyenne :{" "}
+                    <span className="font-semibold">
                       {picRangeData.averagePic !== null ? `${Math.round(picRangeData.averagePic)} mmHg` : "-- mmHg"}
                     </span>
                   </div>
