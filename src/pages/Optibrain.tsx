@@ -235,36 +235,6 @@ const Optibrain = () => {
       dialogKey: "neuro",
       trend: "stable",
     },
-{
-  "#25": {
-    hyperhemie: 20,
-    htic: 0,
-    ischemie: 0,
-    controle: 80,
-    etat: "Hypertension intracrânienne",
-    depuis: "6h00",
-    ppcActuel: 65,
-    ppcMoyen: 68,
-  },
-  "#10": {
-    hyperhemie: 5,
-    htic: 10,
-    ischemie: 15,
-    controle: 70,
-    etat: "Ischémie cérébrale",
-    depuis: "4h30",
-    ppcActuel: 58,
-    ppcMoyen: 62,
-  },
-
-
-
-
-
-
-
-    
-
     {
       label: "PIC",
       value: picValue !== null ? `${Math.round(picValue)} mmHg` : "-- mmHg",
