@@ -771,7 +771,7 @@ const Optibrain = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">Contrôlé</span>
-                      <span className="text-xl font-semibold text-green-600">
+                      <span className="text-xl font-semibold text-gray-700">
                         {neurologicalStateConfig.history.controlled}%
                       </span>
                     </div>
