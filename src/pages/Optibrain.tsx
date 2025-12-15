@@ -245,7 +245,7 @@ const Optibrain = () => {
     }
     // Default configuration (patient #6312)
     return {
-      currentState: "HTIC",
+      currentState: "Contrôlé",
       currentStateColor: "text-red-500",
       currentStateSince: "depuis 6am",
       history: {
