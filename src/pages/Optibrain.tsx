@@ -226,13 +226,45 @@ const Optibrain = () => {
   const picValue = realBrainValues.pic;
   const ppcValue = realBrainValues.ppc;
 
+  // Neurological state configuration per patient
+  const neurologicalStateConfig = useMemo(() => {
+    // Patient #8448 (John Doe) - specific configuration
+    if (patientId === "#8448") {
+      return {
+        currentState: "Contrôlé",
+        currentStateColor: "text-green-600",
+        currentStateSince: "depuis 5h du matin",
+        history: {
+          hyperemia: 0,
+          hticWithIschemia: 10,
+          htic: 30, // HTIC sans ischémie ni hyperhémie
+          ischemia: 0,
+          controlled: 60,
+        },
+      };
+    }
+    // Default configuration (patient #6312)
+    return {
+      currentState: "Hypertension intracranienne",
+      currentStateColor: "text-red-500",
+      currentStateSince: "depuis 6am",
+      history: {
+        hyperemia: 20,
+        hticWithIschemia: 0,
+        htic: 0,
+        ischemia: 0,
+        controlled: 80,
+      },
+    };
+  }, [patientId]);
+
   const brainOptimisationMetrics = [
     {
       label: "État Neuro",
-      value: "Contrôlé",
-      displayValue: "Contrôlé",
+      value: neurologicalStateConfig.currentState,
+      displayValue: neurologicalStateConfig.currentState,
       unit: "",
-      status: "normal",
+      status: neurologicalStateConfig.currentState === "Contrôlé" ? "normal" : "critical",
       hasDetails: true,
       dialogKey: "neuro",
       trend: "stable",
@@ -703,36 +735,26 @@ const Optibrain = () => {
               <div className="border rounded-lg p-6 bg-white shadow-sm">
                 {/* Individual Bars */}
                 <div className="space-y-6">
-                  {/* Hyperhémie */}
+                  {/* HTIC (sans ischémie ni hyperhémie) */}
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Hyperhémie</span>
-                      <span className="text-xl font-semibold text-red-500">20%</span>
+                      <span className="text-sm font-medium text-gray-700">HTIC</span>
+                      <span className="text-xl font-semibold text-orange-500">{neurologicalStateConfig.history.htic}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-red-400 h-3 rounded-full" style={{ width: "20%" }}></div>
+                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: `${neurologicalStateConfig.history.htic}%` }}></div>
                     </div>
+                    <span className="text-xs text-gray-500">Sans ischémie ni hyperhémie</span>
                   </div>
 
-                  {/* HTIC / Hyp. */}
+                  {/* HTIC avec ischémie */}
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">HTIC / Hyp.</span>
-                      <span className="text-xl font-semibold text-orange-500">0%</span>
+                      <span className="text-sm font-medium text-gray-700">HTIC avec ischémie</span>
+                      <span className="text-xl font-semibold text-red-500">{neurologicalStateConfig.history.hticWithIschemia}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: "0%" }}></div>
-                    </div>
-                  </div>
-
-                  {/* Ischémie */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Ischémie</span>
-                      <span className="text-xl font-semibold text-orange-500">0%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: "0%" }}></div>
+                      <div className="bg-red-400 h-3 rounded-full" style={{ width: `${neurologicalStateConfig.history.hticWithIschemia}%` }}></div>
                     </div>
                   </div>
 
@@ -740,10 +762,10 @@ const Optibrain = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">Contrôlé</span>
-                      <span className="text-xl font-semibold text-gray-500">80%</span>
+                      <span className="text-xl font-semibold text-green-600">{neurologicalStateConfig.history.controlled}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-gray-400 h-3 rounded-full" style={{ width: "80%" }}></div>
+                      <div className="bg-green-400 h-3 rounded-full" style={{ width: `${neurologicalStateConfig.history.controlled}%` }}></div>
                     </div>
                   </div>
                 </div>
@@ -752,8 +774,8 @@ const Optibrain = () => {
                 <div className="border-t mt-6 pt-4">
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <div>
-                      État : <span className="font-semibold text-red-500">Hypertension intracranienne</span>{" "}
-                      <span className="text-gray-500">depuis 6am</span>
+                      État : <span className={`font-semibold ${neurologicalStateConfig.currentStateColor}`}>{neurologicalStateConfig.currentState}</span>{" "}
+                      <span className="text-gray-500">{neurologicalStateConfig.currentStateSince}</span>
                     </div>
                     <div>
                       PPC actuel : <span className="font-semibold">65 mmHg</span>
