@@ -232,7 +232,7 @@ const Optibrain = () => {
     if (patientId === "#8448") {
       return {
         currentState: "Contrôlé",
-        currentStateColor: "text-green-600",
+        currentStateColor: "text-grey-600",
         currentStateSince: "depuis 5h du matin",
         history: {
           hyperemia: 0,
@@ -271,8 +271,7 @@ const Optibrain = () => {
     },
     {
       label: "PIC",
-      value:
-        picValue !== null ? `${Math.round(picValue * 10) / 10} mmHg` : "-- mmHg",
+      value: picValue !== null ? `${Math.round(picValue * 10) / 10} mmHg` : "-- mmHg",
       displayValue: picValue !== null ? `${Math.round(picValue * 10) / 10}` : "--",
       unit: "mmHg",
       status: getPicStatus(picValue),
@@ -739,10 +738,15 @@ const Optibrain = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">HTIC</span>
-                      <span className="text-xl font-semibold text-orange-500">{neurologicalStateConfig.history.htic}%</span>
+                      <span className="text-xl font-semibold text-orange-500">
+                        {neurologicalStateConfig.history.htic}%
+                      </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-orange-400 h-3 rounded-full" style={{ width: `${neurologicalStateConfig.history.htic}%` }}></div>
+                      <div
+                        className="bg-orange-400 h-3 rounded-full"
+                        style={{ width: `${neurologicalStateConfig.history.htic}%` }}
+                      ></div>
                     </div>
                     <span className="text-xs text-gray-500">Sans ischémie ni hyperhémie</span>
                   </div>
@@ -751,10 +755,15 @@ const Optibrain = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">HTIC avec ischémie</span>
-                      <span className="text-xl font-semibold text-red-500">{neurologicalStateConfig.history.hticWithIschemia}%</span>
+                      <span className="text-xl font-semibold text-red-500">
+                        {neurologicalStateConfig.history.hticWithIschemia}%
+                      </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-red-400 h-3 rounded-full" style={{ width: `${neurologicalStateConfig.history.hticWithIschemia}%` }}></div>
+                      <div
+                        className="bg-red-400 h-3 rounded-full"
+                        style={{ width: `${neurologicalStateConfig.history.hticWithIschemia}%` }}
+                      ></div>
                     </div>
                   </div>
 
@@ -762,10 +771,15 @@ const Optibrain = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">Contrôlé</span>
-                      <span className="text-xl font-semibold text-green-600">{neurologicalStateConfig.history.controlled}%</span>
+                      <span className="text-xl font-semibold text-green-600">
+                        {neurologicalStateConfig.history.controlled}%
+                      </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-green-400 h-3 rounded-full" style={{ width: `${neurologicalStateConfig.history.controlled}%` }}></div>
+                      <div
+                        className="bg-green-400 h-3 rounded-full"
+                        style={{ width: `${neurologicalStateConfig.history.controlled}%` }}
+                      ></div>
                     </div>
                   </div>
                 </div>
@@ -774,7 +788,10 @@ const Optibrain = () => {
                 <div className="border-t mt-6 pt-4">
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <div>
-                      État : <span className={`font-semibold ${neurologicalStateConfig.currentStateColor}`}>{neurologicalStateConfig.currentState}</span>{" "}
+                      État :{" "}
+                      <span className={`font-semibold ${neurologicalStateConfig.currentStateColor}`}>
+                        {neurologicalStateConfig.currentState}
+                      </span>{" "}
                       <span className="text-gray-500">{neurologicalStateConfig.currentStateSince}</span>
                     </div>
                     <div>
