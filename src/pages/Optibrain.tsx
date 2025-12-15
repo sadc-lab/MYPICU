@@ -245,7 +245,7 @@ const Optibrain = () => {
     }
     // Default configuration (patient #6312)
     return {
-      currentState: "Hypertension intracranienne",
+      currentState: "Hypertension intra",
       currentStateColor: "text-red-500",
       currentStateSince: "depuis 6am",
       history: {
