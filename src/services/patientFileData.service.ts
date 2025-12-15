@@ -82,8 +82,10 @@ export function extractTimeSeriesData(
     }));
 }
 
-// Variables where 0 is not a clinically valid value (sensor error/disconnection)
+// Variables where certain values are not clinically valid (sensor error/disconnection)
+// PIC/PPC: values <= 0 or < 5 are likely sensor errors (normal ICP is 5-15 mmHg)
 const EXCLUDE_ZERO_VARIABLES = ['Variable_PIC', 'Variable_PPC'];
+const MIN_VALID_PIC_VALUE = 5; // Minimum clinically valid PIC value in mmHg
 
 // Get latest value for a variable
 export function getLatestValue(
@@ -98,8 +100,8 @@ export function getLatestValue(
     return null;
   }
   
-  // Check if this variable should exclude zero values
-  const excludeZero = EXCLUDE_ZERO_VARIABLES.includes(variableKey);
+  // Check if this variable should exclude invalid values
+  const excludeInvalid = EXCLUDE_ZERO_VARIABLES.includes(variableKey);
   
   // Filter valid entries and ensure valeur is a number
   const validEntries = data
@@ -107,8 +109,11 @@ export function getLatestValue(
       if (!item.charttime) return false;
       const valeur = typeof item.valeur === 'number' ? item.valeur : Number(item.valeur);
       if (isNaN(valeur)) return false;
-      // Exclude zero values for PIC/PPC as they indicate sensor errors
-      if (excludeZero && valeur === 0) return false;
+      // Exclude zero and aberrant low values for PIC/PPC
+      if (excludeInvalid) {
+        if (variableKey === 'Variable_PIC' && valeur < MIN_VALID_PIC_VALUE) return false;
+        if (variableKey === 'Variable_PPC' && valeur <= 0) return false;
+      }
       return true;
     })
     .map((item: any) => ({

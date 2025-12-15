@@ -350,8 +350,9 @@ const Optibrain = () => {
       };
     }
 
-    // Filter out zero values (sensor errors)
-    const validData = picTimeSeries.filter((d) => d.valeur > 0);
+    // Filter out aberrant values (< 5 mmHg are sensor errors)
+    const MIN_VALID_PIC = 5;
+    const validData = picTimeSeries.filter((d) => d.valeur >= MIN_VALID_PIC);
 
     // Count time in each range
     const counts = {
