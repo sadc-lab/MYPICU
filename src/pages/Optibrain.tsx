@@ -249,9 +249,9 @@ const Optibrain = () => {
       currentStateColor: "text-red-500",
       currentStateSince: "depuis 6am",
       history: {
-        hyperemia: 20,
+        hyperemia: 0,
         hticWithIschemia: 0,
-        htic: 0,
+        htic: 20,
         ischemia: 0,
         controlled: 80,
       },
