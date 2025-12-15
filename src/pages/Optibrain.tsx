@@ -221,17 +221,9 @@ const Optibrain = () => {
     return "normal";
   };
 
-  // Use the same PIC value as picRangeData for consistency
-  const picValue = useMemo(() => {
-    if (!patientFileData) return null;
-    // Get the latest valid (non-zero) PIC value from the time series
-    const picTimeSeries = getTimeSeriesForRange(patientFileData, "Variable_PIC", 24, 1);
-    const validData = picTimeSeries.filter((d) => d.valeur > 0);
-    if (validData.length === 0) return null;
-    // Return the most recent valid value
-    return validData[validData.length - 1].valeur;
-  }, [patientFileData]);
-  
+  // PIC displayed in "Optimisation cérébrale" should reflect the real (non-zero) latest PIC value
+  // (same source as other real-value widgets: getLatestValue excludes sensor 0s).
+  const picValue = realBrainValues.pic;
   const ppcValue = realBrainValues.ppc;
 
   const brainOptimisationMetrics = [
@@ -247,8 +239,9 @@ const Optibrain = () => {
     },
     {
       label: "PIC",
-      value: picValue !== null ? `${Math.round(picValue)} mmHg` : "-- mmHg",
-      displayValue: picValue !== null ? `${Math.round(picValue)}` : "--",
+      value:
+        picValue !== null ? `${Math.round(picValue * 10) / 10} mmHg` : "-- mmHg",
+      displayValue: picValue !== null ? `${Math.round(picValue * 10) / 10}` : "--",
       unit: "mmHg",
       status: getPicStatus(picValue),
       hasDetails: true,
