@@ -221,7 +221,17 @@ const Optibrain = () => {
     return "normal";
   };
 
-  const picValue = realBrainValues.pic;
+  // Use the same PIC value as picRangeData for consistency
+  const picValue = useMemo(() => {
+    if (!patientFileData) return null;
+    // Get the latest valid (non-zero) PIC value from the time series
+    const picTimeSeries = getTimeSeriesForRange(patientFileData, "Variable_PIC", 24, 1);
+    const validData = picTimeSeries.filter((d) => d.valeur > 0);
+    if (validData.length === 0) return null;
+    // Return the most recent valid value
+    return validData[validData.length - 1].valeur;
+  }, [patientFileData]);
+  
   const ppcValue = realBrainValues.ppc;
 
   const brainOptimisationMetrics = [
