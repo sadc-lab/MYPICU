@@ -16,15 +16,21 @@ export interface PatientFileData {
 }
 
 // Variable key mappings for brain metrics
+// Keys must match EXACTLY the JSON file structure (case-sensitive)
 export const BRAIN_VARIABLE_KEYS = {
   FC: 'Variable_FC',           // Heart rate (Fréquence Cardiaque)
   PIC: 'Variable_PIC',         // Intracranial pressure (Pression Intracrânienne)
   PPC: 'Variable_PPC',         // Cerebral perfusion pressure (Pression de Perfusion Cérébrale)
   PAM: 'Variable_PAM',         // Mean arterial pressure (Pression Artérielle Moyenne)
   PVC: 'Variable_PVC',         // Central venous pressure (Pression Veineuse Centrale)
-  TEMP: 'Variable_Temperature', // Temperature
+  TEMP: 'Variable_temperature', // Temperature (lowercase 't' in JSON)
   ETCO2: 'Variable_ETCO2',     // End-tidal CO2
   SPO2: 'Variable_SPO2',       // Oxygen saturation
+  PLAQUETTES: 'Variable_plaquettes', // Platelets (lowercase in JSON)
+  HEMOGLOBINE: 'Variable_hemoglobine', // Hemoglobin (lowercase in JSON)
+  GLYCEMIE: 'Variable_glycemie', // Blood sugar
+  INR: 'Variable_INR',         // INR
+  PACO2: 'Variable_paco2',     // PaCO2
 } as const;
 
 // Cache for loaded patient data
