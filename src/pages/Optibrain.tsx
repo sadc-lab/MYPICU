@@ -485,24 +485,9 @@ const Optibrain = () => {
     const result: Record<string, TimeSeriesDataPoint[]> = {};
 
     Object.entries(varMapping).forEach(([varKey, label]) => {
-      if (!availableVars.includes(varKey)) return;
-
-      const series = getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15);
-
-      // Some lab values (e.g., Hb/plaquettes) can be sparse; if the selected time range contains no points,
-      // fall back to the latest known value so we never generate fake/mock values for them.
-      if (
-        series.length === 0 &&
-        (varKey === "Variable_plaquettes" || varKey === "Variable_hemoglobine")
-      ) {
-        const latest = getLatestValue(patientFileData, varKey);
-        if (latest) {
-          result[label] = [{ charttime: latest.timestamp, valeur: latest.value }];
-          return;
-        }
+      if (availableVars.includes(varKey)) {
+        result[label] = getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15);
       }
-
-      result[label] = series;
     });
 
     return result;
@@ -516,46 +501,21 @@ const Optibrain = () => {
       const baseVar = Object.entries(realTimeSeriesData).sort((a, b) => b[1].length - a[1].length)[0];
 
       if (baseVar && baseVar[1].length > 0) {
-        // Ensure base series is chronological
-        const baseSeries = [...baseVar[1]].sort(
-          (a, b) => new Date(a.charttime).getTime() - new Date(b.charttime).getTime(),
-        );
-
-        // For each series, we'll "hold" the latest known value until a new datapoint appears.
-        const seriesByLabel: Record<string, TimeSeriesDataPoint[]> = Object.fromEntries(
-          Object.entries(realTimeSeriesData).map(([label, series]) => [
-            label,
-            [...series].sort((a, b) => new Date(a.charttime).getTime() - new Date(b.charttime).getTime()),
-          ]),
-        );
-
-        const pointers: Record<string, number> = {};
-        const lastValue: Record<string, number | undefined> = {};
-
-        return baseSeries.map((point) => {
+        return baseVar[1].map((point, idx) => {
           const time = new Date(point.charttime);
-          const ts = time.getTime();
-          const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time
-            .getMinutes()
-            .toString()
-            .padStart(2, "0")}`;
+          const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
 
           const dataPoint: any = {
             time: timeStr,
-            timestamp: ts,
+            timestamp: time.getTime(),
           };
 
-          // Add all available variables, aligned by timestamp
-          Object.entries(seriesByLabel).forEach(([label, series]) => {
-            let i = pointers[label] ?? 0;
-            while (i < series.length && new Date(series[i].charttime).getTime() <= ts) {
-              lastValue[label] = series[i].valeur;
-              i++;
-            }
-            pointers[label] = i;
-
-            if (lastValue[label] !== undefined) {
-              dataPoint[label] = lastValue[label];
+          // Add all available variables
+          Object.entries(realTimeSeriesData).forEach(([label, data]) => {
+            // Find closest data point by time
+            const closest = data.find((d, i) => i === idx) || data[data.length - 1];
+            if (closest) {
+              dataPoint[label] = closest.valeur;
             }
           });
 
