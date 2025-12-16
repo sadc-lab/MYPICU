@@ -66,6 +66,18 @@ export function hasPatientFileData(patientId: string): boolean {
   return getAvailablePatientFileIds().includes(normalizedId);
 }
 
+// Helper function to parse values with French decimal notation (comma as separator)
+export function parseNumericValue(value: unknown): number | null {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    // Replace French decimal comma with period
+    const normalized = value.replace(',', '.');
+    const parsed = parseFloat(normalized);
+    return isNaN(parsed) ? null : parsed;
+  }
+  return null;
+}
+
 // Extract time-series data for a specific variable key
 export function extractTimeSeriesData(
   patientData: PatientFileData,
@@ -75,10 +87,14 @@ export function extractTimeSeriesData(
   if (!Array.isArray(data)) return [];
   
   return data
-    .filter((item: any) => item.charttime && typeof item.valeur === 'number')
+    .filter((item: any) => {
+      if (!item.charttime) return false;
+      const parsed = parseNumericValue(item.valeur);
+      return parsed !== null;
+    })
     .map((item: any) => ({
       charttime: item.charttime,
-      valeur: item.valeur
+      valeur: parseNumericValue(item.valeur)!
     }));
 }
 
@@ -103,12 +119,12 @@ export function getLatestValue(
   // Check if this variable should exclude invalid values
   const excludeInvalid = EXCLUDE_ZERO_VARIABLES.includes(variableKey);
   
-  // Filter valid entries and ensure valeur is a number
+  // Filter valid entries and ensure valeur is a number (handles French decimal notation)
   const validEntries = data
     .filter((item: any) => {
       if (!item.charttime) return false;
-      const valeur = typeof item.valeur === 'number' ? item.valeur : Number(item.valeur);
-      if (isNaN(valeur)) return false;
+      const valeur = parseNumericValue(item.valeur);
+      if (valeur === null) return false;
       // Exclude zero and aberrant low values for PIC/PPC
       if (excludeInvalid) {
         if (variableKey === 'Variable_PIC' && valeur < MIN_VALID_PIC_VALUE) return false;
@@ -118,7 +134,7 @@ export function getLatestValue(
     })
     .map((item: any) => ({
       charttime: item.charttime,
-      valeur: typeof item.valeur === 'number' ? item.valeur : Number(item.valeur)
+      valeur: parseNumericValue(item.valeur)!
     }));
   
   if (validEntries.length === 0) {
