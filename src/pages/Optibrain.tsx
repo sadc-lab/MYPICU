@@ -482,14 +482,22 @@ const Optibrain = () => {
       Variable_hemoglobine: "Hémoglobine",
     };
 
+    console.log("Available variables in JSON:", availableVars);
+    console.log("Looking for these keys:", Object.keys(varMapping));
+
     const result: Record<string, TimeSeriesDataPoint[]> = {};
 
     Object.entries(varMapping).forEach(([varKey, label]) => {
       if (availableVars.includes(varKey)) {
-        result[label] = getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15);
+        const data = getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15);
+        console.log(`Data for ${varKey} (${label}):`, data.length, "points", data.slice(0, 3));
+        result[label] = data;
+      } else {
+        console.log(`Variable ${varKey} NOT found in availableVars`);
       }
     });
 
+    console.log("Final realTimeSeriesData keys:", Object.keys(result));
     return result;
   }, [patientFileData, timeRange]);
 

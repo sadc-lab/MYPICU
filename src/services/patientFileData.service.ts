@@ -90,9 +90,17 @@ export function extractTimeSeriesData(
   variableKey: string
 ): TimeSeriesDataPoint[] {
   const data = patientData[variableKey];
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) {
+    console.log(`extractTimeSeriesData: ${variableKey} is not an array`);
+    return [];
+  }
   
-  return data
+  console.log(`extractTimeSeriesData: ${variableKey} has ${data.length} raw items`);
+  if (data.length > 0) {
+    console.log(`extractTimeSeriesData: First item of ${variableKey}:`, JSON.stringify(data[0]));
+  }
+  
+  const result = data
     .filter((item: any) => {
       if (!item.charttime) return false;
       const parsed = parseNumericValue(item.valeur);
@@ -102,6 +110,13 @@ export function extractTimeSeriesData(
       charttime: item.charttime,
       valeur: parseNumericValue(item.valeur)!
     }));
+  
+  console.log(`extractTimeSeriesData: ${variableKey} returned ${result.length} valid points`);
+  if (result.length > 0) {
+    console.log(`extractTimeSeriesData: First result of ${variableKey}:`, result[0]);
+  }
+  
+  return result;
 }
 
 // Variables where certain values are not clinically valid (sensor error/disconnection)
