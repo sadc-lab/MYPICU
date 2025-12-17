@@ -465,7 +465,7 @@ const Optibrain = () => {
     const hoursBack = getHoursFromTimeRange(timeRange);
     const availableVars = getAvailableVariables(patientFileData);
 
-    // Map variable names to our indicator labels
+    // Map variable names to our indicator labels (case-sensitive, must match JSON exactly)
     const varMapping: Record<string, string> = {
       Variable_FC: "FC",
       Variable_PIC: "PIC",
@@ -473,7 +473,7 @@ const Optibrain = () => {
       Variable_PAM: "PAM",
       Variable_PVC: "PVC",
       Variable_temperature: "Température",
-      Variable_ETCO2: "ETCO2",
+      Variable_EtCO2: "ETCO2",  // Note: 'EtCO2' with lowercase 't' in JSON
       Variable_position_tete: "Tête",
       Variable_paco2: "PaCO2",
       Variable_glycemie: "Glycémie",
@@ -482,22 +482,15 @@ const Optibrain = () => {
       Variable_hemoglobine: "Hémoglobine",
     };
 
-    console.log("Available variables in JSON:", availableVars);
-    console.log("Looking for these keys:", Object.keys(varMapping));
-
     const result: Record<string, TimeSeriesDataPoint[]> = {};
 
     Object.entries(varMapping).forEach(([varKey, label]) => {
       if (availableVars.includes(varKey)) {
         const data = getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15);
-        console.log(`Data for ${varKey} (${label}):`, data.length, "points", data.slice(0, 3));
         result[label] = data;
-      } else {
-        console.log(`Variable ${varKey} NOT found in availableVars`);
       }
     });
 
-    console.log("Final realTimeSeriesData keys:", Object.keys(result));
     return result;
   }, [patientFileData, timeRange]);
 

@@ -90,17 +90,9 @@ export function extractTimeSeriesData(
   variableKey: string
 ): TimeSeriesDataPoint[] {
   const data = patientData[variableKey];
-  if (!Array.isArray(data)) {
-    console.log(`extractTimeSeriesData: ${variableKey} is not an array`);
-    return [];
-  }
+  if (!Array.isArray(data)) return [];
   
-  console.log(`extractTimeSeriesData: ${variableKey} has ${data.length} raw items`);
-  if (data.length > 0) {
-    console.log(`extractTimeSeriesData: First item of ${variableKey}:`, JSON.stringify(data[0]));
-  }
-  
-  const result = data
+  return data
     .filter((item: any) => {
       if (!item.charttime) return false;
       const parsed = parseNumericValue(item.valeur);
@@ -110,13 +102,6 @@ export function extractTimeSeriesData(
       charttime: item.charttime,
       valeur: parseNumericValue(item.valeur)!
     }));
-  
-  console.log(`extractTimeSeriesData: ${variableKey} returned ${result.length} valid points`);
-  if (result.length > 0) {
-    console.log(`extractTimeSeriesData: First result of ${variableKey}:`, result[0]);
-  }
-  
-  return result;
 }
 
 // Variables where certain values are not clinically valid (sensor error/disconnection)
@@ -131,11 +116,7 @@ export function getLatestValue(
 ): { value: number; timestamp: string } | null {
   const data = patientData[variableKey];
   
-  // Direct access to array - handle both number and numeric string valeurs
-  if (!Array.isArray(data) || data.length === 0) {
-    console.log(`getLatestValue: No data found for ${variableKey}`);
-    return null;
-  }
+  if (!Array.isArray(data) || data.length === 0) return null;
   
   // Check if this variable should exclude invalid values
   const excludeInvalid = EXCLUDE_ZERO_VARIABLES.includes(variableKey);
@@ -158,17 +139,12 @@ export function getLatestValue(
       valeur: parseNumericValue(item.valeur)!
     }));
   
-  if (validEntries.length === 0) {
-    console.log(`getLatestValue: No valid entries for ${variableKey}`);
-    return null;
-  }
+  if (validEntries.length === 0) return null;
   
   // Sort by timestamp descending to get most recent
   const sorted = [...validEntries].sort((a, b) => 
     new Date(b.charttime).getTime() - new Date(a.charttime).getTime()
   );
-  
-  console.log(`getLatestValue for ${variableKey}: Latest value = ${sorted[0].valeur} at ${sorted[0].charttime}`);
   
   return {
     value: sorted[0].valeur,
