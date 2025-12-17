@@ -318,7 +318,7 @@ export function getValidityData(
 
 // Calculate adherence percentage from validity data for a specific time range
 // In JSON: 0 = adhérent, 1 = non adhérent
-// hoursBack: number of hours to look back (e.g., 3, 6, 12, 24, 96 for stay)
+// hoursBack: number of hours from start of stay (e.g., 3, 6, 12, 24, 96 for stay)
 // Returns null if no data available
 export function calculateValidityAdherence(validityData: ValidityData | null, hoursBack?: number): {
   adherent: number;
@@ -334,10 +334,10 @@ export function calculateValidityAdherence(validityData: ValidityData | null, ho
   
   if (hourKeys.length === 0) return { adherent: 0, total: 0, percentage: 100, hasData: false };
   
-  // If hoursBack is specified, only take the last N hours
+  // If hoursBack is specified, take the first N hours from start of stay
   if (hoursBack && hoursBack > 0) {
-    // Get the latest hours (from the end of the array)
-    hourKeys = hourKeys.slice(-hoursBack);
+    // Get hours from the beginning (H0, H1, ... up to hoursBack)
+    hourKeys = hourKeys.slice(0, hoursBack);
   }
   
   const total = hourKeys.length;
@@ -352,18 +352,18 @@ export function calculateValidityAdherence(validityData: ValidityData | null, ho
   };
 }
 
-// Get latest validity status (checks last N hours, default 24)
+// Get validity status for first N hours of stay
 // In JSON: 0 = adhérent, 1 = non adhérent
 export function getLatestValidityStatus(
   validityData: ValidityData | null,
-  lastNHours: number = 24
+  firstNHours: number = 24
 ): 'normal' | 'warning' | 'critical' {
   if (!validityData) return 'normal';
   
   const hourKeys = Object.keys(validityData)
     .filter(k => k.startsWith('H'))
-    .sort((a, b) => parseInt(b.replace('H', '')) - parseInt(a.replace('H', '')))
-    .slice(0, lastNHours);
+    .sort((a, b) => parseInt(a.replace('H', '')) - parseInt(b.replace('H', '')))
+    .slice(0, firstNHours);
   
   if (hourKeys.length === 0) return 'normal';
   
