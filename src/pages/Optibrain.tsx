@@ -473,9 +473,8 @@ const Optibrain = () => {
       Variable_PAM: "PAM",
       Variable_PVC: "PVC",
       Variable_temperature: "Température",
-      Variable_EtCO2: "ETCO2",  // Note: 'EtCO2' with lowercase 't' in JSON
-      Variable_position_tete: "Tête",
-      Variable_paco2: "PaCO2",
+      Variable_ETCO2: "ETCO2",
+      Variable_PaCO2: "PaCO2",
       Variable_glycemie: "Glycémie",
       Variable_INR: "INR",
       Variable_plaquettes: "Plaquettes",
