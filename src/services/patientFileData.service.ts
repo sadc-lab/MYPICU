@@ -176,37 +176,26 @@ export function getTimeSeriesForRange(
     return itemTime >= cutoffTime;
   });
   
-  // Return in chronological order
-  const chronological = filtered.reverse();
-  
-  // Only sample if data is dense (more than 2 points per hour on average)
-  // For sparse data like glycemia, keep all points
-  if (sampleEveryMinutes > 0 && chronological.length > 0) {
-    const timeSpanHours = chronological.length > 1
-      ? (new Date(chronological[chronological.length - 1].charttime).getTime() - 
-         new Date(chronological[0].charttime).getTime()) / (1000 * 60 * 60)
-      : 1;
+  // Sample data at specified intervals to reduce points
+  if (sampleEveryMinutes > 0) {
+    const sampled: TimeSeriesDataPoint[] = [];
+    let lastSampledTime = 0;
     
-    const pointsPerHour = chronological.length / Math.max(timeSpanHours, 1);
+    // Process in chronological order
+    const chronological = filtered.reverse();
     
-    // Only sample if we have more than 2 points per hour (dense data like FC, PIC)
-    if (pointsPerHour > 2) {
-      const sampled: TimeSeriesDataPoint[] = [];
-      let lastSampledTime = 0;
-      
-      for (const item of chronological) {
-        const itemTime = new Date(item.charttime).getTime();
-        if (itemTime - lastSampledTime >= sampleEveryMinutes * 60 * 1000) {
-          sampled.push(item);
-          lastSampledTime = itemTime;
-        }
+    for (const item of chronological) {
+      const itemTime = new Date(item.charttime).getTime();
+      if (itemTime - lastSampledTime >= sampleEveryMinutes * 60 * 1000) {
+        sampled.push(item);
+        lastSampledTime = itemTime;
       }
-      
-      return sampled;
     }
+    
+    return sampled;
   }
   
-  return chronological;
+  return filtered.reverse(); // Return in chronological order
 }
 
 // Get patient age from file data
