@@ -475,6 +475,7 @@ const Optibrain = () => {
       Variable_temperature: "Température",
       Variable_ETCO2: "ETCO2",
       Variable_paco2: "PaCO2",
+      Variable_position_tête: "Tête",
       Variable_glycemie: "Glycémie",
       Variable_INR: "INR",
       Variable_plaquettes: "Plaquettes",
