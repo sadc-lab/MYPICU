@@ -43,6 +43,24 @@ import {
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
 
+// Utils – MUST be defined before Optibrain component
+const findClosestByTime = (data: TimeSeriesDataPoint[], targetTime: number): TimeSeriesDataPoint | null => {
+  if (!data || data.length === 0) return null;
+
+  let closest = data[0];
+  let minDiff = Math.abs(new Date(data[0].charttime).getTime() - targetTime);
+
+  for (const point of data) {
+    const diff = Math.abs(new Date(point.charttime).getTime() - targetTime);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = point;
+    }
+  }
+
+  return closest;
+};
+
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
@@ -510,6 +528,7 @@ const Optibrain = () => {
             time: timeStr,
             timestamp: time.getTime(),
           };
+
 
     // Determine number of data points and time intervals based on time range
     let dataPoints: number;
