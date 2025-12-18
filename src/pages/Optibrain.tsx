@@ -1215,19 +1215,30 @@ const Optibrain = () => {
                                 fontSize: "12px",
                               }}
                             />
-                            {selectedIndicators.map((label) => (
-                              <Line
-                                key={label}
-                                type="monotone"
-                                dataKey={label}
-                                stroke={getIndicatorColor(label)}
-                                strokeWidth={2}
-                                dot={false}
-                                activeDot={{
-                                  r: 4,
-                                }}
-                              />
-                            ))}
+                            {selectedIndicators.map((label) => {
+                              // Check if this is sparse data (less data points means sparse)
+                              const dataPoints = realTimeSeriesData?.[label]?.length ?? 0;
+                              const isSparseData = dataPoints > 0 && dataPoints < 20;
+                              
+                              return (
+                                <Line
+                                  key={label}
+                                  type="monotone"
+                                  dataKey={label}
+                                  stroke={getIndicatorColor(label)}
+                                  strokeWidth={isSparseData ? 2 : 2}
+                                  strokeDasharray={isSparseData ? "5 5" : undefined}
+                                  dot={isSparseData ? { r: 4, fill: getIndicatorColor(label), strokeWidth: 2 } : false}
+                                  activeDot={{
+                                    r: 5,
+                                    stroke: getIndicatorColor(label),
+                                    strokeWidth: 2,
+                                    fill: "white",
+                                  }}
+                                  connectNulls={true}
+                                />
+                              );
+                            })}
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
