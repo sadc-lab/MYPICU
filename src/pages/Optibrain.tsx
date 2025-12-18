@@ -529,6 +529,32 @@ const Optibrain = () => {
             timestamp: time.getTime(),
           };
 
+          // Add all available variables
+          Object.entries(realTimeSeriesData).forEach(([label, data]) => {
+            const closest = findClosestByTime(data, time.getTime());
+            if (closest) {
+              dataPoint[label] = closest.valeur;
+            }
+          });
+
+          // Add mock data for indicators without real data
+          clinicalIndicators.forEach((indicator) => {
+            if (!(indicator.label in dataPoint)) {
+              const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
+              const x = Math.sin(seed) * 10000;
+              const variation = (x - Math.floor(x) - 0.5) * 10;
+              dataPoint[indicator.label] = Math.round(variation * 100) / 100;
+            }
+          });
+
+          return dataPoint;
+        });
+      }
+    }
+
+    // Fallback to mock data generation
+    const data = [];
+    const now = new Date();
 
     // Determine number of data points and time intervals based on time range
     let dataPoints: number;
