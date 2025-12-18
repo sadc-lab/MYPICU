@@ -482,12 +482,56 @@ const Optibrain = () => {
       Variable_hemoglobine: "Hémoglobine",
     };
 
+    // First, find the global time window based on ALL variables
+    let globalLatestTime = 0;
+    Object.keys(varMapping).forEach((varKey) => {
+      if (availableVars.includes(varKey)) {
+        const allData = (patientFileData[varKey] as any[]) || [];
+        allData.forEach((item: any) => {
+          if (item.charttime) {
+            const time = new Date(item.charttime).getTime();
+            if (time > globalLatestTime) globalLatestTime = time;
+          }
+        });
+      }
+    });
+
+    if (globalLatestTime === 0) return null;
+
+    const cutoffTime = globalLatestTime - (hoursBack * 60 * 60 * 1000);
+
     const result: Record<string, TimeSeriesDataPoint[]> = {};
 
+    // Now extract data for each variable using the unified time window
     Object.entries(varMapping).forEach(([varKey, label]) => {
       if (availableVars.includes(varKey)) {
-        const data = getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15);
-        result[label] = data;
+        const allData = (patientFileData[varKey] as any[]) || [];
+        const filtered = allData
+          .filter((item: any) => {
+            if (!item.charttime) return false;
+            const itemTime = new Date(item.charttime).getTime();
+            // Include all data within the unified time window
+            return itemTime >= cutoffTime && itemTime <= globalLatestTime;
+          })
+          .map((item: any) => {
+            // Parse value - handle both numeric and string values
+            let valeur = item.valeur;
+            if (typeof valeur === 'string') {
+              // Handle values like "26 mmHg" or French decimal notation
+              const numericPart = valeur.replace(/[^\d.,\-]/g, '').replace(',', '.');
+              valeur = parseFloat(numericPart);
+            }
+            return {
+              charttime: item.charttime,
+              valeur: valeur,
+            };
+          })
+          .filter((item: any) => !isNaN(item.valeur))
+          .sort((a: any, b: any) => new Date(a.charttime).getTime() - new Date(b.charttime).getTime());
+
+        if (filtered.length > 0) {
+          result[label] = filtered;
+        }
       }
     });
 
