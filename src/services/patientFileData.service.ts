@@ -63,7 +63,7 @@ export async function loadPatientFileData(patientId: string): Promise<PatientFil
 
 // Get available patient IDs with file data
 export function getAvailablePatientFileIds(): string[] {
-  return ['8448', '6312'];
+  return ['8749', '6312'];
 }
 
 // Check if patient has detailed file data available

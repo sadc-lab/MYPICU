@@ -228,8 +228,8 @@ const Optibrain = () => {
 
   // Neurological state configuration per patient
   const neurologicalStateConfig = useMemo(() => {
-    // Patient #8448 (John Doe) - specific configuration
-    if (patientId === "#8448") {
+    // Patient #8749 (John Doe) - specific configuration
+    if (patientId === "#8749") {
       return {
         currentState: "Contrôlé",
         currentStateColor: "text-grey-600",
