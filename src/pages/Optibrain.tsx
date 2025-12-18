@@ -43,23 +43,6 @@ import {
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
 
-const VARIABLE_TYPES: Record<string, "continuous" | "discrete"> = {
-  "PIC": "continuous",
-  "PPC": "continuous",
-  "PAM": "continuous",
-  "PVC": "continuous",
-  "ETCO2": "continuous",
-  "PaCO2": "continuous",
-  "Température": "continuous",
-
-  "Glycémie": "discrete",
-  "INR": "discrete",
-  "Plaquettes": "discrete",
-  "Hémoglobine": "discrete",
-  "Tête": "discrete",
-};
-
-
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
@@ -511,77 +494,22 @@ const Optibrain = () => {
     return result;
   }, [patientFileData, timeRange]);
 
-const chartData = useMemo(() => {
-  if (!realTimeSeriesData || selectedIndicators.length === 0) return [];
+  // Chart data - use real data when available, otherwise use mock
+  const chartData = useMemo(() => {
+    // If we have real data, use it
+    if (realTimeSeriesData && Object.keys(realTimeSeriesData).length > 0) {
+      // Find the variable with the most data points to use as base timeline
+      const baseVar = Object.entries(realTimeSeriesData).sort((a, b) => b[1].length - a[1].length)[0];
 
-  const rows = new Map<number, any>();
+      if (baseVar && baseVar[1].length > 0) {
+        return baseVar[1].map((point, idx) => {
+          const time = new Date(point.charttime);
+          const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
 
-  selectedIndicators.forEach((label) => {
-    const series = realTimeSeriesData[label];
-    if (!series || series.length === 0) return;
-
-    const type = VARIABLE_TYPES[label] ?? "continuous";
-
-    series.forEach((point) => {
-      const timestamp = new Date(point.charttime).getTime();
-      const time = new Date(timestamp);
-      const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`;
-
-      if (!rows.has(timestamp)) {
-        rows.set(timestamp, {
-          timestamp,
-          time: timeStr,
-        });
-      }
-
-      rows.get(timestamp)[label] = point.valeur;
-    });
-
-    // ⚠️ interpolation UNIQUEMENT pour les variables continues
-    if (type === "continuous") {
-      const sorted = [...series].sort(
-        (a, b) =>
-          new Date(a.charttime).getTime() - new Date(b.charttime).getTime()
-      );
-
-      for (let i = 1; i < sorted.length; i++) {
-        const prev = sorted[i - 1];
-        const curr = sorted[i];
-
-        const t1 = new Date(prev.charttime).getTime();
-        const t2 = new Date(curr.charttime).getTime();
-
-        // interpolation toutes les 15 min
-        for (
-          let t = t1 + 15 * 60 * 1000;
-          t < t2;
-          t += 15 * 60 * 1000
-        ) {
-          if (!rows.has(t)) {
-            const time = new Date(t);
-            rows.set(t, {
-              timestamp: t,
-              time: `${time.getHours().toString().padStart(2, "0")}:${time
-                .getMinutes()
-                .toString()
-                .padStart(2, "0")}`,
-            });
-          }
-
-          rows.get(t)[label] = prev.valeur;
-        }
-      }
-    }
-  });
-
-  return Array.from(rows.values()).sort(
-    (a, b) => a.timestamp - b.timestamp
-  );
-}, [realTimeSeriesData, selectedIndicators]);
-
+          const dataPoint: any = {
+            time: timeStr,
+            timestamp: time.getTime(),
+          };
 
     // Determine number of data points and time intervals based on time range
     let dataPoints: number;
@@ -1197,15 +1125,16 @@ const chartData = useMemo(() => {
                             />
                             {selectedIndicators.map((label) => (
                               <Line
-  key={label}
-  dataKey={label}
-  stroke={getIndicatorColor(label)}
-  strokeWidth={2}
-  type={VARIABLE_TYPES[label] === "discrete" ? "linear" : "monotone"}
-  dot={VARIABLE_TYPES[label] === "discrete"}
-  connectNulls={false}
-  activeDot={{ r: 4 }}
-/>
+                                key={label}
+                                type="monotone"
+                                dataKey={label}
+                                stroke={getIndicatorColor(label)}
+                                strokeWidth={2}
+                                dot={false}
+                                activeDot={{
+                                  r: 4,
+                                }}
+                              />
                             ))}
                           </LineChart>
                         </ResponsiveContainer>
