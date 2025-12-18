@@ -43,20 +43,6 @@ import {
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
 
-const getPatientTimelineBounds = (data: PatientFileData) => {
-  const allDates = Object.values(data)
-    .flat()
-    .map((d: any) => new Date(d.charttime).getTime())
-    .filter(Boolean);
-
-  if (allDates.length === 0) return null;
-
-  return {
-    start: new Date(Math.min(...allDates)),
-    end: new Date(Math.max(...allDates)),
-  };
-};
-
 // Utils – MUST be defined before Optibrain component
 const findClosestByTime = (data: TimeSeriesDataPoint[], targetTime: number): TimeSeriesDataPoint | null => {
   if (!data || data.length === 0) return null;
@@ -494,12 +480,7 @@ const Optibrain = () => {
   const realTimeSeriesData = useMemo(() => {
     if (!patientFileData) return null;
 
-    const timeline = getPatientTimelineBounds(patientFileData);
-    if (!timeline) return null;
-
-    const endTime = timeline.end;
-    const hoursBack = timeRange === "stay" ? undefined : getHoursFromTimeRange(timeRange);
-
+    const hoursBack = getHoursFromTimeRange(timeRange);
     const availableVars = getAvailableVariables(patientFileData);
 
     // Map variable names to our indicator labels (case-sensitive, must match JSON exactly)
@@ -523,15 +504,7 @@ const Optibrain = () => {
 
     Object.entries(varMapping).forEach(([varKey, label]) => {
       if (availableVars.includes(varKey)) {
-        const rawData = getTimeSeriesForRange(patientFileData, varKey, 9999, 15);
-
-        const data = hoursBack
-          ? rawData.filter((d) => {
-              const t = new Date(d.charttime).getTime();
-              return t >= endTime.getTime() - hoursBack * 3600 * 1000 && t <= endTime.getTime();
-            })
-          : rawData;
-
+        const data = getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15);
         result[label] = data;
       }
     });
