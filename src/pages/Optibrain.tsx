@@ -498,35 +498,55 @@ const Optibrain = () => {
   const chartData = useMemo(() => {
     // If we have real data, use it
     if (realTimeSeriesData && Object.keys(realTimeSeriesData).length > 0) {
-      // Find the variable with the most data points to use as base timeline
-      const baseVar = Object.entries(realTimeSeriesData).sort((a, b) => b[1].length - a[1].length)[0];
+      // Collect ALL unique timestamps from ALL variables
+      const allTimestamps = new Set<number>();
+      Object.values(realTimeSeriesData).forEach((data) => {
+        data.forEach((point) => {
+          allTimestamps.add(new Date(point.charttime).getTime());
+        });
+      });
 
-      if (baseVar && baseVar[1].length > 0) {
-        return baseVar[1].map((point, idx) => {
-          const time = new Date(point.charttime);
+      // Sort timestamps chronologically
+      const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+
+      if (sortedTimestamps.length > 0) {
+        // Helper function to find closest value for a given timestamp
+        const findClosestValue = (data: TimeSeriesDataPoint[], targetTime: number): number | null => {
+          if (data.length === 0) return null;
+          
+          let closest = data[0];
+          let minDiff = Math.abs(new Date(closest.charttime).getTime() - targetTime);
+          
+          for (const point of data) {
+            const diff = Math.abs(new Date(point.charttime).getTime() - targetTime);
+            if (diff < minDiff) {
+              minDiff = diff;
+              closest = point;
+            }
+          }
+          
+          // Only return value if within 2 hours of the target time
+          const twoHoursMs = 2 * 60 * 60 * 1000;
+          if (minDiff <= twoHoursMs) {
+            return closest.valeur;
+          }
+          return null;
+        };
+
+        return sortedTimestamps.map((timestamp) => {
+          const time = new Date(timestamp);
           const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
 
           const dataPoint: any = {
             time: timeStr,
-            timestamp: time.getTime(),
+            timestamp: timestamp,
           };
 
-          // Add all available variables
+          // Add all available variables using closest value by time
           Object.entries(realTimeSeriesData).forEach(([label, data]) => {
-            // Find closest data point by time
-            const closest = data.find((d, i) => i === idx) || data[data.length - 1];
-            if (closest) {
-              dataPoint[label] = closest.valeur;
-            }
-          });
-
-          // Add mock data for indicators without real data
-          clinicalIndicators.forEach((indicator) => {
-            if (!(indicator.label in dataPoint)) {
-              const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
-              const x = Math.sin(seed) * 10000;
-              const variation = (x - Math.floor(x) - 0.5) * 10;
-              dataPoint[indicator.label] = Math.round(variation * 100) / 100;
+            const value = findClosestValue(data, timestamp);
+            if (value !== null) {
+              dataPoint[label] = value;
             }
           });
 
