@@ -1435,9 +1435,22 @@ const Optibrain = () => {
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-5 gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
-                      const dotColor = getAdherenceColor(target.adherencePercentage);
-                      const textColor = getAdherenceTextColor(target.adherencePercentage);
-
+                      const dotColor =
+                        target.status === null
+                          ? "bg-gray-300"
+                          : target.status === "normal"
+                            ? "bg-gray-400"
+                            : target.status === "warning"
+                              ? "bg-orange-400"
+                              : "bg-red-500";
+                      const textColor =
+                        target.status === null
+                          ? "text-gray-400"
+                          : target.status === "normal"
+                            ? "text-gray-500"
+                            : target.status === "warning"
+                              ? "text-orange-600"
+                              : "text-red-600";
                       return (
                         <div
                           key={index}
