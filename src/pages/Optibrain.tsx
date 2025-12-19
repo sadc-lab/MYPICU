@@ -757,11 +757,24 @@ const Optibrain = () => {
     );
   }, [realTimeSeriesData]);
 
-  // Color mapping for chart lines based on status
+  // Palette de couleurs distinctes pour différencier les indicateurs sur le graphique
+  const CHART_COLORS = [
+    "#3b82f6", // blue-500
+    "#ef4444", // red-500
+    "#10b981", // emerald-500
+    "#f59e0b", // amber-500
+    "#8b5cf6", // violet-500
+    "#ec4899", // pink-500
+    "#06b6d4", // cyan-500
+    "#84cc16", // lime-500
+    "#f97316", // orange-500
+  ];
+
+  // Attribuer une couleur unique à chaque indicateur sélectionné
   const getIndicatorColor = (label: string) => {
-    const indicator = clinicalIndicators.find((i) => i.label === label);
-    if (!indicator) return "#9ca3af";
-    return getStatusHexColor(indicator.status);
+    const index = selectedIndicators.indexOf(label);
+    if (index === -1) return "#9ca3af";
+    return CHART_COLORS[index % CHART_COLORS.length];
   };
 
   return (
@@ -1285,19 +1298,38 @@ const Optibrain = () => {
                                 : indicator.adherencePercentage >= 80
                                   ? "bg-orange-400"
                                   : "bg-red-500";
+                          const chartColor = getIndicatorColor(label);
                           return (
                             <div
                               key={label}
-                              className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-200"
+                              className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border-2 shadow-sm"
+                              style={{ borderColor: chartColor }}
                             >
                               {isSparse ? (
-                                <div className={`w-3 h-3 rounded-full ${statusColor}`}></div>
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: chartColor }}
+                                ></div>
                               ) : (
-                                <div className={`w-4 h-0.5 ${statusColor}`}></div>
+                                <div
+                                  className="w-5 h-1 rounded-full"
+                                  style={{ backgroundColor: chartColor }}
+                                ></div>
                               )}
-                              <span className="text-xs text-gray-700">
+                              <span className="text-xs font-medium text-gray-700">
                                 {label} {isSparse && "(points)"}
                               </span>
+                              {indicator.adherencePercentage !== null && (
+                                <span
+                                  className="text-xs font-semibold px-1.5 py-0.5 rounded"
+                                  style={{
+                                    backgroundColor: `${chartColor}20`,
+                                    color: chartColor,
+                                  }}
+                                >
+                                  {indicator.adherencePercentage}%
+                                </span>
+                              )}
                             </div>
                           );
                         })}
@@ -1308,45 +1340,72 @@ const Optibrain = () => {
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis
                               dataKey="time"
-                              tick={{
-                                fontSize: 12,
-                              }}
+                              tick={{ fontSize: 11 }}
                               stroke="#9ca3af"
+                              tickLine={false}
                             />
                             <YAxis
-                              tick={{
-                                fontSize: 12,
-                              }}
+                              tick={{ fontSize: 11 }}
                               stroke="#9ca3af"
+                              tickLine={false}
+                              axisLine={false}
                             />
                             <Tooltip
                               contentStyle={{
-                                backgroundColor: "white",
+                                backgroundColor: "rgba(255, 255, 255, 0.98)",
                                 border: "1px solid #e5e7eb",
-                                borderRadius: "6px",
+                                borderRadius: "8px",
                                 fontSize: "12px",
+                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                padding: "12px",
+                              }}
+                              labelStyle={{ fontWeight: 600, marginBottom: 8 }}
+                              formatter={(value: number, name: string) => {
+                                const color = getIndicatorColor(name);
+                                return [
+                                  <span key={name} style={{ color, fontWeight: 500 }}>
+                                    {value.toFixed(1)}
+                                  </span>,
+                                  <span key={`${name}-label`} style={{ color }}>{name}</span>
+                                ];
                               }}
                             />
                             <Legend
-                              wrapperStyle={{
-                                fontSize: "12px",
-                              }}
+                              wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
+                              iconType="plainline"
+                              formatter={(value: string) => (
+                                <span style={{ color: getIndicatorColor(value), fontWeight: 500 }}>
+                                  {value}
+                                </span>
+                              )}
                             />
-                            {selectedIndicators.map((label) => {
+                            {selectedIndicators.map((label, idx) => {
                               const isSparse = sparseIndicators.has(label);
+                              const color = getIndicatorColor(label);
                               return (
                                 <Line
                                   key={label}
                                   type="monotone"
                                   dataKey={label}
-                                  stroke={getIndicatorColor(label)}
-                                  strokeWidth={isSparse ? 0 : 2}
+                                  stroke={color}
+                                  strokeWidth={isSparse ? 0 : 2.5}
+                                  strokeDasharray={idx > 0 && !isSparse ? (idx % 2 === 1 ? "8 4" : undefined) : undefined}
                                   dot={
                                     isSparse
-                                      ? { r: 6, fill: getIndicatorColor(label), stroke: getIndicatorColor(label) }
-                                      : false
+                                      ? {
+                                          r: 7,
+                                          fill: color,
+                                          stroke: "#fff",
+                                          strokeWidth: 2,
+                                        }
+                                      : { r: 2, fill: color }
                                   }
-                                  activeDot={{ r: isSparse ? 8 : 4 }}
+                                  activeDot={{
+                                    r: isSparse ? 10 : 6,
+                                    stroke: "#fff",
+                                    strokeWidth: 2,
+                                    fill: color,
+                                  }}
                                   connectNulls={false}
                                 />
                               );
