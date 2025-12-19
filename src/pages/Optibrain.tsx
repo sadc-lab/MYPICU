@@ -217,43 +217,70 @@ const Optibrain = () => {
     }
   };
 
-  const hoursForAdherence = getHoursFromTimeRangeForAdherence(timeRange);
-  const monitoringTargets = useMemo(() => {
-    const defaultIndicators = [
-      { label: "Opioide", description: "En cours" },
-      { label: "Hypnotique", description: "En cours" },
-      { label: "Propofol 48h", description: "<48h" },
-      { label: "Anti-Epileptique", description: "Monitorée" },
-      { label: "PIC", description: "Monitorée" },
-      { label: "PAM", description: "Monitorée" },
-      { label: "PVC", description: "Monitorée" },
-      { label: "ETCO2", description: "Monitorée" },
-      { label: "Température", description: "Monitorée" },
-    ];
+// ===== ÉTAPE 2 : Remplacer monitoringTargets =====
+const monitoringTargets = useMemo(() => {
+  const defaultIndicators = [
+    { label: "Opioide", description: "En cours", target: "normal" },
+    { label: "Hypnotique", description: "En cours", target: "normal" },
+    { label: "Propofol 48h", description: "<48h", target: "normal" },
+    { label: "Anti-Epileptique", description: "Monitorée", target: "normal" },
+    { label: "PIC", description: "Monitorée", target: "< 20mmHg" },
+    { label: "PAM", description: "Monitorée", target: "normal" },
+    { label: "PVC", description: "Monitorée", target: "normal" },
+    { label: "ETCO2", description: "Monitorée", target: "normal" },
+    { label: "Température", description: "Monitorée", target: "35-38°C" },
+  ];
 
-    // Si pas de données patient, retourner null pour indiquer l'absence de données réelles
-    if (!patientFileData) {
-      return defaultIndicators.map((indicator) => ({
-        ...indicator,
-        adherencePercentage: null as number | null,
-        status: null as "normal" | "warning" | "critical" | null,
-        hasRealData: false,
-      }));
-    }
+  if (!patientFileData) {
+    return defaultIndicators.map((indicator) => ({
+      ...indicator,
+      adherencePercentage: null as number | null,
+      status: null as 'normal' | 'warning' | 'critical' | null,
+      hasRealData: false,
+    }));
+  }
 
-    const realStatus = getMonitoringInterventionsStatus(patientFileData, hoursForAdherence);
+  const realStatus = getMonitoringInterventionsStatus(patientFileData, hoursForAdherence);
 
-    return defaultIndicators.map((indicator) => {
-      const realData = realStatus.find((s) => s.label === indicator.label);
-
+  return defaultIndicators.map((indicator) => {
+    const realData = realStatus.find((s) => s.label === indicator.label);
+    const variableKey = getVariableKeyFromLabel(indicator.label);
+    
+    // Utiliser la nouvelle fonction de calcul basée sur les données du graphique
+    if (variableKey && patientFileData[variableKey]) {
+      const adherenceData = calculateAdherenceFromChartData(
+        patientFileData,
+        variableKey,
+        hoursForAdherence,
+        indicator.target
+      );
+      
+      // Debug: logguer les informations pour vérifier la cohérence
+      console.log(`[ADHERENCE DEBUG] ${indicator.label}:`, {
+        target: indicator.target,
+        percentage: adherenceData.percentage,
+        totalPoints: adherenceData.totalCount,
+        inRangePoints: adherenceData.inRangeCount,
+        avgValue: adherenceData.avgValue
+      });
+      
       return {
         ...indicator,
-        adherencePercentage: realData?.adherencePercentage ?? null,
+        adherencePercentage: adherenceData.percentage,
         status: realData?.status ?? null,
-        hasRealData: realData !== undefined,
+        hasRealData: true,
       };
-    });
-  }, [patientFileData, hoursForAdherence]);
+    }
+
+    return {
+      ...indicator,
+      adherencePercentage: realData?.adherencePercentage ?? null,
+      status: realData?.status ?? null,
+      hasRealData: realData !== undefined,
+    };
+  });
+}, [patientFileData, hoursForAdherence]);
+// ===== FIN ÉTAPE 2 =====
 
   // Get real clinical indicators status from JSON data
   const clinicalIndicatorsData = useMemo(() => {
