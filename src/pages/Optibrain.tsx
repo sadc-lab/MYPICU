@@ -46,6 +46,115 @@ import {
 } from "@/services/patientFileData.service";
 
 const Optibrain = () => {
+  // ... votre code existant ...
+
+  // ===== ÉTAPE 1 : Fonctions utilitaires pour la synchronisation =====
+  
+  // Fonction pour obtenir les données EXACTEMENT comme elles sont affichées dans le graphique
+  const getChartDataForAdherence = (
+    data: PatientFileData,
+    variableKey: string,
+    hoursBack: number
+  ): { values: number[]; timestamps: Date[]; count: number } => {
+    if (!data || !data[variableKey]) {
+      return { values: [], timestamps: [], count: 0 };
+    }
+
+    const now = new Date();
+    const startTime = new Date(now.getTime() - hoursBack * 60 * 60 * 1000);
+    
+    // Obtenir les données brutes exactement comme pour le graphique
+    const rawData = data[variableKey]
+      .filter(point => {
+        const pointTime = new Date(point.charttime);
+        return pointTime >= startTime && pointTime <= now;
+      })
+      .sort((a, b) => new Date(a.charttime).getTime() - new Date(b.charttime).getTime());
+
+    return {
+      values: rawData.map(d => d.valeur),
+      timestamps: rawData.map(d => new Date(d.charttime)),
+      count: rawData.length
+    };
+  };
+
+  // Fonction améliorée pour parser les plages cibles avec plus de robustesse
+  const parseTargetRange = (target: string): { min: number; max: number } => {
+    const cleanTarget = target.toLowerCase().replace(/°/g, '').trim();
+    
+    // Plage avec tiret
+    const rangeMatch = cleanTarget.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
+    if (rangeMatch) {
+      return {
+        min: parseFloat(rangeMatch[1]),
+        max: parseFloat(rangeMatch[2])
+      };
+    }
+    
+    // Inférieur à
+    const lessThanMatch = cleanTarget.match(/<\s*(\d+(?:\.\d+)?)/);
+    if (lessThanMatch) {
+      return {
+        min: -Infinity,
+        max: parseFloat(lessThanMatch[1])
+      };
+    }
+    
+    // Supérieur à
+    const greaterThanMatch = cleanTarget.match(/>\s*(\d+(?:\.\d+)?)/);
+    if (greaterThanMatch) {
+      return {
+        min: parseFloat(greaterThanMatch[1]),
+        max: Infinity
+      };
+    }
+    
+    return { min: -Infinity, max: Infinity };
+  };
+
+  // Fonction de calcul d'adhérence basée sur les données VISIBLES du graphique
+  const calculateAdherenceFromChartData = (
+    data: PatientFileData,
+    variableKey: string,
+    hoursBack: number,
+    targetRange: string
+  ): { 
+    percentage: number; 
+    inRangeCount: number; 
+    totalCount: number; 
+    avgValue: number;
+  } => {
+    const chartData = getChartDataForAdherence(data, variableKey, hoursBack);
+    
+    if (chartData.count === 0) {
+      return { percentage: 0, inRangeCount: 0, totalCount: 0, avgValue: 0 };
+    }
+    
+    const target = parseTargetRange(targetRange);
+    let inRangeCount = 0;
+    let totalValue = 0;
+    
+    chartData.values.forEach(value => {
+      if (value >= target.min && value <= target.max) {
+        inRangeCount++;
+      }
+      totalValue += value;
+    });
+    
+    const percentage = Math.round((inRangeCount / chartData.count) * 100);
+    const avgValue = Math.round((totalValue / chartData.count) * 10) / 10;
+    
+    return {
+      percentage,
+      inRangeCount,
+      totalCount: chartData.count,
+      avgValue
+    };
+  };
+
+  // ===== FIN ÉTAPE 1 =====
+
+const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
   const metricParam = searchParams.get("metric");
