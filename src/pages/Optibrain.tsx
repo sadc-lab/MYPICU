@@ -453,19 +453,45 @@ const monitoringTargets = useMemo(() => {
     { label: "Plaquettes", target: "> 100 g/L" },
   ];
 
-  // Merge with real data from JSON - ne pas utiliser de fallback mock
-  const clinicalIndicators = useMemo(() => {
-    return baseClinicalIndicators.map((base) => {
-      const realData = clinicalIndicatorsData?.find((d) => d.label === base.label);
+const clinicalIndicators = useMemo(() => {
+  return baseClinicalIndicators.map((base) => {
+    const realData = clinicalIndicatorsData?.find((d) => d.label === base.label);
+    const variableKey = getVariableKeyFromLabel(base.label);
+    
+    // Utiliser la nouvelle fonction de calcul basée sur les données du graphique
+    if (variableKey && patientFileData && patientFileData[variableKey]) {
+      const adherenceData = calculateAdherenceFromChartData(
+        patientFileData,
+        variableKey,
+        hoursForAdherence,
+        base.target
+      );
+      
+      console.log(`[CLINICAL DEBUG] ${base.label}:`, {
+        target: base.target,
+        percentage: adherenceData.percentage,
+        totalPoints: adherenceData.totalCount,
+        avgValue: adherenceData.avgValue
+      });
+      
       return {
         label: base.label,
         target: base.target,
         status: realData?.status ?? null,
-        adherencePercentage: realData?.adherencePercentage ?? null,
-        hasRealData: realData !== undefined,
+        adherencePercentage: adherenceData.percentage,
+        hasRealData: true,
       };
-    });
-  }, [clinicalIndicatorsData]);
+    }
+
+    return {
+      label: base.label,
+      target: base.target,
+      status: realData?.status ?? null,
+      adherencePercentage: realData?.adherencePercentage ?? null,
+      hasRealData: realData !== undefined,
+    };
+  });
+}, [clinicalIndicatorsData, patientFileData, hoursForAdherence]);
 
   // Calculate clinical adherence (average of indicators with real data only)
   const clinicalAdherence = useMemo(() => {
