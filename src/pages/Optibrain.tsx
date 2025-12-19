@@ -1493,11 +1493,7 @@ const Optibrain = () => {
                           </TooltipProvider>
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-700">{target.label}</p>
-                            <p className={`text-xs font-medium ${textColor}`}>
-                              {target.adherencePercentage !== null
-                                ? `${target.adherencePercentage}% - ${target.description}`
-                                : "Pas de données"}
-                            </p>
+                            <p className="text-xs text-gray-500">{target.description}</p>
                           </div>
                         </div>
                       );
