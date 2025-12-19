@@ -120,11 +120,13 @@ const Optibrain = () => {
       { label: "Température", description: "Monitorée" },
     ];
 
+    // Si pas de données patient, retourner null pour indiquer l'absence de données réelles
     if (!patientFileData) {
       return defaultIndicators.map((indicator) => ({
         ...indicator,
-        adherencePercentage: 100,
-        status: "normal" as const,
+        adherencePercentage: null as number | null,
+        status: null as 'normal' | 'warning' | 'critical' | null,
+        hasRealData: false,
       }));
     }
 
@@ -134,9 +136,10 @@ const Optibrain = () => {
       const realData = realStatus.find((s) => s.label === indicator.label);
 
       return {
-        ...indicator, // keep label + description
-        adherencePercentage: realData?.adherencePercentage ?? 100,
-        status: realData?.status ?? "normal",
+        ...indicator,
+        adherencePercentage: realData?.adherencePercentage ?? null,
+        status: realData?.status ?? null,
+        hasRealData: realData !== undefined,
       };
     });
   }, [patientFileData, hoursForAdherence]);
@@ -147,13 +150,15 @@ const Optibrain = () => {
     return getClinicalIndicatorsStatus(patientFileData, hoursForAdherence);
   }, [patientFileData, hoursForAdherence]);
 
-  // Calculate overall monitoring adherence (average of all targets)
+  // Calculate overall monitoring adherence (average of targets with real data only)
   const monitoringAdherence = useMemo(() => {
-    const totalPercentage = monitoringTargets.reduce((sum, t) => sum + t.adherencePercentage, 0);
-    return Math.round(totalPercentage / monitoringTargets.length);
+    const targetsWithData = monitoringTargets.filter((t) => t.adherencePercentage !== null);
+    if (targetsWithData.length === 0) return null;
+    const totalPercentage = targetsWithData.reduce((sum, t) => sum + (t.adherencePercentage ?? 0), 0);
+    return Math.round(totalPercentage / targetsWithData.length);
   }, [monitoringTargets]);
 
-  const nonAdherentCount = monitoringTargets.filter((t) => t.status !== "normal").length;
+  const nonAdherentCount = monitoringTargets.filter((t) => t.status !== null && t.status !== "normal").length;
 
   // Get real PIC, PPC and PACO2 values from patient file data
   const realBrainValues = useMemo(() => {
@@ -310,25 +315,28 @@ const Optibrain = () => {
     { label: "Plaquettes", target: "> 100 g/L" },
   ];
 
-  // Merge with real data from JSON
+  // Merge with real data from JSON - ne pas utiliser de fallback mock
   const clinicalIndicators = useMemo(() => {
     return baseClinicalIndicators.map((base) => {
       const realData = clinicalIndicatorsData?.find((d) => d.label === base.label);
       return {
         label: base.label,
         target: base.target,
-        status: realData?.status ?? "normal",
-        adherencePercentage: realData?.adherencePercentage ?? 100,
+        status: realData?.status ?? null,
+        adherencePercentage: realData?.adherencePercentage ?? null,
+        hasRealData: realData !== undefined,
       };
     });
   }, [clinicalIndicatorsData]);
 
-  // Calculate clinical adherence (average of all indicators)
+  // Calculate clinical adherence (average of indicators with real data only)
   const clinicalAdherence = useMemo(() => {
-    const totalPercentage = clinicalIndicators.reduce((sum, i) => sum + i.adherencePercentage, 0);
-    return Math.round(totalPercentage / clinicalIndicators.length);
+    const indicatorsWithData = clinicalIndicators.filter((i) => i.adherencePercentage !== null);
+    if (indicatorsWithData.length === 0) return null;
+    const totalPercentage = indicatorsWithData.reduce((sum, i) => sum + (i.adherencePercentage ?? 0), 0);
+    return Math.round(totalPercentage / indicatorsWithData.length);
   }, [clinicalIndicators]);
-  const outOfRangeCount = clinicalIndicators.filter((i) => i.status !== "normal").length;
+  const outOfRangeCount = clinicalIndicators.filter((i) => i.status !== null && i.status !== "normal").length;
 
   // Calculate time spent in each PIC range from real data
   const picRangeData = useMemo(() => {
@@ -494,93 +502,22 @@ const Optibrain = () => {
     return result;
   }, [patientFileData, timeRange]);
 
-  // Chart data - use real data when available, otherwise use mock
+  // Chart data - utiliser UNIQUEMENT les données réelles
   const chartData = useMemo(() => {
-    // If we have real data, use it
-    if (realTimeSeriesData && Object.keys(realTimeSeriesData).length > 0) {
-      // Find the variable with the most data points to use as base timeline
-      const baseVar = Object.entries(realTimeSeriesData).sort((a, b) => b[1].length - a[1].length)[0];
-
-      if (baseVar && baseVar[1].length > 0) {
-        return baseVar[1].map((point, idx) => {
-          const time = new Date(point.charttime);
-          const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
-
-          const dataPoint: any = {
-            time: timeStr,
-            timestamp: time.getTime(),
-          };
-
-          // Add all available variables
-          Object.entries(realTimeSeriesData).forEach(([label, data]) => {
-            // Find closest data point by time
-            const closest = data.find((d, i) => i === idx) || data[data.length - 1];
-            if (closest) {
-              dataPoint[label] = closest.valeur;
-            }
-          });
-
-          // Add mock data for indicators without real data
-          clinicalIndicators.forEach((indicator) => {
-            if (!(indicator.label in dataPoint)) {
-              const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
-              const x = Math.sin(seed) * 10000;
-              const variation = (x - Math.floor(x) - 0.5) * 10;
-              dataPoint[indicator.label] = Math.round(variation * 100) / 100;
-            }
-          });
-
-          return dataPoint;
-        });
-      }
+    // Si pas de données réelles, retourner un tableau vide
+    if (!realTimeSeriesData || Object.keys(realTimeSeriesData).length === 0) {
+      return [];
     }
 
-    // Fallback to mock data generation
-    const data = [];
-    const now = new Date();
+    // Find the variable with the most data points to use as base timeline
+    const baseVar = Object.entries(realTimeSeriesData).sort((a, b) => b[1].length - a[1].length)[0];
 
-    // Determine number of data points and time intervals based on time range
-    let dataPoints: number;
-    let intervalMinutes: number;
-
-    switch (timeRange) {
-      case "3h":
-        dataPoints = 12;
-        intervalMinutes = 15;
-        break;
-      case "6h":
-        dataPoints = 24;
-        intervalMinutes = 15;
-        break;
-      case "12h":
-        dataPoints = 48;
-        intervalMinutes = 15;
-        break;
-      case "24h":
-        dataPoints = 96;
-        intervalMinutes = 15;
-        break;
-      case "stay":
-        dataPoints = 192;
-        intervalMinutes = 15;
-        break;
-      default:
-        dataPoints = 96;
-        intervalMinutes = 15;
-        break;
+    if (!baseVar || baseVar[1].length === 0) {
+      return [];
     }
 
-    const getSeededRandom = (seed: number) => {
-      const x = Math.sin(seed) * 10000;
-      return x - Math.floor(x);
-    };
-
-    for (let i = dataPoints - 1; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
-      time.setMinutes(Math.floor(time.getMinutes() / 15) * 15);
-      time.setSeconds(0);
-      time.setMilliseconds(0);
-
+    return baseVar[1].map((point, idx) => {
+      const time = new Date(point.charttime);
       const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
 
       const dataPoint: any = {
@@ -588,21 +525,18 @@ const Optibrain = () => {
         timestamp: time.getTime(),
       };
 
-      clinicalIndicators.forEach((indicator) => {
-        const seed = time.getTime() / 1000 + indicator.label.charCodeAt(0);
-        const variation = (getSeededRandom(seed) - 0.5) * 10;
-        dataPoint[indicator.label] = Math.round(variation * 100) / 100;
+      // Add all available variables - ONLY real data
+      Object.entries(realTimeSeriesData).forEach(([label, data]) => {
+        // Find closest data point by time
+        const closest = data.find((d, i) => i === idx) || data[data.length - 1];
+        if (closest) {
+          dataPoint[label] = closest.valeur;
+        }
       });
 
-      data.push(dataPoint);
-    }
-
-    const uniqueData = data.filter(
-      (item, index, self) => index === self.findIndex((t) => t.timestamp === item.timestamp),
-    );
-
-    return uniqueData;
-  }, [timeRange, realTimeSeriesData, clinicalIndicators]);
+      return dataPoint;
+    });
+  }, [realTimeSeriesData]);
 
   // Color mapping for chart lines based on status
   const getIndicatorColor = (label: string) => {
@@ -1008,13 +942,23 @@ const Optibrain = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div
-                      className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${clinicalAdherence >= 90 ? "border-gray-400 text-gray-600 bg-gray-50" : clinicalAdherence >= 80 ? "border-orange-400 text-orange-600 bg-orange-50" : "border-red-400 text-red-600 bg-red-50"}`}
+                      className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
+                        clinicalAdherence === null
+                          ? "border-gray-300 text-gray-400 bg-gray-50"
+                          : clinicalAdherence >= 90
+                            ? "border-gray-400 text-gray-600 bg-gray-50"
+                            : clinicalAdherence >= 80
+                              ? "border-orange-400 text-orange-600 bg-orange-50"
+                              : "border-red-400 text-red-600 bg-red-50"
+                      }`}
                     >
-                      {clinicalAdherence}%
+                      {clinicalAdherence !== null ? `${clinicalAdherence}%` : "--"}
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700">Adhérence aux cibles recommandées</h3>
-                      <p className="text-xs text-gray-500 mt-1">{outOfRangeCount} Indicateurs à surveiller</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {patientFileData ? `${outOfRangeCount} Indicateurs à surveiller` : "Pas de données disponibles"}
+                      </p>
                     </div>
                   </div>
                   {clinicalExpanded ? (
@@ -1030,11 +974,13 @@ const Optibrain = () => {
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
                       const statusColor =
-                        indicator.status === "critical"
-                          ? "bg-red-500"
-                          : indicator.status === "warning"
-                            ? "bg-orange-400"
-                            : "bg-gray-400";
+                        indicator.status === null
+                          ? "bg-gray-300"
+                          : indicator.status === "critical"
+                            ? "bg-red-500"
+                            : indicator.status === "warning"
+                              ? "bg-orange-400"
+                              : "bg-gray-400";
                       return (
                         <div
                           key={index}
@@ -1055,6 +1001,9 @@ const Optibrain = () => {
                               <p className="text-sm font-medium text-gray-700">{indicator.label}</p>
                             </div>
                             <p className="text-xs text-gray-500">{indicator.target}</p>
+                            {indicator.adherencePercentage !== null && (
+                              <p className="text-xs text-gray-400">{indicator.adherencePercentage}% adhérence</p>
+                            )}
                           </div>
                         </div>
                       );
@@ -1183,19 +1132,23 @@ const Optibrain = () => {
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                        monitoringAdherence >= 90
-                          ? "border-gray-400 text-gray-600 bg-gray-50"
-                          : monitoringAdherence >= 80
-                            ? "border-orange-400 text-orange-600 bg-orange-50"
-                            : "border-red-400 text-red-600 bg-red-50"
+                        monitoringAdherence === null
+                          ? "border-gray-300 text-gray-400 bg-gray-50"
+                          : monitoringAdherence >= 90
+                            ? "border-gray-400 text-gray-600 bg-gray-50"
+                            : monitoringAdherence >= 80
+                              ? "border-orange-400 text-orange-600 bg-orange-50"
+                              : "border-red-400 text-red-600 bg-red-50"
                       }`}
                     >
-                      {monitoringAdherence}%
+                      {monitoringAdherence !== null ? `${monitoringAdherence}%` : "--"}
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
                       <p className="text-xs text-gray-500 mt-1">
-                        {nonAdherentCount} non adhérent{nonAdherentCount > 1 ? "s" : ""}
+                        {patientFileData
+                          ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}`
+                          : "Pas de données disponibles"}
                       </p>
                     </div>
                   </div>
@@ -1211,17 +1164,21 @@ const Optibrain = () => {
                   <div className="grid grid-cols-5 gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
                       const dotColor =
-                        target.status === "normal"
-                          ? "bg-gray-400"
-                          : target.status === "warning"
-                            ? "bg-orange-400"
-                            : "bg-red-500";
+                        target.status === null
+                          ? "bg-gray-300"
+                          : target.status === "normal"
+                            ? "bg-gray-400"
+                            : target.status === "warning"
+                              ? "bg-orange-400"
+                              : "bg-red-500";
                       const textColor =
-                        target.status === "normal"
-                          ? "text-gray-500"
-                          : target.status === "warning"
-                            ? "text-orange-600"
-                            : "text-red-600";
+                        target.status === null
+                          ? "text-gray-400"
+                          : target.status === "normal"
+                            ? "text-gray-500"
+                            : target.status === "warning"
+                              ? "text-orange-600"
+                              : "text-red-600";
                       return (
                         <div
                           key={index}
@@ -1229,8 +1186,12 @@ const Optibrain = () => {
                         >
                           <div className={`w-3 h-3 rounded-full ${dotColor}`}></div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-700">{target.label} </p>
-                            <p className={`text-xs font-medium ${textColor}`}>{target.description}</p>
+                            <p className="text-sm font-medium text-gray-700">{target.label}</p>
+                            <p className={`text-xs font-medium ${textColor}`}>
+                              {target.adherencePercentage !== null
+                                ? `${target.adherencePercentage}% - ${target.description}`
+                                : "Pas de données"}
+                            </p>
                           </div>
                         </div>
                       );
