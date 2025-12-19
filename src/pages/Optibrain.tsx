@@ -114,8 +114,8 @@ const Optibrain = () => {
     const now = new Date();
     const startTime = new Date(now.getTime() - hoursBack * 60 * 60 * 1000);
 
-    // Obtenir les données brutes exactement comme pour le graphique
-    const rawData = data[variableKey]
+    // Correction : ajout du type assertion (as TimeSeriesDataPoint[])
+    const rawData = (data[variableKey] as TimeSeriesDataPoint[])
       .filter((point) => {
         const pointTime = new Date(point.charttime);
         return pointTime >= startTime && pointTime <= now;
@@ -304,6 +304,20 @@ const Optibrain = () => {
     if (!patientFileData) return null;
     return getClinicalIndicatorsStatus(patientFileData, hoursForAdherence);
   }, [patientFileData, hoursForAdherence]);
+
+  // ===== Ajoutez cette déclaration juste avant votre useMemo clinicalIndicators =====
+  const baseClinicalIndicators = [
+    { label: "Tête", target: "0-30°" },
+    { label: "PIC", target: "< 20mmHg" },
+    { label: "PPC", target: "60-70 mm Hg" },
+    { label: "Température", target: "35-38°C" },
+    { label: "PaCO2", target: "35-45mmHg" },
+    { label: "Glycémie", target: "6-11 mmol/L" },
+    { label: "Hémoglobine", target: "> 7g/dl" },
+    { label: "INR", target: "< 1.2" },
+    { label: "Plaquettes", target: "> 100 g/L" },
+  ];
+  // =================================================================================
 
   // ===== CORRECTION : Une seule déclaration pour clinicalIndicators =====
   const clinicalIndicators = useMemo(() => {
