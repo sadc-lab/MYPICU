@@ -1230,14 +1230,15 @@ const Optibrain = () => {
                   <div className="grid grid-cols-5 gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
+                      // Couleur basée sur le pourcentage d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
                       const statusColor =
-                        indicator.status === null
+                        indicator.adherencePercentage === null
                           ? "bg-gray-300"
-                          : indicator.status === "critical"
-                            ? "bg-red-500"
-                            : indicator.status === "warning"
+                          : indicator.adherencePercentage >= 90
+                            ? "bg-gray-400"
+                            : indicator.adherencePercentage >= 80
                               ? "bg-orange-400"
-                              : "bg-gray-400";
+                              : "bg-red-500";
                       return (
                         <div
                           key={index}
@@ -1311,14 +1312,15 @@ const Optibrain = () => {
                           const indicator = clinicalIndicators.find((i) => i.label === label);
                           if (!indicator) return null;
                           const isSparse = sparseIndicators.has(label);
+                          // Couleur basée sur le pourcentage d'adhérence
                           const statusColor =
-                            indicator.status === null
+                            indicator.adherencePercentage === null
                               ? "bg-gray-300"
-                              : indicator.status === "critical"
-                                ? "bg-red-500"
-                                : indicator.status === "warning"
+                              : indicator.adherencePercentage >= 90
+                                ? "bg-gray-400"
+                                : indicator.adherencePercentage >= 80
                                   ? "bg-orange-400"
-                                  : "bg-gray-400";
+                                  : "bg-red-500";
                           return (
                             <div
                               key={label}
@@ -1435,20 +1437,21 @@ const Optibrain = () => {
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-5 gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
+                      // Couleur basée sur le pourcentage d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
                       const dotColor =
-                        target.status === null
+                        target.adherencePercentage === null
                           ? "bg-gray-300"
-                          : target.status === "normal"
+                          : target.adherencePercentage >= 90
                             ? "bg-gray-400"
-                            : target.status === "warning"
+                            : target.adherencePercentage >= 80
                               ? "bg-orange-400"
                               : "bg-red-500";
                       const textColor =
-                        target.status === null
+                        target.adherencePercentage === null
                           ? "text-gray-400"
-                          : target.status === "normal"
+                          : target.adherencePercentage >= 90
                             ? "text-gray-500"
-                            : target.status === "warning"
+                            : target.adherencePercentage >= 80
                               ? "text-orange-600"
                               : "text-red-600";
                       return (
