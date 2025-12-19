@@ -36,7 +36,6 @@ import {
   isVariableSparse,
   getLatestValue,
   calculateAverage,
-  calculateTimeInRanges,
   getAvailableVariables,
   getMonitoringInterventionsStatus,
   getClinicalIndicatorsStatus,
@@ -127,7 +126,7 @@ const Optibrain = () => {
       return defaultIndicators.map((indicator) => ({
         ...indicator,
         adherencePercentage: null as number | null,
-        status: null as 'normal' | 'warning' | 'critical' | null,
+        status: null as "normal" | "warning" | "critical" | null,
         hasRealData: false,
       }));
     }
@@ -499,7 +498,7 @@ const Optibrain = () => {
       if (availableVars.includes(varKey)) {
         const isSparse = isVariableSparse(patientFileData, varKey, 20);
         // Pour les données rares, ne pas échantillonner pour garder tous les points
-        const data = isSparse 
+        const data = isSparse
           ? getAllTimeSeriesData(patientFileData, varKey, hoursBack, true)
           : getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15, true);
         result[label] = { data, isSparse };
@@ -549,12 +548,15 @@ const Optibrain = () => {
           }
         } else {
           // Pour les données denses, interpoler ou prendre le plus proche
-          const closestPoint = data.reduce((closest, point) => {
-            const pointTime = new Date(point.charttime).getTime();
-            const closestTime = closest ? new Date(closest.charttime).getTime() : Infinity;
-            return Math.abs(pointTime - timestamp) < Math.abs(closestTime - timestamp) ? point : closest;
-          }, null as TimeSeriesDataPoint | null);
-          
+          const closestPoint = data.reduce(
+            (closest, point) => {
+              const pointTime = new Date(point.charttime).getTime();
+              const closestTime = closest ? new Date(closest.charttime).getTime() : Infinity;
+              return Math.abs(pointTime - timestamp) < Math.abs(closestTime - timestamp) ? point : closest;
+            },
+            null as TimeSeriesDataPoint | null,
+          );
+
           if (closestPoint && Math.abs(new Date(closestPoint.charttime).getTime() - timestamp) < 30 * 60 * 1000) {
             dataPoint[label] = closestPoint.valeur;
           }
@@ -571,7 +573,7 @@ const Optibrain = () => {
     return new Set(
       Object.entries(realTimeSeriesData)
         .filter(([_, { isSparse }]) => isSparse)
-        .map(([label]) => label)
+        .map(([label]) => label),
     );
   }, [realTimeSeriesData]);
 
@@ -1155,7 +1157,11 @@ const Optibrain = () => {
                                   dataKey={label}
                                   stroke={getIndicatorColor(label)}
                                   strokeWidth={isSparse ? 0 : 2}
-                                  dot={isSparse ? { r: 6, fill: getIndicatorColor(label), stroke: getIndicatorColor(label) } : false}
+                                  dot={
+                                    isSparse
+                                      ? { r: 6, fill: getIndicatorColor(label), stroke: getIndicatorColor(label) }
+                                      : false
+                                  }
                                   activeDot={{ r: isSparse ? 8 : 4 }}
                                   connectNulls={false}
                                 />
