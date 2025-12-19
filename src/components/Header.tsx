@@ -1,7 +1,7 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle } from 'lucide-react';
+import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle, Menu, X, Home } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, getPatientsForPed, Patient } from '@/utils/patientData';
@@ -25,6 +25,13 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { InteractiveGuide } from '@/components/InteractiveGuide';
 import { useTheme } from 'next-themes';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 export const Header = () => {
   const location = useLocation();
@@ -35,6 +42,8 @@ export const Header = () => {
   const [showGuide, setShowGuide] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   
   const isOnMainDashboard = location.pathname === '/';
   
@@ -125,6 +134,29 @@ export const Header = () => {
     return acc;
   }, {} as Record<string, Patient[]>);
 
+  // Mobile search filtered patients
+  const mobileFilteredPatients = mobileSearchQuery.trim() 
+    ? allPatients.filter(patient => {
+        const query = mobileSearchQuery.toLowerCase();
+        const ped = patient.picuId.startsWith('D') ? 'a' : patient.picuId.startsWith('B') ? 'b' : 'c';
+        return (
+          patient.name.toLowerCase().includes(query) ||
+          patient.id.toLowerCase().includes(query) ||
+          patient.pelodScore.toString().includes(query) ||
+          ped === query ||
+          `ped ${ped}`.includes(query)
+        );
+      })
+    : allPatients;
+
+  // Group mobile patients by PED
+  const mobilePatientsByPed = mobileFilteredPatients.reduce((acc, patient) => {
+    const ped = patient.picuId.startsWith('D') ? 'A' : patient.picuId.startsWith('B') ? 'B' : 'C';
+    if (!acc[ped]) acc[ped] = [];
+    acc[ped].push(patient);
+    return acc;
+  }, {} as Record<string, Patient[]>);
+
   return (
     <>
       <InteractiveGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />
@@ -132,6 +164,95 @@ export const Header = () => {
         <div className="container mx-auto px-3 sm:px-6">
         <div className="flex h-14 sm:h-16 items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-8">
+            {/* Mobile Menu Button */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0">
+                <SheetHeader className="p-4 border-b">
+                  <SheetTitle className="text-left">Navigation</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col h-full">
+                  {/* Mobile Search */}
+                  <div className="p-4 border-b">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input 
+                        type="text"
+                        value={mobileSearchQuery}
+                        onChange={(e) => setMobileSearchQuery(e.target.value)}
+                        placeholder="Rechercher patients..."
+                        className="pl-10 w-full"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Navigation Links */}
+                  <div className="p-4 border-b">
+                    <Link 
+                      to="/" 
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Home className="h-5 w-5" />
+                      <span className="font-medium">Tableau de bord</span>
+                    </Link>
+                  </div>
+                  
+                  {/* Patients List */}
+                  <div className="flex-1 overflow-y-auto">
+                    <div className="p-4">
+                      <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+                        Patients ({mobileFilteredPatients.length})
+                      </h3>
+                      {Object.entries(mobilePatientsByPed).sort().map(([ped, patients]) => (
+                        <div key={ped} className="mb-4">
+                          <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase">
+                            PED {ped}
+                          </div>
+                          <div className="space-y-1">
+                            {patients.map((patient) => {
+                              const isActive = patient.id === currentPatientId;
+                              const timeRange = searchParams.get('timeRange');
+                              const linkParams = new URLSearchParams();
+                              linkParams.set('patient', patient.id);
+                              if (timeRange) linkParams.set('timeRange', timeRange);
+                              return (
+                                <Link
+                                  key={patient.id}
+                                  to={`/optistate?${linkParams.toString()}`}
+                                  className={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+                                    isActive ? 'bg-primary/10 border border-primary/20' : 'hover:bg-accent'
+                                  }`}
+                                  onClick={() => {
+                                    setMobileMenuOpen(false);
+                                    setMobileSearchQuery('');
+                                  }}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className={`text-xs font-bold ${isActive ? 'text-primary' : 'text-destructive'}`}>
+                                      {patient.id}
+                                    </span>
+                                    <span className="text-sm truncate">{patient.name}</span>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs shrink-0">
+                                    {patient.pelodScore}
+                                  </Badge>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+            
             <Link to="/" className="flex items-center">
               <span className="text-lg sm:text-2xl font-bold text-primary">MYPICU</span>
             </Link>
