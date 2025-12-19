@@ -1455,6 +1455,7 @@ const Optibrain = () => {
                           {selectedIndicators.map((label, idx) => {
                             const isSparse = sparseIndicators.has(label);
                             const color = getIndicatorColor(label);
+                            const showDots = timeRange === "3h";
                             return (
                               <Line
                                 key={label}
@@ -1471,7 +1472,9 @@ const Optibrain = () => {
                                         stroke: "#fff",
                                         strokeWidth: 2,
                                       }
-                                    : { r: 2, fill: color }
+                                    : showDots 
+                                      ? { r: 2, fill: color }
+                                      : false
                                 }
                                 activeDot={{
                                   r: isSparse ? 10 : 6,
