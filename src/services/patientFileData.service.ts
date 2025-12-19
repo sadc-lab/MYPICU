@@ -358,12 +358,18 @@ export function getValidityData(patientData: PatientFileData, validityKey: strin
 // In JSON: 0 = adhérent, 1 = non adhérent
 // hoursBack: number of hours from start of stay (e.g., 3, 6, 12, 24, 96 for stay)
 // Returns null if no data available
-export function calculateAdherence(
+// ===============================
+// Adherence / validity calculation
+// ===============================
+
+export function calculateValidityAdherence(
   data: TimeSeriesDataPoint[],
   target: { min: number; max: number },
   hoursBack: number,
   simulatedNow: Date,
-) {
+): number | null {
+  if (!data || data.length === 0) return null;
+
   const startTime = simulatedNow.getTime() - hoursBack * 60 * 60 * 1000;
 
   const window = data.filter((d) => new Date(d.charttime).getTime() >= startTime);
