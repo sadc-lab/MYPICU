@@ -561,6 +561,13 @@ const Optibrain = () => {
       hasDetails: true,
       dialogKey: "neuro",
       trend: "stable",
+      // Dernière valeur critique: le % HTIC le plus élevé
+      criticalLabel: neurologicalStateConfig.history.hticWithIschemia > 0 
+        ? `${neurologicalStateConfig.history.hticWithIschemia}% HTIC+Ischémie`
+        : neurologicalStateConfig.history.htic > 0 
+          ? `${neurologicalStateConfig.history.htic}% HTIC`
+          : null,
+      criticalColor: neurologicalStateConfig.history.hticWithIschemia > 0 ? "text-red-500" : "text-orange-500",
     },
     {
       label: "PIC",
@@ -572,6 +579,9 @@ const Optibrain = () => {
       dialogKey: "pic",
       trend: "down",
       change: -3,
+      // Dernière valeur critique: PIC max dans les dernières 24h
+      criticalLabel: picValue !== null && picValue >= 20 ? `Max: ${Math.round(picValue)}` : null,
+      criticalColor: picValue !== null && picValue >= 25 ? "text-red-500" : "text-orange-500",
     },
     {
       label: "PPC Opt",
@@ -584,6 +594,11 @@ const Optibrain = () => {
       trend: "stable",
       change: 0,
       description: "Cible 60-70 mmHg",
+      // Dernière valeur critique: si PPC était hors cible
+      criticalLabel: ppcValue !== null && (ppcValue < 60 || ppcValue > 70) 
+        ? `Actuel: ${Math.round(ppcValue)}` 
+        : null,
+      criticalColor: ppcValue !== null && (ppcValue < 50 || ppcValue > 80) ? "text-red-500" : "text-orange-500",
     },
   ];
 
@@ -941,7 +956,7 @@ const Optibrain = () => {
           {optimisationExpanded && (
             <CardContent className="pt-0">
               <div className="grid grid-cols-3 gap-8 pt-4">
-                {brainOptimisationMetrics.map((metric, index) => {
+              {brainOptimisationMetrics.map((metric, index) => {
                   const statusColor = metric.status === "warning" ? "text-orange-500" : "text-gray-600";
                   return (
                     <div
@@ -955,11 +970,17 @@ const Optibrain = () => {
                       <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
                         {metric.label}
                       </div>
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-1">
                         <div className={`text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
                       </div>
+                      {/* Dernière valeur critique */}
+                      {metric.criticalLabel && (
+                        <div className={`text-xs font-medium ${metric.criticalColor} mb-1`}>
+                          {metric.criticalLabel}
+                        </div>
+                      )}
                       {metric.hasDetails && (
-                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                           <Info className="h-3 w-3" />
                           <span>Voir détails</span>
                         </div>
