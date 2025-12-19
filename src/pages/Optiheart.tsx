@@ -142,7 +142,7 @@ const Optiheart = () => {
 
   if (!patient) {
     return (
-      <div className="min-h-screen bg-[#EDF2F9]">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
           <p>Patient not found</p>
@@ -250,23 +250,23 @@ const Optiheart = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#EDF2F9]">
+    <div className="min-h-screen bg-background">
       <Header />
       <PatientHeader currentPage="optiheart" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">Métriques Cardiaques</CardTitle>
+            <CardTitle className="text-base font-semibold">Métriques Cardiaques</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {heartMetrics.map((metric, index) => {
                 const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
+                const valueColor = inRange ? 'text-muted-foreground' : 'text-destructive';
                 return (
                   <div key={index} className="flex flex-col items-center">
-                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                    <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
                       {metric.label}
                     </div>
                     <div className="flex items-center gap-2 mb-3">
@@ -277,10 +277,10 @@ const Optiheart = () => {
                     
                     <div className="w-full max-w-[180px]">
                       {/* Range bar */}
-                      <div className="relative h-3 bg-gray-200 rounded-full overflow-visible">
+                      <div className="relative h-3 bg-muted rounded-full overflow-visible">
                         {/* Target range (light grey zone) */}
                         <div 
-                          className="absolute top-0 bottom-0 bg-gray-300 rounded-full"
+                          className="absolute top-0 bottom-0 bg-muted/70 rounded-full"
                           style={{
                             left: `${((metric.targetMin - metric.min) / (metric.max - metric.min)) * 100}%`,
                             width: `${((metric.targetMax - metric.targetMin) / (metric.max - metric.min)) * 100}%`
@@ -290,7 +290,7 @@ const Optiheart = () => {
                         {/* Current value position on bar */}
                         <div 
                           className={`absolute w-3 h-3 rounded-full border-2 ${
-                            inRange ? 'bg-gray-500 border-gray-600' : 'bg-red-500 border-red-600'
+                            inRange ? 'bg-muted-foreground border-foreground' : 'bg-destructive border-destructive'
                           } z-10 top-0`}
                           style={{
                             left: `${Math.max(0, Math.min(100, ((metric.value - metric.min) / (metric.max - metric.min)) * 100))}%`,
@@ -300,7 +300,7 @@ const Optiheart = () => {
                       </div>
                       
                       {/* Target range labels */}
-                      <div className="flex justify-between items-center mt-1.5 text-xs text-gray-500">
+                      <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
                         <span>{metric.targetMin}</span>
                         <span>{metric.targetMax}</span>
                       </div>
@@ -312,21 +312,21 @@ const Optiheart = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">Heart Optimisation</CardTitle>
+            <CardTitle className="text-base font-semibold">Heart Optimisation</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-8">
               {heartOptimisationMetrics.map((metric, index) => {
-                const statusColor = metric.status === 'critical' ? 'text-red-500' : metric.status === 'warning' ? 'text-orange-500' : 'text-gray-600';
+                const statusColor = metric.status === 'critical' ? 'text-destructive' : metric.status === 'warning' ? 'text-orange-500 dark:text-orange-400' : 'text-muted-foreground';
                 return (
                   <div 
                     key={index} 
-                    className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                    className="flex flex-col items-center cursor-pointer hover:bg-muted/50 p-4 rounded-lg transition-colors"
                     onClick={() => metric.hasDetails && setOpenDialog(metric.dialogKey || null)}
                   >
-                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                    <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
                       {metric.label}
                     </div>
                     <div className="flex items-center gap-2 mb-2">
@@ -335,7 +335,7 @@ const Optiheart = () => {
                       </div>
                     </div>
                     {metric.hasDetails && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
                         <Info className="h-3 w-3" />
                         <span>Voir détails</span>
                       </div>
@@ -354,8 +354,8 @@ const Optiheart = () => {
               <DialogTitle>État Cardiaque</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                <span className="text-red-500 font-semibold">Choc cardiogénique</span> depuis : 2am
+              <p className="text-sm text-muted-foreground">
+                <span className="text-destructive font-semibold">Choc cardiogénique</span> depuis : 2am
               </p>
               <div className="space-y-3">
                 {[
@@ -366,21 +366,21 @@ const Optiheart = () => {
                 ].map((state, index) => (
                   <div key={index} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">{state.label}</span>
+                      <span className="text-foreground">{state.label}</span>
                       <span className={
-                        state.status === 'critical' ? 'text-red-500 font-semibold' :
-                        state.status === 'warning' ? 'text-orange-500 font-semibold' :
-                        'text-gray-600 font-semibold'
+                        state.status === 'critical' ? 'text-destructive font-semibold' :
+                        state.status === 'warning' ? 'text-orange-500 dark:text-orange-400 font-semibold' :
+                        'text-muted-foreground font-semibold'
                       }>
                         {state.percent}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                       <div 
                         className={`h-2 rounded-full transition-all ${
-                          state.status === 'critical' ? 'bg-red-500' :
-                          state.status === 'warning' ? 'bg-orange-400' :
-                          'bg-gray-400'
+                          state.status === 'critical' ? 'bg-destructive' :
+                          state.status === 'warning' ? 'bg-orange-400 dark:bg-orange-500' :
+                          'bg-muted-foreground'
                         }`}
                         style={{ width: `${state.percent}%` }}
                       ></div>
@@ -388,15 +388,15 @@ const Optiheart = () => {
                   </div>
                 ))}
               </div>
-              <div className="pt-3 border-t text-sm text-gray-600">
-                Débit cardiaque actuel : <span className="text-gray-600 font-semibold">3.2 L/min</span>
-                <span className="ml-4">Débit moyen : <span className="text-gray-600 font-semibold">3.5 L/min</span></span>
+              <div className="pt-3 border-t text-sm text-muted-foreground">
+                Débit cardiaque actuel : <span className="text-foreground font-semibold">3.2 L/min</span>
+                <span className="ml-4">Débit moyen : <span className="text-foreground font-semibold">3.5 L/min</span></span>
               </div>
             </div>
           </DialogContent>
         </Dialog>
 
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="shadow-sm mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">
@@ -409,8 +409,8 @@ const Optiheart = () => {
                     onClick={() => setTimeRange(range)}
                     className={`px-3 py-1 text-sm rounded-md transition-colors ${
                       timeRange === range
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
                   >
                     {getTimeRangeLabel(range)}
@@ -422,27 +422,27 @@ const Optiheart = () => {
           <CardContent className="space-y-4">
 
             {/* Clinical Indicators */}
-            <Card className="border-2 border-gray-200">
-              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setClinicalExpanded(!clinicalExpanded)}>
+            <Card className="border-2 border-border">
+              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setClinicalExpanded(!clinicalExpanded)}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                      outOfRangeCount === 0 ? 'border-gray-400 text-gray-600 bg-gray-50' : 
-                      outOfRangeCount <= 2 ? 'border-orange-400 text-orange-600 bg-orange-50' : 
-                      'border-red-400 text-red-600 bg-red-50'
+                      outOfRangeCount === 0 ? 'border-muted-foreground text-muted-foreground bg-muted/50' : 
+                      outOfRangeCount <= 2 ? 'border-orange-400 dark:border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950' : 
+                      'border-destructive text-destructive bg-red-50 dark:bg-red-950'
                     }`}>
                       {outOfRangeCount}
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-700">
+                      <h3 className="text-sm font-semibold text-foreground">
                         Indicateurs cliniques problématiques : surveiller DC, IC, et RVS
                       </h3>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {outOfRangeCount} indicateur{outOfRangeCount > 1 ? 's' : ''} hors cible sur {totalIndicators}
                       </p>
                     </div>
                   </div>
-                  {clinicalExpanded ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}
+                  {clinicalExpanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                 </div>
               </CardHeader>
               {clinicalExpanded && (
@@ -450,12 +450,12 @@ const Optiheart = () => {
                   <div className="grid grid-cols-3 gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
-                      const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
+                      const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-orange-400 dark:bg-orange-500' : 'bg-muted-foreground';
                       return (
                         <div 
                           key={index}
                           className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${
-                            isSelected ? 'bg-blue-50 border-2 border-blue-400' : 'hover:bg-gray-50'
+                            isSelected ? 'bg-primary/10 border-2 border-primary' : 'hover:bg-muted/50'
                           }`}
                           onClick={() => {
                             setSelectedIndicators(prev =>
@@ -465,20 +465,20 @@ const Optiheart = () => {
                             );
                           }}
                         >
-                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}></div>
+                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}`}></div>
                           <div className="flex-1">
                             <div className="flex items-center gap-1">
-                              <p className="text-sm font-medium text-gray-700">
+                              <p className="text-sm font-medium text-foreground">
                                 {indicator.label} : {indicator.value}{indicator.unit}
                               </p>
                             </div>
-                            <p className="text-xs text-gray-500">{indicator.target}</p>
+                            <p className="text-xs text-muted-foreground">{indicator.target}</p>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                  <p className="text-xs text-gray-500 mt-4 text-center">
+                  <p className="text-xs text-muted-foreground mt-4 text-center">
                     Click on an indicator to display it in the chart
                   </p>
                 </CardContent>
@@ -486,53 +486,53 @@ const Optiheart = () => {
             </Card>
 
             {/* Monitoring Targets */}
-            <Card className="border-2 border-gray-200">
-              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setChecklistExpanded(!checklistExpanded)}>
+            <Card className="border-2 border-border">
+              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setChecklistExpanded(!checklistExpanded)}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                      monitoringAdherence >= 90 ? 'border-gray-400 text-gray-600 bg-gray-50' : 
-                      monitoringAdherence >= 80 ? 'border-orange-400 text-orange-600 bg-orange-50' : 
-                      'border-red-400 text-red-600 bg-red-50'
+                      monitoringAdherence >= 90 ? 'border-muted-foreground text-muted-foreground bg-muted/50' : 
+                      monitoringAdherence >= 80 ? 'border-orange-400 dark:border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950' : 
+                      'border-destructive text-destructive bg-red-50 dark:bg-red-950'
                     }`}>
                       {monitoringAdherence}%
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-700">
+                      <h3 className="text-sm font-semibold text-foreground">
                         Adhérence globale des cibles de monitorage
                       </h3>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {targetOutOfRangeCount} cibles à surveiller
                       </p>
                     </div>
                   </div>
-                  {checklistExpanded ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}
+                  {checklistExpanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                 </div>
               </CardHeader>
               {checklistExpanded && (
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
-                      const statusColor = target.status === 'critical' ? 'bg-red-500' : target.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
+                      const statusColor = target.status === 'critical' ? 'bg-destructive' : target.status === 'warning' ? 'bg-orange-400 dark:bg-orange-500' : 'bg-muted-foreground';
                       return (
                         <div 
                           key={index}
-                          className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
+                          className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-all"
                         >
                           <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between gap-1">
-                              <p className="text-sm font-medium text-gray-700">
+                              <p className="text-sm font-medium text-foreground">
                                 {target.label} : {target.value}{target.unit || ''}
                               </p>
                               <span className={`text-xs font-medium ${
-                                target.status === 'critical' ? 'text-red-500' : 
-                                target.status === 'warning' ? 'text-orange-500' : 'text-gray-500'
+                                target.status === 'critical' ? 'text-destructive' : 
+                                target.status === 'warning' ? 'text-orange-500 dark:text-orange-400' : 'text-muted-foreground'
                               }`}>
                                 {target.adherencePercentage}%
                               </span>
                             </div>
-                            <p className="text-xs text-gray-500">{target.target}</p>
+                            <p className="text-xs text-muted-foreground">{target.target}</p>
                           </div>
                         </div>
                       );
@@ -541,17 +541,17 @@ const Optiheart = () => {
                 </CardContent>
               )}
             </Card>
-            <Card className="border-2 border-gray-200">
+            <Card className="border-2 border-border">
               <CardHeader>
                 <CardTitle className="text-base">
                   {timeRange === 'stay' ? 'Monitoring (Séjour complet)' : `Monitoring (${timeRange.toUpperCase()})`}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] border-2 border-gray-200 rounded-lg p-4">
+                <div className="h-[300px] border-2 border-border rounded-lg p-4">
                   {selectedIndicators.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
-                      <p className="text-gray-400">Select clinical indicators below to display their trends</p>
+                      <p className="text-muted-foreground">Select clinical indicators below to display their trends</p>
                     </div>
                   ) : (
                     <div className="h-full flex flex-col">
@@ -559,9 +559,9 @@ const Optiheart = () => {
                         {selectedIndicators.map(label => {
                           const indicator = clinicalIndicators.find(i => i.label === label);
                           if (!indicator) return null;
-                          const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
+                          const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-orange-400 dark:bg-orange-500' : 'bg-muted-foreground';
                           return (
-                            <Badge key={label} className={`${statusColor} text-white`}>
+                            <Badge key={label} className={`${statusColor} text-white dark:text-white`}>
                               {label}: {indicator.value}{indicator.unit}
                             </Badge>
                           );
@@ -597,7 +597,7 @@ const Optiheart = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Objectifs & Interventions</CardTitle>
@@ -607,7 +607,7 @@ const Optiheart = () => {
             {/* Objectives Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-sm text-gray-700">Objectifs Actuels:</h4>
+                <h4 className="font-semibold text-sm text-foreground">Objectifs Actuels:</h4>
                 {!isEditingObjectives ? (
                   <Button
                     variant="ghost"
@@ -630,7 +630,7 @@ const Optiheart = () => {
                         setObjectives(editedObjectives);
                         setIsEditingObjectives(false);
                       }}
-                      className="h-8 gap-1 text-green-600 hover:text-green-700"
+                      className="h-8 gap-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
                     >
                       <Check className="h-3 w-3" />
                       Save
@@ -642,7 +642,7 @@ const Optiheart = () => {
                         setIsEditingObjectives(false);
                         setEditedObjectives([]);
                       }}
-                      className="h-8 gap-1 text-red-600 hover:text-red-700"
+                      className="h-8 gap-1 text-destructive hover:text-destructive/80"
                     >
                       <X className="h-3 w-3" />
                       Cancel
@@ -652,7 +652,7 @@ const Optiheart = () => {
               </div>
               
               {!isEditingObjectives ? (
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                   {objectives.map((objective, index) => (
                     <li key={index}>{objective}</li>
                   ))}
@@ -678,7 +678,7 @@ const Optiheart = () => {
                           const newObjectives = editedObjectives.filter((_, i) => i !== index);
                           setEditedObjectives(newObjectives);
                         }}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -700,7 +700,7 @@ const Optiheart = () => {
             {/* Interventions Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-sm text-gray-700">Interventions Récentes:</h4>
+                <h4 className="font-semibold text-sm text-foreground">Interventions Récentes:</h4>
                 {!isEditingInterventions ? (
                   <Button
                     variant="ghost"
@@ -723,7 +723,7 @@ const Optiheart = () => {
                         setInterventions(editedInterventions);
                         setIsEditingInterventions(false);
                       }}
-                      className="h-8 gap-1 text-green-600 hover:text-green-700"
+                      className="h-8 gap-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
                     >
                       <Check className="h-3 w-3" />
                       Save
@@ -735,7 +735,7 @@ const Optiheart = () => {
                         setIsEditingInterventions(false);
                         setEditedInterventions([]);
                       }}
-                      className="h-8 gap-1 text-red-600 hover:text-red-700"
+                      className="h-8 gap-1 text-destructive hover:text-destructive/80"
                     >
                       <X className="h-3 w-3" />
                       Cancel
@@ -745,7 +745,7 @@ const Optiheart = () => {
               </div>
               
               {!isEditingInterventions ? (
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                   {interventions.map((intervention, index) => (
                     <li key={index}>{intervention}</li>
                   ))}
@@ -771,7 +771,7 @@ const Optiheart = () => {
                           const newInterventions = editedInterventions.filter((_, i) => i !== index);
                           setEditedInterventions(newInterventions);
                         }}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
