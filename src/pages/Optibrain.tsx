@@ -513,7 +513,8 @@ const Optibrain = () => {
 
           // Add all available variables
           Object.entries(realTimeSeriesData).forEach(([label, data]) => {
-            const closest = findClosestByTime(data, time.getTime());
+            // Find closest data point by time
+            const closest = data.find((d, i) => i === idx) || data[data.length - 1];
             if (closest) {
               dataPoint[label] = closest.valeur;
             }
