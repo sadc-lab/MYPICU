@@ -770,42 +770,6 @@ const Optibrain = () => {
       <PatientHeader currentPage="optibrain" />
 
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        {/* 🔍 COMPOSANT DEBUG - Ajoutez ce bloc ici */}
-        {patientFileData && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <h4 className="text-sm font-semibold text-yellow-800 mb-2">🔍 Debug Adhérence</h4>
-            <div className="text-xs text-yellow-700 space-y-1">
-              <div>Plage horaire: {hoursForAdherence}h</div>
-              <div>Données ajustées au: {new Date().toLocaleString()}</div>
-              <div>
-                Indicateurs synchronisés: {clinicalIndicators.filter((i) => i.hasRealData).length}/
-                {clinicalIndicators.length}
-              </div>
-              <div className="mt-2 text-xs">
-                <button
-                  onClick={() => {
-                    console.log("=== DONNÉES CLINIQUES ===");
-                    clinicalIndicators.forEach((ind) => {
-                      if (ind.hasRealData) {
-                        console.log(`${ind.label}: ${ind.adherencePercentage}% (target: ${ind.target})`);
-                      }
-                    });
-                    console.log("=== DONNÉES MONITORING ===");
-                    monitoringTargets.forEach((target) => {
-                      if (target.hasRealData) {
-                        console.log(`${target.label}: ${target.adherencePercentage}% (target: ${target.target})`);
-                      }
-                    });
-                  }}
-                  className="bg-yellow-600 text-white px-2 py-1 rounded text-xs hover:bg-yellow-700"
-                >
-                  📊 Loguer les données d'adhérence
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {/* Fin du composant debug */}
 
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
