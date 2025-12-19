@@ -480,10 +480,10 @@ const Optibrain = () => {
 
   if (!patient) {
     return (
-      <div className="min-h-screen bg-[#EDF2F9]">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p>Patient not found</p>
+          <p className="text-foreground">Patient not found</p>
         </div>
       </div>
     );
@@ -909,46 +909,46 @@ const Optibrain = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#EDF2F9]">
+    <div className="min-h-screen bg-background">
       <Header />
       <PatientHeader currentPage="optibrain" />
 
       <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px]">
 
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="bg-card shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">Métriques cérébrales</CardTitle>
+            <CardTitle className="text-base font-semibold text-foreground">Métriques cérébrales</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
               {brainMetrics.map((metric, index) => {
                 const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                const valueColor = inRange ? "text-gray-600" : "text-red-500";
+                const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
                 return (
                   <div key={index} className="flex flex-col items-center">
-                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">{metric.label}</div>
+                    <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
                     <div className="flex items-center gap-2 mb-3">
                       <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
                     </div>
 
                     <div className="w-full max-w-[180px]">
-                      <div className="relative h-3 bg-gray-200 rounded-full overflow-visible">
-                        <div
-                          className="absolute top-0 bottom-0 bg-gray-300 rounded-full"
-                          style={{
-                            left: `${((metric.targetMin - metric.min) / (metric.max - metric.min)) * 100}%`,
-                            width: `${((metric.targetMax - metric.targetMin) / (metric.max - metric.min)) * 100}%`,
-                          }}
-                        ></div>
-                        <div
-                          className={`absolute w-3 h-3 rounded-full border-2 ${inRange ? "bg-gray-500 border-gray-600" : "bg-red-500 border-red-600"} z-10 top-0`}
+                        <div className="relative h-3 bg-muted rounded-full overflow-visible">
+                          <div
+                            className="absolute top-0 bottom-0 bg-muted-foreground/30 rounded-full"
+                            style={{
+                              left: `${((metric.targetMin - metric.min) / (metric.max - metric.min)) * 100}%`,
+                              width: `${((metric.targetMax - metric.targetMin) / (metric.max - metric.min)) * 100}%`,
+                            }}
+                          ></div>
+                          <div
+                            className={`absolute w-3 h-3 rounded-full border-2 ${inRange ? "bg-muted-foreground border-muted-foreground" : "bg-status-critical border-status-critical"} z-10 top-0`}
                           style={{
                             left: `${Math.max(0, Math.min(100, ((metric.value - metric.min) / (metric.max - metric.min)) * 100))}%`,
                             transform: "translateX(-50%)",
                           }}
                         ></div>
                       </div>
-                      <div className="flex justify-between items-center mt-1.5 text-xs text-gray-500">
+                      <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
                         <span>{metric.targetMin}</span>
                         <span>{metric.targetMax}</span>
                       </div>
@@ -960,14 +960,14 @@ const Optibrain = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="bg-card shadow-sm mb-6">
           <CardHeader
-            className="cursor-pointer hover:bg-gray-50 transition-colors"
+            className="cursor-pointer hover:bg-muted/50 transition-colors"
             onClick={() => setOptimisationExpanded(!optimisationExpanded)}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 sm:gap-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-blue-400 text-blue-600 bg-blue-50 shrink-0">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-primary text-primary bg-primary/10 shrink-0">
                   <img
                     src={brainIcon}
                     alt="brain"
@@ -1003,7 +1003,7 @@ const Optibrain = () => {
                         metric.hasDetails && setOpenDialog(metric.dialogKey || null);
                       }}
                     >
-                      <div className="text-[10px] sm:text-xs font-medium text-gray-600 mb-1 sm:mb-2 uppercase tracking-wide text-center">
+                      <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 sm:mb-2 uppercase tracking-wide text-center">
                         {metric.label}
                       </div>
                       <div className="flex items-center gap-2 mb-1">
@@ -1016,7 +1016,7 @@ const Optibrain = () => {
                         </div>
                       )}
                       {metric.hasDetails && (
-                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                           <Info className="h-3 w-3" />
                           <span>Voir détails</span>
                         </div>
@@ -1037,37 +1037,37 @@ const Optibrain = () => {
             </DialogHeader>
             <div className="space-y-6">
               {/* État Neurologique Card */}
-              <div className="border rounded-lg p-6 bg-white shadow-sm">
+              <div className="border border-border rounded-lg p-6 bg-card shadow-sm">
                 {/* Individual Bars */}
                 <div className="space-y-6">
                   {/* HTIC (sans ischémie ni hyperhémie) */}
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">HTIC</span>
-                      <span className="text-xl font-semibold text-orange-500">
+                      <span className="text-sm font-medium text-foreground">HTIC</span>
+                      <span className="text-xl font-semibold text-status-warning">
                         {neurologicalStateConfig.history.htic}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-muted rounded-full h-3">
                       <div
-                        className="bg-orange-400 h-3 rounded-full"
+                        className="bg-status-warning h-3 rounded-full"
                         style={{ width: `${neurologicalStateConfig.history.htic}%` }}
                       ></div>
                     </div>
-                    <span className="text-xs text-gray-500">Sans ischémie ni hyperhémie</span>
+                    <span className="text-xs text-muted-foreground">Sans ischémie ni hyperhémie</span>
                   </div>
 
                   {/* HTIC avec ischémie */}
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">HTIC avec ischémie</span>
-                      <span className="text-xl font-semibold text-red-500">
+                      <span className="text-sm font-medium text-foreground">HTIC avec ischémie</span>
+                      <span className="text-xl font-semibold text-status-critical">
                         {neurologicalStateConfig.history.hticWithIschemia}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-muted rounded-full h-3">
                       <div
-                        className="bg-red-400 h-3 rounded-full"
+                        className="bg-status-critical h-3 rounded-full"
                         style={{ width: `${neurologicalStateConfig.history.hticWithIschemia}%` }}
                       ></div>
                     </div>
@@ -1076,14 +1076,14 @@ const Optibrain = () => {
                   {/* Contrôlé */}
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Contrôlé</span>
-                      <span className="text-xl font-semibold text-gray-700">
+                      <span className="text-sm font-medium text-foreground">Contrôlé</span>
+                      <span className="text-xl font-semibold text-foreground">
                         {neurologicalStateConfig.history.controlled}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-muted rounded-full h-3">
                       <div
-                        className="bg-gray-400 h-3 rounded-full"
+                        className="bg-muted-foreground h-3 rounded-full"
                         style={{ width: `${neurologicalStateConfig.history.controlled}%` }}
                       ></div>
                     </div>
@@ -1091,19 +1091,19 @@ const Optibrain = () => {
                 </div>
 
                 {/* Metrics Footer */}
-                <div className="border-t mt-6 pt-4">
-                  <div className="flex items-center justify-between text-sm text-gray-600">
+                <div className="border-t border-border mt-6 pt-4">
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <div>
                       État :{" "}
                       <span className={`font-semibold ${neurologicalStateConfig.currentStateColor}`}>
                         {neurologicalStateConfig.currentState}
                       </span>{" "}
-                      <span className="text-gray-500">{neurologicalStateConfig.currentStateSince}</span>
+                      <span className="text-muted-foreground">{neurologicalStateConfig.currentStateSince}</span>
                     </div>
                     <div>
-                      PPC actuel : <span className="font-semibold">65 mmHg</span>
+                      PPC actuel : <span className="font-semibold text-foreground">65 mmHg</span>
                       <span className="mx-2">|</span>
-                      PPC moyen : <span className="font-semibold">68 mmHg</span>
+                      PPC moyen : <span className="font-semibold text-foreground">68 mmHg</span>
                     </div>
                   </div>
                 </div>
@@ -1121,7 +1121,7 @@ const Optibrain = () => {
             <div className="space-y-6">
               {/* Time Range Selector */}
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Période :</span>
+                <span className="text-sm font-medium text-muted-foreground">Période :</span>
                 <div className="flex gap-2">
                   {["3h", "6h", "12h", "24h", "stay"].map((range) => (
                     <button
@@ -1129,8 +1129,8 @@ const Optibrain = () => {
                       onClick={() => setPicDialogTimeRange(range)}
                       className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                         picDialogTimeRange === range
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
                     >
                       {range === "stay" ? "Séjour" : range}
@@ -1140,13 +1140,13 @@ const Optibrain = () => {
               </div>
 
               {/* PIC Card */}
-              <div className="border rounded-lg p-6 bg-white shadow-sm">
+              <div className="border border-border rounded-lg p-6 bg-card shadow-sm">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-base font-semibold text-gray-700">
-                    <span className="text-orange-500">Répartition du temps</span> par niveau de PIC
+                  <h3 className="text-base font-semibold text-foreground">
+                    <span className="text-status-warning">Répartition du temps</span> par niveau de PIC
                   </h3>
                   {picRangeData.totalMinutes > 0 && (
-                    <span className="text-sm text-gray-500">Total: {picRangeData.totalMinutes} min</span>
+                    <span className="text-sm text-muted-foreground">Total: {picRangeData.totalMinutes} min</span>
                   )}
                 </div>
 
@@ -1155,19 +1155,19 @@ const Optibrain = () => {
                   {picRangeData.ranges.map((range, idx) => {
                     const textColor =
                       range.color === "red"
-                        ? "text-red-500"
+                        ? "text-status-critical"
                         : range.color === "orange"
-                          ? "text-orange-500"
-                          : "text-gray-500";
+                          ? "text-status-warning"
+                          : "text-muted-foreground";
                     const bgColor =
-                      range.color === "red" ? "bg-red-400" : range.color === "orange" ? "bg-orange-400" : "bg-gray-400";
+                      range.color === "red" ? "bg-status-critical" : range.color === "orange" ? "bg-status-warning" : "bg-muted-foreground";
                     return (
                       <div key={idx}>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-gray-700">{range.label}</span>
+                          <span className="text-sm font-medium text-foreground">{range.label}</span>
                           <span className={`text-xl font-semibold ${textColor}`}>{range.minutes} min</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="w-full bg-muted rounded-full h-3">
                           <div
                             className={`${bgColor} h-3 rounded-full`}
                             style={{ width: `${Math.max(range.percentage, 1)}%` }}
@@ -1179,15 +1179,15 @@ const Optibrain = () => {
                 </div>
 
                 {/* Metrics Footer */}
-                <div className="border-t mt-6 pt-4">
-                  <div className="text-sm text-gray-600">
+                <div className="border-t border-border mt-6 pt-4">
+                  <div className="text-sm text-muted-foreground">
                     PIC actuelle :{" "}
-                    <span className="font-semibold">
+                    <span className="font-semibold text-foreground">
                       {picRangeData.currentPic !== null ? `${Math.round(picRangeData.currentPic)} mmHg` : "-- mmHg"}
                     </span>
                     <span className="mx-2">|</span>
                     PIC moyenne :{" "}
-                    <span className="font-semibold">
+                    <span className="font-semibold text-foreground">
                       {picRangeData.averagePic !== null ? `${Math.round(picRangeData.averagePic)} mmHg` : "-- mmHg"}
                     </span>
                   </div>
@@ -1271,18 +1271,18 @@ const Optibrain = () => {
                 </ResponsiveContainer>
               </div>
 
-              <div className="border-t pt-4">
-                <div className="text-sm text-gray-600">
-                  PPC actuelle : <span className="font-semibold">65 mmHg</span>
+              <div className="border-t border-border pt-4">
+                <div className="text-sm text-muted-foreground">
+                  PPC actuelle : <span className="font-semibold text-foreground">65 mmHg</span>
                   <span className="mx-2">|</span>
-                  PPC visée : <span className="font-semibold">60 mmHg</span>
+                  PPC visée : <span className="font-semibold text-foreground">60 mmHg</span>
                 </div>
               </div>
             </div>
           </DialogContent>
         </Dialog>
 
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="bg-card shadow-sm mb-6">
           <CardHeader className="px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="text-base sm:text-lg">
@@ -1294,7 +1294,7 @@ const Optibrain = () => {
                     key={range}
                     onClick={() => setTimeRange(range)}
                     className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-md transition-colors ${
-                      timeRange === range ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      timeRange === range ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
                     }`}
                   >
                     {getTimeRangeLabel(range)}
@@ -1305,9 +1305,9 @@ const Optibrain = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Monitoring Targets - Moved to top */}
-            <Card className="border-2 border-gray-200">
+            <Card className="border-2 border-border">
               <CardHeader
-                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => setChecklistExpanded(!checklistExpanded)}
               >
                 <div className="flex items-center justify-between">
@@ -1315,19 +1315,19 @@ const Optibrain = () => {
                     <div
                       className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold border-4 shrink-0 ${
                         monitoringAdherence === null
-                          ? "border-gray-300 text-gray-400 bg-gray-50"
+                          ? "border-muted-foreground/30 text-muted-foreground bg-muted"
                           : monitoringAdherence >= 90
-                            ? "border-gray-400 text-gray-600 bg-gray-50"
+                            ? "border-muted-foreground text-muted-foreground bg-muted"
                             : monitoringAdherence >= 80
-                              ? "border-orange-400 text-orange-600 bg-orange-50"
-                              : "border-red-400 text-red-600 bg-red-50"
+                              ? "border-status-warning text-status-warning bg-status-warning/10"
+                              : "border-status-critical text-status-critical bg-status-critical/10"
                       }`}
                     >
                       {monitoringAdherence !== null ? `${monitoringAdherence}%` : "--"}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">Monitorage et interventions en place</h3>
+                      <p className="text-xs text-muted-foreground mt-1">
                         {patientFileData
                           ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}`
                           : "Pas de données disponibles"}
@@ -1335,9 +1335,9 @@ const Optibrain = () => {
                     </div>
                   </div>
                   {checklistExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-gray-400 shrink-0" />
+                    <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-400 shrink-0" />
+                    <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
                   )}
                 </div>
               </CardHeader>
@@ -1348,20 +1348,20 @@ const Optibrain = () => {
                       // Couleur basée sur le pourcentage d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
                       const dotColor =
                         target.adherencePercentage === null
-                          ? "bg-gray-300"
+                          ? "bg-muted-foreground/30"
                           : target.adherencePercentage >= 90
-                            ? "bg-gray-400"
+                            ? "bg-muted-foreground"
                             : target.adherencePercentage >= 80
-                              ? "bg-orange-400"
-                              : "bg-red-500";
+                              ? "bg-status-warning"
+                              : "bg-status-critical";
                       const textColor =
                         target.adherencePercentage === null
-                          ? "text-gray-400"
+                          ? "text-muted-foreground"
                           : target.adherencePercentage >= 90
-                            ? "text-gray-500"
+                            ? "text-muted-foreground"
                             : target.adherencePercentage >= 80
-                              ? "text-orange-600"
-                              : "text-red-600";
+                              ? "text-status-warning"
+                              : "text-status-critical";
                       return (
                         <div
                           key={index}
@@ -1403,9 +1403,9 @@ const Optibrain = () => {
               )}
             </Card>
 
-            <Card className="border-2 border-gray-200">
+            <Card className="border-2 border-border">
               <CardHeader
-                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => setClinicalExpanded(!clinicalExpanded)}
               >
                 <div className="flex items-center justify-between">
@@ -1446,19 +1446,19 @@ const Optibrain = () => {
                       // Pastille de couleur d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
                       const adherenceDotColor =
                         indicator.adherencePercentage === null
-                          ? "bg-gray-300"
+                          ? "bg-muted-foreground/30"
                           : indicator.adherencePercentage >= 90
-                            ? "bg-gray-400"
+                            ? "bg-muted-foreground"
                             : indicator.adherencePercentage >= 80
-                              ? "bg-orange-400"
-                              : "bg-red-500";
+                              ? "bg-status-warning"
+                              : "bg-status-critical";
                       return (
                         <div
                           key={index}
                           className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all border-2 ${
                             isSelected 
-                              ? "bg-white shadow-sm" 
-                              : "border-transparent hover:bg-gray-50"
+                              ? "bg-card shadow-sm" 
+                              : "border-transparent hover:bg-muted/50"
                           }`}
                           style={isSelected ? { borderColor: chartColor || undefined } : undefined}
                           onClick={() => {
@@ -1483,7 +1483,7 @@ const Optibrain = () => {
                                   ? (
                                     <div>
                                       <div className="font-semibold">{indicator.adherencePercentage}% adhérence</div>
-                                      <div className="text-gray-400 mt-1">% du temps passé dans la cible recommandée</div>
+                                      <div className="text-muted-foreground mt-1">% du temps passé dans la cible recommandée</div>
                                     </div>
                                   )
                                   : "Pas de données"
@@ -1492,14 +1492,14 @@ const Optibrain = () => {
                             </UITooltip>
                           </TooltipProvider>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-700">{indicator.label}</p>
-                            <p className="text-xs text-gray-500">{indicator.target}</p>
+                            <p className="text-sm font-medium text-foreground">{indicator.label}</p>
+                            <p className="text-xs text-muted-foreground">{indicator.target}</p>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                  <p className="text-xs text-gray-500 mt-4 text-center">
+                  <p className="text-xs text-muted-foreground mt-4 text-center">
                     Cliquez sur un indicateur pour l'afficher dans le graphique
                   </p>
                 </CardContent>
@@ -1507,19 +1507,19 @@ const Optibrain = () => {
             </Card>
 
             {/* Monitoring Chart */}
-            <Card ref={chartRef} className="border-2 border-gray-200">
+            <Card ref={chartRef} className="border-2 border-border">
               <CardHeader className="px-3 sm:px-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                     <CardTitle className="text-sm sm:text-lg">
                       {timeRange === "stay" ? "Monitorage (Séjour)" : `Monitorage (${timeRange.toUpperCase()})`}
                     </CardTitle>
-                    <label className="flex items-center gap-1 sm:gap-2 text-xs text-gray-600 cursor-pointer">
+                    <label className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground cursor-pointer">
                       <input
                         type="checkbox"
                         checked={showTargetZones}
                         onChange={(e) => setShowTargetZones(e.target.checked)}
-                        className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                        className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-border text-primary focus:ring-primary"
                       />
                       <span className="hidden sm:inline">Zones cibles</span>
                       <span className="sm:hidden">Cibles</span>
@@ -1539,13 +1539,13 @@ const Optibrain = () => {
               </CardHeader>
               <CardContent className="px-3 sm:px-6">
                 <div
-                  className={`border-2 border-gray-200 rounded-lg p-2 sm:p-4 ${
+                  className={`border-2 border-border rounded-lg p-2 sm:p-4 ${
                     selectedIndicators.length === 0 ? "h-24 sm:h-32" : "h-[250px] sm:h-[300px]"
                   }`}
                 >
                   {selectedIndicators.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
-                      <p className="text-gray-400 text-xs sm:text-base text-center px-2">
+                      <p className="text-muted-foreground text-xs sm:text-base text-center px-2">
                         Sélectionnez des indicateurs ci-dessus pour afficher leurs tendances
                       </p>
                     </div>
