@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { PatientHeader } from "@/components/PatientHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getPatientById } from "@/utils/patientData";
@@ -1235,7 +1236,19 @@ const Optibrain = () => {
                             );
                           }}
                         >
-                          <div className={`w-3 h-3 rounded-full mt-1 ${adherenceDotColor}`}></div>
+                          <TooltipProvider delayDuration={200}>
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <div className={`w-3 h-3 rounded-full mt-1 ${adherenceDotColor} cursor-help`}></div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                {indicator.adherencePercentage !== null 
+                                  ? `${indicator.adherencePercentage}% adhérence`
+                                  : "Pas de données"
+                                }
+                              </TooltipContent>
+                            </UITooltip>
+                          </TooltipProvider>
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-700">{indicator.label}</p>
                             <p className="text-xs text-gray-500">{indicator.target}</p>
