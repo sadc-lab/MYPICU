@@ -488,9 +488,16 @@ const Optibrain = () => {
           value: Math.round(realBrainValues.paco2 * 10) / 10,
         };
       }
+      // Use patient-specific GCS value
+      if (metric.label === "GCS" && patient?.gcs !== undefined) {
+        return {
+          ...metric,
+          value: patient.gcs,
+        };
+      }
       return metric;
     });
-  }, [realBrainValues.pic, realBrainValues.ppc, realBrainValues.paco2]);
+  }, [realBrainValues.pic, realBrainValues.ppc, realBrainValues.paco2, patient?.gcs]);
 
   // Get PIC status based on value (target < 20 mmHg)
   const getPicStatus = (value: number | null): string => {
