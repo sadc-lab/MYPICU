@@ -1373,8 +1373,9 @@ const Optibrain = () => {
               <CardContent>
                 <div
                   className={`border-2 border-gray-200 rounded-lg p-4 ${
-                    selectedIndicators.length === 0 ? "h-32" : "h-[300px]"
+                    selectedIndicators.length === 0 ? "h-32" : ""
                   }`}
+                  style={selectedIndicators.length > 0 ? { maxHeight: `${Math.min(selectedIndicators.length * 180 + 20, 600)}px`, overflowY: 'auto' } : undefined}
                 >
                   {selectedIndicators.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
@@ -1383,111 +1384,104 @@ const Optibrain = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="h-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData}>
-                          {/* Zones cibles en arrière-plan */}
-                          {showTargetZones && selectedIndicators.map((label) => {
-                            const indicator = clinicalIndicators.find((i) => i.label === label);
-                            if (!indicator) return null;
-                            const target = parseTargetRange(indicator.target);
-                            if (target.min === -Infinity && target.max === Infinity) return null;
-                            const color = getIndicatorColor(label);
-                            const yMin = target.min === -Infinity ? 0 : target.min;
-                            const yMax = target.max === Infinity ? target.min * 2 : target.max;
-                            return (
-                              <ReferenceArea
-                                key={`zone-${label}`}
-                                y1={yMin}
-                                y2={yMax}
-                                fill={color}
-                                fillOpacity={0.08}
-                                stroke={color}
-                                strokeOpacity={0.3}
-                                strokeDasharray="4 2"
-                              />
-                            );
-                          })}
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                          <XAxis
-                            dataKey="time"
-                            tick={{ fontSize: 11 }}
-                            stroke="#9ca3af"
-                            tickLine={false}
-                          />
-                          <YAxis
-                            tick={{ fontSize: 11 }}
-                            stroke="#9ca3af"
-                            tickLine={false}
-                            axisLine={false}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "rgba(255, 255, 255, 0.98)",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "8px",
-                              fontSize: "12px",
-                              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                              padding: "12px",
-                            }}
-                            labelStyle={{ fontWeight: 600, marginBottom: 8 }}
-                            formatter={(value: number, name: string) => {
-                              const color = getIndicatorColor(name);
-                              const indicator = clinicalIndicators.find((i) => i.label === name);
-                              const unit = indicator?.target.match(/[a-zA-Z°%/]+$/)?.[0] || "";
-                              return [
-                                <span key={name} style={{ color, fontWeight: 600 }}>
-                                  {name}: {value.toFixed(1)} {unit}
-                                </span>,
-                                null
-                              ];
-                            }}
-                          />
-                          <Legend
-                            wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
-                            iconType="plainline"
-                            formatter={(value: string) => (
-                              <span style={{ color: getIndicatorColor(value), fontWeight: 500 }}>
-                                {value}
+                    <div className="space-y-2">
+                      {selectedIndicators.map((label) => {
+                        const isSparse = sparseIndicators.has(label);
+                        const color = getIndicatorColor(label);
+                        const showDots = timeRange === "3h";
+                        const indicator = clinicalIndicators.find((i) => i.label === label);
+                        const target = indicator ? parseTargetRange(indicator.target) : null;
+                        const unit = indicator?.target.match(/[a-zA-Z°%/]+$/)?.[0] || "";
+                        
+                        // Filtrer les données pour cet indicateur seulement
+                        const indicatorData = chartData.map(point => ({
+                          time: point.time,
+                          [label]: point[label]
+                        }));
+
+                        return (
+                          <div key={label} className="border border-gray-100 rounded-lg p-2 bg-gray-50/50">
+                            <div className="flex items-center justify-between mb-1 px-2">
+                              <span className="text-sm font-medium" style={{ color }}>
+                                {label}
                               </span>
-                            )}
-                          />
-                          {selectedIndicators.map((label, idx) => {
-                            const isSparse = sparseIndicators.has(label);
-                            const color = getIndicatorColor(label);
-                            const showDots = timeRange === "3h";
-                            return (
-                              <Line
-                                key={label}
-                                type="monotone"
-                                dataKey={label}
-                                stroke={color}
-                                strokeWidth={isSparse ? 0 : 2.5}
-                                strokeDasharray={idx > 0 && !isSparse ? (idx % 2 === 1 ? "8 4" : undefined) : undefined}
-                                dot={
-                                  isSparse
-                                    ? {
-                                        r: 7,
-                                        fill: color,
-                                        stroke: "#fff",
-                                        strokeWidth: 2,
-                                      }
-                                    : showDots 
-                                      ? { r: 2, fill: color }
-                                      : false
-                                }
-                                activeDot={{
-                                  r: isSparse ? 10 : 6,
-                                  stroke: "#fff",
-                                  strokeWidth: 2,
-                                  fill: color,
-                                }}
-                                connectNulls={false}
-                              />
-                            );
-                          })}
-                        </LineChart>
-                      </ResponsiveContainer>
+                              <span className="text-xs text-gray-500">
+                                Cible: {indicator?.target || "N/A"}
+                              </span>
+                            </div>
+                            <div style={{ height: 140 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={indicatorData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                                  {/* Zone cible en arrière-plan */}
+                                  {showTargetZones && target && !(target.min === -Infinity && target.max === Infinity) && (
+                                    <ReferenceArea
+                                      y1={target.min === -Infinity ? 0 : target.min}
+                                      y2={target.max === Infinity ? (target.min * 2) : target.max}
+                                      fill={color}
+                                      fillOpacity={0.1}
+                                      stroke={color}
+                                      strokeOpacity={0.3}
+                                      strokeDasharray="4 2"
+                                    />
+                                  )}
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                                  <XAxis
+                                    dataKey="time"
+                                    tick={{ fontSize: 10 }}
+                                    stroke="#9ca3af"
+                                    tickLine={false}
+                                    axisLine={false}
+                                  />
+                                  <YAxis
+                                    tick={{ fontSize: 10 }}
+                                    stroke="#9ca3af"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    width={35}
+                                    domain={['auto', 'auto']}
+                                  />
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: "rgba(255, 255, 255, 0.98)",
+                                      border: "1px solid #e5e7eb",
+                                      borderRadius: "6px",
+                                      fontSize: "11px",
+                                      boxShadow: "0 2px 4px rgb(0 0 0 / 0.1)",
+                                      padding: "8px",
+                                    }}
+                                    formatter={(value: number) => [
+                                      <span key={label} style={{ color, fontWeight: 600 }}>
+                                        {value.toFixed(1)} {unit}
+                                      </span>,
+                                      label
+                                    ]}
+                                  />
+                                  <Line
+                                    type="monotone"
+                                    dataKey={label}
+                                    stroke={color}
+                                    strokeWidth={isSparse ? 0 : 2}
+                                    dot={
+                                      isSparse
+                                        ? { r: 5, fill: color, stroke: "#fff", strokeWidth: 1.5 }
+                                        : showDots 
+                                          ? { r: 1.5, fill: color }
+                                          : false
+                                    }
+                                    activeDot={{
+                                      r: isSparse ? 8 : 5,
+                                      stroke: "#fff",
+                                      strokeWidth: 2,
+                                      fill: color,
+                                    }}
+                                    connectNulls={false}
+                                  />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
