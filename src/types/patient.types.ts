@@ -15,6 +15,7 @@ export interface Patient {
   lungsScore?: number;
   kidneyScore?: number;
   ward?: 'pedA' | 'pedB';
+  gcs?: number; // Glasgow Coma Scale (3-15)
 }
 
 export interface PatientQueryParams {

@@ -21,6 +21,7 @@ export const pedAPatients: Patient[] = [
     heartScore: 2,
     lungsScore: 1,
     kidneyScore: 0,
+    gcs: 3,
   },
   {
     id: "#6312",
@@ -38,6 +39,7 @@ export const pedAPatients: Patient[] = [
     heartScore: 1,
     lungsScore: 2,
     kidneyScore: 1,
+    gcs: 7,
   },
   {
     id: "#25",
