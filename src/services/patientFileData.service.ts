@@ -358,39 +358,21 @@ export function getValidityData(patientData: PatientFileData, validityKey: strin
 // In JSON: 0 = adhérent, 1 = non adhérent
 // hoursBack: number of hours from start of stay (e.g., 3, 6, 12, 24, 96 for stay)
 // Returns null if no data available
-export function calculateValidityAdherence(
-  validityData: ValidityData | null,
-  hoursBack?: number,
-): {
-  adherent: number;
-  total: number;
-  percentage: number;
-  hasData: boolean;
-} {
-  if (!validityData) return { adherent: 0, total: 0, percentage: 100, hasData: false };
+export function calculateAdherence(
+  data: TimeSeriesDataPoint[],
+  target: { min: number; max: number },
+  hoursBack: number,
+  simulatedNow: Date,
+) {
+  const startTime = simulatedNow.getTime() - hoursBack * 60 * 60 * 1000;
 
-  let hourKeys = Object.keys(validityData)
-    .filter((k) => k.startsWith("H"))
-    .sort((a, b) => parseInt(a.replace("H", "")) - parseInt(b.replace("H", "")));
+  const window = data.filter((d) => new Date(d.charttime).getTime() >= startTime);
 
-  if (hourKeys.length === 0) return { adherent: 0, total: 0, percentage: 100, hasData: false };
+  if (window.length === 0) return null;
 
-  // If hoursBack is specified, take the first N hours from start of stay
-  if (hoursBack && hoursBack > 0) {
-    // Get hours from the beginning (H0, H1, ... up to hoursBack)
-    hourKeys = hourKeys.slice(0, hoursBack);
-  }
+  const inRange = window.filter((d) => d.valeur >= target.min && d.valeur <= target.max);
 
-  const total = hourKeys.length;
-  // 0 = adhérent, 1 = non adhérent
-  const adherent = hourKeys.filter((k) => validityData[k] === 0).length;
-
-  return {
-    adherent,
-    total,
-    percentage: total > 0 ? Math.round((adherent / total) * 100) : 100,
-    hasData: true,
-  };
+  return Math.round((inRange.length / window.length) * 100);
 }
 
 // Get validity status for first N hours of stay
