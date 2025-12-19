@@ -1478,7 +1478,19 @@ const Optibrain = () => {
                           key={index}
                           className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
                         >
-                          <div className={`w-3 h-3 rounded-full ${dotColor}`}></div>
+                          <TooltipProvider delayDuration={200}>
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <div className={`w-3 h-3 rounded-full ${dotColor} cursor-help`}></div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                {target.adherencePercentage !== null 
+                                  ? `${target.adherencePercentage}% adhérence`
+                                  : "Pas de données"
+                                }
+                              </TooltipContent>
+                            </UITooltip>
+                          </TooltipProvider>
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-700">{target.label}</p>
                             <p className={`text-xs font-medium ${textColor}`}>
