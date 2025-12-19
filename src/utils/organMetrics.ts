@@ -27,7 +27,7 @@ export const brainMetrics = [
   },
   {
     label: 'GCS',
-    value: 12,
+    value: 3,
     unit: '',
     min: 3,
     max: 15,
