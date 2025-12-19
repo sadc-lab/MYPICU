@@ -444,15 +444,23 @@ const Optibrain = () => {
   // Get real PIC, PPC and PACO2 values from patient file data
   const realBrainValues = useMemo(() => {
     if (!patientFileData) {
-      return { pic: null, ppc: null, paco2: null };
+      return { pic: null, ppc: null, paco2: null, picMax: null };
     }
     const picLatest = getLatestValue(patientFileData, "Variable_PIC");
     const ppcLatest = getLatestValue(patientFileData, "Variable_PPC");
     const paco2Latest = getLatestValue(patientFileData, "Variable_paco2");
+    
+    // Calculer le PIC max (valeur problématique) sur les dernières 24h
+    const picData = getTimeSeriesForRange(patientFileData, "Variable_PIC", 24, 15, true);
+    const picMax = picData.length > 0 
+      ? Math.max(...picData.map(d => d.valeur))
+      : null;
+    
     return {
       pic: picLatest?.value ?? null,
       ppc: ppcLatest?.value ?? null,
       paco2: paco2Latest?.value ?? null,
+      picMax: picMax,
     };
   }, [patientFileData]);
 
@@ -579,9 +587,11 @@ const Optibrain = () => {
       dialogKey: "pic",
       trend: "down",
       change: -3,
-      // Dernière valeur critique: PIC max dans les dernières 24h
-      criticalLabel: picValue !== null && picValue >= 20 ? `Max: ${Math.round(picValue)}` : null,
-      criticalColor: picValue !== null && picValue >= 25 ? "text-red-500" : "text-orange-500",
+      // Dernière valeur problématique: PIC max dans les dernières 24h si >= 20
+      criticalLabel: realBrainValues.picMax !== null && realBrainValues.picMax >= 20 
+        ? `Max 24h: ${Math.round(realBrainValues.picMax)} mmHg` 
+        : null,
+      criticalColor: realBrainValues.picMax !== null && realBrainValues.picMax >= 25 ? "text-red-500" : "text-orange-500",
     },
     {
       label: "PPC Opt",
