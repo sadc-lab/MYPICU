@@ -1227,42 +1227,29 @@ const Optibrain = () => {
               </CardHeader>
               {clinicalExpanded && (
                 <CardContent className="pt-0">
-                  <div className="grid grid-cols-5 gap-4 pt-4">// ===== CORRECTION complète de la section problématique =====
-{clinicalIndicators.map((indicator, index) => {
-  const isSelected = selectedIndicators.includes(indicator.label);
-  const dotColor = getAdherenceColor(indicator.adherencePercentage);
-  const textColor = getAdherenceTextColor(indicator.adherencePercentage);
-
-  return (
-    <div
-      key={index}
-      className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${
-        isSelected ? "bg-blue-50 border-2 border-blue-400" : "hover:bg-gray-50"
-      }`}
-      onClick={() => {
-        setSelectedIndicators((prev) =>
-          prev.includes(indicator.label)
-            ? prev.filter((label) => label !== indicator.label)
-            : [...prev, indicator.label],
-        );
-      }}
-    >
-      <div
-        className={`w-3 h-3 rounded-full mt-1 ${dotColor} ${isSelected ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}
-      ></div>
-      <div className="flex-1">
-        <div className="flex items-center gap-1">
-          <p className="text-sm font-medium text-gray-700">{indicator.label}</p>
-        </div>
-        <p className="text-xs text-gray-500">{indicator.target}</p>
-        {indicator.adherencePercentage !== null && (
-          <p className={`text-xs ${textColor}`}>{indicator.adherencePercentage}% adhérence</p>
-        )}
-      </div>
-    </div>
-  );
-})}
-                 
+                  <div className="grid grid-cols-5 gap-4 pt-4">
+                    {clinicalIndicators.map((indicator, index) => {
+                      const isSelected = selectedIndicators.includes(indicator.label);
+                      const statusColor =
+                        indicator.status === null
+                          ? "bg-gray-300"
+                          : indicator.status === "critical"
+                            ? "bg-red-500"
+                            : indicator.status === "warning"
+                              ? "bg-orange-400"
+                              : "bg-gray-400";
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${isSelected ? "bg-blue-50 border-2 border-blue-400" : "hover:bg-gray-50"}`}
+                          onClick={() => {
+                            setSelectedIndicators((prev) =>
+                              prev.includes(indicator.label)
+                                ? prev.filter((label) => label !== indicator.label)
+                                : [...prev, indicator.label],
+                            );
+                          }}
+                        >
                           <div
                             className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}
                           ></div>
