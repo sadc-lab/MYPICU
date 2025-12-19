@@ -1240,6 +1240,105 @@ const Optibrain = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Monitoring Targets - Moved to top */}
+            <Card className="border-2 border-gray-200">
+              <CardHeader
+                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => setChecklistExpanded(!checklistExpanded)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
+                        monitoringAdherence === null
+                          ? "border-gray-300 text-gray-400 bg-gray-50"
+                          : monitoringAdherence >= 90
+                            ? "border-gray-400 text-gray-600 bg-gray-50"
+                            : monitoringAdherence >= 80
+                              ? "border-orange-400 text-orange-600 bg-orange-50"
+                              : "border-red-400 text-red-600 bg-red-50"
+                      }`}
+                    >
+                      {monitoringAdherence !== null ? `${monitoringAdherence}%` : "--"}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {patientFileData
+                          ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}`
+                          : "Pas de données disponibles"}
+                      </p>
+                    </div>
+                  </div>
+                  {checklistExpanded ? (
+                    <ChevronUp className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  )}
+                </div>
+              </CardHeader>
+              {checklistExpanded && (
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-5 gap-4 pt-4">
+                    {monitoringTargets.map((target, index) => {
+                      // Couleur basée sur le pourcentage d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
+                      const dotColor =
+                        target.adherencePercentage === null
+                          ? "bg-gray-300"
+                          : target.adherencePercentage >= 90
+                            ? "bg-gray-400"
+                            : target.adherencePercentage >= 80
+                              ? "bg-orange-400"
+                              : "bg-red-500";
+                      const textColor =
+                        target.adherencePercentage === null
+                          ? "text-gray-400"
+                          : target.adherencePercentage >= 90
+                            ? "text-gray-500"
+                            : target.adherencePercentage >= 80
+                              ? "text-orange-600"
+                              : "text-red-600";
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
+                        >
+                          <TooltipProvider delayDuration={200}>
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <div className={`w-3 h-3 rounded-full ${dotColor} cursor-help`}></div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs max-w-56">
+                                {target.contextInfo ? (
+                                  <div>
+                                    <div className="font-semibold">{target.contextInfo}</div>
+                                    {target.adherencePercentage !== null && (
+                                      <div className="text-gray-400 mt-1">{target.adherencePercentage}% adhérence aux cibles</div>
+                                    )}
+                                  </div>
+                                ) : target.adherencePercentage !== null ? (
+                                  <div>
+                                    <div className="font-semibold">{target.adherencePercentage}% adhérence</div>
+                                    <div className="text-gray-400 mt-1">% du temps passé dans la cible recommandée</div>
+                                  </div>
+                                ) : (
+                                  "Pas de données"
+                                )}
+                              </TooltipContent>
+                            </UITooltip>
+                          </TooltipProvider>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-700">{target.label}</p>
+                            <p className="text-xs text-gray-500">{target.description}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+
             {/* Clinical Indicators Adherence */}
             <Card className="border-2 border-gray-200">
               <CardHeader
@@ -1492,105 +1591,6 @@ const Optibrain = () => {
                   )}
                 </div>
               </CardContent>
-            </Card>
-
-            {/* Monitoring Targets */}
-            <Card className="border-2 border-gray-200">
-              <CardHeader
-                className="cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => setChecklistExpanded(!checklistExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                        monitoringAdherence === null
-                          ? "border-gray-300 text-gray-400 bg-gray-50"
-                          : monitoringAdherence >= 90
-                            ? "border-gray-400 text-gray-600 bg-gray-50"
-                            : monitoringAdherence >= 80
-                              ? "border-orange-400 text-orange-600 bg-orange-50"
-                              : "border-red-400 text-red-600 bg-red-50"
-                      }`}
-                    >
-                      {monitoringAdherence !== null ? `${monitoringAdherence}%` : "--"}
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {patientFileData
-                          ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}`
-                          : "Pas de données disponibles"}
-                      </p>
-                    </div>
-                  </div>
-                  {checklistExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
-                  )}
-                </div>
-              </CardHeader>
-              {checklistExpanded && (
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-5 gap-4 pt-4">
-                    {monitoringTargets.map((target, index) => {
-                      // Couleur basée sur le pourcentage d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
-                      const dotColor =
-                        target.adherencePercentage === null
-                          ? "bg-gray-300"
-                          : target.adherencePercentage >= 90
-                            ? "bg-gray-400"
-                            : target.adherencePercentage >= 80
-                              ? "bg-orange-400"
-                              : "bg-red-500";
-                      const textColor =
-                        target.adherencePercentage === null
-                          ? "text-gray-400"
-                          : target.adherencePercentage >= 90
-                            ? "text-gray-500"
-                            : target.adherencePercentage >= 80
-                              ? "text-orange-600"
-                              : "text-red-600";
-                      return (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
-                        >
-                          <TooltipProvider delayDuration={200}>
-                            <UITooltip>
-                              <TooltipTrigger asChild>
-                                <div className={`w-3 h-3 rounded-full ${dotColor} cursor-help`}></div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-56">
-                                {target.contextInfo ? (
-                                  <div>
-                                    <div className="font-semibold">{target.contextInfo}</div>
-                                    {target.adherencePercentage !== null && (
-                                      <div className="text-gray-400 mt-1">{target.adherencePercentage}% adhérence aux cibles</div>
-                                    )}
-                                  </div>
-                                ) : target.adherencePercentage !== null ? (
-                                  <div>
-                                    <div className="font-semibold">{target.adherencePercentage}% adhérence</div>
-                                    <div className="text-gray-400 mt-1">% du temps passé dans la cible recommandée</div>
-                                  </div>
-                                ) : (
-                                  "Pas de données"
-                                )}
-                              </TooltipContent>
-                            </UITooltip>
-                          </TooltipProvider>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-700">{target.label}</p>
-                            <p className="text-xs text-gray-500">{target.description}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              )}
             </Card>
           </CardContent>
         </Card>
