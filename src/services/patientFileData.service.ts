@@ -26,8 +26,10 @@ export function calculateTimeSeriesAdherence(
 export function calculateValidityAdherenceFromHourlyData(
   validityData: ValidityData | null,
   hoursBack: number = 24,
-): number | null {
-  if (!validityData) return null;
+): { percentage: number; hasData: boolean } {
+  if (!validityData) {
+    return { percentage: 0, hasData: false };
+  }
 
   const hourEntries = Object.keys(validityData)
     .filter((k) => k.startsWith("H"))
@@ -37,17 +39,25 @@ export function calculateValidityAdherenceFromHourlyData(
     }))
     .filter((h) => h.hour < hoursBack);
 
-  if (hourEntries.length === 0) return null;
+  if (hourEntries.length === 0) {
+    return { percentage: 0, hasData: false };
+  }
 
   const adherentCount = hourEntries.filter((h) => h.value === 0).length;
+  const percentage = Math.round((adherentCount / hourEntries.length) * 100);
 
-  return Math.round((adherentCount / hourEntries.length) * 100);
+  return {
+    percentage,
+    hasData: true,
+  };
 }
 
 // ===============================
 // BACKWARD COMPATIBILITY EXPORT
 // ===============================
-
-export function calculateValidityAdherence(validityData: ValidityData | null, hoursBack: number = 24): number | null {
+export function calculateValidityAdherence(
+  validityData: ValidityData | null,
+  hoursBack: number = 24,
+): { percentage: number; hasData: boolean } {
   return calculateValidityAdherenceFromHourlyData(validityData, hoursBack);
 }
