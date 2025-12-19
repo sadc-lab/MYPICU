@@ -32,6 +32,8 @@ import {
   loadPatientFileData,
   hasPatientFileData,
   getTimeSeriesForRange,
+  getAllTimeSeriesData,
+  isVariableSparse,
   getLatestValue,
   calculateAverage,
   calculateTimeInRanges,
@@ -467,6 +469,7 @@ const Optibrain = () => {
   };
 
   // Real data time series for charts (when patient file data is available)
+  // Inclut l'information sur la densité des données pour l'affichage
   const realTimeSeriesData = useMemo(() => {
     if (!patientFileData) return null;
 
@@ -490,12 +493,16 @@ const Optibrain = () => {
       Variable_hemoglobine: "Hémoglobine",
     };
 
-    const result: Record<string, TimeSeriesDataPoint[]> = {};
+    const result: Record<string, { data: TimeSeriesDataPoint[]; isSparse: boolean }> = {};
 
     Object.entries(varMapping).forEach(([varKey, label]) => {
       if (availableVars.includes(varKey)) {
-        const data = getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15);
-        result[label] = data;
+        const isSparse = isVariableSparse(patientFileData, varKey, 20);
+        // Pour les données rares, ne pas échantillonner pour garder tous les points
+        const data = isSparse 
+          ? getAllTimeSeriesData(patientFileData, varKey, hoursBack, true)
+          : getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15, true);
+        result[label] = { data, isSparse };
       }
     });
 
@@ -503,39 +510,69 @@ const Optibrain = () => {
   }, [patientFileData, timeRange]);
 
   // Chart data - utiliser UNIQUEMENT les données réelles
+  // Combine toutes les séries temporelles en un seul dataset pour le graphique
   const chartData = useMemo(() => {
-    // Si pas de données réelles, retourner un tableau vide
     if (!realTimeSeriesData || Object.keys(realTimeSeriesData).length === 0) {
       return [];
     }
 
-    // Find the variable with the most data points to use as base timeline
-    const baseVar = Object.entries(realTimeSeriesData).sort((a, b) => b[1].length - a[1].length)[0];
+    // Collecter tous les timestamps uniques de toutes les séries
+    const allTimestamps = new Set<number>();
+    Object.values(realTimeSeriesData).forEach(({ data }) => {
+      data.forEach((point) => {
+        allTimestamps.add(new Date(point.charttime).getTime());
+      });
+    });
 
-    if (!baseVar || baseVar[1].length === 0) {
-      return [];
-    }
+    // Trier les timestamps
+    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
 
-    return baseVar[1].map((point, idx) => {
-      const time = new Date(point.charttime);
+    if (sortedTimestamps.length === 0) return [];
+
+    // Créer les points de données
+    return sortedTimestamps.map((timestamp) => {
+      const time = new Date(timestamp);
       const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
 
       const dataPoint: any = {
         time: timeStr,
-        timestamp: time.getTime(),
+        timestamp,
       };
 
-      // Add all available variables - ONLY real data
-      Object.entries(realTimeSeriesData).forEach(([label, data]) => {
-        // Find closest data point by time
-        const closest = data.find((d, i) => i === idx) || data[data.length - 1];
-        if (closest) {
-          dataPoint[label] = closest.valeur;
+      // Pour chaque indicateur, trouver la valeur exacte ou la plus proche
+      Object.entries(realTimeSeriesData).forEach(([label, { data, isSparse }]) => {
+        // Pour les données rares, ne mettre la valeur que si on a un point exact
+        if (isSparse) {
+          const exactPoint = data.find((d) => new Date(d.charttime).getTime() === timestamp);
+          if (exactPoint) {
+            dataPoint[label] = exactPoint.valeur;
+          }
+        } else {
+          // Pour les données denses, interpoler ou prendre le plus proche
+          const closestPoint = data.reduce((closest, point) => {
+            const pointTime = new Date(point.charttime).getTime();
+            const closestTime = closest ? new Date(closest.charttime).getTime() : Infinity;
+            return Math.abs(pointTime - timestamp) < Math.abs(closestTime - timestamp) ? point : closest;
+          }, null as TimeSeriesDataPoint | null);
+          
+          if (closestPoint && Math.abs(new Date(closestPoint.charttime).getTime() - timestamp) < 30 * 60 * 1000) {
+            dataPoint[label] = closestPoint.valeur;
+          }
         }
       });
 
       return dataPoint;
     });
+  }, [realTimeSeriesData]);
+
+  // Déterminer quels indicateurs ont des données rares (pour afficher des points au lieu de lignes)
+  const sparseIndicators = useMemo(() => {
+    if (!realTimeSeriesData) return new Set<string>();
+    return new Set(
+      Object.entries(realTimeSeriesData)
+        .filter(([_, { isSparse }]) => isSparse)
+        .map(([label]) => label)
+    );
   }, [realTimeSeriesData]);
 
   // Color mapping for chart lines based on status
@@ -1053,19 +1090,28 @@ const Optibrain = () => {
                         {selectedIndicators.map((label) => {
                           const indicator = clinicalIndicators.find((i) => i.label === label);
                           if (!indicator) return null;
+                          const isSparse = sparseIndicators.has(label);
                           const statusColor =
-                            indicator.status === "critical"
-                              ? "bg-red-500"
-                              : indicator.status === "warning"
-                                ? "bg-orange-400"
-                                : "bg-gray-400";
+                            indicator.status === null
+                              ? "bg-gray-300"
+                              : indicator.status === "critical"
+                                ? "bg-red-500"
+                                : indicator.status === "warning"
+                                  ? "bg-orange-400"
+                                  : "bg-gray-400";
                           return (
                             <div
                               key={label}
                               className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-200"
                             >
-                              <div className={`w-2 h-2 rounded-full ${statusColor}`}></div>
-                              <span className="text-xs text-gray-700">{label}</span>
+                              {isSparse ? (
+                                <div className={`w-3 h-3 rounded-full ${statusColor}`}></div>
+                              ) : (
+                                <div className={`w-4 h-0.5 ${statusColor}`}></div>
+                              )}
+                              <span className="text-xs text-gray-700">
+                                {label} {isSparse && "(points)"}
+                              </span>
                             </div>
                           );
                         })}
@@ -1100,19 +1146,21 @@ const Optibrain = () => {
                                 fontSize: "12px",
                               }}
                             />
-                            {selectedIndicators.map((label) => (
-                              <Line
-                                key={label}
-                                type="monotone"
-                                dataKey={label}
-                                stroke={getIndicatorColor(label)}
-                                strokeWidth={2}
-                                dot={false}
-                                activeDot={{
-                                  r: 4,
-                                }}
-                              />
-                            ))}
+                            {selectedIndicators.map((label) => {
+                              const isSparse = sparseIndicators.has(label);
+                              return (
+                                <Line
+                                  key={label}
+                                  type="monotone"
+                                  dataKey={label}
+                                  stroke={getIndicatorColor(label)}
+                                  strokeWidth={isSparse ? 0 : 2}
+                                  dot={isSparse ? { r: 6, fill: getIndicatorColor(label), stroke: getIndicatorColor(label) } : false}
+                                  activeDot={{ r: isSparse ? 8 : 4 }}
+                                  connectNulls={false}
+                                />
+                              );
+                            })}
                           </LineChart>
                         </ResponsiveContainer>
                       </div>

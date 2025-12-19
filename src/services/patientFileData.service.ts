@@ -153,27 +153,45 @@ export function getLatestValue(
 }
 
 // Get time-series data filtered by time range
+// Les données sont normalisées pour traiter les timestamps comme si c'était aujourd'hui
 export function getTimeSeriesForRange(
   patientData: PatientFileData,
   variableKey: string,
   hoursBack: number = 24,
-  sampleEveryMinutes: number = 15
+  sampleEveryMinutes: number = 15,
+  normalizeToToday: boolean = true
 ): TimeSeriesDataPoint[] {
   const allData = extractTimeSeriesData(patientData, variableKey);
   if (allData.length === 0) return [];
   
-  // Find the most recent timestamp
+  // Sort by original timestamp
   const sorted = [...allData].sort((a, b) => 
     new Date(b.charttime).getTime() - new Date(a.charttime).getTime()
   );
   
-  const latestTime = new Date(sorted[0].charttime).getTime();
-  const cutoffTime = latestTime - (hoursBack * 60 * 60 * 1000);
+  // Si normalizeToToday est true, on calcule le décalage pour que les données semblent d'aujourd'hui
+  const latestOriginalTime = new Date(sorted[0].charttime).getTime();
+  const now = new Date().getTime();
+  const timeOffset = normalizeToToday ? (now - latestOriginalTime) : 0;
   
-  // Filter to time range
+  const cutoffTime = now - (hoursBack * 60 * 60 * 1000);
+  
+  // Filter to time range (using normalized time)
   const filtered = sorted.filter(item => {
-    const itemTime = new Date(item.charttime).getTime();
-    return itemTime >= cutoffTime;
+    const originalTime = new Date(item.charttime).getTime();
+    const normalizedTime = originalTime + timeOffset;
+    return normalizedTime >= cutoffTime;
+  });
+  
+  // Normalize timestamps and sample data
+  const normalized = filtered.map(item => {
+    const originalTime = new Date(item.charttime).getTime();
+    const normalizedTime = new Date(originalTime + timeOffset);
+    return {
+      ...item,
+      charttime: normalizedTime.toISOString(),
+      originalCharttime: item.charttime
+    };
   });
   
   // Sample data at specified intervals to reduce points
@@ -182,7 +200,7 @@ export function getTimeSeriesForRange(
     let lastSampledTime = 0;
     
     // Process in chronological order
-    const chronological = filtered.reverse();
+    const chronological = normalized.reverse();
     
     for (const item of chronological) {
       const itemTime = new Date(item.charttime).getTime();
@@ -195,7 +213,27 @@ export function getTimeSeriesForRange(
     return sampled;
   }
   
-  return filtered.reverse(); // Return in chronological order
+  return normalized.reverse(); // Return in chronological order
+}
+
+// Get ALL time-series data without sampling (for sparse data like INR)
+export function getAllTimeSeriesData(
+  patientData: PatientFileData,
+  variableKey: string,
+  hoursBack: number = 24,
+  normalizeToToday: boolean = true
+): TimeSeriesDataPoint[] {
+  return getTimeSeriesForRange(patientData, variableKey, hoursBack, 0, normalizeToToday);
+}
+
+// Check if a variable has sparse data (few data points)
+export function isVariableSparse(
+  patientData: PatientFileData,
+  variableKey: string,
+  threshold: number = 10
+): boolean {
+  const allData = extractTimeSeriesData(patientData, variableKey);
+  return allData.length < threshold;
 }
 
 // Get patient age from file data
