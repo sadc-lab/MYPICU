@@ -1208,19 +1208,25 @@ const Optibrain = () => {
                   <div className="grid grid-cols-5 gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
-                      // Couleur basée sur le pourcentage d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
-                      const statusColor =
+                      const chartColor = isSelected ? getIndicatorColor(indicator.label) : null;
+                      // Couleur d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
+                      const adherenceColor =
                         indicator.adherencePercentage === null
-                          ? "bg-gray-300"
+                          ? "text-gray-400"
                           : indicator.adherencePercentage >= 90
-                            ? "bg-gray-400"
+                            ? "text-gray-500"
                             : indicator.adherencePercentage >= 80
-                              ? "bg-orange-400"
-                              : "bg-red-500";
+                              ? "text-orange-500"
+                              : "text-red-500";
                       return (
                         <div
                           key={index}
-                          className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${isSelected ? "bg-blue-50 border-2 border-blue-400" : "hover:bg-gray-50"}`}
+                          className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all border-2 ${
+                            isSelected 
+                              ? "bg-white shadow-sm" 
+                              : "border-transparent hover:bg-gray-50"
+                          }`}
+                          style={isSelected ? { borderColor: chartColor || undefined } : undefined}
                           onClick={() => {
                             setSelectedIndicators((prev) =>
                               prev.includes(indicator.label)
@@ -1230,16 +1236,22 @@ const Optibrain = () => {
                           }}
                         >
                           <div
-                            className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}
+                            className="w-3 h-3 rounded-full mt-1"
+                            style={{ backgroundColor: isSelected && chartColor ? chartColor : "#9ca3af" }}
                           ></div>
                           <div className="flex-1">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center justify-between gap-1">
                               <p className="text-sm font-medium text-gray-700">{indicator.label}</p>
+                              {indicator.adherencePercentage !== null && (
+                                <span 
+                                  className={`text-xs font-bold ${adherenceColor}`}
+                                  style={isSelected && chartColor ? { color: chartColor } : undefined}
+                                >
+                                  {indicator.adherencePercentage}%
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs text-gray-500">{indicator.target}</p>
-                            {indicator.adherencePercentage !== null && (
-                              <p className="text-xs text-gray-400">{indicator.adherencePercentage}% adhérence</p>
-                            )}
                           </div>
                         </div>
                       );
@@ -1295,163 +1307,108 @@ const Optibrain = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="h-full flex flex-col">
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {selectedIndicators.map((label) => {
-                          const indicator = clinicalIndicators.find((i) => i.label === label);
-                          if (!indicator) return null;
-                          const isSparse = sparseIndicators.has(label);
-                          // Couleur basée sur le pourcentage d'adhérence
-                          const statusColor =
-                            indicator.adherencePercentage === null
-                              ? "bg-gray-300"
-                              : indicator.adherencePercentage >= 90
-                                ? "bg-gray-400"
-                                : indicator.adherencePercentage >= 80
-                                  ? "bg-orange-400"
-                                  : "bg-red-500";
-                          const chartColor = getIndicatorColor(label);
-                          return (
-                            <div
-                              key={label}
-                              className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border-2 shadow-sm"
-                              style={{ borderColor: chartColor }}
-                            >
-                              {isSparse ? (
-                                <div
-                                  className="w-3 h-3 rounded-full"
-                                  style={{ backgroundColor: chartColor }}
-                                ></div>
-                              ) : (
-                                <div
-                                  className="w-5 h-1 rounded-full"
-                                  style={{ backgroundColor: chartColor }}
-                                ></div>
-                              )}
-                              <span className="text-xs font-medium text-gray-700">
-                                {label} {isSparse && "(points)"}
+                    <div className="h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData}>
+                          {/* Zones cibles en arrière-plan */}
+                          {showTargetZones && selectedIndicators.map((label) => {
+                            const indicator = clinicalIndicators.find((i) => i.label === label);
+                            if (!indicator) return null;
+                            const target = parseTargetRange(indicator.target);
+                            if (target.min === -Infinity && target.max === Infinity) return null;
+                            const color = getIndicatorColor(label);
+                            const yMin = target.min === -Infinity ? 0 : target.min;
+                            const yMax = target.max === Infinity ? target.min * 2 : target.max;
+                            return (
+                              <ReferenceArea
+                                key={`zone-${label}`}
+                                y1={yMin}
+                                y2={yMax}
+                                fill={color}
+                                fillOpacity={0.08}
+                                stroke={color}
+                                strokeOpacity={0.3}
+                                strokeDasharray="4 2"
+                              />
+                            );
+                          })}
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis
+                            dataKey="time"
+                            tick={{ fontSize: 11 }}
+                            stroke="#9ca3af"
+                            tickLine={false}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 11 }}
+                            stroke="#9ca3af"
+                            tickLine={false}
+                            axisLine={false}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "rgba(255, 255, 255, 0.98)",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                              padding: "12px",
+                            }}
+                            labelStyle={{ fontWeight: 600, marginBottom: 8 }}
+                            formatter={(value: number, name: string) => {
+                              const color = getIndicatorColor(name);
+                              const indicator = clinicalIndicators.find((i) => i.label === name);
+                              const unit = indicator?.target.match(/[a-zA-Z°%/]+$/)?.[0] || "";
+                              return [
+                                <span key={name} style={{ color, fontWeight: 600 }}>
+                                  {name}: {value.toFixed(1)} {unit}
+                                </span>,
+                                null
+                              ];
+                            }}
+                          />
+                          <Legend
+                            wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
+                            iconType="plainline"
+                            formatter={(value: string) => (
+                              <span style={{ color: getIndicatorColor(value), fontWeight: 500 }}>
+                                {value}
                               </span>
-                              {indicator.adherencePercentage !== null && (
-                                <span
-                                  className="text-xs font-semibold px-1.5 py-0.5 rounded"
-                                  style={{
-                                    backgroundColor: `${chartColor}20`,
-                                    color: chartColor,
-                                  }}
-                                >
-                                  {indicator.adherencePercentage}%
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="flex-1">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={chartData}>
-                            {/* Zones cibles en arrière-plan */}
-                            {showTargetZones && selectedIndicators.map((label, idx) => {
-                              const indicator = clinicalIndicators.find((i) => i.label === label);
-                              if (!indicator) return null;
-                              const target = parseTargetRange(indicator.target);
-                              // N'afficher que si on a des bornes finies
-                              if (target.min === -Infinity && target.max === Infinity) return null;
-                              const color = getIndicatorColor(label);
-                              // Pour < X, on utilise 0 comme min raisonnable
-                              const yMin = target.min === -Infinity ? 0 : target.min;
-                              // Pour > X, on utilise une valeur max raisonnable
-                              const yMax = target.max === Infinity ? target.min * 2 : target.max;
-                              return (
-                                <ReferenceArea
-                                  key={`zone-${label}`}
-                                  y1={yMin}
-                                  y2={yMax}
-                                  fill={color}
-                                  fillOpacity={0.08}
-                                  stroke={color}
-                                  strokeOpacity={0.3}
-                                  strokeDasharray="4 2"
-                                />
-                              );
-                            })}
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis
-                              dataKey="time"
-                              tick={{ fontSize: 11 }}
-                              stroke="#9ca3af"
-                              tickLine={false}
-                            />
-                            <YAxis
-                              tick={{ fontSize: 11 }}
-                              stroke="#9ca3af"
-                              tickLine={false}
-                              axisLine={false}
-                            />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: "rgba(255, 255, 255, 0.98)",
-                                border: "1px solid #e5e7eb",
-                                borderRadius: "8px",
-                                fontSize: "12px",
-                                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                                padding: "12px",
-                              }}
-                              labelStyle={{ fontWeight: 600, marginBottom: 8 }}
-                              formatter={(value: number, name: string) => {
-                                const color = getIndicatorColor(name);
-                                const indicator = clinicalIndicators.find((i) => i.label === name);
-                                const unit = indicator?.target.match(/[a-zA-Z°%/]+$/)?.[0] || "";
-                                return [
-                                  <span key={name} style={{ color, fontWeight: 600 }}>
-                                    {name}: {value.toFixed(1)} {unit}
-                                  </span>,
-                                  null
-                                ];
-                              }}
-                            />
-                            <Legend
-                              wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
-                              iconType="plainline"
-                              formatter={(value: string) => (
-                                <span style={{ color: getIndicatorColor(value), fontWeight: 500 }}>
-                                  {value}
-                                </span>
-                              )}
-                            />
-                            {selectedIndicators.map((label, idx) => {
-                              const isSparse = sparseIndicators.has(label);
-                              const color = getIndicatorColor(label);
-                              return (
-                                <Line
-                                  key={label}
-                                  type="monotone"
-                                  dataKey={label}
-                                  stroke={color}
-                                  strokeWidth={isSparse ? 0 : 2.5}
-                                  strokeDasharray={idx > 0 && !isSparse ? (idx % 2 === 1 ? "8 4" : undefined) : undefined}
-                                  dot={
-                                    isSparse
-                                      ? {
-                                          r: 7,
-                                          fill: color,
-                                          stroke: "#fff",
-                                          strokeWidth: 2,
-                                        }
-                                      : { r: 2, fill: color }
-                                  }
-                                  activeDot={{
-                                    r: isSparse ? 10 : 6,
-                                    stroke: "#fff",
-                                    strokeWidth: 2,
-                                    fill: color,
-                                  }}
-                                  connectNulls={false}
-                                />
-                              );
-                            })}
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
+                            )}
+                          />
+                          {selectedIndicators.map((label, idx) => {
+                            const isSparse = sparseIndicators.has(label);
+                            const color = getIndicatorColor(label);
+                            return (
+                              <Line
+                                key={label}
+                                type="monotone"
+                                dataKey={label}
+                                stroke={color}
+                                strokeWidth={isSparse ? 0 : 2.5}
+                                strokeDasharray={idx > 0 && !isSparse ? (idx % 2 === 1 ? "8 4" : undefined) : undefined}
+                                dot={
+                                  isSparse
+                                    ? {
+                                        r: 7,
+                                        fill: color,
+                                        stroke: "#fff",
+                                        strokeWidth: 2,
+                                      }
+                                    : { r: 2, fill: color }
+                                }
+                                activeDot={{
+                                  r: isSparse ? 10 : 6,
+                                  stroke: "#fff",
+                                  strokeWidth: 2,
+                                  fill: color,
+                                }}
+                                connectNulls={false}
+                              />
+                            );
+                          })}
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
                   )}
                 </div>
