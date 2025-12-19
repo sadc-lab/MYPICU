@@ -299,9 +299,13 @@ const Optibrain = () => {
         hasRealData: realData !== undefined,
       };
     });
+  }, [patientFileData, hoursForAdherence]); // ===== CORRECTION : Une seule déclaration pour clinicalIndicatorsData =====
+  const clinicalIndicatorsData = useMemo(() => {
+    if (!patientFileData) return null;
+    return getClinicalIndicatorsStatus(patientFileData, hoursForAdherence);
   }, [patientFileData, hoursForAdherence]);
 
-  // ===== ÉTAPE 3 : Remplacer clinicalIndicators avec la nouvelle logique =====
+  // ===== CORRECTION : Une seule déclaration pour clinicalIndicators =====
   const clinicalIndicators = useMemo(() => {
     return baseClinicalIndicators.map((base) => {
       const realData = clinicalIndicatorsData?.find((d) => d.label === base.label);
