@@ -1241,9 +1241,14 @@ const Optibrain = () => {
                               <TooltipTrigger asChild>
                                 <div className={`w-3 h-3 rounded-full mt-1 ${adherenceDotColor} cursor-help`}></div>
                               </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs">
+                              <TooltipContent side="top" className="text-xs max-w-48">
                                 {indicator.adherencePercentage !== null 
-                                  ? `${indicator.adherencePercentage}% adhérence`
+                                  ? (
+                                    <div>
+                                      <div className="font-semibold">{indicator.adherencePercentage}% adhérence</div>
+                                      <div className="text-gray-400 mt-1">% du temps passé dans la cible recommandée</div>
+                                    </div>
+                                  )
                                   : "Pas de données"
                                 }
                               </TooltipContent>
@@ -1483,9 +1488,14 @@ const Optibrain = () => {
                               <TooltipTrigger asChild>
                                 <div className={`w-3 h-3 rounded-full ${dotColor} cursor-help`}></div>
                               </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs">
+                              <TooltipContent side="top" className="text-xs max-w-48">
                                 {target.adherencePercentage !== null 
-                                  ? `${target.adherencePercentage}% adhérence`
+                                  ? (
+                                    <div>
+                                      <div className="font-semibold">{target.adherencePercentage}% adhérence</div>
+                                      <div className="text-gray-400 mt-1">% du temps passé dans la cible recommandée</div>
+                                    </div>
+                                  )
                                   : "Pas de données"
                                 }
                               </TooltipContent>
