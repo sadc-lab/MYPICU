@@ -1209,15 +1209,15 @@ const Optibrain = () => {
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
                       const chartColor = isSelected ? getIndicatorColor(indicator.label) : null;
-                      // Couleur d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
-                      const adherenceColor =
+                      // Pastille de couleur d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
+                      const adherenceDotColor =
                         indicator.adherencePercentage === null
-                          ? "text-gray-400"
+                          ? "bg-gray-300"
                           : indicator.adherencePercentage >= 90
-                            ? "text-gray-500"
+                            ? "bg-gray-400"
                             : indicator.adherencePercentage >= 80
-                              ? "text-orange-500"
-                              : "text-red-500";
+                              ? "bg-orange-400"
+                              : "bg-red-500";
                       return (
                         <div
                           key={index}
@@ -1235,22 +1235,9 @@ const Optibrain = () => {
                             );
                           }}
                         >
-                          <div
-                            className="w-3 h-3 rounded-full mt-1"
-                            style={{ backgroundColor: isSelected && chartColor ? chartColor : "#9ca3af" }}
-                          ></div>
+                          <div className={`w-3 h-3 rounded-full mt-1 ${adherenceDotColor}`}></div>
                           <div className="flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <p className="text-sm font-medium text-gray-700">{indicator.label}</p>
-                              {indicator.adherencePercentage !== null && (
-                                <span 
-                                  className={`text-xs font-bold ${adherenceColor}`}
-                                  style={isSelected && chartColor ? { color: chartColor } : undefined}
-                                >
-                                  {indicator.adherencePercentage}%
-                                </span>
-                              )}
-                            </div>
+                            <p className="text-sm font-medium text-gray-700">{indicator.label}</p>
                             <p className="text-xs text-gray-500">{indicator.target}</p>
                           </div>
                         </div>
