@@ -101,30 +101,30 @@ const Optibrain = () => {
   };
 
   // Fonction pour obtenir les données EXACTEMENT comme elles sont affichées dans le graphique
+  // IMPORTANT: les timestamps des JSON sont anciens (données statiques). On normalise donc "comme si c'était aujourd'hui"
+  // via getTimeSeriesForRange/getAllTimeSeriesData (normalizeToToday=true), sinon l'adhérence tombe à 0 (hors fenêtre temporelle).
   const getChartDataForAdherence = (
     data: PatientFileData,
     variableKey: string,
     hoursBack: number,
   ): { values: number[]; timestamps: Date[]; count: number } => {
-    if (!data || !data[variableKey]) {
+    if (!data || !variableKey) {
       return { values: [], timestamps: [], count: 0 };
     }
 
-    const now = new Date();
-    const startTime = new Date(now.getTime() - hoursBack * 60 * 60 * 1000);
+    const sparse = isVariableSparse(data, variableKey, 20);
 
-    // Type assertion pour corriger l'erreur TypeScript
-    const rawData = (data[variableKey] as TimeSeriesDataPoint[])
-      .filter((point) => {
-        const pointTime = new Date(point.charttime);
-        return pointTime >= startTime && pointTime <= now;
-      })
-      .sort((a, b) => new Date(a.charttime).getTime() - new Date(b.charttime).getTime());
+    // Même logique que le graphe principal:
+    // - données denses: échantillonnage (15 min)
+    // - données rares: aucun échantillonnage (points exacts)
+    const series = sparse
+      ? getAllTimeSeriesData(data, variableKey, hoursBack, true)
+      : getTimeSeriesForRange(data, variableKey, hoursBack, 15, true);
 
     return {
-      values: rawData.map((d) => d.valeur),
-      timestamps: rawData.map((d) => new Date(d.charttime)),
-      count: rawData.length,
+      values: series.map((d) => d.valeur),
+      timestamps: series.map((d) => new Date(d.charttime)),
+      count: series.length,
     };
   };
 
