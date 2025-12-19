@@ -43,3 +43,11 @@ export function calculateValidityAdherenceFromHourlyData(
 
   return Math.round((adherentCount / hourEntries.length) * 100);
 }
+
+// ===============================
+// BACKWARD COMPATIBILITY EXPORT
+// ===============================
+
+export function calculateValidityAdherence(validityData: ValidityData | null, hoursBack: number = 24): number | null {
+  return calculateValidityAdherenceFromHourlyData(validityData, hoursBack);
+}
