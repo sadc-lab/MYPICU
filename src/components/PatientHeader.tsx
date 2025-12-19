@@ -39,10 +39,10 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   if (!patient) return null;
 
   const getOrganBadgeClass = (score?: number) => {
-    if (!score || score === 0) return "bg-gray-100 text-gray-500 border border-gray-300";
-    if (score === 1) return "bg-orange-100 text-orange-600 border border-orange-300";
-    if (score === 2) return "bg-orange-200 text-orange-700 border border-orange-400";
-    return "bg-red-200 text-red-700 border border-red-400";
+    if (!score || score === 0) return "bg-muted text-muted-foreground border border-border";
+    if (score === 1) return "bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border border-orange-300 dark:border-orange-700";
+    if (score === 2) return "bg-orange-200 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border border-orange-400 dark:border-orange-600";
+    return "bg-red-200 dark:bg-red-950 text-red-700 dark:text-red-400 border border-red-400 dark:border-red-700";
   };
 
   const getColorFilter = (score?: number) => {
@@ -54,10 +54,10 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   };
 
   const getTextColor = (score?: number) => {
-    if (!score || score === 0) return "text-gray-500";
-    if (score === 1) return "text-orange-600";
-    if (score === 2) return "text-orange-700";
-    return "text-red-700";
+    if (!score || score === 0) return "text-muted-foreground";
+    if (score === 1) return "text-orange-600 dark:text-orange-400";
+    if (score === 2) return "text-orange-700 dark:text-orange-300";
+    return "text-red-700 dark:text-red-400";
   };
 
   const isActivePage = (page: string) => currentPage === page;
@@ -166,7 +166,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   navigate(`/optistate?${params.toString()}`);
                 }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage("optistate") ? "bg-primary text-white" : "hover:bg-gray-100"
+                  isActivePage("optistate") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.pelodScore)} text-xs`}>
@@ -189,7 +189,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   navigate(`/optibrain?${params.toString()}`);
                 }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage("optibrain") ? "bg-primary text-white" : "hover:bg-gray-100"
+                  isActivePage("optibrain") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.brainScore)} text-xs`}>
@@ -212,7 +212,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   navigate(`/optiheart?${params.toString()}`);
                 }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage("optiheart") ? "bg-primary text-white" : "hover:bg-gray-100"
+                  isActivePage("optiheart") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.heartScore)} text-xs`}>
@@ -230,7 +230,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   navigate(`/optilungs?${params.toString()}`);
                 }}
                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage("optilungs") ? "bg-primary text-white" : "hover:bg-gray-100"
+                  isActivePage("optilungs") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.lungsScore)} text-xs`}>

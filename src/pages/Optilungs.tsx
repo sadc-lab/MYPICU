@@ -142,7 +142,7 @@ const Optilungs = () => {
 
   if (!patient) {
     return (
-      <div className="min-h-screen bg-[#EDF2F9]">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
           <p>Patient non trouvé</p>
@@ -168,24 +168,24 @@ const Optilungs = () => {
 
 
   return (
-    <div className="min-h-screen bg-[#EDF2F9]">
+    <div className="min-h-screen bg-background">
       <Header />
       <PatientHeader currentPage="optilungs" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">Métriques Pulmonaires</CardTitle>
+            <CardTitle className="text-base font-semibold">Métriques Pulmonaires</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {lungMetrics.map((metric, index) => {
                 const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                const valueColor = inRange ? 'text-gray-600' : 'text-red-500';
+                const valueColor = inRange ? 'text-muted-foreground' : 'text-destructive';
                 
                 return (
                   <div key={index} className="flex flex-col items-center">
-                    <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                    <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
                       {metric.label}
                     </div>
                     <div className={`text-4xl font-bold ${valueColor} mb-3`}>
@@ -194,10 +194,10 @@ const Optilungs = () => {
                     
                     <div className="w-full max-w-[180px]">
                       {/* Range bar */}
-                      <div className="relative h-3 bg-gray-200 rounded-full overflow-visible">
+                      <div className="relative h-3 bg-muted rounded-full overflow-visible">
                         {/* Target range (light grey zone) */}
                         <div 
-                          className="absolute top-0 bottom-0 bg-gray-300 rounded-full"
+                          className="absolute top-0 bottom-0 bg-muted/70 rounded-full"
                           style={{
                             left: `${((metric.targetMin - metric.min) / (metric.max - metric.min)) * 100}%`,
                             width: `${((metric.targetMax - metric.targetMin) / (metric.max - metric.min)) * 100}%`
@@ -207,7 +207,7 @@ const Optilungs = () => {
                         {/* Current value position on bar */}
                         <div 
                           className={`absolute w-3 h-3 rounded-full border-2 ${
-                            inRange ? 'bg-gray-500 border-gray-600' : 'bg-red-500 border-red-600'
+                            inRange ? 'bg-muted-foreground border-foreground' : 'bg-destructive border-destructive'
                           } z-10 top-0`}
                           style={{
                             left: `${Math.max(0, Math.min(100, ((metric.value - metric.min) / (metric.max - metric.min)) * 100))}%`,
@@ -217,7 +217,7 @@ const Optilungs = () => {
                       </div>
                       
                       {/* Target range labels */}
-                      <div className="flex justify-between items-center mt-1.5 text-xs text-gray-500">
+                      <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
                         <span>{metric.targetMin}</span>
                         <span>{metric.targetMax}</span>
                       </div>
@@ -229,23 +229,23 @@ const Optilungs = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="shadow-sm mb-6">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-gray-900">Optimisation Pulmonaire</CardTitle>
+            <CardTitle className="text-base font-semibold">Optimisation Pulmonaire</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-8">
               <div 
-                className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                className="flex flex-col items-center cursor-pointer hover:bg-muted/50 p-4 rounded-lg transition-colors"
                 onClick={() => setOpenDialog('vap1')}
               >
-                <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
                   VAP Prediction 1
                 </div>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="text-4xl font-bold text-orange-500">75</div>
+                  <div className="text-4xl font-bold text-orange-500 dark:text-orange-400">75</div>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
                   <Info className="h-3 w-3" />
                   <span>Voir détails</span>
                 </div>
@@ -262,17 +262,17 @@ const Optilungs = () => {
             </DialogHeader>
             <div className="space-y-6">
               {/* Prediction Card */}
-              <div className="border rounded-lg p-6 bg-white shadow-sm">
+              <div className="border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold text-gray-700">
-                    Prédictions VAP module 1 : <span className="font-normal text-gray-500">dernières 48 heures</span>
+                  <h3 className="text-base font-semibold text-foreground">
+                    Prédictions VAP module 1 : <span className="font-normal text-muted-foreground">dernières 48 heures</span>
                   </h3>
                 </div>
                 
                 {/* Percentage Badge */}
                 <div className="flex justify-center mb-4">
-                  <div className="inline-block px-4 py-1 border-2 border-gray-300 rounded-full">
-                    <span className="text-xl font-semibold text-gray-700">77.9%</span>
+                  <div className="inline-block px-4 py-1 border-2 border-border rounded-full">
+                    <span className="text-xl font-semibold text-foreground">77.9%</span>
                   </div>
                 </div>
 
@@ -292,7 +292,7 @@ const Optilungs = () => {
                   </div>
                   
                   {/* Scale markers */}
-                  <div className="flex justify-between mt-2 text-xs text-gray-500">
+                  <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                     <span>10</span>
                     <span>20</span>
                     <span>30</span>
@@ -307,18 +307,18 @@ const Optilungs = () => {
 
                 {/* Metrics */}
                 <div className="border-t pt-4">
-                  <div className="flex justify-between text-sm text-gray-600">
+                  <div className="flex justify-between text-sm text-muted-foreground">
                     <span>FiO2 : <span className="font-semibold">N/A</span></span>
                     <span>PEEP : <span className="font-semibold">N/A</span></span>
-                    <span>Fiabilité : <span className="font-semibold text-orange-500">77.9%</span></span>
+                    <span>Fiabilité : <span className="font-semibold text-orange-500 dark:text-orange-400">77.9%</span></span>
                   </div>
                 </div>
               </div>
 
               {/* Recommendations */}
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-gray-700">Recommandations :</p>
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <p className="text-sm font-semibold text-foreground">Recommandations :</p>
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                   <li>Renforcer les protocoles d'hygiène respiratoire</li>
                   <li>Revoir les niveaux de sédation</li>
                   <li>Considérer la prophylaxie probiotique</li>
@@ -330,7 +330,7 @@ const Optilungs = () => {
         </Dialog>
 
         {/* Clinical Indicators Section */}
-        <Card className="bg-white shadow-sm mb-6">
+        <Card className="shadow-sm mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Indicateurs Cliniques</CardTitle>
@@ -341,8 +341,8 @@ const Optilungs = () => {
                     onClick={() => setTimeRange(range)}
                     className={`px-3 py-1 text-sm rounded-md transition-colors ${
                       timeRange === range
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     }`}
                   >
                     {getTimeRangeLabel(range)}
@@ -352,27 +352,27 @@ const Optilungs = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Card className="border-2 border-gray-200">
-              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setClinicalExpanded(!clinicalExpanded)}>
+            <Card className="border-2 border-border">
+              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setClinicalExpanded(!clinicalExpanded)}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                      outOfRangeCount === 0 ? 'border-gray-400 text-gray-600 bg-gray-50' : 
-                      outOfRangeCount <= 2 ? 'border-orange-400 text-orange-600 bg-orange-50' : 
-                      'border-red-400 text-red-600 bg-red-50'
+                      outOfRangeCount === 0 ? 'border-muted-foreground text-muted-foreground bg-muted/50' : 
+                      outOfRangeCount <= 2 ? 'border-orange-400 dark:border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950' : 
+                      'border-destructive text-destructive bg-red-50 dark:bg-red-950'
                     }`}>
                       {outOfRangeCount}
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-700">
+                      <h3 className="text-sm font-semibold text-foreground">
                         Indicateurs respiratoires problématiques : surveiller PaO2, FiO2, P/F Ratio
                       </h3>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {outOfRangeCount} indicateur{outOfRangeCount > 1 ? 's' : ''} hors cible sur {totalIndicators}
                       </p>
                     </div>
                   </div>
-                  {clinicalExpanded ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}
+                  {clinicalExpanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                 </div>
               </CardHeader>
               {clinicalExpanded && (
@@ -380,12 +380,12 @@ const Optilungs = () => {
                   <div className="grid grid-cols-3 gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
-                      const statusColor = indicator.status === 'critical' ? 'bg-red-500' : indicator.status === 'warning' ? 'bg-orange-400' : 'bg-gray-400';
+                      const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-orange-400 dark:bg-orange-500' : 'bg-muted-foreground';
                       return (
                         <div 
                           key={index}
                           className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${
-                            isSelected ? 'bg-blue-50 border-2 border-blue-400' : 'hover:bg-gray-50'
+                            isSelected ? 'bg-primary/10 border-2 border-primary' : 'hover:bg-muted/50'
                           }`}
                           onClick={() => {
                             setSelectedIndicators(prev =>
@@ -395,20 +395,20 @@ const Optilungs = () => {
                             );
                           }}
                         >
-                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}></div>
+                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}`}></div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between gap-1">
-                              <p className="text-sm font-medium text-gray-700">
+                              <p className="text-sm font-medium text-foreground">
                                 {indicator.label} : {indicator.value}{indicator.unit}
                               </p>
                               <span className={`text-xs font-medium ${
-                                indicator.status === 'critical' ? 'text-red-500' : 
-                                indicator.status === 'warning' ? 'text-orange-500' : 'text-gray-500'
+                                indicator.status === 'critical' ? 'text-destructive' : 
+                                indicator.status === 'warning' ? 'text-orange-500 dark:text-orange-400' : 'text-muted-foreground'
                               }`}>
                                 {indicator.adherencePercentage}%
                               </span>
                             </div>
-                            <p className="text-xs text-gray-500">{indicator.target}</p>
+                            <p className="text-xs text-muted-foreground">{indicator.target}</p>
                           </div>
                         </div>
                       );
@@ -421,7 +421,7 @@ const Optilungs = () => {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <Card className="lg:col-span-2 bg-white shadow-sm">
+          <Card className="lg:col-span-2 shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Wind className="h-5 w-5 text-primary" />
@@ -429,13 +429,13 @@ const Optilungs = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-                <p className="text-gray-400">Courbe Pression-Volume affichée ici</p>
+              <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-border rounded-lg">
+                <p className="text-muted-foreground">Courbe Pression-Volume affichée ici</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white shadow-sm">
+          <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Gauge className="h-5 w-5 text-primary" />
@@ -445,8 +445,8 @@ const Optilungs = () => {
             <CardContent className="space-y-3">
               {ventilatorSettings.map((setting, index) => (
                 <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{setting.label} :</span>
-                  <span className="font-semibold text-sm text-gray-900">{setting.value}</span>
+                  <span className="text-sm text-muted-foreground">{setting.label} :</span>
+                  <span className="font-semibold text-sm text-foreground">{setting.value}</span>
                 </div>
               ))}
             </CardContent>
@@ -454,33 +454,33 @@ const Optilungs = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <Card className="bg-white shadow-sm">
+          <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg">Analyse des Gaz du Sang</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                  <span className="text-sm text-gray-600">Ratio PaO2/FiO2</span>
-                  <span className="font-semibold text-gray-900">238</span>
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
+                  <span className="text-sm text-muted-foreground">Ratio PaO2/FiO2</span>
+                  <span className="font-semibold text-foreground">238</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                  <span className="text-sm text-gray-600">Excès de Base</span>
-                  <span className="font-semibold text-gray-900">-2 mEq/L</span>
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
+                  <span className="text-sm text-muted-foreground">Excès de Base</span>
+                  <span className="font-semibold text-foreground">-2 mEq/L</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                  <span className="text-sm text-gray-600">HCO3</span>
-                  <span className="font-semibold text-gray-900">24 mEq/L</span>
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
+                  <span className="text-sm text-muted-foreground">HCO3</span>
+                  <span className="font-semibold text-foreground">24 mEq/L</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                  <span className="text-sm text-gray-600">Lactate</span>
-                  <span className="font-semibold text-gray-900">1.2 mmol/L</span>
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
+                  <span className="text-sm text-muted-foreground">Lactate</span>
+                  <span className="font-semibold text-foreground">1.2 mmol/L</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white shadow-sm">
+          <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg">Statut d'Oxygénation</CardTitle>
             </CardHeader>
@@ -488,20 +488,20 @@ const Optilungs = () => {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Index d'Oxygénation</span>
-                    <Badge className="bg-gray-100 text-gray-600">5.5</Badge>
+                    <span className="text-sm text-muted-foreground">Index d'Oxygénation</span>
+                    <Badge className="bg-muted text-muted-foreground">5.5</Badge>
                   </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-gray-500" style={{ width: '65%' }}></div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-muted-foreground" style={{ width: '65%' }}></div>
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Gradient Alvéolo-artériel</span>
-                    <Badge className="bg-orange-100 text-orange-700">35 mmHg</Badge>
+                    <span className="text-sm text-muted-foreground">Gradient Alvéolo-artériel</span>
+                    <Badge className="bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400">35 mmHg</Badge>
                   </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-orange-500" style={{ width: '45%' }}></div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-orange-500 dark:bg-orange-400" style={{ width: '45%' }}></div>
                   </div>
                 </div>
               </div>
@@ -509,7 +509,7 @@ const Optilungs = () => {
           </Card>
         </div>
 
-        <Card className="bg-white shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Objectifs & Interventions</CardTitle>
@@ -519,7 +519,7 @@ const Optilungs = () => {
             {/* Objectives Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-sm text-gray-700">Objectifs Actuels:</h4>
+                <h4 className="font-semibold text-sm text-foreground">Objectifs Actuels:</h4>
                 {!isEditingObjectives ? (
                   <Button
                     variant="ghost"
@@ -542,7 +542,7 @@ const Optilungs = () => {
                         setObjectives(editedObjectives);
                         setIsEditingObjectives(false);
                       }}
-                      className="h-8 gap-1 text-green-600 hover:text-green-700"
+                      className="h-8 gap-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
                     >
                       <Check className="h-3 w-3" />
                       Save
@@ -554,7 +554,7 @@ const Optilungs = () => {
                         setIsEditingObjectives(false);
                         setEditedObjectives([]);
                       }}
-                      className="h-8 gap-1 text-red-600 hover:text-red-700"
+                      className="h-8 gap-1 text-destructive hover:text-destructive/80"
                     >
                       <X className="h-3 w-3" />
                       Cancel
@@ -564,7 +564,7 @@ const Optilungs = () => {
               </div>
               
               {!isEditingObjectives ? (
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                   {objectives.map((objective, index) => (
                     <li key={index}>{objective}</li>
                   ))}
@@ -590,7 +590,7 @@ const Optilungs = () => {
                           const newObjectives = editedObjectives.filter((_, i) => i !== index);
                           setEditedObjectives(newObjectives);
                         }}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -612,7 +612,7 @@ const Optilungs = () => {
             {/* Interventions Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-sm text-gray-700">Interventions Récentes:</h4>
+                <h4 className="font-semibold text-sm text-foreground">Interventions Récentes:</h4>
                 {!isEditingInterventions ? (
                   <Button
                     variant="ghost"
@@ -635,7 +635,7 @@ const Optilungs = () => {
                         setInterventions(editedInterventions);
                         setIsEditingInterventions(false);
                       }}
-                      className="h-8 gap-1 text-green-600 hover:text-green-700"
+                      className="h-8 gap-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
                     >
                       <Check className="h-3 w-3" />
                       Save
@@ -647,7 +647,7 @@ const Optilungs = () => {
                         setIsEditingInterventions(false);
                         setEditedInterventions([]);
                       }}
-                      className="h-8 gap-1 text-red-600 hover:text-red-700"
+                      className="h-8 gap-1 text-destructive hover:text-destructive/80"
                     >
                       <X className="h-3 w-3" />
                       Cancel
@@ -657,7 +657,7 @@ const Optilungs = () => {
               </div>
               
               {!isEditingInterventions ? (
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                   {interventions.map((intervention, index) => (
                     <li key={index}>{intervention}</li>
                   ))}
@@ -683,7 +683,7 @@ const Optilungs = () => {
                           const newInterventions = editedInterventions.filter((_, i) => i !== index);
                           setEditedInterventions(newInterventions);
                         }}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
