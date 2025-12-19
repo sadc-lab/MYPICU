@@ -129,14 +129,14 @@ export const Header = () => {
     <>
       <InteractiveGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />
       <header className="border-b bg-card shadow-sm">
-        <div className="container mx-auto px-6">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-8">
+        <div className="container mx-auto px-3 sm:px-6">
+        <div className="flex h-14 sm:h-16 items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-8">
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold text-primary">MYPICU</span>
+              <span className="text-lg sm:text-2xl font-bold text-primary">MYPICU</span>
             </Link>
             
-            <div ref={searchRef} className="relative" data-guide="search">
+            <div ref={searchRef} className="relative hidden sm:block" data-guide="search">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
               <Input 
                 type="text"

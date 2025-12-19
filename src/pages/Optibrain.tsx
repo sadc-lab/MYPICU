@@ -913,14 +913,14 @@ const Optibrain = () => {
       <Header />
       <PatientHeader currentPage="optibrain" />
 
-      <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
+      <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px]">
 
         <Card className="bg-white shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="text-base font-semibold text-gray-900">Métriques cérébrales</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
               {brainMetrics.map((metric, index) => {
                 const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
                 const valueColor = inRange ? "text-gray-600" : "text-red-500";
@@ -928,7 +928,7 @@ const Optibrain = () => {
                   <div key={index} className="flex flex-col items-center">
                     <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">{metric.label}</div>
                     <div className="flex items-center gap-2 mb-3">
-                      <div className={`text-4xl font-bold ${valueColor}`}>{metric.value}</div>
+                      <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
                     </div>
 
                     <div className="w-full max-w-[180px]">
@@ -966,48 +966,48 @@ const Optibrain = () => {
             onClick={() => setOptimisationExpanded(!optimisationExpanded)}
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-blue-400 text-blue-600 bg-blue-50">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-blue-400 text-blue-600 bg-blue-50 shrink-0">
                   <img
                     src={brainIcon}
                     alt="brain"
-                    className="h-8 w-8"
+                    className="h-6 w-6 sm:h-8 sm:w-8"
                     style={{
                       filter: "invert(39%) sepia(95%) saturate(1095%) hue-rotate(196deg) brightness(97%) contrast(94%)",
                     }}
                   />
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700">Optimisation cérébrale actuelle</h3>
-                  <p className="text-xs text-gray-500 mt-1">Hyperhémie, PIC 26 et PPC optimale 65</p>
+                <div className="min-w-0">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-700">Optimisation cérébrale actuelle</h3>
+                  <p className="text-xs text-gray-500 mt-1 truncate">Hyperhémie, PIC 26 et PPC optimale 65</p>
                 </div>
               </div>
               {optimisationExpanded ? (
-                <ChevronUp className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-5 w-5 text-gray-400 shrink-0" />
               ) : (
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronDown className="h-5 w-5 text-gray-400 shrink-0" />
               )}
             </div>
           </CardHeader>
           {optimisationExpanded && (
             <CardContent className="pt-0">
-              <div className="grid grid-cols-3 gap-8 pt-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-8 pt-4">
               {brainOptimisationMetrics.map((metric, index) => {
                   const statusColor = metric.status === "warning" ? "text-orange-500" : "text-gray-600";
                   return (
                     <div
                       key={index}
-                      className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                      className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-2 sm:p-4 rounded-lg transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         metric.hasDetails && setOpenDialog(metric.dialogKey || null);
                       }}
                     >
-                      <div className="text-xs font-medium text-gray-600 mb-2 uppercase tracking-wide">
+                      <div className="text-[10px] sm:text-xs font-medium text-gray-600 mb-1 sm:mb-2 uppercase tracking-wide text-center">
                         {metric.label}
                       </div>
                       <div className="flex items-center gap-2 mb-1">
-                        <div className={`text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
+                        <div className={`text-xl sm:text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
                       </div>
                       {/* Dernière valeur critique */}
                       {metric.criticalLabel && (
@@ -1283,17 +1283,17 @@ const Optibrain = () => {
         </Dialog>
 
         <Card className="bg-white shadow-sm mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">
+          <CardHeader className="px-4 sm:px-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <CardTitle className="text-base sm:text-lg">
                 Adhérence & Monitorage {timeRange === "stay" ? "sur le séjour" : `sur ${timeRange}`}
               </CardTitle>
-              <div className="flex gap-2">
+              <div className="flex gap-1 sm:gap-2 flex-wrap">
                 {timeRanges.map((range) => (
                   <button
                     key={range}
                     onClick={() => setTimeRange(range)}
-                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-md transition-colors ${
                       timeRange === range ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
@@ -1311,9 +1311,9 @@ const Optibrain = () => {
                 onClick={() => setChecklistExpanded(!checklistExpanded)}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4">
                     <div
-                      className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
+                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold border-4 shrink-0 ${
                         monitoringAdherence === null
                           ? "border-gray-300 text-gray-400 bg-gray-50"
                           : monitoringAdherence >= 90
@@ -1325,8 +1325,8 @@ const Optibrain = () => {
                     >
                       {monitoringAdherence !== null ? `${monitoringAdherence}%` : "--"}
                     </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold text-gray-700">Monitorage et interventions en place</h3>
                       <p className="text-xs text-gray-500 mt-1">
                         {patientFileData
                           ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}`
@@ -1335,15 +1335,15 @@ const Optibrain = () => {
                     </div>
                   </div>
                   {checklistExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-gray-400" />
+                    <ChevronUp className="h-5 w-5 text-gray-400 shrink-0" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                    <ChevronDown className="h-5 w-5 text-gray-400 shrink-0" />
                   )}
                 </div>
               </CardHeader>
               {checklistExpanded && (
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-5 gap-4 pt-4">
+                <CardContent className="pt-0 px-3 sm:px-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
                       // Couleur basée sur le pourcentage d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
                       const dotColor =
@@ -1403,16 +1403,15 @@ const Optibrain = () => {
               )}
             </Card>
 
-            {/* Clinical Indicators Adherence */}
             <Card className="border-2 border-gray-200">
               <CardHeader
                 className="cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => setClinicalExpanded(!clinicalExpanded)}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4">
                     <div
-                      className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
+                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold border-4 shrink-0 ${
                         clinicalAdherence === null
                           ? "border-gray-300 text-gray-400 bg-gray-50"
                           : clinicalAdherence >= 90
@@ -1424,23 +1423,23 @@ const Optibrain = () => {
                     >
                       {clinicalAdherence !== null ? `${clinicalAdherence}%` : "--"}
                     </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700">Adhérence aux cibles recommandées</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold text-gray-700">Adhérence aux cibles recommandées</h3>
                       <p className="text-xs text-gray-500 mt-1">
                         {patientFileData ? `${outOfRangeCount} Indicateurs à surveiller` : "Pas de données disponibles"}
                       </p>
                     </div>
                   </div>
                   {clinicalExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-gray-400" />
+                    <ChevronUp className="h-5 w-5 text-gray-400 shrink-0" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                    <ChevronDown className="h-5 w-5 text-gray-400 shrink-0" />
                   )}
                 </div>
               </CardHeader>
               {clinicalExpanded && (
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-5 gap-4 pt-4">
+                <CardContent className="pt-0 px-3 sm:px-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
                       const chartColor = isSelected ? getIndicatorColor(indicator.label) : null;
@@ -1509,27 +1508,28 @@ const Optibrain = () => {
 
             {/* Monitoring Chart */}
             <Card ref={chartRef} className="border-2 border-gray-200">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <CardTitle className="text-lg">
-                      {timeRange === "stay" ? "Monitorage (Séjour complet)" : `Monitorage (${timeRange.toUpperCase()})`}
+              <CardHeader className="px-3 sm:px-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                    <CardTitle className="text-sm sm:text-lg">
+                      {timeRange === "stay" ? "Monitorage (Séjour)" : `Monitorage (${timeRange.toUpperCase()})`}
                     </CardTitle>
-                    <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                    <label className="flex items-center gap-1 sm:gap-2 text-xs text-gray-600 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={showTargetZones}
                         onChange={(e) => setShowTargetZones(e.target.checked)}
-                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                        className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                       />
-                      Zones cibles
+                      <span className="hidden sm:inline">Zones cibles</span>
+                      <span className="sm:hidden">Cibles</span>
                     </label>
                   </div>
-                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 self-start sm:self-auto">
                     {fileDataLoading ? (
                       <span className="flex items-center gap-1">
                         <Loader2 className="h-3 w-3 animate-spin" />
-                        Chargement...
+                        <span className="hidden sm:inline">Chargement...</span>
                       </span>
                     ) : (
                       getTimeRangeDisplayLabel(timeRange)
@@ -1537,15 +1537,15 @@ const Optibrain = () => {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6">
                 <div
-                  className={`border-2 border-gray-200 rounded-lg p-4 ${
-                    selectedIndicators.length === 0 ? "h-32" : "h-[300px]"
+                  className={`border-2 border-gray-200 rounded-lg p-2 sm:p-4 ${
+                    selectedIndicators.length === 0 ? "h-24 sm:h-32" : "h-[250px] sm:h-[300px]"
                   }`}
                 >
                   {selectedIndicators.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
-                      <p className="text-gray-400">
+                      <p className="text-gray-400 text-xs sm:text-base text-center px-2">
                         Sélectionnez des indicateurs ci-dessus pour afficher leurs tendances
                       </p>
                     </div>
