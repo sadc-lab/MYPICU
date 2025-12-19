@@ -1227,17 +1227,18 @@ const Optibrain = () => {
               </CardHeader>
               {clinicalExpanded && (
                 <CardContent className="pt-0">
-                  <div className="grid grid-cols-5 gap-4 pt-4">
-                    // Remplacez cette partie dans le return JSX :
+                  <div className="grid grid-cols-5 gap-4 pt-4">// ===== CORRECTION complète de la section problématique =====
 {clinicalIndicators.map((indicator, index) => {
   const isSelected = selectedIndicators.includes(indicator.label);
   const dotColor = getAdherenceColor(indicator.adherencePercentage);
   const textColor = getAdherenceTextColor(indicator.adherencePercentage);
-  
+
   return (
     <div
       key={index}
-      className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${isSelected ? "bg-blue-50 border-2 border-blue-400" : "hover:bg-gray-50"}`}
+      className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${
+        isSelected ? "bg-blue-50 border-2 border-blue-400" : "hover:bg-gray-50"
+      }`}
       onClick={() => {
         setSelectedIndicators((prev) =>
           prev.includes(indicator.label)
@@ -1246,7 +1247,9 @@ const Optibrain = () => {
         );
       }}
     >
-      <div className={`w-3 h-3 rounded-full mt-1 ${dotColor} ${isSelected ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}></div>
+      <div
+        className={`w-3 h-3 rounded-full mt-1 ${dotColor} ${isSelected ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}
+      ></div>
       <div className="flex-1">
         <div className="flex items-center gap-1">
           <p className="text-sm font-medium text-gray-700">{indicator.label}</p>
@@ -1259,7 +1262,7 @@ const Optibrain = () => {
     </div>
   );
 })}
-                        >
+                 
                           <div
                             className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}
                           ></div>
