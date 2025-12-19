@@ -444,7 +444,7 @@ const Optibrain = () => {
   // Get real PIC, PPC and PACO2 values from patient file data
   const realBrainValues = useMemo(() => {
     if (!patientFileData) {
-      return { pic: null, ppc: null, paco2: null, picMax: null };
+      return { pic: null, ppc: null, paco2: null, picMax: null, ppcMin: null, ppcMax: null };
     }
     const picLatest = getLatestValue(patientFileData, "Variable_PIC");
     const ppcLatest = getLatestValue(patientFileData, "Variable_PPC");
@@ -456,11 +456,22 @@ const Optibrain = () => {
       ? Math.max(...picData.map(d => d.valeur))
       : null;
     
+    // Calculer le PPC min et max sur les dernières 24h
+    const ppcData = getTimeSeriesForRange(patientFileData, "Variable_PPC", 24, 15, true);
+    const ppcMin = ppcData.length > 0 
+      ? Math.min(...ppcData.map(d => d.valeur))
+      : null;
+    const ppcMax = ppcData.length > 0 
+      ? Math.max(...ppcData.map(d => d.valeur))
+      : null;
+    
     return {
       pic: picLatest?.value ?? null,
       ppc: ppcLatest?.value ?? null,
       paco2: paco2Latest?.value ?? null,
       picMax: picMax,
+      ppcMin: ppcMin,
+      ppcMax: ppcMax,
     };
   }, [patientFileData]);
 
@@ -604,11 +615,23 @@ const Optibrain = () => {
       trend: "stable",
       change: 0,
       description: "Cible 60-70 mmHg",
-      // Dernière valeur critique: si PPC était hors cible
-      criticalLabel: ppcValue !== null && (ppcValue < 60 || ppcValue > 70) 
-        ? `Actuel: ${Math.round(ppcValue)}` 
-        : null,
-      criticalColor: ppcValue !== null && (ppcValue < 50 || ppcValue > 80) ? "text-red-500" : "text-orange-500",
+      // Dernière valeur problématique: PPC min ou max hors cible (60-70)
+      criticalLabel: (() => {
+        const { ppcMin, ppcMax } = realBrainValues;
+        if (ppcMin !== null && ppcMin < 60) {
+          return `Min 24h: ${Math.round(ppcMin)} mmHg`;
+        }
+        if (ppcMax !== null && ppcMax > 70) {
+          return `Max 24h: ${Math.round(ppcMax)} mmHg`;
+        }
+        return null;
+      })(),
+      criticalColor: (() => {
+        const { ppcMin, ppcMax } = realBrainValues;
+        if (ppcMin !== null && ppcMin < 50) return "text-red-500";
+        if (ppcMax !== null && ppcMax > 80) return "text-red-500";
+        return "text-orange-500";
+      })(),
     },
   ];
 
