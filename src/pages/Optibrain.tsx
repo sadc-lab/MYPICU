@@ -1399,11 +1399,13 @@ const Optibrain = () => {
                               labelStyle={{ fontWeight: 600, marginBottom: 8 }}
                               formatter={(value: number, name: string) => {
                                 const color = getIndicatorColor(name);
+                                const indicator = clinicalIndicators.find((i) => i.label === name);
+                                const unit = indicator?.target.match(/[a-zA-Z°%/]+$/)?.[0] || "";
                                 return [
-                                  <span key={name} style={{ color, fontWeight: 500 }}>
-                                    {value.toFixed(1)}
+                                  <span key={name} style={{ color, fontWeight: 600 }}>
+                                    {name}: {value.toFixed(1)} {unit}
                                   </span>,
-                                  <span key={`${name}-label`} style={{ color }}>{name}</span>
+                                  null
                                 ];
                               }}
                             />
