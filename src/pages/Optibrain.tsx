@@ -511,19 +511,6 @@ const Optibrain = () => {
     return value >= min && value <= max;
   };
 
-  // Base clinical indicators with targets
-  const baseClinicalIndicators = [
-    { label: "Tête", target: "0-30°" },
-    { label: "PIC", target: "< 20mmHg" },
-    { label: "PPC", target: "60-70 mmHg" },
-    { label: "Température", target: "35-38°C" },
-    { label: "PaCO2", target: "35-45mmHg" },
-    { label: "Glycémie", target: "6-11 mmol/L" },
-    { label: "Hémoglobine", target: "> 7g/dl" },
-    { label: "INR", target: "< 1.2" },
-    { label: "Plaquettes", target: "> 100 g/L" },
-  ];
-
   // Calculate clinical adherence (average of indicators with real data only)
   const clinicalAdherence = useMemo(() => {
     const indicatorsWithData = clinicalIndicators.filter((i) => i.adherencePercentage !== null);
