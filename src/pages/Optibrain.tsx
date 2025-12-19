@@ -236,18 +236,89 @@ const Optibrain = () => {
 
   const hoursForAdherence = getHoursFromTimeRangeForAdherence(timeRange);
 
+  // Helper pour calculer la durée depuis la première administration d'un médicament
+  const getMedicationDuration = (variableKey: string): { hours: number; drugName: string | null } | null => {
+    if (!patientFileData) return null;
+    
+    const data = patientFileData[variableKey] as Array<{ charttime: string; drugname?: string }> | undefined;
+    if (!data || data.length === 0) return null;
+    
+    // Trier par date pour trouver la première administration
+    const sortedData = [...data].sort((a, b) => 
+      new Date(a.charttime).getTime() - new Date(b.charttime).getTime()
+    );
+    
+    const firstDate = new Date(sortedData[0].charttime);
+    const lastDate = new Date(sortedData[sortedData.length - 1].charttime);
+    const durationMs = lastDate.getTime() - firstDate.getTime();
+    const hours = Math.round(durationMs / (1000 * 60 * 60));
+    
+    return { 
+      hours, 
+      drugName: sortedData[0].drugname || null 
+    };
+  };
+
+  // Helper pour formater la durée en texte lisible
+  const formatDuration = (hours: number): string => {
+    if (hours < 1) return "< 1h";
+    if (hours < 24) return `${hours}h`;
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    if (remainingHours === 0) return `${days}j`;
+    return `${days}j ${remainingHours}h`;
+  };
+
   // Monitoring targets avec synchronisation des données visibles
   const monitoringTargets = useMemo(() => {
+    // Calculer les durées pour les médicaments
+    const propofolDuration = getMedicationDuration("Variable_hypnotiques");
+    const opioideDuration = getMedicationDuration("Variable_opioides");
+    const antiEpileptiqueDuration = getMedicationDuration("Variable_anti_epileptique");
+
+    // Trouver le nom du propofol dans les hypnotiques
+    const hypnotiquesData = patientFileData?.Variable_hypnotiques as Array<{ drugname?: string }> | undefined;
+    const propofolEntry = hypnotiquesData?.find(h => h.drugname?.toLowerCase().includes("propofol"));
+    const isOnPropofol = !!propofolEntry;
+
     const defaultIndicators = [
-      { label: "Opioide", description: "En cours", target: "normal" },
-      { label: "Hypnotique", description: "En cours", target: "normal" },
-      { label: "Propofol 48h", description: "<48h", target: "normal" },
-      { label: "Anti-Epileptique", description: "Monitorée", target: "normal" },
-      { label: "PIC", description: "Monitorée", target: "< 20mmHg" },
-      { label: "PAM", description: "Monitorée", target: "normal" },
-      { label: "PVC", description: "Monitorée", target: "normal" },
-      { label: "ETCO2", description: "Monitorée", target: "normal" },
-      { label: "Température", description: "Monitorée", target: "35-38°C" },
+      { 
+        label: "Opioide", 
+        description: opioideDuration ? `${opioideDuration.drugName || "En cours"}` : "En cours", 
+        target: "normal",
+        contextInfo: opioideDuration 
+          ? `Sous ${opioideDuration.drugName || "opioïde"} depuis ${formatDuration(opioideDuration.hours)}`
+          : null
+      },
+      { 
+        label: "Hypnotique", 
+        description: propofolDuration ? `${propofolDuration.drugName || "En cours"}` : "En cours", 
+        target: "normal",
+        contextInfo: propofolDuration 
+          ? `Sous ${propofolDuration.drugName || "hypnotique"} depuis ${formatDuration(propofolDuration.hours)}`
+          : null
+      },
+      { 
+        label: "Propofol 48h", 
+        description: isOnPropofol ? (propofolDuration && propofolDuration.hours > 48 ? "> 48h" : "< 48h") : "Non administré", 
+        target: "normal",
+        contextInfo: isOnPropofol && propofolDuration
+          ? `Propofol administré depuis ${formatDuration(propofolDuration.hours)}${propofolDuration.hours > 48 ? " ⚠️" : ""}`
+          : "Pas de propofol administré"
+      },
+      { 
+        label: "Anti-Epileptique", 
+        description: antiEpileptiqueDuration ? `${antiEpileptiqueDuration.drugName || "Monitorée"}` : "Monitorée", 
+        target: "normal",
+        contextInfo: antiEpileptiqueDuration 
+          ? `Sous ${antiEpileptiqueDuration.drugName || "anti-épileptique"} depuis ${formatDuration(antiEpileptiqueDuration.hours)}`
+          : null
+      },
+      { label: "PIC", description: "Monitorée", target: "< 20mmHg", contextInfo: null },
+      { label: "PAM", description: "Monitorée", target: "normal", contextInfo: null },
+      { label: "PVC", description: "Monitorée", target: "normal", contextInfo: null },
+      { label: "ETCO2", description: "Monitorée", target: "normal", contextInfo: null },
+      { label: "Température", description: "Monitorée", target: "35-38°C", contextInfo: null },
     ];
 
     if (!patientFileData) {
@@ -1488,16 +1559,22 @@ const Optibrain = () => {
                               <TooltipTrigger asChild>
                                 <div className={`w-3 h-3 rounded-full ${dotColor} cursor-help`}></div>
                               </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-48">
-                                {target.adherencePercentage !== null 
-                                  ? (
-                                    <div>
-                                      <div className="font-semibold">{target.adherencePercentage}% adhérence</div>
-                                      <div className="text-gray-400 mt-1">% du temps passé dans la cible recommandée</div>
-                                    </div>
-                                  )
-                                  : "Pas de données"
-                                }
+                              <TooltipContent side="top" className="text-xs max-w-56">
+                                {target.contextInfo ? (
+                                  <div>
+                                    <div className="font-semibold">{target.contextInfo}</div>
+                                    {target.adherencePercentage !== null && (
+                                      <div className="text-gray-400 mt-1">{target.adherencePercentage}% adhérence aux cibles</div>
+                                    )}
+                                  </div>
+                                ) : target.adherencePercentage !== null ? (
+                                  <div>
+                                    <div className="font-semibold">{target.adherencePercentage}% adhérence</div>
+                                    <div className="text-gray-400 mt-1">% du temps passé dans la cible recommandée</div>
+                                  </div>
+                                ) : (
+                                  "Pas de données"
+                                )}
                               </TooltipContent>
                             </UITooltip>
                           </TooltipProvider>
