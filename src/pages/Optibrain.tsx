@@ -113,39 +113,6 @@ const Optibrain = () => {
     const now = new Date();
     const startTime = new Date(now.getTime() - hoursBack * 60 * 60 * 1000);
 
-    // Fonction pour obtenir les données EXACTEMENT comme elles sont affichées dans le graphique
-  const getChartDataForAdherence = (
-    data: PatientFileData,
-    variableKey: string,
-    hoursBack: number,
-  ): { values: number[]; timestamps: Date[]; count: number } => {
-    if (!data || !data[variableKey]) {
-      return { values: [], timestamps: [], count: 0 };
-    }
-
-    const now = new Date();
-    const startTime = new Date(now.getTime() - hoursBack * 60 * 60 * 1000);
-
-    // Fonctions de couleur basées sur l'adhérence
-const getAdherenceColor = (adherencePercentage: number | null): string => {
-  if (adherencePercentage === null) return "bg-gray-300";
-  if (adherencePercentage >= 90) return "bg-green-500";
-  if (adherencePercentage >= 80) return "bg-orange-400";
-  return "bg-red-500";
-};
-
-const getAdherenceTextColor = (adherencePercentage: number | null): string => {
-  if (adherencePercentage === null) return "text-gray-400";
-  if (adherencePercentage >= 90) return "text-green-600";
-  if (adherencePercentage >= 80) return "text-orange-600";
-  return "text-red-600";
-};
-
-    // Type assertion pour corriger l'erreur TypeScript
-    const rawData = (data[variableKey] as TimeSeriesDataPoint[])
-      .filter((point) => {
-        const pointTime = new Date(point.charttime);
-
     // Type assertion pour corriger l'erreur TypeScript
     const rawData = (data[variableKey] as TimeSeriesDataPoint[])
       .filter((point) => {
