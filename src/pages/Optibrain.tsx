@@ -81,66 +81,51 @@ const Optibrain = () => {
   // Fonction pour ajuster temporellement les données (les traiter comme si c'était aujourd'hui)
   const adjustDataToCurrentTime = (data: PatientFileData): PatientFileData => {
     if (!data) return data;
-
+    
     const now = new Date();
     const allTimestamps = Object.values(data)
       .flat()
       .map((d: any) => new Date(d.charttime).getTime())
-      .filter((time) => !isNaN(time));
-
+      .filter(time => !isNaN(time));
+    
     if (allTimestamps.length === 0) return data;
-
+    
     const mostRecentDataPoint = Math.max(...allTimestamps);
     const timeDiff = now.getTime() - mostRecentDataPoint;
-
+    
     const adjustedData: PatientFileData = {};
-
+    
     Object.entries(data).forEach(([key, values]) => {
       if (Array.isArray(values)) {
         adjustedData[key] = values.map((point: any) => ({
           ...point,
-          charttime: new Date(new Date(point.charttime).getTime() + timeDiff).toISOString(),
+          charttime: new Date(new Date(point.charttime).getTime() + timeDiff).toISOString()
         }));
       }
     });
-
+    
     return adjustedData;
   };
 
   // Fonction helper pour obtenir la clé de variable depuis le label
   const getVariableKeyFromLabel = (label: string): string => {
     const mapping: Record<string, string> = {
-      FC: "Variable_FC",
-      PIC: "Variable_PIC",
-      PPC: "Variable_PPC",
-      PAM: "Variable_PAM",
-      PVC: "Variable_PVC",
-      Température: "Variable_temperature",
-      ETCO2: "Variable_ETCO2",
-      PaCO2: "Variable_paco2",
-      Tête: "Variable_position_tete",
-      Glycémie: "Variable_glycemie",
-      INR: "Variable_INR",
-      Plaquettes: "Variable_plaquettes",
-      Hémoglobine: "Variable_hemoglobine",
+      "FC": "Variable_FC",
+      "PIC": "Variable_PIC", 
+      "PPC": "Variable_PPC",
+      "PAM": "Variable_PAM",
+      "PVC": "Variable_PVC",
+      "Température": "Variable_temperature",
+      "ETCO2": "Variable_ETCO2",
+      "PaCO2": "Variable_paco2",
+      "Tête": "Variable_position_tete",
+      "Glycémie": "Variable_glycemie",
+      "INR": "Variable_INR",
+      "Plaquettes": "Variable_plaquettes",
+      "Hémoglobine": "Variable_hemoglobine",
     };
     return mapping[label] || "";
   };
-
-  // Load patient file data with temporal adjustment
-  useEffect(() => {
-    if (hasFileData) {
-      setFileDataLoading(true);
-      loadPatientFileData(patientId)
-        .then((data) => {
-          const adjustedData = adjustDataToCurrentTime(data);
-          setPatientFileData(adjustedData);
-        })
-        .finally(() => setFileDataLoading(false));
-    } else {
-      setPatientFileData(null);
-    }
-  }, [patientId, hasFileData]);
 
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRange = (range: string): number => {
@@ -162,6 +147,84 @@ const Optibrain = () => {
 
   const hoursForAdherence = getHoursFromTimeRange(timeRange);
 
+  // Load patient file data with temporal adjustment
+  useEffect(() => {
+    if (hasFileData) {
+      setFileDataLoading(true);
+      loadPatientFileData(patientId)
+        .then((data) => {
+          const adjustedData = adjustDataToCurrentTime(data);
+          setPatientFileData(adjustedData);
+        })
+        .finally(() => setFileDataLoading(false));
+    } else {
+      setPatientFileData(null);
+    }
+  }, [patientId, hasFileData]);
+
+  // Déplacer les calculs dépendants de patientFileData ici, après son initialisation
+
+  // Real data time series for charts (when patient file data is available)
+  const realTimeSeriesData = useMemo(() => {
+    if (!patientFileData) return null;
+
+    const hoursBack = getHoursFromTimeRange(timeRange);
+    const availableVars = getAvailableVariables(patientFileData);
+
+    // Map variable names to our indicator labels (case-sensitive, must match JSON exactly)
+    const varMapping: Record<string, string> = {
+      Variable_FC: "FC",
+      Variable_PIC: "PIC",
+      Variable_PPC: "PPC",
+      Variable_PAM: "PAM",
+      Variable_PVC: "PVC",
+      Variable_temperature: "Température",
+      Variable_ETCO2: "ETCO2",
+      Variable_paco2: "PaCO2",
+      Variable_position_tete: "Tête",
+      Variable_glycemie: "Glycémie",
+      Variable_INR: "INR",
+      Variable_plaquettes: "Plaquettes",
+      Variable_hemoglobine: "Hémoglobine",
+    };
+
+    const result: Record<string, { data: TimeSeriesDataPoint[]; isSparse: boolean }> = {};
+
+    Object.entries(varMapping).forEach(([varKey, label]) => {
+      if (availableVars.includes(varKey)) {
+        const isSparse = isVariableSparse(patientFileData, varKey, 20);
+        // Pour les données rares, ne pas échantillonner pour garder tous les points
+        const data = isSparse 
+          ? getAllTimeSeriesData(patientFileData, varKey, hoursBack, true)
+          : getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15, true);
+        result[label] = { data, isSparse };
+      }
+    });
+
+    return result;
+  }, [patientFileData, timeRange]);
+
+  // Get real PIC, PPC and PACO2 values from patient file data
+  const realBrainValues = useMemo(() => {
+    if (!patientFileData) {
+      return { pic: null, ppc: null, paco2: null };
+    }
+    const picLatest = getLatestValue(patientFileData, "Variable_PIC");
+    const ppcLatest = getLatestValue(patientFileData, "Variable_PPC");
+    const paco2Latest = getLatestValue(patientFileData, "Variable_paco2");
+    return {
+      pic: picLatest?.value ?? null,
+      ppc: ppcLatest?.value ?? null,
+      paco2: paco2Latest?.value ?? null,
+    };
+  }, [patientFileData]);
+
+  // Get real clinical indicators status from JSON data
+  const clinicalIndicatorsData = useMemo(() => {
+    if (!patientFileData) return null;
+    return getClinicalIndicatorsStatus(patientFileData, hoursForAdherence);
+  }, [patientFileData, hoursForAdherence]);
+
   // AMÉLIORÉ: Monitoring targets avec synchronisation des données visibles
   const monitoringTargets = useMemo(() => {
     const defaultIndicators = [
@@ -181,7 +244,7 @@ const Optibrain = () => {
       return defaultIndicators.map((indicator) => ({
         ...indicator,
         adherencePercentage: null as number | null,
-        status: null as "normal" | "warning" | "critical" | null,
+        status: null as 'normal' | 'warning' | 'critical' | null,
         hasRealData: false,
       }));
     }
@@ -191,21 +254,51 @@ const Optibrain = () => {
     return defaultIndicators.map((indicator) => {
       const realData = realStatus.find((s) => s.label === indicator.label);
       const variableKey = getVariableKeyFromLabel(indicator.label);
-
+      
       // Si on a des données dans le graphique, calculer l'adhérence sur ces données
-      if (
-        realTimeSeriesData &&
-        realTimeSeriesData[indicator.label] &&
-        realTimeSeriesData[indicator.label].data.length > 0
-      ) {
-        const adherenceInfo = calculateTimeInRanges(patientFileData, variableKey, hoursForAdherence);
+      if (realTimeSeriesData && realTimeSeriesData[indicator.label] && realTimeSeriesData[indicator.label].data.length > 0) {
+        const now = new Date();
+        const startTime = new Date(now.getTime() - hoursForAdherence * 60 * 60 * 1000);
+        
+        // Filtrer les données dans la plage temporelle
+        const recentData = patientFileData[variableKey]?.filter(point => {
+          const pointTime = new Date(point.charttime);
+          return pointTime >= startTime && pointTime <= now;
+        }) || [];
 
-        return {
-          ...indicator,
-          adherencePercentage: adherenceInfo?.percentage ?? realData?.adherencePercentage ?? null,
-          status: realData?.status ?? null,
-          hasRealData: true,
-        };
+        if (recentData.length > 0) {
+          // Parser la plage cible
+          const rangeMatch = indicator.target.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
+          let minTarget = 0;
+          let maxTarget = 0;
+          
+          if (rangeMatch) {
+            minTarget = parseFloat(rangeMatch[1]);
+            maxTarget = parseFloat(rangeMatch[2]);
+          } else if (indicator.target.includes('<')) {
+            maxTarget = parseFloat(indicator.target.match(/(\d+(?:\.\d+)?)/)?.[1] || '0');
+            minTarget = -Infinity;
+          } else if (indicator.target.includes('>')) {
+            minTarget = parseFloat(indicator.target.match(/(\d+(?:\.\d+)?)/)?.[1] || '0');
+            maxTarget = Infinity;
+          }
+          
+          let inRangeCount = 0;
+          recentData.forEach(point => {
+            if (point.valeur >= minTarget && point.valeur <= maxTarget) {
+              inRangeCount++;
+            }
+          });
+          
+          const percentage = Math.round((inRangeCount / recentData.length) * 100);
+          
+          return {
+            ...indicator,
+            adherencePercentage: percentage,
+            status: realData?.status ?? null,
+            hasRealData: true,
+          };
+        }
       }
 
       return {
@@ -217,36 +310,124 @@ const Optibrain = () => {
     });
   }, [patientFileData, realTimeSeriesData, hoursForAdherence]);
 
-  // Get real clinical indicators status from JSON data
-  const clinicalIndicatorsData = useMemo(() => {
-    if (!patientFileData) return null;
-    return getClinicalIndicatorsStatus(patientFileData, hoursForAdherence);
-  }, [patientFileData, hoursForAdherence]);
+  // Base clinical indicators with targets
+  const baseClinicalIndicators = [
+    { label: "Tête", target: "0-30°" },
+    { label: "PIC", target: "< 20mmHg" },
+    { label: "PPC", target: "60-70 mm Hg" },
+    { label: "Température", target: "35-38°C" },
+    { label: "PaCO2", target: "35-45mmHg" },
+    { label: "Glycémie", target: "6-11 mmol/L" },
+    { label: "Hémoglobine", target: "> 7g/dl" },
+    { label: "INR", target: "< 1.2" },
+    { label: "Plaquettes", target: "> 100 g/L" },
+  ];
+
+  // AMÉLIORÉ: Merge with real data from JSON - utiliser les données visibles du graphique
+  const clinicalIndicators = useMemo(() => {
+    return baseClinicalIndicators.map((base) => {
+      const realData = clinicalIndicatorsData?.find((d) => d.label === base.label);
+      const variableKey = getVariableKeyFromLabel(base.label);
+      
+      // Si on a des données dans le graphique, calculer l'adhérence sur ces données
+      if (realTimeSeriesData && realTimeSeriesData[base.label] && realTimeSeriesData[base.label].data.length > 0) {
+        const now = new Date();
+        const startTime = new Date(now.getTime() - hoursForAdherence * 60 * 60 * 1000);
+        
+        // Filtrer les données dans la plage temporelle
+        const recentData = patientFileData[variableKey]?.filter(point => {
+          const pointTime = new Date(point.charttime);
+          return pointTime >= startTime && pointTime <= now;
+        }) || [];
+
+        if (recentData.length > 0) {
+          // Parser la plage cible
+          const rangeMatch = base.target.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
+          let minTarget = 0;
+          let maxTarget = 0;
+          
+          if (rangeMatch) {
+            minTarget = parseFloat(rangeMatch[1]);
+            maxTarget = parseFloat(rangeMatch[2]);
+          } else if (base.target.includes('<')) {
+            maxTarget = parseFloat(base.target.match(/(\d+(?:\.\d+)?)/)?.[1] || '0');
+            minTarget = -Infinity;
+          } else if (base.target.includes('>')) {
+            minTarget = parseFloat(base.target.match(/(\d+(?:\.\d+)?)/)?.[1] || '0');
+            maxTarget = Infinity;
+          }
+          
+          let inRangeCount = 0;
+          recentData.forEach(point => {
+            if (point.valeur >= minTarget && point.valeur <= maxTarget) {
+              inRangeCount++;
+            }
+          });
+          
+          const percentage = Math.round((inRangeCount / recentData.length) * 100);
+          
+          return {
+            label: base.label,
+            target: base.target,
+            status: realData?.status ?? null,
+            adherencePercentage: percentage,
+            hasRealData: true,
+          };
+        }
+      }
+
+      return {
+        label: base.label,
+        target: base.target,
+        status: realData?.status ?? null,
+        adherencePercentage: realData?.adherencePercentage ?? null,
+        hasRealData: realData !== undefined,
+      };
+    });
+  }, [clinicalIndicatorsData, realTimeSeriesData, patientFileData, hoursForAdherence]);
 
   // AMÉLIORÉ: Calculate overall monitoring adherence (average of targets with real data only)
   const monitoringAdherence = useMemo(() => {
-    const targetsWithData = monitoringTargets.filter((t) => t.adherencePercentage !== null);
+    const targetsWithData = monitoringTargets.filter((t) => t.hasRealData);
     if (targetsWithData.length === 0) return null;
-    const totalPercentage = targetsWithData.reduce((sum, t) => sum + (t.adherencePercentage ?? 0), 0);
-    return Math.round(totalPercentage / targetsWithData.length);
+    
+    let totalPercentage = 0;
+    let validIndicators = 0;
+    
+    targetsWithData.forEach((target) => {
+      if (target.adherencePercentage !== null) {
+        totalPercentage += target.adherencePercentage;
+        validIndicators++;
+      }
+    });
+    
+    return validIndicators > 0 ? Math.round(totalPercentage / validIndicators) : null;
   }, [monitoringTargets]);
-
+  
   const nonAdherentCount = monitoringTargets.filter((t) => t.status !== null && t.status !== "normal").length;
 
-  // Get real PIC, PPC and PACO2 values from patient file data
-  const realBrainValues = useMemo(() => {
-    if (!patientFileData) {
-      return { pic: null, ppc: null, paco2: null };
-    }
-    const picLatest = getLatestValue(patientFileData, "Variable_PIC");
-    const ppcLatest = getLatestValue(patientFileData, "Variable_PPC");
-    const paco2Latest = getLatestValue(patientFileData, "Variable_paco2");
-    return {
-      pic: picLatest?.value ?? null,
-      ppc: ppcLatest?.value ?? null,
-      paco2: paco2Latest?.value ?? null,
-    };
-  }, [patientFileData]);
+  // AMÉLIORÉ: Calculate clinical adherence (average of indicators with real data only)
+  const clinicalAdherence = useMemo(() => {
+    const indicatorsWithData = clinicalIndicators.filter((i) => i.hasRealData);
+    if (indicatorsWithData.length === 0) return null;
+    
+    let totalPercentage = 0;
+    let validIndicators = 0;
+    
+    indicatorsWithData.forEach((indicator) => {
+      if (indicator.adherencePercentage !== null) {
+        totalPercentage += indicator.adherencePercentage;
+        validIndicators++;
+      }
+    });
+    
+    return validIndicators > 0 ? Math.round(totalPercentage / validIndicators) : null;
+  }, [clinicalIndicators]);
+  
+  const outOfRangeCount = clinicalIndicators.filter((i) => i.status !== null && i.status !== "normal").length;
+
+  // Le reste du composant continue ici...
+  // [Le reste du code reste identique mais sera exécuté après que toutes les variables soient définies]
 
   if (!patient) {
     return (
@@ -258,7 +439,7 @@ const Optibrain = () => {
       </div>
     );
   }
-
+  
   // Override brainMetrics with real data when available
   const brainMetrics = useMemo(() => {
     return importedBrainMetrics.map((metric) => {
@@ -371,108 +552,10 @@ const Optibrain = () => {
       description: "Cible 60-70 mmHg",
     },
   ];
-
+  
   const isInRange = (value: number, min: number, max: number) => {
     return value >= min && value <= max;
   };
-
-  // Base clinical indicators with targets
-  const baseClinicalIndicators = [
-    { label: "Tête", target: "0-30°" },
-    { label: "PIC", target: "< 20mmHg" },
-    { label: "PPC", target: "60-70 mmHg" },
-    { label: "Température", target: "35-38°C" },
-    { label: "PaCO2", target: "35-45mmHg" },
-    { label: "Glycémie", target: "6-11 mmol/L" },
-    { label: "Hémoglobine", target: "> 7g/dl" },
-    { label: "INR", target: "< 1.2" },
-    { label: "Plaquettes", target: "> 100 g/L" },
-  ];
-
-  // AMÉLIORÉ: Merge with real data from JSON - utiliser les données visibles du graphique
-  const clinicalIndicators = useMemo(() => {
-    return baseClinicalIndicators.map((base) => {
-      const realData = clinicalIndicatorsData?.find((d) => d.label === base.label);
-      const variableKey = getVariableKeyFromLabel(base.label);
-
-      // Si on a des données dans le graphique, utiliser ces données pour l'adhérence
-      if (realTimeSeriesData && realTimeSeriesData[base.label] && realTimeSeriesData[base.label].data.length > 0) {
-        // Calculer l'adhérence basée sur les données visibles
-        const now = new Date();
-        const startTime = new Date(now.getTime() - hoursForAdherence * 60 * 60 * 1000);
-
-        // Filtrer les données dans la plage temporelle
-        const recentData =
-          patientFileData[variableKey]?.filter((point) => {
-            const pointTime = new Date(point.charttime);
-            return pointTime >= startTime && pointTime <= now;
-          }) || [];
-
-        if (recentData.length > 0) {
-          // Parser la plage cible
-          const rangeMatch = base.target.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
-          let minTarget = 0;
-          let maxTarget = 0;
-
-          if (rangeMatch) {
-            minTarget = parseFloat(rangeMatch[1]);
-            maxTarget = parseFloat(rangeMatch[2]);
-          } else if (base.target.includes("<")) {
-            maxTarget = parseFloat(base.target.match(/(\d+(?:\.\d+)?)/)?.[1] || "0");
-            minTarget = -Infinity;
-          } else if (base.target.includes(">")) {
-            minTarget = parseFloat(base.target.match(/(\d+(?:\.\d+)?)/)?.[1] || "0");
-            maxTarget = Infinity;
-          }
-
-          let inRangeCount = 0;
-          recentData.forEach((point) => {
-            if (point.valeur >= minTarget && point.valeur <= maxTarget) {
-              inRangeCount++;
-            }
-          });
-
-          const percentage = Math.round((inRangeCount / recentData.length) * 100);
-
-          return {
-            label: base.label,
-            target: base.target,
-            status: realData?.status ?? null,
-            adherencePercentage: percentage,
-            hasRealData: true,
-          };
-        }
-      }
-
-      return {
-        label: base.label,
-        target: base.target,
-        status: realData?.status ?? null,
-        adherencePercentage: realData?.adherencePercentage ?? null,
-        hasRealData: realData !== undefined,
-      };
-    });
-  }, [clinicalIndicatorsData, realTimeSeriesData, patientFileData, hoursForAdherence]);
-
-  // AMÉLIORÉ: Calculate clinical adherence (average of indicators with real data only)
-  const clinicalAdherence = useMemo(() => {
-    const indicatorsWithData = clinicalIndicators.filter((i) => i.hasRealData);
-    if (indicatorsWithData.length === 0) return null;
-
-    let totalPercentage = 0;
-    let validIndicators = 0;
-
-    indicatorsWithData.forEach((indicator) => {
-      if (indicator.adherencePercentage !== null) {
-        totalPercentage += indicator.adherencePercentage;
-        validIndicators++;
-      }
-    });
-
-    return validIndicators > 0 ? Math.round(totalPercentage / validIndicators) : null;
-  }, [clinicalIndicators]);
-
-  const outOfRangeCount = clinicalIndicators.filter((i) => i.status !== null && i.status !== "normal").length;
 
   // Calculate time spent in each PIC range from real data - AMÉLIORÉ avec filtrage temporel
   const picRangeData = useMemo(() => {
@@ -503,7 +586,7 @@ const Optibrain = () => {
           { label: "> 30 mmHg", minutes: 0, percentage: 0, color: "red", status: "critical" },
           { label: "< 20 mmHg", minutes: 0, percentage: 0, color: "gray", status: "normal" },
         ],
-        currentPic: null,
+        currentPic: realBrainValues.pic,
         averagePic: null,
         totalMinutes: 0,
       };
@@ -511,9 +594,9 @@ const Optibrain = () => {
 
     const now = new Date();
     const startTime = new Date(now.getTime() - hoursBack * 60 * 60 * 1000);
-
+    
     // Filtrer les données dans la plage temporelle actuelle
-    const picTimeSeries = (patientFileData["Variable_PIC"] || []).filter((point) => {
+    const picTimeSeries = (patientFileData["Variable_PIC"] || []).filter(point => {
       const pointTime = new Date(point.charttime);
       return pointTime >= startTime && pointTime <= now;
     });
@@ -591,46 +674,6 @@ const Optibrain = () => {
     };
   }, [patientFileData, realBrainValues.pic, picDialogTimeRange]);
 
-  // Real data time series for charts (when patient file data is available)
-  const realTimeSeriesData = useMemo(() => {
-    if (!patientFileData) return null;
-
-    const hoursBack = getHoursFromTimeRange(timeRange);
-    const availableVars = getAvailableVariables(patientFileData);
-
-    // Map variable names to our indicator labels (case-sensitive, must match JSON exactly)
-    const varMapping: Record<string, string> = {
-      Variable_FC: "FC",
-      Variable_PIC: "PIC",
-      Variable_PPC: "PPC",
-      Variable_PAM: "PAM",
-      Variable_PVC: "PVC",
-      Variable_temperature: "Température",
-      Variable_ETCO2: "ETCO2",
-      Variable_paco2: "PaCO2",
-      Variable_position_tete: "Tête",
-      Variable_glycemie: "Glycémie",
-      Variable_INR: "INR",
-      Variable_plaquettes: "Plaquettes",
-      Variable_hemoglobine: "Hémoglobine",
-    };
-
-    const result: Record<string, { data: TimeSeriesDataPoint[]; isSparse: boolean }> = {};
-
-    Object.entries(varMapping).forEach(([varKey, label]) => {
-      if (availableVars.includes(varKey)) {
-        const isSparse = isVariableSparse(patientFileData, varKey, 20);
-        // Pour les données rares, ne pas échantillonner pour garder tous les points
-        const data = isSparse
-          ? getAllTimeSeriesData(patientFileData, varKey, hoursBack, true)
-          : getTimeSeriesForRange(patientFileData, varKey, hoursBack, 15, true);
-        result[label] = { data, isSparse };
-      }
-    });
-
-    return result;
-  }, [patientFileData, timeRange]);
-
   // Chart data - utiliser UNIQUEMENT les données réelles
   const chartData = useMemo(() => {
     if (!realTimeSeriesData || Object.keys(realTimeSeriesData).length === 0) {
@@ -670,15 +713,12 @@ const Optibrain = () => {
           }
         } else {
           // Pour les données denses, interpoler ou prendre le plus proche
-          const closestPoint = data.reduce(
-            (closest, point) => {
-              const pointTime = new Date(point.charttime).getTime();
-              const closestTime = closest ? new Date(closest.charttime).getTime() : Infinity;
-              return Math.abs(pointTime - timestamp) < Math.abs(closestTime - timestamp) ? point : closest;
-            },
-            null as TimeSeriesDataPoint | null,
-          );
-
+          const closestPoint = data.reduce((closest, point) => {
+            const pointTime = new Date(point.charttime).getTime();
+            const closestTime = closest ? new Date(closest.charttime).getTime() : Infinity;
+            return Math.abs(pointTime - timestamp) < Math.abs(closestTime - timestamp) ? point : closest;
+          }, null as TimeSeriesDataPoint | null);
+          
           if (closestPoint && Math.abs(new Date(closestPoint.charttime).getTime() - timestamp) < 30 * 60 * 1000) {
             dataPoint[label] = closestPoint.valeur;
           }
@@ -695,7 +735,7 @@ const Optibrain = () => {
     return new Set(
       Object.entries(realTimeSeriesData)
         .filter(([_, { isSparse }]) => isSparse)
-        .map(([label]) => label),
+        .map(([label]) => label)
     );
   }, [realTimeSeriesData]);
 
@@ -1183,7 +1223,7 @@ const Optibrain = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">
-                    {timeRange === "stay" ? "Monitorage (Séjour complet)" : `Monitorage (${timeRange.toUpperCase()})`}
+                    {timeRange ===="stay" ? "Monitorage (Séjour complet)" : `Monitorage (${timeRange.toUpperCase()})`}
                   </CardTitle>
                   <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                     {fileDataLoading ? (
@@ -1280,11 +1320,7 @@ const Optibrain = () => {
                                   dataKey={label}
                                   stroke={getIndicatorColor(label)}
                                   strokeWidth={isSparse ? 0 : 2}
-                                  dot={
-                                    isSparse
-                                      ? { r: 6, fill: getIndicatorColor(label), stroke: getIndicatorColor(label) }
-                                      : false
-                                  }
+                                  dot={isSparse ? { r: 6, fill: getIndicatorColor(label), stroke: getIndicatorColor(label) } : false}
                                   activeDot={{ r: isSparse ? 8 : 4 }}
                                   connectNulls={false}
                                 />
