@@ -22,7 +22,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from "recharts";
 import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
 import { useTimeRange } from "@/hooks/useTimeRange";
 import { getStatusHexColor } from "@/utils/colorUtils";
@@ -72,6 +72,7 @@ const Optibrain = () => {
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
   const [picDialogTimeRange, setPicDialogTimeRange] = useState<string>("24h");
+  const [showTargetZones, setShowTargetZones] = useState(true);
 
   // Patient file data state
   const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
@@ -1255,9 +1256,20 @@ const Optibrain = () => {
             <Card className="border-2 border-gray-200">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">
-                    {timeRange === "stay" ? "Monitorage (Séjour complet)" : `Monitorage (${timeRange.toUpperCase()})`}
-                  </CardTitle>
+                  <div className="flex items-center gap-4">
+                    <CardTitle className="text-lg">
+                      {timeRange === "stay" ? "Monitorage (Séjour complet)" : `Monitorage (${timeRange.toUpperCase()})`}
+                    </CardTitle>
+                    <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showTargetZones}
+                        onChange={(e) => setShowTargetZones(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                      />
+                      Zones cibles
+                    </label>
+                  </div>
                   <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                     {fileDataLoading ? (
                       <span className="flex items-center gap-1">
@@ -1337,6 +1349,31 @@ const Optibrain = () => {
                       <div className="flex-1">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={chartData}>
+                            {/* Zones cibles en arrière-plan */}
+                            {showTargetZones && selectedIndicators.map((label, idx) => {
+                              const indicator = clinicalIndicators.find((i) => i.label === label);
+                              if (!indicator) return null;
+                              const target = parseTargetRange(indicator.target);
+                              // N'afficher que si on a des bornes finies
+                              if (target.min === -Infinity && target.max === Infinity) return null;
+                              const color = getIndicatorColor(label);
+                              // Pour < X, on utilise 0 comme min raisonnable
+                              const yMin = target.min === -Infinity ? 0 : target.min;
+                              // Pour > X, on utilise une valeur max raisonnable
+                              const yMax = target.max === Infinity ? target.min * 2 : target.max;
+                              return (
+                                <ReferenceArea
+                                  key={`zone-${label}`}
+                                  y1={yMin}
+                                  y2={yMax}
+                                  fill={color}
+                                  fillOpacity={0.08}
+                                  stroke={color}
+                                  strokeOpacity={0.3}
+                                  strokeDasharray="4 2"
+                                />
+                              );
+                            })}
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis
                               dataKey="time"
