@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Header } from "@/components/Header";
 import { PatientHeader } from "@/components/PatientHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,6 +74,9 @@ const Optibrain = () => {
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
   const [picDialogTimeRange, setPicDialogTimeRange] = useState<string>("24h");
   const [showTargetZones, setShowTargetZones] = useState(true);
+  
+  // Ref pour le graphique de monitorage
+  const chartRef = useRef<HTMLDivElement>(null);
 
   // Patient file data state
   const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
@@ -1465,6 +1468,10 @@ const Optibrain = () => {
                                 ? prev.filter((label) => label !== indicator.label)
                                 : [...prev, indicator.label],
                             );
+                            // Scroll vers le graphique
+                            setTimeout(() => {
+                              chartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }, 100);
                           }}
                         >
                           <TooltipProvider delayDuration={200}>
@@ -1501,7 +1508,7 @@ const Optibrain = () => {
             </Card>
 
             {/* Monitoring Chart */}
-            <Card className="border-2 border-gray-200">
+            <Card ref={chartRef} className="border-2 border-gray-200">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
