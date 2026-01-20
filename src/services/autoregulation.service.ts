@@ -34,12 +34,16 @@ interface AutoregulationFileData {
 // Cache for loaded autoregulation data
 const autoregulationCache = new Map<string, AutoregulationFileData>();
 
-// Available patient IDs with autoregulation data
+// Available patient IDs with autoregulation data files
 const AVAILABLE_AUTOREGULATION_PATIENTS = ["8448"];
+
+// Enable simulation mode for all patients when no real data exists
+const ENABLE_SIMULATION_FALLBACK = true;
 
 export function hasAutoregulationData(patientId: string): boolean {
   const normalizedId = patientId.replace("#", "");
-  return AVAILABLE_AUTOREGULATION_PATIENTS.includes(normalizedId);
+  // Return true if real data exists OR simulation is enabled
+  return AVAILABLE_AUTOREGULATION_PATIENTS.includes(normalizedId) || ENABLE_SIMULATION_FALLBACK;
 }
 
 export async function loadAutoregulationData(patientId: string): Promise<AutoregulationFileData | null> {
