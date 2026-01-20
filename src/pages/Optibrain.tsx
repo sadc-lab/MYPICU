@@ -45,6 +45,13 @@ import {
   PatientFileData,
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
+import {
+  loadAutoregulationData,
+  hasAutoregulationData,
+  getOptimalPPC,
+  getPPCStatusVsOptimal,
+  OptimalPPCResult,
+} from "@/services/autoregulation.service";
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -82,6 +89,17 @@ const Optibrain = () => {
   const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
   const [fileDataLoading, setFileDataLoading] = useState(false);
   const hasFileData = hasPatientFileData(patientId);
+
+  // Autoregulation data state for optimal PPC
+  const [optimalPPCResult, setOptimalPPCResult] = useState<OptimalPPCResult>({
+    optimalPPC: null,
+    lowerLimit: null,
+    upperLimit: null,
+    prxScore: null,
+    timestamp: null,
+    hasData: false,
+  });
+  const hasAutoregData = hasAutoregulationData(patientId);
 
   // ===== Fonctions utilitaires pour la synchronisation =====
 
@@ -218,6 +236,32 @@ const Optibrain = () => {
       setPatientFileData(null);
     }
   }, [patientId, hasFileData]);
+
+  // Load autoregulation data for optimal PPC calculation
+  useEffect(() => {
+    if (hasAutoregData) {
+      loadAutoregulationData(patientId)
+        .then((data) => {
+          if (data) {
+            // Use 30min window with 4h lookback as default
+            const result = getOptimalPPC(data, 30, 4);
+            setOptimalPPCResult(result);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load autoregulation data:", err);
+        });
+    } else {
+      setOptimalPPCResult({
+        optimalPPC: null,
+        lowerLimit: null,
+        upperLimit: null,
+        prxScore: null,
+        timestamp: null,
+        hasData: false,
+      });
+    }
+  }, [patientId, hasAutoregData]);
 
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRangeForAdherence = (range: string): number => {
@@ -609,17 +653,42 @@ const Optibrain = () => {
     },
     {
       label: "PPC Opt",
-      value: "65 mmHg",
-      displayValue: "65",
+      value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
+        ? `${Math.round(optimalPPCResult.optimalPPC)} mmHg` 
+        : "-- mmHg",
+      displayValue: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
+        ? `${Math.round(optimalPPCResult.optimalPPC)}` 
+        : "--",
       unit: "mmHg",
-      status: "normal",
+      status: (() => {
+        if (!optimalPPCResult.hasData || optimalPPCResult.optimalPPC === null) return "normal";
+        const ppcStatus = getPPCStatusVsOptimal(realBrainValues.ppc, optimalPPCResult);
+        if (ppcStatus === "below" || ppcStatus === "above") return "warning";
+        return "normal";
+      })(),
       hasDetails: true,
       dialogKey: "ppc",
       trend: "stable",
       change: 0,
-      description: "Cible 60-70 mmHg",
-      // Dernière valeur problématique: PPC min ou max hors cible (60-70)
+      description: optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
+        ? `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
+        : "Cible 60-70 mmHg",
+      // Afficher la zone d'autorégulation quand disponible
       criticalLabel: (() => {
+        // Si on a les données d'autorégulation, afficher le statut vs optimal
+        if (optimalPPCResult.hasData && realBrainValues.ppc !== null && optimalPPCResult.optimalPPC !== null) {
+          const ppcStatus = getPPCStatusVsOptimal(realBrainValues.ppc, optimalPPCResult);
+          if (ppcStatus === "below") {
+            const diff = Math.round((optimalPPCResult.lowerLimit ?? optimalPPCResult.optimalPPC) - realBrainValues.ppc);
+            return `PPC actuelle ${diff} mmHg sous la zone`;
+          }
+          if (ppcStatus === "above") {
+            const diff = Math.round(realBrainValues.ppc - (optimalPPCResult.upperLimit ?? optimalPPCResult.optimalPPC));
+            return `PPC actuelle ${diff} mmHg au-dessus`;
+          }
+          return null; // Dans la zone optimale
+        }
+        // Fallback: afficher min/max hors cible standard
         const { ppcMin, ppcMax } = realBrainValues;
         if (ppcMin !== null && ppcMin < 60) {
           return `Min 24h: ${Math.round(ppcMin)} mmHg`;
@@ -630,10 +699,14 @@ const Optibrain = () => {
         return null;
       })(),
       criticalColor: (() => {
+        if (optimalPPCResult.hasData && realBrainValues.ppc !== null) {
+          const ppcStatus = getPPCStatusVsOptimal(realBrainValues.ppc, optimalPPCResult);
+          if (ppcStatus === "below" || ppcStatus === "above") return "text-status-warning";
+        }
         const { ppcMin, ppcMax } = realBrainValues;
-        if (ppcMin !== null && ppcMin < 50) return "text-red-500";
-        if (ppcMax !== null && ppcMax > 80) return "text-red-500";
-        return "text-orange-500";
+        if (ppcMin !== null && ppcMin < 50) return "text-status-critical";
+        if (ppcMax !== null && ppcMax > 80) return "text-status-critical";
+        return "text-status-warning";
       })(),
     },
   ];
