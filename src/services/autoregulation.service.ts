@@ -237,3 +237,122 @@ export function getPPCStatusVsOptimal(
   if (currentPPC > ula) return "above";
   return "optimal";
 }
+
+// Data point for PRx vs PPC autoregulation curve
+export interface AutoregulationCurvePoint {
+  ppc: number;
+  prx: number;
+  count: number; // Number of samples at this PPC bin
+}
+
+// Generate PRx vs PPC curve data for visualization
+// Groups PPC values into bins and calculates mean PRx for each bin
+export function getAutoregulationCurveData(
+  data: AutoregulationFileData,
+  windowMinutes: number = 30,
+  binSize: number = 5 // PPC bin size in mmHg
+): {
+  curveData: AutoregulationCurvePoint[];
+  optimalPPC: number | null;
+  lowerLimit: number | null;
+  upperLimit: number | null;
+  minPrx: number | null;
+} {
+  const defaultResult = {
+    curveData: [],
+    optimalPPC: null,
+    lowerLimit: null,
+    upperLimit: null,
+    minPrx: null,
+  };
+  
+  const tableKey = Object.keys(data).find(k => k.includes("Fisher"));
+  if (!tableKey) return defaultResult;
+  
+  const tableData = data[tableKey];
+  if (!Array.isArray(tableData)) return defaultResult;
+  
+  const prxCol = `PRx_${windowMinutes}min`;
+  
+  // Collect all PPC-PRx pairs
+  const ppcPrxPairs: Array<{ ppc: number; prx: number }> = [];
+  
+  for (const entry of tableData) {
+    const row = parseCSVRow(entry);
+    
+    const ppc = parseNumericValue(row.get("PPC") || row.get("rawPPC") || "");
+    const prx = parseNumericValue(row.get(prxCol) || row.get("PRx") || "");
+    
+    if (ppc !== null && prx !== null && ppc > 0) {
+      ppcPrxPairs.push({ ppc, prx });
+    }
+  }
+  
+  if (ppcPrxPairs.length === 0) return defaultResult;
+  
+  // Group by PPC bins and calculate mean PRx
+  const bins = new Map<number, { sum: number; count: number }>();
+  
+  for (const { ppc, prx } of ppcPrxPairs) {
+    const binCenter = Math.round(ppc / binSize) * binSize;
+    const existing = bins.get(binCenter) || { sum: 0, count: 0 };
+    existing.sum += prx;
+    existing.count += 1;
+    bins.set(binCenter, existing);
+  }
+  
+  // Convert to curve data points
+  const curveData: AutoregulationCurvePoint[] = [];
+  let minPrx = Infinity;
+  let optimalPPCFromCurve: number | null = null;
+  
+  const sortedBins = Array.from(bins.entries()).sort((a, b) => a[0] - b[0]);
+  
+  for (const [ppc, { sum, count }] of sortedBins) {
+    if (count >= 3) { // Only include bins with enough samples
+      const meanPrx = sum / count;
+      curveData.push({
+        ppc,
+        prx: Math.round(meanPrx * 100) / 100,
+        count,
+      });
+      
+      if (meanPrx < minPrx) {
+        minPrx = meanPrx;
+        optimalPPCFromCurve = ppc;
+      }
+    }
+  }
+  
+  // Estimate LLA and ULA (where PRx crosses 0.3 threshold)
+  const PRX_THRESHOLD = 0.3;
+  let lowerLimit: number | null = null;
+  let upperLimit: number | null = null;
+  
+  // Find LLA (first crossing from left where PRx goes below threshold)
+  for (let i = 0; i < curveData.length - 1; i++) {
+    if (curveData[i].prx >= PRX_THRESHOLD && curveData[i + 1].prx < PRX_THRESHOLD) {
+      lowerLimit = curveData[i].ppc;
+      break;
+    }
+  }
+  
+  // Find ULA (first crossing from right where PRx goes above threshold)
+  for (let i = curveData.length - 1; i > 0; i--) {
+    if (curveData[i].prx >= PRX_THRESHOLD && curveData[i - 1].prx < PRX_THRESHOLD) {
+      upperLimit = curveData[i].ppc;
+      break;
+    }
+  }
+  
+  return {
+    curveData,
+    optimalPPC: optimalPPCFromCurve,
+    lowerLimit,
+    upperLimit,
+    minPrx: minPrx === Infinity ? null : Math.round(minPrx * 100) / 100,
+  };
+}
+
+// Re-export the parseCSVRow function for external use
+export { parseCSVRow };

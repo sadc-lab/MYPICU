@@ -52,6 +52,7 @@ import {
   getPPCStatusVsOptimal,
   OptimalPPCResult,
 } from "@/services/autoregulation.service";
+import { AutoregulationChart } from "@/components/AutoregulationChart";
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -1270,87 +1271,29 @@ const Optibrain = () => {
           </DialogContent>
         </Dialog>
 
-        {/* PPC Optimal Dialog */}
+        {/* PPC Optimal Dialog - Courbe d'autorégulation */}
         <Dialog open={openDialog === "ppc"} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>PPC optimale - Étude sur 6 heures</DialogTitle>
+              <DialogTitle>Autorégulation cérébrale - Courbe PRx vs PPC</DialogTitle>
             </DialogHeader>
-            <div className="space-y-6">
-              <div className="h-80 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={(() => {
-                      const data = [];
-                      const now = new Date();
-                      for (let i = 0; i <= 72; i++) {
-                        const time = new Date(now.getTime() - (72 - i) * 5 * 60000);
-                        const hours = time.getHours().toString().padStart(2, "0");
-                        const minutes = time.getMinutes().toString().padStart(2, "0");
-
-                        // Generate realistic PPC values with some variation
-                        const baseValue = 60;
-                        const variation = Math.sin(i / 10) * 8 + Math.random() * 6 - 3;
-                        const ppcValue = Math.max(48, Math.min(72, baseValue + variation));
-
-                        data.push({
-                          time: `${hours}:${minutes}`,
-                          ppc: Math.round(ppcValue * 10) / 10,
-                          target: 60,
-                          upperBound: 70,
-                          lowerBound: 50,
-                          current: i === 72 ? 65 : null,
-                        });
-                      }
-                      return data;
-                    })()}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                    <XAxis dataKey="time" stroke="#666" interval={11} tick={{ fontSize: 12 }} />
-                    <YAxis
-                      domain={[45, 75]}
-                      stroke="#666"
-                      label={{ value: "PPC (mmHg)", angle: -90, position: "insideLeft" }}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "rgba(255, 255, 255, 0.95)",
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                      }}
-                    />
-                    {/* Target PPC */}
-                    <Line
-                      type="monotone"
-                      dataKey="target"
-                      stroke="#444"
-                      strokeWidth={2}
-                      dot={false}
-                      name="PPC visée (60 mmHg)"
-                    />
-
-                    {/* Actual PPC values */}
-                    <Line
-                      type="monotone"
-                      dataKey="ppc"
-                      stroke="#ef4444"
-                      strokeWidth={2.5}
-                      dot={false}
-                      name="PPC actuelle"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="border-t border-border pt-4">
-                <div className="text-sm text-muted-foreground">
-                  PPC actuelle : <span className="font-semibold text-foreground">65 mmHg</span>
-                  <span className="mx-2">|</span>
-                  PPC visée : <span className="font-semibold text-foreground">60 mmHg</span>
+            <div className="space-y-4">
+              {/* Autoregulation Chart Component */}
+              <AutoregulationChart 
+                patientId={patientId} 
+                currentPPC={realBrainValues.ppc}
+                windowMinutes={30}
+              />
+              
+              {/* Fallback info when no autoregulation data */}
+              {!hasAutoregData && (
+                <div className="border-t border-border pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Données d'autorégulation non disponibles pour ce patient. 
+                    Utilisation de la cible standard : <span className="font-medium">60-70 mmHg</span>
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
