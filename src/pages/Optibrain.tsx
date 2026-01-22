@@ -489,13 +489,14 @@ const Optibrain = () => {
 
   const nonAdherentCount = monitoringTargets.filter((t) => t.status !== null && t.status !== "normal").length;
 
-  // Get real PIC, PPC and PACO2 values from patient file data
+  // Get real PIC, PPC, PAM and PACO2 values from patient file data
   const realBrainValues = useMemo(() => {
     if (!patientFileData) {
-      return { pic: null, ppc: null, paco2: null, picMax: null, ppcMin: null, ppcMax: null };
+      return { pic: null, ppc: null, pam: null, paco2: null, picMax: null, ppcMin: null, ppcMax: null, pamMin: null, pamMax: null };
     }
     const picLatest = getLatestValue(patientFileData, "Variable_PIC");
     const ppcLatest = getLatestValue(patientFileData, "Variable_PPC");
+    const pamLatest = getLatestValue(patientFileData, "Variable_PAM");
     const paco2Latest = getLatestValue(patientFileData, "Variable_paco2");
     
     // Calculer le PIC max (valeur problématique) sur les dernières 24h
@@ -513,13 +514,25 @@ const Optibrain = () => {
       ? Math.max(...ppcData.map(d => d.valeur))
       : null;
     
+    // Calculer la PAM min et max sur les dernières 24h
+    const pamData = getTimeSeriesForRange(patientFileData, "Variable_PAM", 24, 15, true);
+    const pamMin = pamData.length > 0 
+      ? Math.min(...pamData.map(d => d.valeur))
+      : null;
+    const pamMax = pamData.length > 0 
+      ? Math.max(...pamData.map(d => d.valeur))
+      : null;
+    
     return {
       pic: picLatest?.value ?? null,
       ppc: ppcLatest?.value ?? null,
+      pam: pamLatest?.value ?? null,
       paco2: paco2Latest?.value ?? null,
       picMax: picMax,
       ppcMin: ppcMin,
       ppcMax: ppcMax,
+      pamMin: pamMin,
+      pamMax: pamMax,
     };
   }, [patientFileData]);
 
@@ -1282,6 +1295,9 @@ const Optibrain = () => {
               <AutoregulationChart 
                 patientId={patientId} 
                 currentPPC={realBrainValues.ppc}
+                currentPAM={realBrainValues.pam}
+                pamMin={realBrainValues.pamMin}
+                pamMax={realBrainValues.pamMax}
                 windowMinutes={30}
               />
               
