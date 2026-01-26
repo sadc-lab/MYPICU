@@ -46,6 +46,8 @@ interface TimeSeriesPoint {
   time: number;
   ppc: number | null;
   pam: number | null;
+  lowerLimit: number | null;  // LLA - varies over time
+  upperLimit: number | null;  // ULA - varies over time
 }
 
 import { TimeWindowSelector, TimeWindowValue, timeWindowToHours, hoursToTimeWindow } from "@/components/ui/TimeWindowSelector";
@@ -147,6 +149,8 @@ export function AutoregulationChart({
                   time: normalizedTime,
                   ppc: point.nirs, // Use NIRS as PPC equivalent for display
                   pam: point.pam,
+                  lowerLimit: curveResult.lowerLimit, // NIRS uses fixed limits for now
+                  upperLimit: curveResult.upperLimit,
                 };
               })
               .sort((a: TimeSeriesPoint, b: TimeSeriesPoint) => a.time - b.time);
@@ -171,7 +175,7 @@ export function AutoregulationChart({
             setLowerLimit(curveResult.lowerLimit);
             setUpperLimit(curveResult.upperLimit);
             
-            // Get time series
+            // Get time series with time-varying LLA/ULA
             const hours = timeWindowToHours(selectedWindow) || 6;
             const timeSeriesRaw = getOptimalPPCTimeSeries(data, windowMinutes, 4, hours);
             const timeSeries: TimeSeriesPoint[] = timeSeriesRaw.map((point) => ({
@@ -179,6 +183,8 @@ export function AutoregulationChart({
               time: new Date(point.horodate).getTime(),
               ppc: point.ppc,
               pam: point.pam,
+              lowerLimit: point.lowerLimit,  // Time-varying LLA
+              upperLimit: point.upperLimit,  // Time-varying ULA
             }));
             
             setTimeSeriesData(timeSeries);
@@ -196,26 +202,23 @@ export function AutoregulationChart({
   // Labels based on data type
   const targetLabel = isNirsBased ? "PAM optimale" : "PPC Optimale";
 
-  // Calculate Y axis domain
+  // Calculate Y axis domain - includes time-varying limits
   const yDomain = useMemo(() => {
     if (timeSeriesData.length === 0) {
       return [40, 80];
     }
 
-    const ppcValues = timeSeriesData
-      .map((d) => d.ppc)
-      .filter((v): v is number => v !== null);
+    const allValues: number[] = [];
     
-    if (ppcValues.length === 0) return [40, 80];
+    for (const d of timeSeriesData) {
+      if (d.ppc !== null) allValues.push(d.ppc);
+      if (d.pam !== null) allValues.push(d.pam);
+      if (d.lowerLimit !== null) allValues.push(d.lowerLimit);
+      if (d.upperLimit !== null) allValues.push(d.upperLimit);
+    }
+    
+    if (allValues.length === 0) return [40, 80];
 
-    const minVal = Math.min(...ppcValues);
-    const maxVal = Math.max(...ppcValues);
-    
-    // Include limits in domain calculation
-    const allValues = [...ppcValues];
-    if (lowerLimit !== null) allValues.push(lowerLimit);
-    if (upperLimit !== null) allValues.push(upperLimit);
-    
     const minDomain = Math.min(...allValues);
     const maxDomain = Math.max(...allValues);
 
@@ -223,7 +226,7 @@ export function AutoregulationChart({
       Math.floor(minDomain / 5) * 5 - 5,
       Math.ceil(maxDomain / 5) * 5 + 5,
     ];
-  }, [timeSeriesData, lowerLimit, upperLimit]);
+  }, [timeSeriesData]);
 
   // Format X axis time
   const formatXAxis = (time: number) => {
@@ -333,45 +336,29 @@ export function AutoregulationChart({
             
             <Tooltip content={<CustomTooltip />} />
 
-            {/* Optimal zone shading between LLA and ULA */}
-            {lowerLimit !== null && upperLimit !== null && (
-              <ReferenceArea
-                y1={lowerLimit}
-                y2={upperLimit}
-                fill="hsl(var(--status-normal))"
-                fillOpacity={0.1}
-              />
-            )}
+            {/* Dynamic LLA line - varies over time */}
+            <Line
+              type="monotone"
+              dataKey="lowerLimit"
+              stroke="hsl(var(--muted-foreground))"
+              strokeWidth={1.5}
+              strokeDasharray="6 4"
+              dot={false}
+              connectNulls
+              name="LLA"
+            />
 
-            {/* Upper limit line (ULA) */}
-            {upperLimit !== null && (
-              <ReferenceLine
-                y={upperLimit}
-                stroke="hsl(var(--muted-foreground))"
-                strokeWidth={1.5}
-                strokeDasharray="6 4"
-              />
-            )}
-
-            {/* Lower limit line (LLA) */}
-            {lowerLimit !== null && (
-              <ReferenceLine
-                y={lowerLimit}
-                stroke="hsl(var(--muted-foreground))"
-                strokeWidth={1.5}
-                strokeDasharray="6 4"
-              />
-            )}
-
-            {/* Optimal value line */}
-            {optimalValue !== null && (
-              <ReferenceLine
-                y={optimalValue}
-                stroke="hsl(var(--status-normal))"
-                strokeWidth={1}
-                strokeDasharray="3 3"
-              />
-            )}
+            {/* Dynamic ULA line - varies over time */}
+            <Line
+              type="monotone"
+              dataKey="upperLimit"
+              stroke="hsl(var(--muted-foreground))"
+              strokeWidth={1.5}
+              strokeDasharray="6 4"
+              dot={false}
+              connectNulls
+              name="ULA"
+            />
 
             {/* PAM Line - Secondary data (rendered first to appear behind) */}
             <Line
