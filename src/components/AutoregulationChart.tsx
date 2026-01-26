@@ -34,6 +34,10 @@ interface AutoregulationChartProps {
   pamMin?: number | null;
   pamMax?: number | null;
   windowMinutes?: number;
+  /** Global time range from page - syncs with chart selector */
+  timeRange?: TimeWindowValue;
+  /** Callback when time range changes - syncs back to page */
+  onTimeRangeChange?: (value: TimeWindowValue) => void;
 }
 
 // Time series data point for the chart
@@ -53,14 +57,30 @@ export function AutoregulationChart({
   pamMin: propPamMin,
   pamMax: propPamMax,
   windowMinutes = 30,
+  timeRange: externalTimeRange,
+  onTimeRangeChange,
 }: AutoregulationChartProps) {
   const [loading, setLoading] = useState(false);
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesPoint[]>([]);
   const [optimalValue, setOptimalValue] = useState<number | null>(null);
   const [lowerLimit, setLowerLimit] = useState<number | null>(null);
-  const [selectedWindow, setSelectedWindow] = useState<TimeWindowValue>("6h");
+  const [internalWindow, setInternalWindow] = useState<TimeWindowValue>("6h");
   const [upperLimit, setUpperLimit] = useState<number | null>(null);
   const [isNirsBased, setIsNirsBased] = useState(false);
+  
+  // Use external timeRange if provided, otherwise use internal state
+  // Filter out "stay" as it's not supported for autoregulation chart
+  const selectedWindow: TimeWindowValue = externalTimeRange && externalTimeRange !== "stay" 
+    ? externalTimeRange 
+    : internalWindow;
+  
+  const handleWindowChange = (value: TimeWindowValue) => {
+    if (onTimeRangeChange) {
+      onTimeRangeChange(value);
+    } else {
+      setInternalWindow(value);
+    }
+  };
   
   // NIRS-specific state
   const [nirsCurrentPAM, setNirsCurrentPAM] = useState<number | null>(null);
@@ -265,7 +285,7 @@ export function AutoregulationChart({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <TimeWindowSelector
           value={selectedWindow}
-          onChange={setSelectedWindow}
+          onChange={handleWindowChange}
           includeStay={false}
           label="Fenêtre :"
           variant="muted"

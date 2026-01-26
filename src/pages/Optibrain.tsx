@@ -1290,6 +1290,8 @@ const Optibrain = () => {
                 pamMin={realBrainValues.pamMin}
                 pamMax={realBrainValues.pamMax}
                 windowMinutes={30}
+                timeRange={timeRange === "stay" ? "24h" : timeRange as any}
+                onTimeRangeChange={(value) => setTimeRange(value as any)}
               />
               
               {/* Fallback info when no autoregulation data */}
