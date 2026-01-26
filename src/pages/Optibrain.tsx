@@ -51,7 +51,9 @@ import {
   getOptimalPPC,
   getPPCStatusVsOptimal,
   OptimalPPCResult,
+  isNirsBasedPatient,
 } from "@/services/autoregulation.service";
+import { getOptimalPAMFromNirs } from "@/services/nirsAutoregulation.service";
 import { AutoregulationChart } from "@/components/AutoregulationChart";
 import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 
@@ -102,6 +104,7 @@ const Optibrain = () => {
     hasData: false,
   });
   const hasAutoregData = hasAutoregulationData(patientId);
+  const isNirsBased = isNirsBasedPatient(patientId);
 
   // ===== Fonctions utilitaires pour la synchronisation =====
 
@@ -239,20 +242,32 @@ const Optibrain = () => {
     }
   }, [patientId, hasFileData]);
 
-  // Load autoregulation data for optimal PPC calculation
+  // Load autoregulation data for optimal PPC/PAM calculation
   useEffect(() => {
     if (hasAutoregData) {
-      loadAutoregulationData(patientId)
-        .then((data) => {
-          if (data) {
-            // Use 30min window with 4h lookback as default
-            const result = getOptimalPPC(data, 30, 4);
+      if (isNirsBased) {
+        // Use NIRS-based calculation for patient #8749
+        getOptimalPAMFromNirs(patientId, 30)
+          .then((result) => {
             setOptimalPPCResult(result);
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to load autoregulation data:", err);
-        });
+          })
+          .catch((err) => {
+            console.error("Failed to load NIRS autoregulation data:", err);
+          });
+      } else {
+        // Use PRx-based calculation for other patients
+        loadAutoregulationData(patientId)
+          .then((data) => {
+            if (data) {
+              // Use 30min window with 4h lookback as default
+              const result = getOptimalPPC(data, 30, 4);
+              setOptimalPPCResult(result);
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to load autoregulation data:", err);
+          });
+      }
     } else {
       setOptimalPPCResult({
         optimalPPC: null,
@@ -263,7 +278,7 @@ const Optibrain = () => {
         hasData: false,
       });
     }
-  }, [patientId, hasAutoregData]);
+  }, [patientId, hasAutoregData, isNirsBased]);
 
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRangeForAdherence = (range: string): number => {
@@ -667,7 +682,7 @@ const Optibrain = () => {
       criticalColor: realBrainValues.picMax !== null && realBrainValues.picMax >= 25 ? "text-red-500" : "text-orange-500",
     },
     {
-      label: "PPC Opt",
+      label: isNirsBased ? "PAM Opt" : "PPC Opt",
       value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
         ? `${Math.round(optimalPPCResult.optimalPPC)} mmHg` 
         : "-- mmHg",
@@ -677,7 +692,10 @@ const Optibrain = () => {
       unit: "mmHg",
       status: (() => {
         if (!optimalPPCResult.hasData || optimalPPCResult.optimalPPC === null) return "normal";
-        const ppcStatus = getPPCStatusVsOptimal(realBrainValues.ppc, optimalPPCResult);
+        // For NIRS patients, compare PAM to optimal PAM
+        const valueToCompare = isNirsBased ? realBrainValues.pam : realBrainValues.ppc;
+        if (valueToCompare === null) return "normal";
+        const ppcStatus = getPPCStatusVsOptimal(valueToCompare, optimalPPCResult);
         if (ppcStatus === "below" || ppcStatus === "above") return "warning";
         return "normal";
       })(),
@@ -687,19 +705,22 @@ const Optibrain = () => {
       change: 0,
       description: optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
         ? `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
-        : "Cible 60-70 mmHg",
+        : isNirsBased ? "Cible PAM individuelle" : "Cible 60-70 mmHg",
       // Afficher la zone d'autorégulation quand disponible
       criticalLabel: (() => {
         // Si on a les données d'autorégulation, afficher le statut vs optimal
-        if (optimalPPCResult.hasData && realBrainValues.ppc !== null && optimalPPCResult.optimalPPC !== null) {
-          const ppcStatus = getPPCStatusVsOptimal(realBrainValues.ppc, optimalPPCResult);
+        if (optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null) {
+          const valueToCompare = isNirsBased ? realBrainValues.pam : realBrainValues.ppc;
+          if (valueToCompare === null) return null;
+          const ppcStatus = getPPCStatusVsOptimal(valueToCompare, optimalPPCResult);
+          const label = isNirsBased ? "PAM" : "PPC";
           if (ppcStatus === "below") {
-            const diff = Math.round((optimalPPCResult.lowerLimit ?? optimalPPCResult.optimalPPC) - realBrainValues.ppc);
-            return `PPC actuelle ${diff} mmHg sous la zone`;
+            const diff = Math.round((optimalPPCResult.lowerLimit ?? optimalPPCResult.optimalPPC) - valueToCompare);
+            return `${label} actuelle ${diff} mmHg sous la zone`;
           }
           if (ppcStatus === "above") {
-            const diff = Math.round(realBrainValues.ppc - (optimalPPCResult.upperLimit ?? optimalPPCResult.optimalPPC));
-            return `PPC actuelle ${diff} mmHg au-dessus`;
+            const diff = Math.round(valueToCompare - (optimalPPCResult.upperLimit ?? optimalPPCResult.optimalPPC));
+            return `${label} actuelle ${diff} mmHg au-dessus`;
           }
           return null; // Dans la zone optimale
         }
@@ -1070,7 +1091,7 @@ const Optibrain = () => {
                   <p className="text-xs text-muted-foreground mt-1 truncate">
                     {realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)} mmHg` : "PIC --"}
                     {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
-                      ? ` • PPC optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`
+                      ? ` • ${isNirsBased ? "PAM" : "PPC"} optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`
                       : realBrainValues.ppc !== null 
                         ? ` • PPC ${Math.round(realBrainValues.ppc)} mmHg`
                         : ""}
