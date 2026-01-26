@@ -1157,7 +1157,7 @@ const Optibrain = () => {
                           ) : (
                             <Plus className="h-3 w-3" />
                           )}
-                          <span>{isSelected ? "Sélectionné" : "Ajouter au graphique"}</span>
+                          <span>{isSelected ? "Affiché" : "Afficher"}</span>
                         </div>
                       )}
                     </div>
