@@ -577,6 +577,14 @@ export function UnifiedBrainChart({
               fill="hsl(var(--status-warning))"
               name="PIC"
               isAnimationActive={false}
+              shape={(props: any) => (
+                <circle
+                  cx={props.cx}
+                  cy={props.cy}
+                  r={3}
+                  fill="hsl(var(--status-warning))"
+                />
+              )}
             />
 
             {/* PAM Line */}
