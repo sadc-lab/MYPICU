@@ -7,8 +7,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine,
-  ReferenceArea,
+  Area,
+  ComposedChart,
 } from "recharts";
 import {
   loadAutoregulationData,
@@ -312,7 +312,15 @@ export function AutoregulationChart({
       {/* Main Time Series Chart */}
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={timeSeriesData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }}>
+          <ComposedChart data={timeSeriesData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }}>
+            <defs>
+              <linearGradient id="optimalZoneGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(var(--status-normal))" stopOpacity={0.2} />
+                <stop offset="50%" stopColor="hsl(var(--status-normal))" stopOpacity={0.15} />
+                <stop offset="100%" stopColor="hsl(var(--status-normal))" stopOpacity={0.2} />
+              </linearGradient>
+            </defs>
+            
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
             
             <XAxis
@@ -335,6 +343,27 @@ export function AutoregulationChart({
             />
             
             <Tooltip content={<CustomTooltip />} />
+
+            {/* Dynamic shaded zone between LLA and ULA */}
+            <Area
+              type="monotone"
+              dataKey="upperLimit"
+              stroke="none"
+              fill="url(#optimalZoneGradient)"
+              fillOpacity={1}
+              connectNulls
+              name="Zone optimale"
+              isAnimationActive={false}
+            />
+            <Area
+              type="monotone"
+              dataKey="lowerLimit"
+              stroke="none"
+              fill="hsl(var(--background))"
+              fillOpacity={1}
+              connectNulls
+              isAnimationActive={false}
+            />
 
             {/* Dynamic LLA line - varies over time */}
             <Line
@@ -360,7 +389,7 @@ export function AutoregulationChart({
               name="ULA"
             />
 
-            {/* PAM Line - Secondary data (rendered first to appear behind) */}
+            {/* PAM Line - Secondary data */}
             <Line
               type="monotone"
               dataKey="pam"
@@ -381,7 +410,7 @@ export function AutoregulationChart({
               connectNulls
               name={isNirsBased ? "NIRS" : "PPC"}
             />
-          </LineChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
 
