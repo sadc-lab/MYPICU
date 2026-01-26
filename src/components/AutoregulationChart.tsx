@@ -284,16 +284,6 @@ export function AutoregulationChart({
 
   return (
     <div className="space-y-4">
-      {/* Time window selector - aligned right */}
-      <div className="flex justify-end">
-        <TimeWindowSelector
-          value={selectedWindow}
-          onChange={handleWindowChange}
-          includeStay={false}
-          label="Période :"
-          variant="muted"
-        />
-      </div>
 
       {/* Main Time Series Chart */}
       <div className="h-72 w-full">
