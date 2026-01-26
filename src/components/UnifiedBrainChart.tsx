@@ -570,15 +570,13 @@ export function UnifiedBrainChart({
               />
             )}
 
-            {/* PIC Line */}
-            <Line
-              type="monotone"
+            {/* PIC Scatter (dots only) */}
+            <Scatter
+              data={chartData.filter(d => d.pic !== null)}
               dataKey="pic"
-              stroke="hsl(var(--status-warning))"
-              strokeWidth={2}
-              dot={false}
-              connectNulls
+              fill="hsl(var(--status-warning))"
               name="PIC"
+              isAnimationActive={false}
             />
 
             {/* PAM Line */}
