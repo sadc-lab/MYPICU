@@ -23,6 +23,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from "recharts";
 import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
 import { useTimeRange } from "@/hooks/useTimeRange";
@@ -1148,97 +1149,14 @@ const Optibrain = () => {
           )}
         </Card>
 
-        {/* Neurological State Dialog */}
-        <Dialog open={openDialog === "neuro"} onOpenChange={(open) => !open && setOpenDialog(null)}>
+        {/* Unified Brain Details Dialog with Tabs */}
+        <Dialog open={openDialog === "neuro" || openDialog === "pic" || openDialog === "ppc"} onOpenChange={(open) => !open && setOpenDialog(null)}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>État Neurologique</DialogTitle>
+              <DialogTitle>Détails Optimisation Cérébrale</DialogTitle>
             </DialogHeader>
-            <div className="space-y-6">
-              {/* État Neurologique Card */}
-              <div className="border border-border rounded-lg p-6 bg-card shadow-sm">
-                {/* Individual Bars */}
-                <div className="space-y-6">
-                  {/* HTIC (sans ischémie ni hyperhémie) */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-foreground">HTIC</span>
-                      <span className="text-xl font-semibold text-status-warning">
-                        {neurologicalStateConfig.history.htic}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div
-                        className="bg-status-warning h-3 rounded-full"
-                        style={{ width: `${neurologicalStateConfig.history.htic}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs text-muted-foreground">Sans ischémie ni hyperhémie</span>
-                  </div>
-
-                  {/* HTIC avec ischémie */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-foreground">HTIC avec ischémie</span>
-                      <span className="text-xl font-semibold text-status-critical">
-                        {neurologicalStateConfig.history.hticWithIschemia}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div
-                        className="bg-status-critical h-3 rounded-full"
-                        style={{ width: `${neurologicalStateConfig.history.hticWithIschemia}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Contrôlé */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-foreground">Contrôlé</span>
-                      <span className="text-xl font-semibold text-foreground">
-                        {neurologicalStateConfig.history.controlled}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div
-                        className="bg-muted-foreground h-3 rounded-full"
-                        style={{ width: `${neurologicalStateConfig.history.controlled}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Metrics Footer */}
-                <div className="border-t border-border mt-6 pt-4">
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div>
-                      État :{" "}
-                      <span className={`font-semibold ${neurologicalStateConfig.currentStateColor}`}>
-                        {neurologicalStateConfig.currentState}
-                      </span>{" "}
-                      <span className="text-muted-foreground">{neurologicalStateConfig.currentStateSince}</span>
-                    </div>
-                    <div>
-                      PPC actuel : <span className="font-semibold text-foreground">65 mmHg</span>
-                      <span className="mx-2">|</span>
-                      PPC moyen : <span className="font-semibold text-foreground">68 mmHg</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* PIC Dialog */}
-        <Dialog open={openDialog === "pic"} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>PIC (Pression intracrânienne)</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6">
-              {/* Time Range Selector */}
+            <div className="space-y-4">
+              {/* Time Range Selector - Synchronized across all tabs */}
               <div className="flex items-center justify-end">
                 <TimeWindowSelector
                   value={picDialogTimeRange}
@@ -1248,108 +1166,175 @@ const Optibrain = () => {
                 />
               </div>
 
-              {/* PIC Card */}
-              <div className="border border-border rounded-lg p-6 bg-card shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-base font-semibold text-foreground">
-                    <span className="text-status-warning">Répartition du temps</span> par niveau de PIC
-                  </h3>
-                  {picRangeData.totalMinutes > 0 && (
-                    <span className="text-sm text-muted-foreground">Total: {picRangeData.totalMinutes} min</span>
-                  )}
-                </div>
+              <Tabs defaultValue={openDialog || "neuro"} className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="neuro">État Neuro</TabsTrigger>
+                  <TabsTrigger value="pic">PIC</TabsTrigger>
+                  <TabsTrigger value="ppc">{isNirsBased ? "PAM Opt" : "PPC Opt"}</TabsTrigger>
+                </TabsList>
 
-                {/* Individual Bars */}
-                <div className="space-y-6">
-                  {picRangeData.ranges.map((range, idx) => {
-                    const textColor =
-                      range.color === "red"
-                        ? "text-status-critical"
-                        : range.color === "orange"
-                          ? "text-status-warning"
-                          : "text-muted-foreground";
-                    const bgColor =
-                      range.color === "red" ? "bg-status-critical" : range.color === "orange" ? "bg-status-warning" : "bg-muted-foreground";
-                    return (
-                      <div key={idx}>
+                {/* Tab: État Neurologique */}
+                <TabsContent value="neuro" className="space-y-4 mt-4">
+                  <div className="border border-border rounded-lg p-6 bg-card shadow-sm">
+                    <div className="space-y-6">
+                      {/* HTIC (sans ischémie ni hyperhémie) */}
+                      <div>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-foreground">{range.label}</span>
-                          <span className={`text-xl font-semibold ${textColor}`}>{range.minutes} min</span>
+                          <span className="text-sm font-medium text-foreground">HTIC</span>
+                          <span className="text-xl font-semibold text-status-warning">
+                            {neurologicalStateConfig.history.htic}%
+                          </span>
                         </div>
                         <div className="w-full bg-muted rounded-full h-3">
                           <div
-                            className={`${bgColor} h-3 rounded-full`}
-                            style={{ width: `${Math.max(range.percentage, 1)}%` }}
+                            className="bg-status-warning h-3 rounded-full"
+                            style={{ width: `${neurologicalStateConfig.history.htic}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-muted-foreground">Sans ischémie ni hyperhémie</span>
+                      </div>
+
+                      {/* HTIC avec ischémie */}
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-foreground">HTIC avec ischémie</span>
+                          <span className="text-xl font-semibold text-status-critical">
+                            {neurologicalStateConfig.history.hticWithIschemia}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3">
+                          <div
+                            className="bg-status-critical h-3 rounded-full"
+                            style={{ width: `${neurologicalStateConfig.history.hticWithIschemia}%` }}
                           ></div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
 
-                {/* Metrics Footer */}
-                <div className="border-t border-border mt-6 pt-4">
-                  <div className="text-sm text-muted-foreground">
-                    PIC actuelle :{" "}
-                    <span className="font-semibold text-foreground">
-                      {picRangeData.currentPic !== null ? `${Math.round(picRangeData.currentPic)} mmHg` : "-- mmHg"}
-                    </span>
-                    <span className="mx-2">|</span>
-                    PIC moyenne :{" "}
-                    <span className="font-semibold text-foreground">
-                      {picRangeData.averagePic !== null ? `${Math.round(picRangeData.averagePic)} mmHg` : "-- mmHg"}
-                    </span>
+                      {/* Contrôlé */}
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-foreground">Contrôlé</span>
+                          <span className="text-xl font-semibold text-foreground">
+                            {neurologicalStateConfig.history.controlled}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3">
+                          <div
+                            className="bg-muted-foreground h-3 rounded-full"
+                            style={{ width: `${neurologicalStateConfig.history.controlled}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Metrics Footer */}
+                    <div className="border-t border-border mt-6 pt-4">
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <div>
+                          État :{" "}
+                          <span className={`font-semibold ${neurologicalStateConfig.currentStateColor}`}>
+                            {neurologicalStateConfig.currentState}
+                          </span>{" "}
+                          <span className="text-muted-foreground">{neurologicalStateConfig.currentStateSince}</span>
+                        </div>
+                        <div>
+                          PPC actuel : <span className="font-semibold text-foreground">65 mmHg</span>
+                          <span className="mx-2">|</span>
+                          PPC moyen : <span className="font-semibold text-foreground">68 mmHg</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </TabsContent>
+
+                {/* Tab: PIC */}
+                <TabsContent value="pic" className="space-y-4 mt-4">
+                  <div className="border border-border rounded-lg p-6 bg-card shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-base font-semibold text-foreground">
+                        <span className="text-status-warning">Répartition du temps</span> par niveau de PIC
+                      </h3>
+                      {picRangeData.totalMinutes > 0 && (
+                        <span className="text-sm text-muted-foreground">Total: {picRangeData.totalMinutes} min</span>
+                      )}
+                    </div>
+
+                    {/* Individual Bars */}
+                    <div className="space-y-6">
+                      {picRangeData.ranges.map((range, idx) => {
+                        const textColor =
+                          range.color === "red"
+                            ? "text-status-critical"
+                            : range.color === "orange"
+                              ? "text-status-warning"
+                              : "text-muted-foreground";
+                        const bgColor =
+                          range.color === "red" ? "bg-status-critical" : range.color === "orange" ? "bg-status-warning" : "bg-muted-foreground";
+                        return (
+                          <div key={idx}>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-foreground">{range.label}</span>
+                              <span className={`text-xl font-semibold ${textColor}`}>{range.minutes} min</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-3">
+                              <div
+                                className={`${bgColor} h-3 rounded-full`}
+                                style={{ width: `${Math.max(range.percentage, 1)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Metrics Footer */}
+                    <div className="border-t border-border mt-6 pt-4">
+                      <div className="text-sm text-muted-foreground">
+                        PIC actuelle :{" "}
+                        <span className="font-semibold text-foreground">
+                          {picRangeData.currentPic !== null ? `${Math.round(picRangeData.currentPic)} mmHg` : "-- mmHg"}
+                        </span>
+                        <span className="mx-2">|</span>
+                        PIC moyenne :{" "}
+                        <span className="font-semibold text-foreground">
+                          {picRangeData.averagePic !== null ? `${Math.round(picRangeData.averagePic)} mmHg` : "-- mmHg"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Tab: PPC/PAM Optimale */}
+                <TabsContent value="ppc" className="space-y-4 mt-4">
+                  <AutoregulationChart 
+                    patientId={patientId} 
+                    currentPPC={realBrainValues.ppc}
+                    currentPAM={realBrainValues.pam}
+                    pamMin={realBrainValues.pamMin}
+                    pamMax={realBrainValues.pamMax}
+                    windowMinutes={30}
+                    timeRange={picDialogTimeRange === "stay" ? "24h" : picDialogTimeRange as any}
+                    onTimeRangeChange={(value) => setPicDialogTimeRange(value as any)}
+                    optimalPPC={optimalPPCResult.optimalPPC}
+                    lowerLimit={optimalPPCResult.lowerLimit}
+                    upperLimit={optimalPPCResult.upperLimit}
+                    hasData={optimalPPCResult.hasData}
+                    isNirsBased={isNirsBased}
+                  />
+
+                  {/* Fallback info when no autoregulation data */}
+                  {!hasAutoregData && (
+                    <div className="text-sm text-muted-foreground text-center">
+                      Données d'autorégulation non disponibles pour ce patient. 
+                      Utilisation de la cible standard : <span className="font-medium">60-70 mmHg</span>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* PPC/PAM Optimal Dialog - Courbe d'autorégulation */}
-        <Dialog open={openDialog === "ppc"} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>{isNirsBased ? "PAM Optimale (Autorégulation NIRS)" : "PPC Optimale (Autorégulation cérébrale)"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6">
-              {/* Time Range Selector - same UX as PIC dialog */}
-              <div className="flex items-center justify-end">
-                <TimeWindowSelector
-                  value={timeRange === "stay" ? "24h" : timeRange as any}
-                  onChange={(value) => setTimeRange(value as any)}
-                  includeStay={false}
-                  label="Période :"
-                />
-              </div>
-
-              {/* Autoregulation Chart with integrated footer */}
-              <AutoregulationChart 
-                patientId={patientId} 
-                currentPPC={realBrainValues.ppc}
-                currentPAM={realBrainValues.pam}
-                pamMin={realBrainValues.pamMin}
-                pamMax={realBrainValues.pamMax}
-                windowMinutes={30}
-                timeRange={timeRange === "stay" ? "24h" : timeRange as any}
-                onTimeRangeChange={(value) => setTimeRange(value as any)}
-                optimalPPC={optimalPPCResult.optimalPPC}
-                lowerLimit={optimalPPCResult.lowerLimit}
-                upperLimit={optimalPPCResult.upperLimit}
-                hasData={optimalPPCResult.hasData}
-                isNirsBased={isNirsBased}
-              />
-
-              {/* Fallback info when no autoregulation data */}
-              {!hasAutoregData && (
-                <div className="text-sm text-muted-foreground text-center">
-                  Données d'autorégulation non disponibles pour ce patient. 
-                  Utilisation de la cible standard : <span className="font-medium">60-70 mmHg</span>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
 
         <Card className="bg-card shadow-sm mb-6">
           <CardHeader className="px-4 sm:px-6">
