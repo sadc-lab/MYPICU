@@ -34,7 +34,6 @@ interface AutoregulationChartProps {
   pamMin?: number | null;
   pamMax?: number | null;
   windowMinutes?: number;
-  hoursBack?: number;
 }
 
 // Time series data point for the chart
@@ -45,6 +44,14 @@ interface TimeSeriesPoint {
   pam: number | null;
 }
 
+// Available time windows
+const TIME_WINDOWS = [
+  { value: 3, label: "3h" },
+  { value: 6, label: "6h" },
+  { value: 12, label: "12h" },
+  { value: 24, label: "24h" },
+];
+
 export function AutoregulationChart({
   patientId,
   currentPPC,
@@ -52,12 +59,12 @@ export function AutoregulationChart({
   pamMin: propPamMin,
   pamMax: propPamMax,
   windowMinutes = 30,
-  hoursBack = 6,
 }: AutoregulationChartProps) {
   const [loading, setLoading] = useState(false);
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesPoint[]>([]);
   const [optimalValue, setOptimalValue] = useState<number | null>(null);
   const [lowerLimit, setLowerLimit] = useState<number | null>(null);
+  const [selectedHours, setSelectedHours] = useState(6);
   const [upperLimit, setUpperLimit] = useState<number | null>(null);
   const [isNirsBased, setIsNirsBased] = useState(false);
   
@@ -102,7 +109,7 @@ export function AutoregulationChart({
             
             // Build time series from raw NIRS data
             const now = new Date();
-            const cutoffTime = now.getTime() - hoursBack * 60 * 60 * 1000;
+            const cutoffTime = now.getTime() - selectedHours * 60 * 60 * 1000;
             
             // Find latest timestamp and calculate offset
             let latestTime = 0;
@@ -150,7 +157,7 @@ export function AutoregulationChart({
             setUpperLimit(curveResult.upperLimit);
             
             // Get time series
-            const timeSeriesRaw = getOptimalPPCTimeSeries(data, windowMinutes, 4, hoursBack);
+            const timeSeriesRaw = getOptimalPPCTimeSeries(data, windowMinutes, 4, selectedHours);
             const timeSeries: TimeSeriesPoint[] = timeSeriesRaw.map((point) => ({
               timestamp: point.horodate,
               time: new Date(point.horodate).getTime(),
@@ -168,7 +175,7 @@ export function AutoregulationChart({
           setLoading(false);
         });
     }
-  }, [patientId, windowMinutes, hoursBack, hasData]);
+  }, [patientId, windowMinutes, selectedHours, hasData]);
 
   // Labels based on data type
   const targetLabel = isNirsBased ? "PAM optimale" : "PPC Optimale";
@@ -258,11 +265,26 @@ export function AutoregulationChart({
 
   return (
     <div className="space-y-4">
-      {/* Time label */}
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium">
-          Évolution sur {hoursBack} heures
-        </h4>
+      {/* Time window selector and legend */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Fenêtre :</span>
+          <div className="flex bg-muted rounded-lg p-1">
+            {TIME_WINDOWS.map((tw) => (
+              <button
+                key={tw.value}
+                onClick={() => setSelectedHours(tw.value)}
+                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  selectedHours === tw.value
+                    ? "bg-background text-foreground shadow-sm font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tw.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-0.5 bg-status-critical" />
@@ -356,10 +378,10 @@ export function AutoregulationChart({
         </ResponsiveContainer>
       </div>
 
-      {/* Y-axis label on the left */}
+      {/* Y-axis label */}
       <div className="flex justify-between items-center text-sm">
         <span className="font-medium">{isNirsBased ? "NIRS (%)" : "PPC"}</span>
-        <span className="text-muted-foreground">{hoursBack} heures</span>
+        <span className="text-muted-foreground">{selectedHours} heures</span>
       </div>
 
       {/* Legend with limits */}
