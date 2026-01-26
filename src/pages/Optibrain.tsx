@@ -1306,32 +1306,83 @@ const Optibrain = () => {
           </DialogContent>
         </Dialog>
 
-        {/* PPC Optimal Dialog - Courbe d'autorégulation */}
+        {/* PPC/PAM Optimal Dialog - Courbe d'autorégulation */}
         <Dialog open={openDialog === "ppc"} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Autorégulation cérébrale - Courbe PRx vs PPC</DialogTitle>
+              <DialogTitle>{isNirsBased ? "PAM Optimale (Autorégulation NIRS)" : "PPC Optimale (Autorégulation cérébrale)"}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              {/* Autoregulation Chart Component */}
-              <AutoregulationChart 
-                patientId={patientId} 
-                currentPPC={realBrainValues.ppc}
-                currentPAM={realBrainValues.pam}
-                pamMin={realBrainValues.pamMin}
-                pamMax={realBrainValues.pamMax}
-                windowMinutes={30}
-                timeRange={timeRange === "stay" ? "24h" : timeRange as any}
-                onTimeRangeChange={(value) => setTimeRange(value as any)}
-              />
-              
+            <div className="space-y-6">
+              {/* Time Range Selector */}
+              <div className="flex items-center justify-end">
+                <TimeWindowSelector
+                  value={timeRange === "stay" ? "24h" : timeRange as any}
+                  onChange={(value) => setTimeRange(value as any)}
+                  includeStay={false}
+                  label="Période :"
+                />
+              </div>
+
+              {/* Main Card */}
+              <div className="border border-border rounded-lg p-6 bg-card shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-base font-semibold text-foreground">
+                    <span className="text-primary">Évolution</span> de {isNirsBased ? "la PAM" : "la PPC"} vs zone optimale
+                  </h3>
+                </div>
+
+                {/* Autoregulation Chart */}
+                <div className="mb-6">
+                  <AutoregulationChart 
+                    patientId={patientId} 
+                    currentPPC={realBrainValues.ppc}
+                    currentPAM={realBrainValues.pam}
+                    pamMin={realBrainValues.pamMin}
+                    pamMax={realBrainValues.pamMax}
+                    windowMinutes={30}
+                    timeRange={timeRange === "stay" ? "24h" : timeRange as any}
+                    onTimeRangeChange={(value) => setTimeRange(value as any)}
+                  />
+                </div>
+
+                {/* Metrics Footer */}
+                <div className="border-t border-border pt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-muted-foreground">
+                    <div>
+                      {isNirsBased ? "PAM" : "PPC"} actuelle :{" "}
+                      <span className="font-semibold text-foreground">
+                        {isNirsBased 
+                          ? (realBrainValues.pam !== null ? `${Math.round(realBrainValues.pam)} mmHg` : "-- mmHg")
+                          : (realBrainValues.ppc !== null ? `${Math.round(realBrainValues.ppc)} mmHg` : "-- mmHg")
+                        }
+                      </span>
+                      <span className="mx-2">|</span>
+                      {isNirsBased ? "PAM" : "PPC"} optimale :{" "}
+                      <span className="font-semibold text-foreground">
+                        {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
+                          ? `${Math.round(optimalPPCResult.optimalPPC)} mmHg`
+                          : "-- mmHg"
+                        }
+                      </span>
+                    </div>
+                    <div>
+                      Zone :{" "}
+                      <span className="font-semibold text-foreground">
+                        {optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
+                          ? `${Math.round(optimalPPCResult.lowerLimit)} - ${Math.round(optimalPPCResult.upperLimit)} mmHg`
+                          : isNirsBased ? "-- mmHg" : "60 - 70 mmHg"
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Fallback info when no autoregulation data */}
               {!hasAutoregData && (
-                <div className="border-t border-border pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Données d'autorégulation non disponibles pour ce patient. 
-                    Utilisation de la cible standard : <span className="font-medium">60-70 mmHg</span>
-                  </p>
+                <div className="text-sm text-muted-foreground text-center">
+                  Données d'autorégulation non disponibles pour ce patient. 
+                  Utilisation de la cible standard : <span className="font-medium">60-70 mmHg</span>
                 </div>
               )}
             </div>
