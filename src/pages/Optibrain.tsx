@@ -86,6 +86,7 @@ const Optibrain = () => {
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
   const [picDialogTimeRange, setPicDialogTimeRange] = useState<TimeWindowValue>("24h");
+  const [selectedBrainIndicators, setSelectedBrainIndicators] = useState<string[]>([]);
   const [showTargetZones, setShowTargetZones] = useState(true);
   
   // Ref pour le graphique de monitorage
@@ -1111,17 +1112,37 @@ const Optibrain = () => {
             </div>
           </CardHeader>
           {optimisationExpanded && (
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 space-y-4">
+              {/* Selectable Brain Metrics */}
               <div className="grid grid-cols-3 gap-2 sm:gap-8 pt-4">
-              {brainOptimisationMetrics.map((metric, index) => {
+                {brainOptimisationMetrics.map((metric, index) => {
+                  const isSelected = selectedBrainIndicators.includes(metric.label);
                   const statusColor = metric.status === "warning" ? "text-orange-500" : "text-gray-600";
+                  const brainIndicatorColors: Record<string, string> = {
+                    "État Neuro": "#8b5cf6", // violet
+                    "PIC": "#f59e0b", // amber/orange
+                    [isNirsBased ? "PAM Opt" : "PPC Opt"]: "#10b981", // emerald/green
+                  };
+                  const chartColor = brainIndicatorColors[metric.label] || "#3b82f6";
+                  
                   return (
                     <div
                       key={index}
-                      className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-2 sm:p-4 rounded-lg transition-colors"
+                      className={`flex flex-col items-center cursor-pointer p-2 sm:p-4 rounded-lg transition-all border-2 ${
+                        isSelected 
+                          ? "bg-card shadow-sm" 
+                          : "border-transparent hover:bg-muted/50"
+                      }`}
+                      style={isSelected ? { borderColor: chartColor } : undefined}
                       onClick={(e) => {
                         e.stopPropagation();
-                        metric.hasDetails && setOpenDialog(metric.dialogKey || null);
+                        if (metric.hasDetails) {
+                          setSelectedBrainIndicators((prev) =>
+                            prev.includes(metric.label)
+                              ? prev.filter((label) => label !== metric.label)
+                              : [...prev, metric.label]
+                          );
+                        }
                       }}
                     >
                       <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 sm:mb-2 uppercase tracking-wide text-center">
@@ -1138,50 +1159,49 @@ const Optibrain = () => {
                       )}
                       {metric.hasDetails && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                          <Info className="h-3 w-3" />
-                          <span>Voir détails</span>
+                          {isSelected ? (
+                            <Check className="h-3 w-3 text-primary" />
+                          ) : (
+                            <Plus className="h-3 w-3" />
+                          )}
+                          <span>{isSelected ? "Sélectionné" : "Ajouter au graphique"}</span>
                         </div>
                       )}
                     </div>
                   );
                 })}
               </div>
+
+              {/* Embedded Brain Chart */}
+              {selectedBrainIndicators.length > 0 && (
+                <div className="border-t border-border pt-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-foreground">
+                      Évolution temporelle
+                    </div>
+                    <TimeWindowSelector
+                      value={picDialogTimeRange}
+                      onChange={setPicDialogTimeRange}
+                      includeStay={true}
+                      size="sm"
+                    />
+                  </div>
+                  <UnifiedBrainChart
+                    patientId={patientId}
+                    timeRange={picDialogTimeRange}
+                    currentPIC={realBrainValues.pic}
+                    currentPAM={realBrainValues.pam}
+                    optimalPAM={optimalPPCResult.optimalPPC}
+                    lowerLimit={optimalPPCResult.lowerLimit}
+                    upperLimit={optimalPPCResult.upperLimit}
+                    autoregulationScore={optimalPPCResult.prxScore}
+                    isNirsBased={isNirsBased}
+                  />
+                </div>
+              )}
             </CardContent>
           )}
         </Card>
-
-        {/* Unified Brain Details Dialog */}
-        <Dialog open={openDialog === "neuro" || openDialog === "pic" || openDialog === "ppc"} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Détails Optimisation Cérébrale</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {/* Time Range Selector */}
-              <div className="flex items-center justify-end">
-                <TimeWindowSelector
-                  value={picDialogTimeRange}
-                  onChange={setPicDialogTimeRange}
-                  includeStay={true}
-                  label="Période :"
-                />
-              </div>
-
-              {/* Unified Chart: PIC, PAM, and Neurological States */}
-              <UnifiedBrainChart
-                patientId={patientId}
-                timeRange={picDialogTimeRange}
-                currentPIC={realBrainValues.pic}
-                currentPAM={realBrainValues.pam}
-                optimalPAM={optimalPPCResult.optimalPPC}
-                lowerLimit={optimalPPCResult.lowerLimit}
-                upperLimit={optimalPPCResult.upperLimit}
-                autoregulationScore={optimalPPCResult.prxScore}
-                isNirsBased={isNirsBased}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
 
 
         <Card className="bg-card shadow-sm mb-6">
