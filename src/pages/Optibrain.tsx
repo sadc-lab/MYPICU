@@ -1196,6 +1196,7 @@ const Optibrain = () => {
                     upperLimit={optimalPPCResult.upperLimit}
                     autoregulationScore={optimalPPCResult.prxScore}
                     isNirsBased={isNirsBased}
+                    selectedIndicators={selectedBrainIndicators}
                   />
                 </div>
               )}
