@@ -284,29 +284,15 @@ export function AutoregulationChart({
 
   return (
     <div className="space-y-4">
-      {/* Time window selector and legend */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      {/* Time window selector - aligned right */}
+      <div className="flex justify-end">
         <TimeWindowSelector
           value={selectedWindow}
           onChange={handleWindowChange}
           includeStay={false}
-          label="Fenêtre :"
+          label="Période :"
           variant="muted"
         />
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 bg-status-critical" />
-            <span>{isNirsBased ? "NIRS" : "PPC"}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 bg-muted-foreground" />
-            <span>PAM</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 border-dashed border-t-2 border-muted-foreground" style={{ borderStyle: 'dashed' }} />
-            <span>Limites (LLA/ULA)</span>
-          </div>
-        </div>
       </div>
 
       {/* Main Time Series Chart */}
@@ -414,10 +400,24 @@ export function AutoregulationChart({
         </ResponsiveContainer>
       </div>
 
-      {/* Y-axis label */}
-      <div className="flex justify-between items-center text-sm">
-        <span className="font-medium">{isNirsBased ? "NIRS (%)" : "PPC"}</span>
-        <span className="text-muted-foreground">{selectedWindow === "stay" ? "Séjour" : selectedWindow}</span>
+      {/* Legend - below the chart */}
+      <div className="flex items-center justify-center gap-6 text-xs">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-0.5 bg-status-critical" />
+          <span>{isNirsBased ? "NIRS" : "PPC"}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-0.5 bg-muted-foreground" />
+          <span>PAM</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-0.5 border-dashed border-t-2 border-muted-foreground" style={{ borderStyle: 'dashed' }} />
+          <span>Limites (LLA/ULA)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-status-normal/20 border border-status-normal/40" />
+          <span>Zone optimale</span>
+        </div>
       </div>
 
       {/* Legend with limits and status indicator */}
