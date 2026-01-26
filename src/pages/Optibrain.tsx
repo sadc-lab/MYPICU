@@ -1150,20 +1150,13 @@ const Optibrain = () => {
                           {metric.criticalLabel}
                         </div>
                       )}
-                      {metric.hasDetails && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                          {isSelected ? (
-                            <Check className="h-3 w-3 text-primary" />
-                          ) : (
-                            <Plus className="h-3 w-3" />
-                          )}
-                          <span>{isSelected ? "Affiché" : "Afficher"}</span>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
               </div>
+              <p className="text-xs text-muted-foreground mt-4 text-center">
+                Cliquez sur un indicateur pour l'afficher dans le graphique
+              </p>
 
               {/* Embedded Brain Chart */}
               {selectedBrainIndicators.length > 0 && (
