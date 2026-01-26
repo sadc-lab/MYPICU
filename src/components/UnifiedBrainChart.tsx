@@ -49,6 +49,8 @@ interface UnifiedBrainChartProps {
   lowerLimit?: number | null;
   upperLimit?: number | null;
   nirsReliability?: number | null;
+  autoregulationScore?: number | null; // PRx or COx
+  isNirsBased?: boolean;
 }
 
 // Time Distribution Bar Component
@@ -231,6 +233,8 @@ export function UnifiedBrainChart({
   lowerLimit,
   upperLimit,
   nirsReliability,
+  autoregulationScore,
+  isNirsBased,
 }: UnifiedBrainChartProps) {
   const [loading, setLoading] = useState(false);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
@@ -450,10 +454,22 @@ export function UnifiedBrainChart({
           
           {/* NIRS Reliability */}
           {nirsReliability !== null && nirsReliability !== undefined && (
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-1">
               <span className="text-xs text-muted-foreground">Fiabilité NIRS :</span>
               <span className={`text-sm font-medium ${nirsReliability >= 70 ? 'text-status-normal' : nirsReliability >= 50 ? 'text-status-warning' : 'text-status-critical'}`}>
                 {Math.round(nirsReliability)}%
+              </span>
+            </div>
+          )}
+          
+          {/* Autoregulation Score (PRx or COx) */}
+          {autoregulationScore !== null && autoregulationScore !== undefined && (
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-muted-foreground">
+                {isNirsBased ? "COx :" : "PRx :"}
+              </span>
+              <span className={`text-sm font-medium ${autoregulationScore < 0.3 ? 'text-status-normal' : autoregulationScore < 0.5 ? 'text-status-warning' : 'text-status-critical'}`}>
+                {autoregulationScore.toFixed(2)}
               </span>
             </div>
           )}

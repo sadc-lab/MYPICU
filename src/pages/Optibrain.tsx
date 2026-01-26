@@ -1176,6 +1176,8 @@ const Optibrain = () => {
                 optimalPAM={optimalPPCResult.optimalPPC}
                 lowerLimit={optimalPPCResult.lowerLimit}
                 upperLimit={optimalPPCResult.upperLimit}
+                autoregulationScore={optimalPPCResult.prxScore}
+                isNirsBased={isNirsBased}
               />
             </div>
           </DialogContent>
