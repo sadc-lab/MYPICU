@@ -34,16 +34,26 @@ interface AutoregulationFileData {
 // Cache for loaded autoregulation data
 const autoregulationCache = new Map<string, AutoregulationFileData>();
 
-// Available patient IDs with autoregulation data files
+// Available patient IDs with autoregulation data files (PRx-based)
 const AVAILABLE_AUTOREGULATION_PATIENTS = ["8448"];
+
+// Patient IDs using NIRS-based autoregulation (COx)
+const NIRS_AUTOREGULATION_PATIENTS = ["8749"];
 
 // Enable simulation mode for all patients when no real data exists
 const ENABLE_SIMULATION_FALLBACK = true;
 
 export function hasAutoregulationData(patientId: string): boolean {
   const normalizedId = patientId.replace("#", "");
-  // Return true if real data exists OR simulation is enabled
-  return AVAILABLE_AUTOREGULATION_PATIENTS.includes(normalizedId) || ENABLE_SIMULATION_FALLBACK;
+  // Return true if real data exists (PRx or NIRS) OR simulation is enabled
+  return AVAILABLE_AUTOREGULATION_PATIENTS.includes(normalizedId) || 
+         NIRS_AUTOREGULATION_PATIENTS.includes(normalizedId) ||
+         ENABLE_SIMULATION_FALLBACK;
+}
+
+export function isNirsBasedPatient(patientId: string): boolean {
+  const normalizedId = patientId.replace("#", "");
+  return NIRS_AUTOREGULATION_PATIENTS.includes(normalizedId);
 }
 
 export async function loadAutoregulationData(patientId: string): Promise<AutoregulationFileData | null> {
