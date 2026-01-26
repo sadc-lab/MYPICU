@@ -57,7 +57,12 @@ interface TimeDistributionBarProps {
 
 const TimeDistributionBar = ({ neuroZones }: TimeDistributionBarProps) => {
   const distribution = useMemo(() => {
-    if (neuroZones.length === 0) return { controlled: 0, htic: 0, htic_ischemia: 0, total: 0 };
+    if (neuroZones.length === 0) return { 
+      controlled: { percentage: 0, durationMs: 0 }, 
+      htic: { percentage: 0, durationMs: 0 }, 
+      htic_ischemia: { percentage: 0, durationMs: 0 }, 
+      total: 0 
+    };
 
     const totals: Record<NeuroState, number> = {
       controlled: 0,
@@ -73,12 +78,36 @@ const TimeDistributionBar = ({ neuroZones }: TimeDistributionBarProps) => {
     }
 
     return {
-      controlled: totalDuration > 0 ? (totals.controlled / totalDuration) * 100 : 0,
-      htic: totalDuration > 0 ? (totals.htic / totalDuration) * 100 : 0,
-      htic_ischemia: totalDuration > 0 ? (totals.htic_ischemia / totalDuration) * 100 : 0,
+      controlled: { 
+        percentage: totalDuration > 0 ? (totals.controlled / totalDuration) * 100 : 0,
+        durationMs: totals.controlled,
+      },
+      htic: { 
+        percentage: totalDuration > 0 ? (totals.htic / totalDuration) * 100 : 0,
+        durationMs: totals.htic,
+      },
+      htic_ischemia: { 
+        percentage: totalDuration > 0 ? (totals.htic_ischemia / totalDuration) * 100 : 0,
+        durationMs: totals.htic_ischemia,
+      },
       total: totalDuration,
     };
   }, [neuroZones]);
+
+  // Format duration in hours and minutes
+  const formatDuration = (ms: number): string => {
+    const totalMinutes = Math.round(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours === 0) {
+      return `${minutes}min`;
+    } else if (minutes === 0) {
+      return `${hours}h`;
+    } else {
+      return `${hours}h${minutes.toString().padStart(2, '0')}`;
+    }
+  };
 
   if (neuroZones.length === 0) return null;
 
@@ -122,7 +151,7 @@ const TimeDistributionBar = ({ neuroZones }: TimeDistributionBarProps) => {
       {/* Horizontal stacked bar */}
       <div className="h-6 w-full flex rounded-md overflow-hidden">
         {states.map((state) => {
-          const percentage = distribution[state];
+          const { percentage } = distribution[state];
           if (percentage === 0) return null;
           return (
             <div
@@ -140,18 +169,20 @@ const TimeDistributionBar = ({ neuroZones }: TimeDistributionBarProps) => {
         })}
       </div>
 
-      {/* Legend with percentages */}
+      {/* Legend with percentages and durations */}
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
         {states.map((state) => {
           const config = stateConfig[state];
-          const percentage = distribution[state];
+          const { percentage, durationMs } = distribution[state];
           return (
             <div key={state} className="flex items-center gap-1.5">
               <span className={`${config.color.replace('bg-', 'text-')}`}>
                 {config.symbol}
               </span>
               <span className="text-foreground">{config.label}</span>
-              <span className="text-muted-foreground">({Math.round(percentage)}%)</span>
+              <span className="text-muted-foreground">
+                {formatDuration(durationMs)} ({Math.round(percentage)}%)
+              </span>
             </div>
           );
         })}
