@@ -234,6 +234,48 @@ export function buildNirsAutoregulationCurve(
   };
 }
 
+// Get optimal PAM result in the same format as OptimalPPCResult for consistency
+export async function getOptimalPAMFromNirs(
+  patientId: string,
+  windowMinutes: number = 30
+): Promise<{
+  optimalPPC: number | null; // Actually optimalPAM, using same field name for compatibility
+  lowerLimit: number | null;
+  upperLimit: number | null;
+  prxScore: number | null;
+  timestamp: string | null;
+  hasData: boolean;
+}> {
+  const defaultResult = {
+    optimalPPC: null,
+    lowerLimit: null,
+    upperLimit: null,
+    prxScore: null,
+    timestamp: null,
+    hasData: false,
+  };
+
+  try {
+    const data = await loadNirsData(patientId);
+    if (data.length === 0) return defaultResult;
+
+    const result = buildNirsAutoregulationCurve(data, windowMinutes, 5);
+    
+    return {
+      optimalPPC: result.optimalPAM,
+      lowerLimit: result.lowerLimit,
+      upperLimit: result.upperLimit,
+      prxScore: result.minCox,
+      timestamp: data.length > 0 ? data[data.length - 1].timestamp : null,
+      hasData: result.hasRealData,
+    };
+  } catch (error) {
+    console.error("Error calculating optimal PAM from NIRS:", error);
+    return defaultResult;
+  }
+}
+
+
 // Get current PAM and NIRS from the latest data
 export function getCurrentNirsValues(data: NirsDataPoint[]): {
   currentPAM: number | null;
