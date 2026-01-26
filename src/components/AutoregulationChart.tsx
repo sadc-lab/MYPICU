@@ -410,75 +410,14 @@ export function AutoregulationChart({
         </div>
       </div>
 
-      {/* Legend with limits and status indicator */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
-        {/* Status indicator */}
-        <div className={`rounded-lg p-3 col-span-2 sm:col-span-1 ${
-          currentPAM !== null && lowerLimit !== null && upperLimit !== null
-            ? currentPAM >= lowerLimit && currentPAM <= upperLimit
-              ? "bg-status-normal/20 border border-status-normal"
-              : currentPAM < lowerLimit
-                ? "bg-status-critical/20 border border-status-critical"
-                : "bg-status-warning/20 border border-status-warning"
-            : "bg-muted/50"
-        }`}>
-          <p className="text-muted-foreground text-xs">Statut PAM</p>
-          <p className={`font-semibold text-sm ${
-            currentPAM !== null && lowerLimit !== null && upperLimit !== null
-              ? currentPAM >= lowerLimit && currentPAM <= upperLimit
-                ? "text-status-normal"
-                : currentPAM < lowerLimit
-                  ? "text-status-critical"
-                  : "text-status-warning"
-              : ""
-          }`}>
-            {currentPAM !== null && lowerLimit !== null && upperLimit !== null
-              ? currentPAM >= lowerLimit && currentPAM <= upperLimit
-                ? "✓ Dans la zone"
-                : currentPAM < lowerLimit
-                  ? "↓ Sous LLA"
-                  : "↑ Au-dessus ULA"
-              : "--"}
-          </p>
-        </div>
-        <div className="bg-muted/50 rounded-lg p-3">
-          <p className="text-muted-foreground text-xs">{targetLabel}</p>
-          <p className="font-semibold text-lg">
-            {optimalValue !== null ? `${optimalValue} mmHg` : "--"}
-          </p>
-        </div>
-        <div className="bg-muted/50 rounded-lg p-3">
-          <p className="text-muted-foreground text-xs">LLA (limite basse)</p>
-          <p className="font-semibold text-lg">
-            {lowerLimit !== null ? `${lowerLimit} mmHg` : "--"}
-          </p>
-        </div>
-        <div className="bg-muted/50 rounded-lg p-3">
-          <p className="text-muted-foreground text-xs">ULA (limite haute)</p>
-          <p className="font-semibold text-lg">
-            {upperLimit !== null ? `${upperLimit} mmHg` : "--"}
-          </p>
-        </div>
-        <div className="bg-muted/50 rounded-lg p-3">
-          <p className="text-muted-foreground text-xs">PAM actuelle</p>
-          <p className="font-semibold text-lg">
-            {currentPAM !== null ? `${Math.round(currentPAM)} mmHg` : "--"}
-          </p>
-        </div>
-      </div>
-
       {/* Interpretation guide */}
-      <div className="text-xs text-muted-foreground border-t border-border pt-3 space-y-1">
+      <div className="text-xs text-muted-foreground pt-2">
         <p>
           <span className="font-medium">Interprétation :</span> La{" "}
           <span className="text-status-critical font-medium">ligne rouge</span> montre l'évolution 
-          de la {isNirsBased ? "NIRS" : "PPC"} au cours du temps. Les{" "}
-          <span className="text-muted-foreground font-medium">lignes pointillées grises</span> représentent 
-          les limites d'autorégulation (LLA/ULA).
-        </p>
-        <p>
-          La <span className="text-status-normal font-medium">zone verte</span> représente la plage
-          où l'autorégulation cérébrale est optimale.
+          de la {isNirsBased ? "NIRS" : "PPC"}. Les{" "}
+          <span className="text-muted-foreground font-medium">lignes pointillées</span> représentent 
+          les limites d'autorégulation (LLA/ULA). La <span className="text-status-normal font-medium">zone verte</span> est la plage optimale.
         </p>
       </div>
     </div>
