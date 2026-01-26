@@ -48,6 +48,7 @@ interface UnifiedBrainChartProps {
   optimalPAM?: number | null;
   lowerLimit?: number | null;
   upperLimit?: number | null;
+  nirsReliability?: number | null;
 }
 
 // Time Distribution Bar Component
@@ -229,6 +230,7 @@ export function UnifiedBrainChart({
   optimalPAM,
   lowerLimit,
   upperLimit,
+  nirsReliability,
 }: UnifiedBrainChartProps) {
   const [loading, setLoading] = useState(false);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
@@ -403,27 +405,57 @@ export function UnifiedBrainChart({
         htic: "HTIC",
         htic_ischemia: "HTIC + Ischémie",
       };
+
+      const stateColors: Record<NeuroState, string> = {
+        controlled: "text-muted-foreground",
+        htic: "text-status-warning",
+        htic_ischemia: "text-status-critical",
+      };
       
       return (
-        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-          <p className="text-xs text-muted-foreground mb-2">
+        <div className="bg-card border border-border rounded-lg p-3 shadow-lg min-w-[180px]">
+          <p className="text-xs text-muted-foreground mb-2 border-b border-border pb-2">
             {format(new Date(data.timestamp), "dd/MM HH:mm", { locale: fr })}
           </p>
-          {data.pic !== null && (
-            <p className="font-medium text-status-warning">
-              PIC: {Math.round(data.pic)} mmHg
-            </p>
-          )}
-          {data.pam !== null && (
-            <p className="font-medium text-status-critical">
-              PAM: {Math.round(data.pam)} mmHg
-            </p>
-          )}
+          
+          {/* Neurological State */}
           {data.neuroState && (
-            <p className="text-sm text-muted-foreground mt-1">
-              État: {stateLabels[data.neuroState as NeuroState]}
-              {data.isTransition && " (transition)"}
-            </p>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs text-muted-foreground">État :</span>
+              <span className={`text-sm font-medium ${stateColors[data.neuroState as NeuroState]}`}>
+                {stateLabels[data.neuroState as NeuroState]}
+              </span>
+            </div>
+          )}
+          
+          {/* PIC */}
+          {data.pic !== null && (
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs text-muted-foreground">PIC :</span>
+              <span className="text-sm font-medium text-status-warning">
+                {Math.round(data.pic)} mmHg
+              </span>
+            </div>
+          )}
+          
+          {/* PAM Optimale */}
+          {optimalPAM !== null && optimalPAM !== undefined && (
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs text-muted-foreground">PAM Opt :</span>
+              <span className="text-sm font-medium text-status-normal">
+                {Math.round(optimalPAM)} mmHg
+              </span>
+            </div>
+          )}
+          
+          {/* NIRS Reliability */}
+          {nirsReliability !== null && nirsReliability !== undefined && (
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-muted-foreground">Fiabilité NIRS :</span>
+              <span className={`text-sm font-medium ${nirsReliability >= 70 ? 'text-status-normal' : nirsReliability >= 50 ? 'text-status-warning' : 'text-status-critical'}`}>
+                {Math.round(nirsReliability)}%
+              </span>
+            </div>
           )}
         </div>
       );
