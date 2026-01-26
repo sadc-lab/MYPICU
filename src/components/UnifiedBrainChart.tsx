@@ -193,11 +193,10 @@ const TimeDistributionBar = ({ neuroZones }: TimeDistributionBarProps) => {
 
 
 const NeuroTransitionShape = (props: any) => {
-  const { cx, cy, payload } = props;
-  if (!payload?.isTransition || !cx || !cy) return null;
+  const { cx, payload } = props;
+  if (!payload?.isTransition || !cx) return null;
   
   const state = payload.neuroState;
-  const size = 8;
   
   // Colors based on state
   const colors: Record<NeuroState, string> = {
@@ -208,51 +207,18 @@ const NeuroTransitionShape = (props: any) => {
   
   const color = colors[state as NeuroState] || colors.controlled;
   
-  if (state === "htic") {
-    // Triangle for HTIC
-    return (
-      <polygon
-        points={`${cx},${cy - size} ${cx - size},${cy + size} ${cx + size},${cy + size}`}
-        fill={color}
-        stroke="hsl(var(--background))"
-        strokeWidth={2}
-      />
-    );
-  } else if (state === "htic_ischemia") {
-    // X/Cross for HTIC with ischemia
-    return (
-      <g>
-        <line
-          x1={cx - size}
-          y1={cy - size}
-          x2={cx + size}
-          y2={cy + size}
-          stroke={color}
-          strokeWidth={3}
-        />
-        <line
-          x1={cx + size}
-          y1={cy - size}
-          x2={cx - size}
-          y2={cy + size}
-          stroke={color}
-          strokeWidth={3}
-        />
-      </g>
-    );
-  } else {
-    // Circle for Controlled
-    return (
-      <circle
-        cx={cx}
-        cy={cy}
-        r={size}
-        fill={color}
-        stroke="hsl(var(--background))"
-        strokeWidth={2}
-      />
-    );
-  }
+  // Render a vertical line spanning the chart height
+  return (
+    <line
+      x1={cx}
+      y1={0}
+      x2={cx}
+      y2={1000}
+      stroke={color}
+      strokeWidth={2}
+      strokeDasharray="4 2"
+    />
+  );
 };
 
 export function UnifiedBrainChart({
