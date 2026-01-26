@@ -51,6 +51,7 @@ interface UnifiedBrainChartProps {
   nirsReliability?: number | null;
   autoregulationScore?: number | null; // PRx or COx
   isNirsBased?: boolean;
+  selectedIndicators?: string[]; // Filter which curves to show
 }
 
 // Time Distribution Bar Component
@@ -235,6 +236,7 @@ export function UnifiedBrainChart({
   nirsReliability,
   autoregulationScore,
   isNirsBased,
+  selectedIndicators,
 }: UnifiedBrainChartProps) {
   const [loading, setLoading] = useState(false);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
@@ -242,6 +244,13 @@ export function UnifiedBrainChart({
   const [patientData, setPatientData] = useState<PatientFileData | null>(null);
 
   const hasData = hasPatientFileData(patientId);
+  
+  // Determine which elements to show based on selectedIndicators
+  // If selectedIndicators is undefined or empty, show all
+  const showAll = !selectedIndicators || selectedIndicators.length === 0;
+  const showNeuro = showAll || selectedIndicators.includes("État Neuro");
+  const showPIC = showAll || selectedIndicators.includes("PIC");
+  const showPAM = showAll || selectedIndicators.includes("PAM Opt") || selectedIndicators.includes("PPC Opt");
 
   useEffect(() => {
     if (!hasData) {
@@ -520,7 +529,7 @@ export function UnifiedBrainChart({
             </defs>
 
             {/* Background zones for neurological states */}
-            {neuroZones.map((zone, idx) => (
+            {showNeuro && neuroZones.map((zone, idx) => (
               <ReferenceArea
                 key={idx}
                 x1={zone.start}
@@ -533,7 +542,7 @@ export function UnifiedBrainChart({
             ))}
 
             {/* Optimal PAM zone if available */}
-            {lowerLimit && upperLimit && (
+            {showPAM && lowerLimit && upperLimit && (
               <ReferenceArea
                 y1={lowerLimit}
                 y2={upperLimit}
@@ -567,7 +576,7 @@ export function UnifiedBrainChart({
             <Tooltip content={<CustomTooltip />} />
 
             {/* LLA/ULA reference lines */}
-            {lowerLimit && (
+            {showPAM && lowerLimit && (
               <ReferenceLine
                 y={lowerLimit}
                 stroke="hsl(var(--muted-foreground))"
@@ -575,7 +584,7 @@ export function UnifiedBrainChart({
                 strokeWidth={1.5}
               />
             )}
-            {upperLimit && (
+            {showPAM && upperLimit && (
               <ReferenceLine
                 y={upperLimit}
                 stroke="hsl(var(--muted-foreground))"
@@ -585,40 +594,46 @@ export function UnifiedBrainChart({
             )}
 
             {/* PIC Scatter (dots only) */}
-            <Scatter
-              data={chartData.filter(d => d.pic !== null)}
-              dataKey="pic"
-              fill="hsl(var(--status-warning))"
-              name="PIC"
-              isAnimationActive={false}
-              shape={(props: any) => (
-                <circle
-                  cx={props.cx}
-                  cy={props.cy}
-                  r={3}
-                  fill="hsl(var(--status-warning))"
-                />
-              )}
-            />
+            {showPIC && (
+              <Scatter
+                data={chartData.filter(d => d.pic !== null)}
+                dataKey="pic"
+                fill="hsl(var(--status-warning))"
+                name="PIC"
+                isAnimationActive={false}
+                shape={(props: any) => (
+                  <circle
+                    cx={props.cx}
+                    cy={props.cy}
+                    r={3}
+                    fill="hsl(var(--status-warning))"
+                  />
+                )}
+              />
+            )}
 
             {/* PAM Line */}
-            <Line
-              type="monotone"
-              dataKey="pam"
-              stroke="hsl(var(--status-critical))"
-              strokeWidth={2}
-              dot={false}
-              connectNulls
-              name="PAM"
-            />
+            {showPAM && (
+              <Line
+                type="monotone"
+                dataKey="pam"
+                stroke="hsl(var(--status-critical))"
+                strokeWidth={2}
+                dot={false}
+                connectNulls
+                name="PAM"
+              />
+            )}
 
             {/* Neurological state transition markers */}
-            <Scatter
-              data={transitionData}
-              dataKey="pic"
-              shape={<NeuroTransitionShape />}
-              isAnimationActive={false}
-            />
+            {showNeuro && (
+              <Scatter
+                data={transitionData}
+                dataKey="pic"
+                shape={<NeuroTransitionShape />}
+                isAnimationActive={false}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -626,53 +641,60 @@ export function UnifiedBrainChart({
       {/* Footer with current values */}
       <div className="border-t border-border pt-4">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-          <div>
-            <span className="text-muted-foreground">PIC actuelle :</span>{" "}
-            <span className="font-semibold text-foreground">
-              {currentPIC !== null && currentPIC !== undefined ? `${Math.round(currentPIC)} mmHg` : "--"}
-            </span>
-          </div>
-          <span className="text-border">|</span>
-          <div>
-            <span className="text-muted-foreground">PAM actuelle :</span>{" "}
-            <span className="font-semibold text-foreground">
-              {currentPAM !== null && currentPAM !== undefined ? `${Math.round(currentPAM)} mmHg` : "--"}
-            </span>
-          </div>
-          {optimalPAM && (
+          {showPIC && (
             <>
-              <span className="text-border">|</span>
               <div>
-                <span className="text-muted-foreground">PAM optimale :</span>{" "}
-                <span className="font-semibold text-foreground">{Math.round(optimalPAM)} mmHg</span>
-              </div>
-            </>
-          )}
-          {lowerLimit && upperLimit && (
-            <>
-              <span className="text-border">|</span>
-              <div>
-                <span className="text-muted-foreground">Zone :</span>{" "}
+                <span className="text-muted-foreground">PIC actuelle :</span>{" "}
                 <span className="font-semibold text-foreground">
-                  {Math.round(lowerLimit)} - {Math.round(upperLimit)} mmHg
+                  {currentPIC !== null && currentPIC !== undefined ? `${Math.round(currentPIC)} mmHg` : "--"}
                 </span>
               </div>
+              {showPAM && <span className="text-border">|</span>}
+            </>
+          )}
+          {showPAM && (
+            <>
+              <div>
+                <span className="text-muted-foreground">PAM actuelle :</span>{" "}
+                <span className="font-semibold text-foreground">
+                  {currentPAM !== null && currentPAM !== undefined ? `${Math.round(currentPAM)} mmHg` : "--"}
+                </span>
+              </div>
+              {optimalPAM && (
+                <>
+                  <span className="text-border">|</span>
+                  <div>
+                    <span className="text-muted-foreground">PAM optimale :</span>{" "}
+                    <span className="font-semibold text-foreground">{Math.round(optimalPAM)} mmHg</span>
+                  </div>
+                </>
+              )}
+              {lowerLimit && upperLimit && (
+                <>
+                  <span className="text-border">|</span>
+                  <div>
+                    <span className="text-muted-foreground">Zone :</span>{" "}
+                    <span className="font-semibold text-foreground">
+                      {Math.round(lowerLimit)} - {Math.round(upperLimit)} mmHg
+                    </span>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
       </div>
 
-      {/* Time Distribution Bar */}
-      <TimeDistributionBar neuroZones={neuroZones} />
+      {/* Time Distribution Bar - only show when neuro states are visible */}
+      {showNeuro && <TimeDistributionBar neuroZones={neuroZones} />}
 
-      {/* Interpretation */}
+      {/* Interpretation - adapt based on what's shown */}
       <div className="text-xs text-muted-foreground">
         <p>
-          <span className="font-medium">Interprétation :</span> Les{" "}
-          <span className="text-status-warning font-medium">courbes orange</span> et{" "}
-          <span className="text-status-critical font-medium">rouge</span> montrent l'évolution 
-          de la PIC et PAM. Les zones colorées en arrière-plan indiquent l'état neurologique. 
-          Les symboles marquent les changements d'état.
+          <span className="font-medium">Interprétation :</span>{" "}
+          {showPIC && <><span className="text-status-warning font-medium">Les points orange</span> montrent l'évolution de la PIC. </>}
+          {showPAM && <><span className="text-status-critical font-medium">La courbe rouge</span> montre l'évolution de la PAM. </>}
+          {showNeuro && <>Les zones colorées en arrière-plan indiquent l'état neurologique. Les lignes verticales marquent les changements d'état.</>}
         </p>
       </div>
     </div>
