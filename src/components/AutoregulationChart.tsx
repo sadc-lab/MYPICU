@@ -384,8 +384,37 @@ export function AutoregulationChart({
         <span className="text-muted-foreground">{selectedHours} heures</span>
       </div>
 
-      {/* Legend with limits */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+      {/* Legend with limits and status indicator */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
+        {/* Status indicator */}
+        <div className={`rounded-lg p-3 col-span-2 sm:col-span-1 ${
+          currentPAM !== null && lowerLimit !== null && upperLimit !== null
+            ? currentPAM >= lowerLimit && currentPAM <= upperLimit
+              ? "bg-status-normal/20 border border-status-normal"
+              : currentPAM < lowerLimit
+                ? "bg-status-critical/20 border border-status-critical"
+                : "bg-status-warning/20 border border-status-warning"
+            : "bg-muted/50"
+        }`}>
+          <p className="text-muted-foreground text-xs">Statut PAM</p>
+          <p className={`font-semibold text-sm ${
+            currentPAM !== null && lowerLimit !== null && upperLimit !== null
+              ? currentPAM >= lowerLimit && currentPAM <= upperLimit
+                ? "text-status-normal"
+                : currentPAM < lowerLimit
+                  ? "text-status-critical"
+                  : "text-status-warning"
+              : ""
+          }`}>
+            {currentPAM !== null && lowerLimit !== null && upperLimit !== null
+              ? currentPAM >= lowerLimit && currentPAM <= upperLimit
+                ? "✓ Dans la zone"
+                : currentPAM < lowerLimit
+                  ? "↓ Sous LLA"
+                  : "↑ Au-dessus ULA"
+              : "--"}
+          </p>
+        </div>
         <div className="bg-muted/50 rounded-lg p-3">
           <p className="text-muted-foreground text-xs">{targetLabel}</p>
           <p className="font-semibold text-lg">
