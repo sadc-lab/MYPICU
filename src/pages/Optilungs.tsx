@@ -11,6 +11,7 @@ import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronU
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
 import { useTimeRange } from '@/hooks/useTimeRange';
+import { TimeWindowSelector } from '@/components/ui/TimeWindowSelector';
 import {
   loadPatientFileData,
   hasPatientFileData,
@@ -334,21 +335,11 @@ const Optilungs = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Indicateurs Cliniques</CardTitle>
-              <div className="flex gap-2">
-                {timeRanges.map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                      timeRange === range
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    }`}
-                  >
-                    {getTimeRangeLabel(range)}
-                  </button>
-                ))}
-              </div>
+              <TimeWindowSelector
+                value={timeRange}
+                onChange={(value) => setTimeRange(value as any)}
+                includeStay={true}
+              />
             </div>
           </CardHeader>
           <CardContent>

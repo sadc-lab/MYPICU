@@ -44,13 +44,7 @@ interface TimeSeriesPoint {
   pam: number | null;
 }
 
-// Available time windows
-const TIME_WINDOWS = [
-  { value: 3, label: "3h" },
-  { value: 6, label: "6h" },
-  { value: 12, label: "12h" },
-  { value: 24, label: "24h" },
-];
+import { TimeWindowSelector, TimeWindowValue, timeWindowToHours, hoursToTimeWindow } from "@/components/ui/TimeWindowSelector";
 
 export function AutoregulationChart({
   patientId,
@@ -64,7 +58,7 @@ export function AutoregulationChart({
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesPoint[]>([]);
   const [optimalValue, setOptimalValue] = useState<number | null>(null);
   const [lowerLimit, setLowerLimit] = useState<number | null>(null);
-  const [selectedHours, setSelectedHours] = useState(6);
+  const [selectedWindow, setSelectedWindow] = useState<TimeWindowValue>("6h");
   const [upperLimit, setUpperLimit] = useState<number | null>(null);
   const [isNirsBased, setIsNirsBased] = useState(false);
   
@@ -109,7 +103,8 @@ export function AutoregulationChart({
             
             // Build time series from raw NIRS data
             const now = new Date();
-            const cutoffTime = now.getTime() - selectedHours * 60 * 60 * 1000;
+            const hours = timeWindowToHours(selectedWindow) || 6;
+            const cutoffTime = now.getTime() - hours * 60 * 60 * 1000;
             
             // Find latest timestamp and calculate offset
             let latestTime = 0;
@@ -157,7 +152,8 @@ export function AutoregulationChart({
             setUpperLimit(curveResult.upperLimit);
             
             // Get time series
-            const timeSeriesRaw = getOptimalPPCTimeSeries(data, windowMinutes, 4, selectedHours);
+            const hours = timeWindowToHours(selectedWindow) || 6;
+            const timeSeriesRaw = getOptimalPPCTimeSeries(data, windowMinutes, 4, hours);
             const timeSeries: TimeSeriesPoint[] = timeSeriesRaw.map((point) => ({
               timestamp: point.horodate,
               time: new Date(point.horodate).getTime(),
@@ -175,7 +171,7 @@ export function AutoregulationChart({
           setLoading(false);
         });
     }
-  }, [patientId, windowMinutes, selectedHours, hasData]);
+  }, [patientId, windowMinutes, selectedWindow, hasData]);
 
   // Labels based on data type
   const targetLabel = isNirsBased ? "PAM optimale" : "PPC Optimale";
@@ -267,24 +263,13 @@ export function AutoregulationChart({
     <div className="space-y-4">
       {/* Time window selector and legend */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Fenêtre :</span>
-          <div className="flex bg-muted rounded-lg p-1">
-            {TIME_WINDOWS.map((tw) => (
-              <button
-                key={tw.value}
-                onClick={() => setSelectedHours(tw.value)}
-                className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                  selectedHours === tw.value
-                    ? "bg-background text-foreground shadow-sm font-medium"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tw.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <TimeWindowSelector
+          value={selectedWindow}
+          onChange={setSelectedWindow}
+          includeStay={false}
+          label="Fenêtre :"
+          variant="muted"
+        />
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-0.5 bg-status-critical" />
@@ -381,7 +366,7 @@ export function AutoregulationChart({
       {/* Y-axis label */}
       <div className="flex justify-between items-center text-sm">
         <span className="font-medium">{isNirsBased ? "NIRS (%)" : "PPC"}</span>
-        <span className="text-muted-foreground">{selectedHours} heures</span>
+        <span className="text-muted-foreground">{selectedWindow === "stay" ? "Séjour" : selectedWindow}</span>
       </div>
 
       {/* Legend with limits and status indicator */}
