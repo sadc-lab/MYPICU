@@ -11,6 +11,7 @@ import { MiniMetricChart } from '@/components/MiniMetricChart';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { useTimeRange } from '@/hooks/useTimeRange';
+import { TimeWindowSelector } from '@/components/ui/TimeWindowSelector';
 
 const Optistate = () => {
   const [searchParams] = useSearchParams();
@@ -226,19 +227,11 @@ const Optistate = () => {
                 Indicateurs Problématiques
               </CardTitle>
               {/* Time Range Selector */}
-              <div className="flex gap-2">
-                {timeRanges.map((range) => (
-                  <Button
-                    key={range}
-                    variant={timeRange === range ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setTimeRange(range)}
-                    className="h-8 text-xs"
-                  >
-                    {getTimeRangeLabel(range)}
-                  </Button>
-                ))}
-              </div>
+              <TimeWindowSelector
+                value={timeRange}
+                onChange={(value) => setTimeRange(value as any)}
+                includeStay={true}
+              />
             </div>
           </CardHeader>
           <CardContent className="pt-6">

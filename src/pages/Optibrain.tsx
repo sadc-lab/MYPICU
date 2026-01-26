@@ -53,6 +53,7 @@ import {
   OptimalPPCResult,
 } from "@/services/autoregulation.service";
 import { AutoregulationChart } from "@/components/AutoregulationChart";
+import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -80,7 +81,7 @@ const Optibrain = () => {
   const [editedObjectives, setEditedObjectives] = useState<string[]>([]);
   const [isEditingInterventions, setIsEditingInterventions] = useState(false);
   const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
-  const [picDialogTimeRange, setPicDialogTimeRange] = useState<string>("24h");
+  const [picDialogTimeRange, setPicDialogTimeRange] = useState<TimeWindowValue>("24h");
   const [showTargetZones, setShowTargetZones] = useState(true);
   
   // Ref pour le graphique de monitorage
@@ -1207,23 +1208,13 @@ const Optibrain = () => {
             </DialogHeader>
             <div className="space-y-6">
               {/* Time Range Selector */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Période :</span>
-                <div className="flex gap-2">
-                  {["3h", "6h", "12h", "24h", "stay"].map((range) => (
-                    <button
-                      key={range}
-                      onClick={() => setPicDialogTimeRange(range)}
-                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                        picDialogTimeRange === range
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      }`}
-                    >
-                      {range === "stay" ? "Séjour" : range}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center justify-end">
+                <TimeWindowSelector
+                  value={picDialogTimeRange}
+                  onChange={setPicDialogTimeRange}
+                  includeStay={true}
+                  label="Période :"
+                />
               </div>
 
               {/* PIC Card */}
@@ -1320,19 +1311,12 @@ const Optibrain = () => {
               <CardTitle className="text-base sm:text-lg">
                 Adhérence & Monitorage {timeRange === "stay" ? "sur le séjour" : `sur ${timeRange}`}
               </CardTitle>
-              <div className="flex gap-1 sm:gap-2 flex-wrap">
-                {timeRanges.map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-md transition-colors ${
-                      timeRange === range ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    {getTimeRangeLabel(range)}
-                  </button>
-                ))}
-              </div>
+              <TimeWindowSelector
+                value={timeRange}
+                onChange={(value) => setTimeRange(value as any)}
+                includeStay={true}
+                size="sm"
+              />
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
