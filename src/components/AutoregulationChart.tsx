@@ -296,7 +296,11 @@ export function AutoregulationChart({
             <span>{isNirsBased ? "NIRS" : "PPC"}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 bg-muted-foreground border-dashed border-t-2 border-muted-foreground" style={{ borderStyle: 'dashed' }} />
+            <div className="w-3 h-0.5 bg-muted-foreground" />
+            <span>PAM</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-0.5 border-dashed border-t-2 border-muted-foreground" style={{ borderStyle: 'dashed' }} />
             <span>Limites (LLA/ULA)</span>
           </div>
         </div>
@@ -368,6 +372,17 @@ export function AutoregulationChart({
                 strokeDasharray="3 3"
               />
             )}
+
+            {/* PAM Line - Secondary data (rendered first to appear behind) */}
+            <Line
+              type="monotone"
+              dataKey="pam"
+              stroke="hsl(var(--muted-foreground))"
+              strokeWidth={1.5}
+              dot={false}
+              connectNulls
+              name="PAM"
+            />
 
             {/* PPC/NIRS Line - Main data */}
             <Line
