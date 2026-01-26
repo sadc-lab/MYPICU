@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import {
-  ScatterChart,
-  Scatter,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -13,17 +13,19 @@ import {
 import {
   loadAutoregulationData,
   hasAutoregulationData,
+  getOptimalPPCTimeSeries,
   getAutoregulationCurveData,
-  AutoregulationCurvePoint,
   isNirsBasedPatient,
 } from "@/services/autoregulation.service";
 import {
   loadNirsData,
   buildNirsAutoregulationCurve,
   getCurrentNirsValues,
-  NirsCurvePoint,
+  NirsDataPoint,
 } from "@/services/nirsAutoregulation.service";
 import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface AutoregulationChartProps {
   patientId: string;
@@ -32,13 +34,15 @@ interface AutoregulationChartProps {
   pamMin?: number | null;
   pamMax?: number | null;
   windowMinutes?: number;
+  hoursBack?: number;
 }
 
-// Unified curve point for both PRx and COx
-interface UnifiedCurvePoint {
-  x: number;  // PPC or PAM
-  y: number;  // PRx or COx
-  count: number;
+// Time series data point for the chart
+interface TimeSeriesPoint {
+  timestamp: string;
+  time: number;
+  ppc: number | null;
+  pam: number | null;
 }
 
 export function AutoregulationChart({
@@ -48,13 +52,13 @@ export function AutoregulationChart({
   pamMin: propPamMin,
   pamMax: propPamMax,
   windowMinutes = 30,
+  hoursBack = 6,
 }: AutoregulationChartProps) {
   const [loading, setLoading] = useState(false);
-  const [curveData, setCurveData] = useState<UnifiedCurvePoint[]>([]);
+  const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesPoint[]>([]);
   const [optimalValue, setOptimalValue] = useState<number | null>(null);
   const [lowerLimit, setLowerLimit] = useState<number | null>(null);
   const [upperLimit, setUpperLimit] = useState<number | null>(null);
-  const [minIndex, setMinIndex] = useState<number | null>(null);
   const [isNirsBased, setIsNirsBased] = useState(false);
   
   // NIRS-specific state
@@ -71,7 +75,7 @@ export function AutoregulationChart({
 
   useEffect(() => {
     if (!hasData) {
-      setCurveData([]);
+      setTimeSeriesData([]);
       return;
     }
 
@@ -80,27 +84,52 @@ export function AutoregulationChart({
     setLoading(true);
 
     if (isNirs) {
-      // Load NIRS-based autoregulation data (COx vs PAM)
+      // Load NIRS-based autoregulation data
       loadNirsData(patientId)
         .then((data) => {
           if (data && data.length > 0) {
-            const result = buildNirsAutoregulationCurve(data, windowMinutes, 5);
-            const unified: UnifiedCurvePoint[] = result.curveData.map((d: NirsCurvePoint) => ({
-              x: d.pam,
-              y: d.cox,
-              count: d.count,
-            }));
-            setCurveData(unified);
-            setOptimalValue(result.optimalPAM);
-            setLowerLimit(result.lowerLimit);
-            setUpperLimit(result.upperLimit);
-            setMinIndex(result.minCox);
+            // Get autoregulation curve for limits
+            const curveResult = buildNirsAutoregulationCurve(data, windowMinutes, 5);
+            setOptimalValue(curveResult.optimalPAM);
+            setLowerLimit(curveResult.lowerLimit);
+            setUpperLimit(curveResult.upperLimit);
             
-            // Get current values from NIRS data
+            // Get current values
             const currentValues = getCurrentNirsValues(data);
             setNirsCurrentPAM(currentValues.currentPAM);
             setNirsPamMin(currentValues.pamMin);
             setNirsPamMax(currentValues.pamMax);
+            
+            // Build time series from raw NIRS data
+            const now = new Date();
+            const cutoffTime = now.getTime() - hoursBack * 60 * 60 * 1000;
+            
+            // Find latest timestamp and calculate offset
+            let latestTime = 0;
+            for (const point of data) {
+              const time = new Date(point.timestamp).getTime();
+              if (time > latestTime) latestTime = time;
+            }
+            const timeOffset = now.getTime() - latestTime;
+            
+            const timeSeries: TimeSeriesPoint[] = data
+              .filter((point: NirsDataPoint) => {
+                const time = new Date(point.timestamp).getTime() + timeOffset;
+                return time >= cutoffTime && point.pam !== null;
+              })
+              .map((point: NirsDataPoint) => {
+                const originalTime = new Date(point.timestamp).getTime();
+                const normalizedTime = originalTime + timeOffset;
+                return {
+                  timestamp: new Date(normalizedTime).toISOString(),
+                  time: normalizedTime,
+                  ppc: point.nirs, // Use NIRS as PPC equivalent for display
+                  pam: point.pam,
+                };
+              })
+              .sort((a: TimeSeriesPoint, b: TimeSeriesPoint) => a.time - b.time);
+            
+            setTimeSeriesData(timeSeries);
           }
         })
         .catch((err) => {
@@ -110,58 +139,73 @@ export function AutoregulationChart({
           setLoading(false);
         });
     } else {
-      // Load PRx-based autoregulation data (PRx vs PPC)
+      // Load PRx-based autoregulation data
       loadAutoregulationData(patientId)
         .then((data) => {
           if (data) {
-            const result = getAutoregulationCurveData(data, windowMinutes, 5);
-            const unified: UnifiedCurvePoint[] = result.curveData.map((d: AutoregulationCurvePoint) => ({
-              x: d.ppc,
-              y: d.prx,
-              count: d.count,
+            // Get curve data for limits
+            const curveResult = getAutoregulationCurveData(data, windowMinutes, 5);
+            setOptimalValue(curveResult.optimalPPC);
+            setLowerLimit(curveResult.lowerLimit);
+            setUpperLimit(curveResult.upperLimit);
+            
+            // Get time series
+            const timeSeriesRaw = getOptimalPPCTimeSeries(data, windowMinutes, 4, hoursBack);
+            const timeSeries: TimeSeriesPoint[] = timeSeriesRaw.map((point) => ({
+              timestamp: point.horodate,
+              time: new Date(point.horodate).getTime(),
+              ppc: point.ppc,
+              pam: point.pam,
             }));
-            setCurveData(unified);
-            setOptimalValue(result.optimalPPC);
-            setLowerLimit(result.lowerLimit);
-            setUpperLimit(result.upperLimit);
-            setMinIndex(result.minPrx);
+            
+            setTimeSeriesData(timeSeries);
           }
         })
         .catch((err) => {
-          console.error("Failed to load autoregulation curve data:", err);
+          console.error("Failed to load autoregulation data:", err);
         })
         .finally(() => {
           setLoading(false);
         });
     }
-  }, [patientId, windowMinutes, hasData]);
+  }, [patientId, windowMinutes, hoursBack, hasData]);
 
   // Labels based on data type
-  const xLabel = isNirsBased ? "PAM (mmHg)" : "PPC (mmHg)";
-  const yLabel = isNirsBased ? "COx" : "PRx";
-  const indexName = isNirsBased ? "COx" : "PRx";
   const targetLabel = isNirsBased ? "PAM optimale" : "PPC Optimale";
-  const currentLabel = isNirsBased ? "PAM actuelle" : "PPC actuelle";
 
-  // Calculate axis domains
-  const { xDomain, yDomain } = useMemo(() => {
-    if (curveData.length === 0) {
-      return { xDomain: [30, 130], yDomain: [-0.5, 1] };
+  // Calculate Y axis domain
+  const yDomain = useMemo(() => {
+    if (timeSeriesData.length === 0) {
+      return [40, 80];
     }
 
-    const xValues = curveData.map((d) => d.x);
-    const yValues = curveData.map((d) => d.y);
+    const ppcValues = timeSeriesData
+      .map((d) => d.ppc)
+      .filter((v): v is number => v !== null);
+    
+    if (ppcValues.length === 0) return [40, 80];
 
-    const minX = Math.min(...xValues);
-    const maxX = Math.max(...xValues);
-    const minY = Math.min(...yValues);
-    const maxY = Math.max(...yValues);
+    const minVal = Math.min(...ppcValues);
+    const maxVal = Math.max(...ppcValues);
+    
+    // Include limits in domain calculation
+    const allValues = [...ppcValues];
+    if (lowerLimit !== null) allValues.push(lowerLimit);
+    if (upperLimit !== null) allValues.push(upperLimit);
+    
+    const minDomain = Math.min(...allValues);
+    const maxDomain = Math.max(...allValues);
 
-    return {
-      xDomain: [Math.floor(minX / 10) * 10 - 5, Math.ceil(maxX / 10) * 10 + 5],
-      yDomain: [Math.min(-0.5, minY - 0.1), Math.max(1, maxY + 0.1)],
-    };
-  }, [curveData]);
+    return [
+      Math.floor(minDomain / 5) * 5 - 5,
+      Math.ceil(maxDomain / 5) * 5 + 5,
+    ];
+  }, [timeSeriesData, lowerLimit, upperLimit]);
+
+  // Format X axis time
+  const formatXAxis = (time: number) => {
+    return format(new Date(time), "HH:mm", { locale: fr });
+  };
 
   if (!hasData) {
     return (
@@ -179,10 +223,10 @@ export function AutoregulationChart({
     );
   }
 
-  if (curveData.length === 0) {
+  if (timeSeriesData.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-muted-foreground">
-        <p>Données insuffisantes pour construire la courbe d'autorégulation</p>
+        <p>Données insuffisantes pour construire le graphique d'autorégulation</p>
       </div>
     );
   }
@@ -193,260 +237,133 @@ export function AutoregulationChart({
       const data = payload[0].payload;
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-medium">{isNirsBased ? "PAM" : "PPC"}: {data.x} mmHg</p>
-          <p className="text-sm text-muted-foreground">{indexName}: {data.y.toFixed(2)}</p>
-          <p className="text-xs text-muted-foreground">({data.count} mesures)</p>
+          <p className="text-xs text-muted-foreground mb-1">
+            {format(new Date(data.timestamp), "dd/MM HH:mm", { locale: fr })}
+          </p>
+          {data.ppc !== null && (
+            <p className="font-medium text-status-critical">
+              {isNirsBased ? "NIRS" : "PPC"}: {Math.round(data.ppc)} {isNirsBased ? "%" : "mmHg"}
+            </p>
+          )}
+          {data.pam !== null && (
+            <p className="text-sm text-muted-foreground">
+              PAM: {Math.round(data.pam)} mmHg
+            </p>
+          )}
         </div>
       );
     }
     return null;
   };
 
-  // Current value for the x-axis marker
-  const currentXValue = isNirsBased ? currentPAM : currentPPC;
-
   return (
     <div className="space-y-4">
-      <div className="h-64 w-full">
+      {/* Time label */}
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium">
+          Évolution sur {hoursBack} heures
+        </h4>
+        <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-0.5 bg-status-critical" />
+            <span>{isNirsBased ? "NIRS" : "PPC"}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-0.5 bg-muted-foreground border-dashed border-t-2 border-muted-foreground" style={{ borderStyle: 'dashed' }} />
+            <span>Limites (LLA/ULA)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Time Series Chart */}
+      <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+          <LineChart data={timeSeriesData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+            
             <XAxis
+              dataKey="time"
               type="number"
-              dataKey="x"
-              domain={xDomain}
-              name={isNirsBased ? "PAM" : "PPC"}
-              unit=" mmHg"
+              domain={["dataMin", "dataMax"]}
+              tickFormatter={formatXAxis}
               tick={{ fontSize: 11 }}
               className="fill-foreground"
-              label={{
-                value: xLabel,
-                position: "bottom",
-                offset: -5,
-                className: "fill-muted-foreground",
-              }}
+              axisLine={{ stroke: "hsl(var(--border))" }}
             />
+            
             <YAxis
-              type="number"
-              dataKey="y"
               domain={yDomain}
-              name={indexName}
               tick={{ fontSize: 11 }}
               className="fill-foreground"
-              label={{
-                value: yLabel,
-                angle: -90,
-                position: "insideLeft",
-                className: "fill-muted-foreground",
-              }}
+              axisLine={{ stroke: "hsl(var(--border))" }}
+              tickFormatter={(value) => `${value}`}
+              width={40}
             />
+            
             <Tooltip content={<CustomTooltip />} />
 
-            {/* Index threshold line (0.3 = loss of autoregulation) */}
-            <ReferenceLine
-              y={0.3}
-              stroke="hsl(var(--status-warning))"
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              label={{
-                value: `${indexName} = 0.3`,
-                position: "right",
-                className: "fill-status-warning text-xs",
-              }}
-            />
-
-            {/* Zero line */}
-            <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeWidth={1} />
-
-            {/* Optimal zone (LLA to ULA) */}
+            {/* Optimal zone shading between LLA and ULA */}
             {lowerLimit !== null && upperLimit !== null && (
               <ReferenceArea
-                x1={lowerLimit}
-                x2={upperLimit}
+                y1={lowerLimit}
+                y2={upperLimit}
                 fill="hsl(var(--status-normal))"
-                fillOpacity={0.15}
+                fillOpacity={0.1}
+              />
+            )}
+
+            {/* Upper limit line (ULA) */}
+            {upperLimit !== null && (
+              <ReferenceLine
+                y={upperLimit}
+                stroke="hsl(var(--muted-foreground))"
+                strokeWidth={1.5}
+                strokeDasharray="6 4"
+              />
+            )}
+
+            {/* Lower limit line (LLA) */}
+            {lowerLimit !== null && (
+              <ReferenceLine
+                y={lowerLimit}
+                stroke="hsl(var(--muted-foreground))"
+                strokeWidth={1.5}
+                strokeDasharray="6 4"
               />
             )}
 
             {/* Optimal value line */}
             {optimalValue !== null && (
               <ReferenceLine
-                x={optimalValue}
+                y={optimalValue}
                 stroke="hsl(var(--status-normal))"
-                strokeWidth={2}
-                label={{
-                  value: `${isNirsBased ? "PAM" : "PPC"} opt: ${optimalValue}`,
-                  position: "top",
-                  className: "fill-status-normal text-xs font-medium",
-                }}
-              />
-            )}
-
-            {/* Current value indicator */}
-            {currentXValue !== null && (
-              <ReferenceLine
-                x={currentXValue}
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
+                strokeWidth={1}
                 strokeDasharray="3 3"
-                label={{
-                  value: `Actuel: ${Math.round(currentXValue)}`,
-                  position: "top",
-                  className: "fill-primary text-xs",
-                }}
               />
             )}
 
-            {/* LLA line */}
-            {lowerLimit !== null && (
-              <ReferenceLine
-                x={lowerLimit}
-                stroke="hsl(var(--status-warning))"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-              />
-            )}
-
-            {/* ULA line */}
-            {upperLimit !== null && (
-              <ReferenceLine
-                x={upperLimit}
-                stroke="hsl(var(--status-warning))"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-              />
-            )}
-
-            {/* Scatter points with connecting line */}
-            <Scatter
-              name={`${indexName} vs ${isNirsBased ? "PAM" : "PPC"}`}
-              data={curveData}
-              fill="hsl(var(--primary))"
-              line={{ stroke: "hsl(var(--primary))", strokeWidth: 2 }}
+            {/* PPC/NIRS Line - Main data */}
+            <Line
+              type="monotone"
+              dataKey="ppc"
+              stroke="hsl(var(--status-critical))"
+              strokeWidth={2}
+              dot={false}
+              connectNulls
+              name={isNirsBased ? "NIRS" : "PPC"}
             />
-          </ScatterChart>
+          </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* PAM Autoregulation Bar Chart */}
-      <div className="mt-6">
-        <h4 className="text-sm font-medium mb-3">Zone d'autorégulation - PAM</h4>
-        <div className="relative h-20 bg-muted/30 rounded-lg overflow-hidden">
-          {/* Background gradient showing danger zones */}
-          <div className="absolute inset-0 flex">
-            {/* Left danger zone (below LLA) */}
-            <div 
-              className="h-full bg-gradient-to-r from-status-critical/30 to-status-warning/20"
-              style={{ width: `${lowerLimit !== null ? ((lowerLimit - 30) / 100) * 100 : 20}%` }}
-            />
-            {/* Optimal zone (LLA to ULA) */}
-            <div 
-              className="h-full bg-status-normal/20"
-              style={{ 
-                width: `${lowerLimit !== null && upperLimit !== null 
-                  ? ((upperLimit - lowerLimit) / 100) * 100 
-                  : 30}%` 
-              }}
-            />
-            {/* Right danger zone (above ULA) */}
-            <div 
-              className="h-full bg-gradient-to-l from-status-critical/30 to-status-warning/20 flex-1"
-            />
-          </div>
-
-          {/* Scale markers */}
-          <div className="absolute bottom-0 left-0 right-0 h-5 flex justify-between px-2 text-[10px] text-muted-foreground">
-            <span>30</span>
-            <span>50</span>
-            <span>70</span>
-            <span>90</span>
-            <span>110</span>
-            <span>130</span>
-          </div>
-
-          {/* LLA marker */}
-          {lowerLimit !== null && (
-            <div 
-              className="absolute top-0 bottom-5 w-0.5 bg-status-warning"
-              style={{ left: `${((lowerLimit - 30) / 100) * 100}%` }}
-            >
-              <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-status-warning whitespace-nowrap">
-                LLA: {lowerLimit}
-              </span>
-            </div>
-          )}
-
-          {/* ULA marker */}
-          {upperLimit !== null && (
-            <div 
-              className="absolute top-0 bottom-5 w-0.5 bg-status-warning"
-              style={{ left: `${((upperLimit - 30) / 100) * 100}%` }}
-            >
-              <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-status-warning whitespace-nowrap">
-                ULA: {upperLimit}
-              </span>
-            </div>
-          )}
-
-          {/* Target PAM marker */}
-          {optimalValue !== null && (
-            <div 
-              className="absolute top-2 bottom-5 w-1 bg-status-normal rounded"
-              style={{ left: `${((optimalValue - 30) / 100) * 100}%` }}
-            >
-              <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] text-status-normal font-medium whitespace-nowrap">
-                Cible: {optimalValue}
-              </span>
-            </div>
-          )}
-
-          {/* PAM min-max range bar */}
-          {pamMin !== null && pamMax !== null && (
-            <div 
-              className="absolute top-6 h-3 bg-primary/40 rounded"
-              style={{ 
-                left: `${((pamMin - 30) / 100) * 100}%`,
-                width: `${((pamMax - pamMin) / 100) * 100}%`
-              }}
-            />
-          )}
-
-          {/* Current PAM marker */}
-          {currentPAM !== null && (
-            <div 
-              className="absolute top-4 bottom-5 w-1.5 bg-primary rounded shadow-lg"
-              style={{ left: `${((currentPAM - 30) / 100) * 100}%` }}
-            >
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap font-medium">
-                PAM: {Math.round(currentPAM)}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* PAM Legend */}
-        <div className="flex flex-wrap gap-4 mt-4 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 bg-primary rounded" />
-            <span>PAM actuelle{currentPAM !== null ? `: ${Math.round(currentPAM)} mmHg` : ""}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 bg-primary/40 rounded" />
-            <span>Plage PAM 24h{pamMin !== null && pamMax !== null ? `: ${Math.round(pamMin)}-${Math.round(pamMax)} mmHg` : ""}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 bg-status-normal rounded" />
-            <span>{targetLabel}{optimalValue !== null ? `: ${optimalValue} mmHg` : ""}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 bg-status-normal/20 border border-status-normal rounded" />
-            <span>Zone optimale{lowerLimit !== null && upperLimit !== null ? `: ${lowerLimit}-${upperLimit} mmHg` : ""}</span>
-          </div>
-        </div>
+      {/* Y-axis label on the left */}
+      <div className="flex justify-between items-center text-sm">
+        <span className="font-medium">{isNirsBased ? "NIRS (%)" : "PPC"}</span>
+        <span className="text-muted-foreground">{hoursBack} heures</span>
       </div>
 
-      {/* Legend and metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mt-4">
+      {/* Legend with limits */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
         <div className="bg-muted/50 rounded-lg p-3">
           <p className="text-muted-foreground text-xs">{targetLabel}</p>
           <p className="font-semibold text-lg">
@@ -454,21 +371,21 @@ export function AutoregulationChart({
           </p>
         </div>
         <div className="bg-muted/50 rounded-lg p-3">
-          <p className="text-muted-foreground text-xs">Zone optimale (LLA-ULA)</p>
+          <p className="text-muted-foreground text-xs">LLA (limite basse)</p>
           <p className="font-semibold text-lg">
-            {lowerLimit !== null && upperLimit !== null
-              ? `${lowerLimit} - ${upperLimit} mmHg`
-              : "--"}
+            {lowerLimit !== null ? `${lowerLimit} mmHg` : "--"}
           </p>
         </div>
         <div className="bg-muted/50 rounded-lg p-3">
-          <p className="text-muted-foreground text-xs">{indexName} minimum</p>
-          <p className="font-semibold text-lg">{minIndex !== null ? minIndex.toFixed(2) : "--"}</p>
+          <p className="text-muted-foreground text-xs">ULA (limite haute)</p>
+          <p className="font-semibold text-lg">
+            {upperLimit !== null ? `${upperLimit} mmHg` : "--"}
+          </p>
         </div>
         <div className="bg-muted/50 rounded-lg p-3">
-          <p className="text-muted-foreground text-xs">{currentLabel}</p>
+          <p className="text-muted-foreground text-xs">PAM actuelle</p>
           <p className="font-semibold text-lg">
-            {currentXValue !== null ? `${Math.round(currentXValue)} mmHg` : "--"}
+            {currentPAM !== null ? `${Math.round(currentPAM)} mmHg` : "--"}
           </p>
         </div>
       </div>
@@ -476,19 +393,16 @@ export function AutoregulationChart({
       {/* Interpretation guide */}
       <div className="text-xs text-muted-foreground border-t border-border pt-3 space-y-1">
         <p>
-          <span className="font-medium">Interprétation :</span> {indexName} {"<"} 0.3 = autorégulation
-          préservée, {indexName} {">"} 0.3 = autorégulation altérée
+          <span className="font-medium">Interprétation :</span> La{" "}
+          <span className="text-status-critical font-medium">ligne rouge</span> montre l'évolution 
+          de la {isNirsBased ? "NIRS" : "PPC"} au cours du temps. Les{" "}
+          <span className="text-muted-foreground font-medium">lignes pointillées grises</span> représentent 
+          les limites d'autorégulation (LLA/ULA).
         </p>
         <p>
           La <span className="text-status-normal font-medium">zone verte</span> représente la plage
-          de PAM où l'autorégulation cérébrale est optimale (LLA à ULA).
+          où l'autorégulation cérébrale est optimale.
         </p>
-        {isNirsBased && (
-          <p className="text-primary">
-            <span className="font-medium">Note :</span> Ce patient utilise le COx (corrélation NIRS-PAM) 
-            pour l'analyse de l'autorégulation.
-          </p>
-        )}
       </div>
     </div>
   );
