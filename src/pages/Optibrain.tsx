@@ -1313,6 +1313,16 @@ const Optibrain = () => {
               <DialogTitle>{isNirsBased ? "PAM Optimale (Autorégulation NIRS)" : "PPC Optimale (Autorégulation cérébrale)"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
+              {/* Time Range Selector - same UX as PIC dialog */}
+              <div className="flex items-center justify-end">
+                <TimeWindowSelector
+                  value={timeRange === "stay" ? "24h" : timeRange as any}
+                  onChange={(value) => setTimeRange(value as any)}
+                  includeStay={false}
+                  label="Période :"
+                />
+              </div>
+
               {/* Autoregulation Chart */}
               <AutoregulationChart 
                 patientId={patientId} 
