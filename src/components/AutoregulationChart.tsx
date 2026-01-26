@@ -38,6 +38,12 @@ interface AutoregulationChartProps {
   timeRange?: TimeWindowValue;
   /** Callback when time range changes - syncs back to page */
   onTimeRangeChange?: (value: TimeWindowValue) => void;
+  /** Optional props for footer display */
+  optimalPPC?: number | null;
+  lowerLimit?: number | null;
+  upperLimit?: number | null;
+  hasData?: boolean;
+  isNirsBased?: boolean;
 }
 
 // Time series data point for the chart
@@ -61,6 +67,11 @@ export function AutoregulationChart({
   windowMinutes = 30,
   timeRange: externalTimeRange,
   onTimeRangeChange,
+  optimalPPC: propOptimalPPC,
+  lowerLimit: propLowerLimit,
+  upperLimit: propUpperLimit,
+  hasData: propHasData,
+  isNirsBased: propIsNirsBased,
 }: AutoregulationChartProps) {
   const [loading, setLoading] = useState(false);
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesPoint[]>([]);
@@ -89,15 +100,21 @@ export function AutoregulationChart({
   const [nirsPamMin, setNirsPamMin] = useState<number | null>(null);
   const [nirsPamMax, setNirsPamMax] = useState<number | null>(null);
 
-  const hasData = hasAutoregulationData(patientId);
+  const hasAutoData = hasAutoregulationData(patientId);
   
   // Use NIRS values if available, otherwise use props
   const currentPAM = isNirsBased && nirsCurrentPAM !== null ? nirsCurrentPAM : propCurrentPAM;
   const pamMin = isNirsBased && nirsPamMin !== null ? nirsPamMin : propPamMin;
   const pamMax = isNirsBased && nirsPamMax !== null ? nirsPamMax : propPamMax;
+  
+  // Use props for footer values if provided, otherwise use local state
+  const displayOptimalPPC = propOptimalPPC ?? optimalValue;
+  const displayLowerLimit = propLowerLimit ?? lowerLimit;
+  const displayUpperLimit = propUpperLimit ?? upperLimit;
+  const displayIsNirsBased = propIsNirsBased ?? isNirsBased;
 
   useEffect(() => {
-    if (!hasData) {
+    if (!hasAutoData) {
       setTimeSeriesData([]);
       return;
     }
@@ -197,7 +214,7 @@ export function AutoregulationChart({
           setLoading(false);
         });
     }
-  }, [patientId, windowMinutes, selectedWindow, hasData]);
+  }, [patientId, windowMinutes, selectedWindow, hasAutoData]);
 
   // Labels based on data type
   const targetLabel = isNirsBased ? "PAM optimale" : "PPC Optimale";
@@ -233,7 +250,7 @@ export function AutoregulationChart({
     return format(new Date(time), "HH:mm", { locale: fr });
   };
 
-  if (!hasData) {
+  if (!hasAutoData) {
     return (
       <div className="h-64 flex items-center justify-center text-muted-foreground">
         <p>Pas de données d'autorégulation disponibles pour ce patient</p>
@@ -390,12 +407,74 @@ export function AutoregulationChart({
         </ResponsiveContainer>
       </div>
 
+      {/* Metrics Footer - Status and Results */}
+      {(displayOptimalPPC !== undefined || displayLowerLimit !== undefined) && (
+        <div className="border-t border-border pt-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            {/* Statut PAM */}
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Statut :</span>
+              <span className={`font-semibold ${
+                currentPAM !== null && displayLowerLimit !== null && displayUpperLimit !== null
+                  ? currentPAM >= displayLowerLimit && currentPAM <= displayUpperLimit
+                    ? "text-status-normal"
+                    : currentPAM < displayLowerLimit
+                      ? "text-status-critical"
+                      : "text-status-warning"
+                  : "text-muted-foreground"
+              }`}>
+                {currentPAM !== null && displayLowerLimit !== null && displayUpperLimit !== null
+                  ? currentPAM >= displayLowerLimit && currentPAM <= displayUpperLimit
+                    ? "✓ Dans la zone"
+                    : currentPAM < displayLowerLimit
+                      ? "↓ Sous LLA"
+                      : "↑ Au-dessus ULA"
+                  : "--"}
+              </span>
+            </div>
+            <span className="text-border">|</span>
+            {/* PAM/PPC actuelle */}
+            <div>
+              <span className="text-muted-foreground">{displayIsNirsBased ? "PAM" : "PPC"} actuelle :</span>{" "}
+              <span className="font-semibold text-foreground">
+                {displayIsNirsBased 
+                  ? (currentPAM !== null ? `${Math.round(currentPAM)} mmHg` : "--")
+                  : (currentPPC !== null ? `${Math.round(currentPPC)} mmHg` : "--")
+                }
+              </span>
+            </div>
+            <span className="text-border">|</span>
+            {/* PAM/PPC optimale */}
+            <div>
+              <span className="text-muted-foreground">{displayIsNirsBased ? "PAM" : "PPC"} optimale :</span>{" "}
+              <span className="font-semibold text-foreground">
+                {displayOptimalPPC !== null 
+                  ? `${Math.round(displayOptimalPPC)} mmHg`
+                  : "--"
+                }
+              </span>
+            </div>
+            <span className="text-border">|</span>
+            {/* Zone */}
+            <div>
+              <span className="text-muted-foreground">Zone :</span>{" "}
+              <span className="font-semibold text-foreground">
+                {displayLowerLimit !== null && displayUpperLimit !== null
+                  ? `${Math.round(displayLowerLimit)} - ${Math.round(displayUpperLimit)} mmHg`
+                  : displayIsNirsBased ? "--" : "60 - 70 mmHg"
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Interpretation guide */}
       <div className="text-xs text-muted-foreground">
         <p>
           <span className="font-medium">Interprétation :</span> La{" "}
           <span className="text-status-critical font-medium">ligne rouge</span> montre l'évolution 
-          de la {isNirsBased ? "NIRS" : "PPC"}. Les{" "}
+          de la {displayIsNirsBased ? "NIRS" : "PPC"}. Les{" "}
           <span className="text-muted-foreground font-medium">lignes pointillées</span> représentent 
           les limites d'autorégulation (LLA/ULA). La <span className="text-status-normal font-medium">zone verte</span> est la plage optimale.
         </p>
@@ -405,7 +484,7 @@ export function AutoregulationChart({
       <div className="flex items-center justify-center gap-6 text-xs pt-2">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-0.5 bg-status-critical" />
-          <span>{isNirsBased ? "NIRS" : "PPC"}</span>
+          <span>{displayIsNirsBased ? "NIRS" : "PPC"}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-0.5 bg-muted-foreground" />

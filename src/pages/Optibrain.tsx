@@ -1323,7 +1323,7 @@ const Optibrain = () => {
                 />
               </div>
 
-              {/* Autoregulation Chart */}
+              {/* Autoregulation Chart with integrated footer */}
               <AutoregulationChart 
                 patientId={patientId} 
                 currentPPC={realBrainValues.ppc}
@@ -1333,67 +1333,12 @@ const Optibrain = () => {
                 windowMinutes={30}
                 timeRange={timeRange === "stay" ? "24h" : timeRange as any}
                 onTimeRangeChange={(value) => setTimeRange(value as any)}
+                optimalPPC={optimalPPCResult.optimalPPC}
+                lowerLimit={optimalPPCResult.lowerLimit}
+                upperLimit={optimalPPCResult.upperLimit}
+                hasData={optimalPPCResult.hasData}
+                isNirsBased={isNirsBased}
               />
-
-              {/* Metrics Footer */}
-              <div className="border-t border-border pt-4">
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-                  {/* Statut PAM */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Statut :</span>
-                    <span className={`font-semibold ${
-                      realBrainValues.pam !== null && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-                        ? realBrainValues.pam >= optimalPPCResult.lowerLimit && realBrainValues.pam <= optimalPPCResult.upperLimit
-                          ? "text-status-normal"
-                          : realBrainValues.pam < optimalPPCResult.lowerLimit
-                            ? "text-status-critical"
-                            : "text-status-warning"
-                        : "text-muted-foreground"
-                    }`}>
-                      {realBrainValues.pam !== null && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-                        ? realBrainValues.pam >= optimalPPCResult.lowerLimit && realBrainValues.pam <= optimalPPCResult.upperLimit
-                          ? "✓ Dans la zone"
-                          : realBrainValues.pam < optimalPPCResult.lowerLimit
-                            ? "↓ Sous LLA"
-                            : "↑ Au-dessus ULA"
-                        : "--"}
-                    </span>
-                  </div>
-                  <span className="text-border">|</span>
-                  {/* PAM actuelle */}
-                  <div>
-                    <span className="text-muted-foreground">{isNirsBased ? "PAM" : "PPC"} actuelle :</span>{" "}
-                    <span className="font-semibold text-foreground">
-                      {isNirsBased 
-                        ? (realBrainValues.pam !== null ? `${Math.round(realBrainValues.pam)} mmHg` : "--")
-                        : (realBrainValues.ppc !== null ? `${Math.round(realBrainValues.ppc)} mmHg` : "--")
-                      }
-                    </span>
-                  </div>
-                  <span className="text-border">|</span>
-                  {/* PAM optimale */}
-                  <div>
-                    <span className="text-muted-foreground">{isNirsBased ? "PAM" : "PPC"} optimale :</span>{" "}
-                    <span className="font-semibold text-foreground">
-                      {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
-                        ? `${Math.round(optimalPPCResult.optimalPPC)} mmHg`
-                        : "--"
-                      }
-                    </span>
-                  </div>
-                  <span className="text-border">|</span>
-                  {/* Zone */}
-                  <div>
-                    <span className="text-muted-foreground">Zone :</span>{" "}
-                    <span className="font-semibold text-foreground">
-                      {optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-                        ? `${Math.round(optimalPPCResult.lowerLimit)} - ${Math.round(optimalPPCResult.upperLimit)} mmHg`
-                        : isNirsBased ? "--" : "60 - 70 mmHg"
-                      }
-                    </span>
-                  </div>
-                </div>
-              </div>
 
               {/* Fallback info when no autoregulation data */}
               {!hasAutoregData && (
