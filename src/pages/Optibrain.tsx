@@ -1066,8 +1066,18 @@ const Optibrain = () => {
                   />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-xs sm:text-sm font-semibold text-gray-700">Optimisation cérébrale actuelle</h3>
-                  <p className="text-xs text-gray-500 mt-1 truncate">Hyperhémie, PIC 26 et PPC optimale 65</p>
+                  <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation cérébrale actuelle</h3>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    {realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)} mmHg` : "PIC --"}
+                    {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
+                      ? ` • PPC optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`
+                      : realBrainValues.ppc !== null 
+                        ? ` • PPC ${Math.round(realBrainValues.ppc)} mmHg`
+                        : ""}
+                    {optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
+                      ? ` (zone ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)})`
+                      : ""}
+                  </p>
                 </div>
               </div>
               {optimisationExpanded ? (
