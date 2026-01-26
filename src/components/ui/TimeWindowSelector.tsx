@@ -29,7 +29,7 @@ interface TimeWindowSelectorProps {
   includeStay?: boolean;
   label?: string;
   size?: "sm" | "default";
-  variant?: "default" | "muted";
+  variant?: "default" | "muted" | "compact";
   className?: string;
 }
 
@@ -45,41 +45,79 @@ export function TimeWindowSelector({
 }: TimeWindowSelectorProps) {
   const displayOptions = options || (includeStay ? DEFAULT_OPTIONS : WITHOUT_STAY_OPTIONS);
 
-  const buttonSizeClasses = size === "sm" ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm";
-  
-  const getButtonClasses = (isActive: boolean) => {
-    if (variant === "muted") {
-      return isActive
-        ? "bg-background text-foreground shadow-sm font-medium"
-        : "text-muted-foreground hover:text-foreground";
-    }
-    return isActive
-      ? "bg-primary text-primary-foreground"
-      : "bg-muted text-muted-foreground hover:bg-muted/80";
+  const sizeClasses = {
+    sm: "h-7 text-xs",
+    default: "h-8 text-sm",
   };
+
+  const buttonSizeClasses = {
+    sm: "px-2 min-w-[32px]",
+    default: "px-3 min-w-[40px]",
+  };
+
+  if (variant === "compact") {
+    return (
+      <div className={cn("flex items-center gap-1.5", className)}>
+        {label && (
+          <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
+        )}
+        <div className="inline-flex items-center rounded-md border border-border bg-muted/50 p-0.5">
+          {displayOptions.map((option) => {
+            const isActive = value === option.value;
+            return (
+              <button
+                key={option.value}
+                onClick={() => onChange(option.value)}
+                className={cn(
+                  "inline-flex items-center justify-center rounded-sm px-2 py-1 text-xs font-medium transition-all",
+                  isActive
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
       {label && (
-        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="text-sm text-muted-foreground whitespace-nowrap">{label}</span>
       )}
       <div className={cn(
-        "flex rounded-lg",
-        variant === "muted" ? "bg-muted p-1" : "gap-1"
+        "inline-flex items-center rounded-lg border border-border overflow-hidden",
+        sizeClasses[size]
       )}>
-        {displayOptions.map((option) => (
-          <button
-            key={option.value}
-            onClick={() => onChange(option.value)}
-            className={cn(
-              "rounded-md transition-colors",
-              buttonSizeClasses,
-              getButtonClasses(value === option.value)
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
+        {displayOptions.map((option, index) => {
+          const isActive = value === option.value;
+          const isFirst = index === 0;
+          const isLast = index === displayOptions.length - 1;
+          
+          return (
+            <button
+              key={option.value}
+              onClick={() => onChange(option.value)}
+              className={cn(
+                "inline-flex items-center justify-center font-medium transition-all",
+                buttonSizeClasses[size],
+                sizeClasses[size],
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                !isFirst && "border-l border-border",
+                isFirst && "rounded-l-md",
+                isLast && "rounded-r-md"
+              )}
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
