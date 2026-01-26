@@ -1118,22 +1118,15 @@ const Optibrain = () => {
                 {brainOptimisationMetrics.map((metric, index) => {
                   const isSelected = selectedBrainIndicators.includes(metric.label);
                   const statusColor = metric.status === "warning" ? "text-orange-500" : "text-gray-600";
-                  const brainIndicatorColors: Record<string, string> = {
-                    "État Neuro": "#8b5cf6", // violet
-                    "PIC": "#f59e0b", // amber/orange
-                    [isNirsBased ? "PAM Opt" : "PPC Opt"]: "#10b981", // emerald/green
-                  };
-                  const chartColor = brainIndicatorColors[metric.label] || "#3b82f6";
                   
                   return (
                     <div
                       key={index}
                       className={`flex flex-col items-center cursor-pointer p-2 sm:p-4 rounded-lg transition-all border-2 ${
                         isSelected 
-                          ? "bg-card shadow-sm" 
+                          ? "bg-card shadow-sm border-primary" 
                           : "border-transparent hover:bg-muted/50"
                       }`}
-                      style={isSelected ? { borderColor: chartColor } : undefined}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (metric.hasDetails) {
