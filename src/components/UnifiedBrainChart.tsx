@@ -50,7 +50,117 @@ interface UnifiedBrainChartProps {
   upperLimit?: number | null;
 }
 
-// Custom shape for neurological state transitions
+// Time Distribution Bar Component
+interface TimeDistributionBarProps {
+  neuroZones: { start: number; end: number; state: NeuroState }[];
+}
+
+const TimeDistributionBar = ({ neuroZones }: TimeDistributionBarProps) => {
+  const distribution = useMemo(() => {
+    if (neuroZones.length === 0) return { controlled: 0, htic: 0, htic_ischemia: 0, total: 0 };
+
+    const totals: Record<NeuroState, number> = {
+      controlled: 0,
+      htic: 0,
+      htic_ischemia: 0,
+    };
+
+    let totalDuration = 0;
+    for (const zone of neuroZones) {
+      const duration = zone.end - zone.start;
+      totals[zone.state] += duration;
+      totalDuration += duration;
+    }
+
+    return {
+      controlled: totalDuration > 0 ? (totals.controlled / totalDuration) * 100 : 0,
+      htic: totalDuration > 0 ? (totals.htic / totalDuration) * 100 : 0,
+      htic_ischemia: totalDuration > 0 ? (totals.htic_ischemia / totalDuration) * 100 : 0,
+      total: totalDuration,
+    };
+  }, [neuroZones]);
+
+  if (neuroZones.length === 0) return null;
+
+  const stateConfig: Record<NeuroState, { label: string; color: string; symbol: React.ReactNode }> = {
+    controlled: {
+      label: "Contrôlé",
+      color: "bg-muted-foreground",
+      symbol: (
+        <svg width="10" height="10" viewBox="0 0 10 10">
+          <circle cx="5" cy="5" r="4" fill="currentColor" />
+        </svg>
+      ),
+    },
+    htic: {
+      label: "HTIC",
+      color: "bg-status-warning",
+      symbol: (
+        <svg width="10" height="10" viewBox="0 0 10 10">
+          <polygon points="5,0.5 0.5,9.5 9.5,9.5" fill="currentColor" />
+        </svg>
+      ),
+    },
+    htic_ischemia: {
+      label: "HTIC + Ischémie",
+      color: "bg-status-critical",
+      symbol: (
+        <svg width="10" height="10" viewBox="0 0 10 10">
+          <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" strokeWidth="2" />
+          <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" strokeWidth="2" />
+        </svg>
+      ),
+    },
+  };
+
+  const states: NeuroState[] = ["controlled", "htic", "htic_ischemia"];
+
+  return (
+    <div className="space-y-2">
+      <div className="text-xs text-muted-foreground font-medium">Répartition du temps par état neurologique</div>
+      
+      {/* Horizontal stacked bar */}
+      <div className="h-6 w-full flex rounded-md overflow-hidden">
+        {states.map((state) => {
+          const percentage = distribution[state];
+          if (percentage === 0) return null;
+          return (
+            <div
+              key={state}
+              className={`${stateConfig[state].color} flex items-center justify-center transition-all`}
+              style={{ width: `${percentage}%` }}
+            >
+              {percentage >= 10 && (
+                <span className="text-xs font-medium text-white drop-shadow-sm">
+                  {Math.round(percentage)}%
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Legend with percentages */}
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
+        {states.map((state) => {
+          const config = stateConfig[state];
+          const percentage = distribution[state];
+          return (
+            <div key={state} className="flex items-center gap-1.5">
+              <span className={`${config.color.replace('bg-', 'text-')}`}>
+                {config.symbol}
+              </span>
+              <span className="text-foreground">{config.label}</span>
+              <span className="text-muted-foreground">({Math.round(percentage)}%)</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+
 const NeuroTransitionShape = (props: any) => {
   const { cx, cy, payload } = props;
   if (!payload?.isTransition || !cx || !cy) return null;
@@ -501,40 +611,8 @@ export function UnifiedBrainChart({
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs">
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-0.5 bg-status-warning" />
-          <span>PIC</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-0.5 bg-status-critical" />
-          <span>PAM</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-0.5 border-dashed border-t-2 border-muted-foreground" style={{ borderStyle: 'dashed' }} />
-          <span>Limites (LLA/ULA)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <circle cx="6" cy="6" r="4" fill="hsl(var(--muted-foreground))" />
-          </svg>
-          <span>Contrôlé</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <polygon points="6,1 1,11 11,11" fill="hsl(var(--status-warning))" />
-          </svg>
-          <span>HTIC</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <line x1="1" y1="1" x2="11" y2="11" stroke="hsl(var(--status-critical))" strokeWidth="2" />
-            <line x1="11" y1="1" x2="1" y2="11" stroke="hsl(var(--status-critical))" strokeWidth="2" />
-          </svg>
-          <span>HTIC + Ischémie</span>
-        </div>
-      </div>
+      {/* Time Distribution Bar */}
+      <TimeDistributionBar neuroZones={neuroZones} />
 
       {/* Interpretation */}
       <div className="text-xs text-muted-foreground">
