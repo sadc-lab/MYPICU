@@ -21,6 +21,7 @@ import {
   TrendingDown,
   Minus,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -1086,6 +1087,19 @@ const Optibrain = () => {
           </CardHeader>
           {optimisationExpanded && (
             <CardContent className="pt-0 space-y-4">
+              {/* Alert if no autoregulation data available yet */}
+              {!optimalPPCResult.hasData && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-status-warning/10 border border-status-warning/30 mt-4">
+                  <AlertCircle className="h-5 w-5 text-status-warning shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">Données d'autorégulation en cours de calcul</p>
+                    <p className="text-muted-foreground text-xs mt-0.5">
+                      Les résultats d'optimisation cérébrale seront disponibles après environ 30 minutes de monitorage continu.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
               {/* Selectable Brain Metrics */}
               <div className="grid grid-cols-3 gap-2 sm:gap-6 pt-4">
                 {brainOptimisationMetrics.map((metric, index) => {
