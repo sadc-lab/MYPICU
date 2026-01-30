@@ -21,6 +21,7 @@ import {
   loadNirsData,
   buildNirsAutoregulationCurve,
   getCurrentNirsValues,
+  getNirsTimeSeriesWithDynamicLimits,
   NirsDataPoint,
 } from "@/services/nirsAutoregulation.service";
 import { Loader2 } from "lucide-react";
@@ -124,11 +125,11 @@ export function AutoregulationChart({
     setLoading(true);
 
     if (isNirs) {
-      // Load NIRS-based autoregulation data
+      // Load NIRS-based autoregulation data with dynamic limits
       loadNirsData(patientId)
         .then((data) => {
           if (data && data.length > 0) {
-            // Get autoregulation curve for limits
+            // Get autoregulation curve for overall values
             const curveResult = buildNirsAutoregulationCurve(data, windowMinutes, 5);
             setOptimalValue(curveResult.optimalPAM);
             setLowerLimit(curveResult.lowerLimit);
@@ -140,37 +141,23 @@ export function AutoregulationChart({
             setNirsPamMin(currentValues.pamMin);
             setNirsPamMax(currentValues.pamMax);
             
-            // Build time series from raw NIRS data
-            const now = new Date();
+            // Get time series with DYNAMIC LLA/ULA limits
             const hours = timeWindowToHours(selectedWindow) || 6;
-            const cutoffTime = now.getTime() - hours * 60 * 60 * 1000;
+            const dynamicTimeSeries = getNirsTimeSeriesWithDynamicLimits(
+              data,
+              windowMinutes,
+              4, // lookback hours for limit calculation
+              hours // output hours
+            );
             
-            // Find latest timestamp and calculate offset
-            let latestTime = 0;
-            for (const point of data) {
-              const time = new Date(point.timestamp).getTime();
-              if (time > latestTime) latestTime = time;
-            }
-            const timeOffset = now.getTime() - latestTime;
-            
-            const timeSeries: TimeSeriesPoint[] = data
-              .filter((point: NirsDataPoint) => {
-                const time = new Date(point.timestamp).getTime() + timeOffset;
-                return time >= cutoffTime && point.pam !== null;
-              })
-              .map((point: NirsDataPoint) => {
-                const originalTime = new Date(point.timestamp).getTime();
-                const normalizedTime = originalTime + timeOffset;
-                return {
-                  timestamp: new Date(normalizedTime).toISOString(),
-                  time: normalizedTime,
-                  ppc: point.nirs, // Use NIRS as PPC equivalent for display
-                  pam: point.pam,
-                  lowerLimit: curveResult.lowerLimit, // NIRS uses fixed limits for now
-                  upperLimit: curveResult.upperLimit,
-                };
-              })
-              .sort((a: TimeSeriesPoint, b: TimeSeriesPoint) => a.time - b.time);
+            const timeSeries: TimeSeriesPoint[] = dynamicTimeSeries.map((point) => ({
+              timestamp: point.timestamp,
+              time: point.time,
+              ppc: point.nirs, // Use NIRS as PPC equivalent for display
+              pam: point.pam,
+              lowerLimit: point.lowerLimit, // Dynamic LLA
+              upperLimit: point.upperLimit, // Dynamic ULA
+            }));
             
             setTimeSeriesData(timeSeries);
           }

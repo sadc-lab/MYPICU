@@ -275,6 +275,189 @@ export async function getOptimalPAMFromNirs(
   }
 }
 
+// Interface for time-varying limits
+export interface NirsTimeSeriesPoint {
+  timestamp: string;
+  time: number;
+  pam: number | null;
+  nirs: number | null;
+  cox: number | null;
+  optimalPAM: number | null;
+  lowerLimit: number | null;  // Dynamic LLA
+  upperLimit: number | null;  // Dynamic ULA
+}
+
+// Calculate dynamic LLA/ULA for each point using a sliding window approach
+// This gives time-varying autoregulation limits
+export function getNirsTimeSeriesWithDynamicLimits(
+  data: NirsDataPoint[],
+  windowMinutes: number = 30,
+  lookbackHours: number = 4,
+  outputHours: number = 6
+): NirsTimeSeriesPoint[] {
+  if (data.length < 10) return [];
+  
+  const result: NirsTimeSeriesPoint[] = [];
+  const lookbackMs = lookbackHours * 60 * 60 * 1000;
+  const windowMs = windowMinutes * 60 * 1000;
+  
+  // Find latest timestamp and calculate offset to normalize to "now"
+  let latestTime = 0;
+  for (const point of data) {
+    const time = new Date(point.timestamp).getTime();
+    if (time > latestTime) latestTime = time;
+  }
+  const now = Date.now();
+  const timeOffset = now - latestTime;
+  const cutoffTime = now - outputHours * 60 * 60 * 1000;
+  
+  // Pre-calculate COx for all points
+  const coxValues: (number | null)[] = [];
+  for (let i = 0; i < data.length; i++) {
+    const currentTime = new Date(data[i].timestamp).getTime();
+    const windowStart = currentTime - windowMs;
+    
+    const nirsValues: number[] = [];
+    const pamValues: number[] = [];
+    
+    for (let j = i; j >= 0; j--) {
+      const pointTime = new Date(data[j].timestamp).getTime();
+      if (pointTime < windowStart) break;
+      
+      if (data[j].nirs !== null && data[j].pam !== null) {
+        nirsValues.push(data[j].nirs);
+        pamValues.push(data[j].pam);
+      }
+    }
+    
+    if (nirsValues.length >= 5) {
+      const cox = calculatePearsonCorrelation(nirsValues, pamValues);
+      coxValues.push(Math.round(cox * 100) / 100);
+    } else {
+      coxValues.push(null);
+    }
+  }
+  
+  // For each output point, calculate dynamic limits using lookback window
+  for (let i = 0; i < data.length; i++) {
+    const currentTime = new Date(data[i].timestamp).getTime();
+    const normalizedTime = currentTime + timeOffset;
+    
+    // Only output points within the requested time range
+    if (normalizedTime < cutoffTime) continue;
+    
+    const lookbackStart = currentTime - lookbackMs;
+    
+    // Collect PAM-COx pairs within lookback window
+    const pamCoxPairs: Array<{ pam: number; cox: number }> = [];
+    for (let j = i; j >= 0; j--) {
+      const pointTime = new Date(data[j].timestamp).getTime();
+      if (pointTime < lookbackStart) break;
+      
+      const pam = data[j].pam;
+      const cox = coxValues[j];
+      if (pam !== null && cox !== null) {
+        pamCoxPairs.push({ pam, cox });
+      }
+    }
+    
+    // Calculate optimal PAM and limits from this window
+    let optimalPAM: number | null = null;
+    let lowerLimit: number | null = null;
+    let upperLimit: number | null = null;
+    
+    if (pamCoxPairs.length >= 10) {
+      // Group by PAM bins (5 mmHg)
+      const binSize = 5;
+      const bins = new Map<number, { sum: number; count: number }>();
+      
+      for (const { pam, cox } of pamCoxPairs) {
+        const binCenter = Math.round(pam / binSize) * binSize;
+        const existing = bins.get(binCenter) || { sum: 0, count: 0 };
+        existing.sum += cox;
+        existing.count += 1;
+        bins.set(binCenter, existing);
+      }
+      
+      // Find optimal (lowest COx)
+      let minCox = Infinity;
+      const sortedBins = Array.from(bins.entries())
+        .filter(([, { count }]) => count >= 2)
+        .sort((a, b) => a[0] - b[0]);
+      
+      for (const [pam, { sum, count }] of sortedBins) {
+        const meanCox = sum / count;
+        if (meanCox < minCox) {
+          minCox = meanCox;
+          optimalPAM = pam;
+        }
+      }
+      
+      // Calculate LLA/ULA based on COx threshold
+      const COX_THRESHOLD = 0.3;
+      const curveData = sortedBins.map(([pam, { sum, count }]) => ({
+        pam,
+        cox: sum / count,
+      }));
+      
+      // Find LLA (from left)
+      for (let k = 0; k < curveData.length - 1; k++) {
+        if (curveData[k].cox >= COX_THRESHOLD && curveData[k + 1].cox < COX_THRESHOLD) {
+          lowerLimit = curveData[k].pam;
+          break;
+        }
+      }
+      
+      // Find ULA (from right)
+      for (let k = curveData.length - 1; k > 0; k--) {
+        if (curveData[k].cox >= COX_THRESHOLD && curveData[k - 1].cox < COX_THRESHOLD) {
+          upperLimit = curveData[k].pam;
+          break;
+        }
+      }
+      
+      // Fallback estimates if thresholds not crossed
+      if (lowerLimit === null && optimalPAM !== null && curveData.length > 0) {
+        lowerLimit = Math.round((optimalPAM + curveData[0].pam) / 2);
+      }
+      if (upperLimit === null && optimalPAM !== null && curveData.length > 0) {
+        upperLimit = Math.round((optimalPAM + curveData[curveData.length - 1].pam) / 2);
+      }
+    }
+    
+    result.push({
+      timestamp: new Date(normalizedTime).toISOString(),
+      time: normalizedTime,
+      pam: data[i].pam,
+      nirs: data[i].nirs,
+      cox: coxValues[i],
+      optimalPAM,
+      lowerLimit,
+      upperLimit,
+    });
+  }
+  
+  return result;
+}
+
+// Helper: Pearson correlation
+function calculatePearsonCorrelation(x: number[], y: number[]): number {
+  if (x.length !== y.length || x.length < 3) return 0;
+  
+  const n = x.length;
+  const sumX = x.reduce((a, b) => a + b, 0);
+  const sumY = y.reduce((a, b) => a + b, 0);
+  const sumXY = x.reduce((a, b, i) => a + b * y[i], 0);
+  const sumX2 = x.reduce((a, b) => a + b * b, 0);
+  const sumY2 = y.reduce((a, b) => a + b * b, 0);
+  
+  const numerator = n * sumXY - sumX * sumY;
+  const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+  
+  if (denominator === 0) return 0;
+  return numerator / denominator;
+}
+
 
 // Get current PAM and NIRS from the latest data
 export function getCurrentNirsValues(data: NirsDataPoint[]): {
