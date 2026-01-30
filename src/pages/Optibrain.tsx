@@ -685,6 +685,41 @@ const Optibrain = () => {
       criticalColor: realBrainValues.picMax !== null && realBrainValues.picMax >= 25 ? "text-red-500" : "text-orange-500",
     },
     {
+      label: "Autorégulation",
+      value: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null 
+        ? optimalPPCResult.prxScore.toFixed(2) 
+        : "--",
+      displayValue: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null 
+        ? optimalPPCResult.prxScore.toFixed(2) 
+        : "--",
+      unit: isNirsBased ? "COx" : "PRx",
+      status: (() => {
+        if (!optimalPPCResult.hasData || optimalPPCResult.prxScore === null) return "normal";
+        if (optimalPPCResult.prxScore >= 0.5) return "critical";
+        if (optimalPPCResult.prxScore >= 0.3) return "warning";
+        return "normal";
+      })(),
+      hasDetails: true,
+      dialogKey: "autoregulation",
+      trend: "stable",
+      change: 0,
+      description: isNirsBased ? "Indice COx (NIRS)" : "Indice PRx",
+      criticalLabel: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
+        ? optimalPPCResult.prxScore < 0.3 
+          ? "Autorégulation intacte" 
+          : optimalPPCResult.prxScore < 0.5 
+            ? "Autorégulation altérée" 
+            : "Autorégulation absente"
+        : null,
+      criticalColor: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
+        ? optimalPPCResult.prxScore < 0.3 
+          ? "text-status-normal" 
+          : optimalPPCResult.prxScore < 0.5 
+            ? "text-status-warning" 
+            : "text-status-critical"
+        : "text-muted-foreground",
+    },
+    {
       label: isNirsBased ? "PAM Opt" : "PPC Opt",
       value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
         ? `${Math.round(optimalPPCResult.optimalPPC)} mmHg` 
@@ -1114,15 +1149,19 @@ const Optibrain = () => {
           {optimisationExpanded && (
             <CardContent className="pt-0 space-y-4">
               {/* Selectable Brain Metrics */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-8 pt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 pt-4">
                 {brainOptimisationMetrics.map((metric, index) => {
                   const isSelected = selectedBrainIndicators.includes(metric.label);
-                  const statusColor = metric.status === "warning" ? "text-orange-500" : "text-gray-600";
+                  const statusColor = metric.status === "critical" 
+                    ? "text-status-critical" 
+                    : metric.status === "warning" 
+                      ? "text-status-warning" 
+                      : "text-foreground";
                   
                   return (
                     <div
                       key={index}
-                      className={`flex flex-col items-center cursor-pointer p-2 sm:p-4 rounded-lg transition-all border-2 ${
+                      className={`flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 ${
                         isSelected 
                           ? "bg-card shadow-sm border-primary" 
                           : "border-transparent hover:bg-muted/50"
@@ -1138,15 +1177,18 @@ const Optibrain = () => {
                         }
                       }}
                     >
-                      <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 sm:mb-2 uppercase tracking-wide text-center">
+                      <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
                         {metric.label}
                       </div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className={`text-xl sm:text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
+                      <div className="flex items-center gap-1 mb-1">
+                        <div className={`text-lg sm:text-2xl font-bold ${statusColor}`}>{metric.displayValue}</div>
+                        {metric.unit && (
+                          <span className="text-xs text-muted-foreground">{metric.unit}</span>
+                        )}
                       </div>
                       {/* Dernière valeur critique */}
                       {metric.criticalLabel && (
-                        <div className={`text-xs font-medium ${metric.criticalColor} mb-1`}>
+                        <div className={`text-[10px] sm:text-xs font-medium ${metric.criticalColor} text-center leading-tight`}>
                           {metric.criticalLabel}
                         </div>
                       )}
@@ -1158,32 +1200,57 @@ const Optibrain = () => {
                 Cliquez sur un indicateur pour l'afficher dans le graphique
               </p>
 
-              {/* Embedded Brain Chart */}
+              {/* Embedded Charts */}
               {selectedBrainIndicators.length > 0 && (
                 <div className="border-t border-border pt-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-foreground">
-                      Évolution temporelle
+                      {selectedBrainIndicators.includes("Autorégulation") 
+                        ? "Courbe d'autorégulation" 
+                        : "Évolution temporelle"}
                     </div>
                     <TimeWindowSelector
                       value={picDialogTimeRange}
                       onChange={setPicDialogTimeRange}
                       includeStay={true}
                       size="sm"
+                      variant="compact"
                     />
                   </div>
-                  <UnifiedBrainChart
-                    patientId={patientId}
-                    timeRange={picDialogTimeRange}
-                    currentPIC={realBrainValues.pic}
-                    currentPAM={realBrainValues.pam}
-                    optimalPAM={optimalPPCResult.optimalPPC}
-                    lowerLimit={optimalPPCResult.lowerLimit}
-                    upperLimit={optimalPPCResult.upperLimit}
-                    autoregulationScore={optimalPPCResult.prxScore}
-                    isNirsBased={isNirsBased}
-                    selectedIndicators={selectedBrainIndicators}
-                  />
+                  
+                  {/* Show AutoregulationChart when Autorégulation is selected */}
+                  {selectedBrainIndicators.includes("Autorégulation") && (
+                    <AutoregulationChart
+                      patientId={patientId}
+                      currentPPC={realBrainValues.ppc}
+                      currentPAM={realBrainValues.pam}
+                      pamMin={realBrainValues.pamMin}
+                      pamMax={realBrainValues.pamMax}
+                      timeRange={picDialogTimeRange}
+                      onTimeRangeChange={setPicDialogTimeRange}
+                      optimalPPC={optimalPPCResult.optimalPPC}
+                      lowerLimit={optimalPPCResult.lowerLimit}
+                      upperLimit={optimalPPCResult.upperLimit}
+                      hasData={optimalPPCResult.hasData}
+                      isNirsBased={isNirsBased}
+                    />
+                  )}
+                  
+                  {/* Show UnifiedBrainChart for other indicators */}
+                  {selectedBrainIndicators.some(i => i !== "Autorégulation") && (
+                    <UnifiedBrainChart
+                      patientId={patientId}
+                      timeRange={picDialogTimeRange}
+                      currentPIC={realBrainValues.pic}
+                      currentPAM={realBrainValues.pam}
+                      optimalPAM={optimalPPCResult.optimalPPC}
+                      lowerLimit={optimalPPCResult.lowerLimit}
+                      upperLimit={optimalPPCResult.upperLimit}
+                      autoregulationScore={optimalPPCResult.prxScore}
+                      isNirsBased={isNirsBased}
+                      selectedIndicators={selectedBrainIndicators.filter(i => i !== "Autorégulation")}
+                    />
+                  )}
                 </div>
               )}
             </CardContent>
