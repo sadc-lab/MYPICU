@@ -719,70 +719,6 @@ const Optibrain = () => {
             : "text-status-critical"
         : "text-muted-foreground",
     },
-    {
-      label: isNirsBased ? "PAM Opt" : "PPC Opt",
-      value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
-        ? `${Math.round(optimalPPCResult.optimalPPC)} mmHg` 
-        : "-- mmHg",
-      displayValue: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
-        ? `${Math.round(optimalPPCResult.optimalPPC)}` 
-        : "--",
-      unit: "mmHg",
-      status: (() => {
-        if (!optimalPPCResult.hasData || optimalPPCResult.optimalPPC === null) return "normal";
-        // For NIRS patients, compare PAM to optimal PAM
-        const valueToCompare = isNirsBased ? realBrainValues.pam : realBrainValues.ppc;
-        if (valueToCompare === null) return "normal";
-        const ppcStatus = getPPCStatusVsOptimal(valueToCompare, optimalPPCResult);
-        if (ppcStatus === "below" || ppcStatus === "above") return "warning";
-        return "normal";
-      })(),
-      hasDetails: true,
-      dialogKey: "ppc",
-      trend: "stable",
-      change: 0,
-      description: optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-        ? `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
-        : isNirsBased ? "Cible PAM individuelle" : "Cible 60-70 mmHg",
-      // Afficher la zone d'autorégulation quand disponible
-      criticalLabel: (() => {
-        // Si on a les données d'autorégulation, afficher le statut vs optimal
-        if (optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null) {
-          const valueToCompare = isNirsBased ? realBrainValues.pam : realBrainValues.ppc;
-          if (valueToCompare === null) return null;
-          const ppcStatus = getPPCStatusVsOptimal(valueToCompare, optimalPPCResult);
-          const label = isNirsBased ? "PAM" : "PPC";
-          if (ppcStatus === "below") {
-            const diff = Math.round((optimalPPCResult.lowerLimit ?? optimalPPCResult.optimalPPC) - valueToCompare);
-            return `${label} actuelle ${diff} mmHg sous la zone`;
-          }
-          if (ppcStatus === "above") {
-            const diff = Math.round(valueToCompare - (optimalPPCResult.upperLimit ?? optimalPPCResult.optimalPPC));
-            return `${label} actuelle ${diff} mmHg au-dessus`;
-          }
-          return null; // Dans la zone optimale
-        }
-        // Fallback: afficher min/max hors cible standard
-        const { ppcMin, ppcMax } = realBrainValues;
-        if (ppcMin !== null && ppcMin < 60) {
-          return `Min 24h: ${Math.round(ppcMin)} mmHg`;
-        }
-        if (ppcMax !== null && ppcMax > 70) {
-          return `Max 24h: ${Math.round(ppcMax)} mmHg`;
-        }
-        return null;
-      })(),
-      criticalColor: (() => {
-        if (optimalPPCResult.hasData && realBrainValues.ppc !== null) {
-          const ppcStatus = getPPCStatusVsOptimal(realBrainValues.ppc, optimalPPCResult);
-          if (ppcStatus === "below" || ppcStatus === "above") return "text-status-warning";
-        }
-        const { ppcMin, ppcMax } = realBrainValues;
-        if (ppcMin !== null && ppcMin < 50) return "text-status-critical";
-        if (ppcMax !== null && ppcMax > 80) return "text-status-critical";
-        return "text-status-warning";
-      })(),
-    },
   ];
 
   const isInRange = (value: number, min: number, max: number) => {
@@ -1149,7 +1085,7 @@ const Optibrain = () => {
           {optimisationExpanded && (
             <CardContent className="pt-0 space-y-4">
               {/* Selectable Brain Metrics */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 pt-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-6 pt-4">
                 {brainOptimisationMetrics.map((metric, index) => {
                   const isSelected = selectedBrainIndicators.includes(metric.label);
                   const statusColor = metric.status === "critical" 
