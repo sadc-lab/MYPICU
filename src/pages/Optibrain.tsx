@@ -686,13 +686,13 @@ const Optibrain = () => {
     },
     {
       label: "Autorégulation",
-      value: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null 
-        ? optimalPPCResult.prxScore.toFixed(2) 
+      value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
+        ? `${Math.round(optimalPPCResult.optimalPPC)}` 
         : "--",
-      displayValue: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null 
-        ? optimalPPCResult.prxScore.toFixed(2) 
+      displayValue: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
+        ? `${Math.round(optimalPPCResult.optimalPPC)}` 
         : "--",
-      unit: isNirsBased ? "COx" : "PRx",
+      unit: isNirsBased ? "PAM Opt" : "PPC Opt",
       status: (() => {
         if (!optimalPPCResult.hasData || optimalPPCResult.prxScore === null) return "normal";
         if (optimalPPCResult.prxScore >= 0.5) return "critical";
@@ -703,7 +703,9 @@ const Optibrain = () => {
       dialogKey: "autoregulation",
       trend: "stable",
       change: 0,
-      description: isNirsBased ? "Indice COx (NIRS)" : "Indice PRx",
+      description: optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
+        ? `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
+        : isNirsBased ? "PAM optimale individuelle" : "PPC optimale individuelle",
       criticalLabel: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
         ? optimalPPCResult.prxScore < 0.3 
           ? "Autorégulation intacte" 
