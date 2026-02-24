@@ -5,7 +5,7 @@ import { PatientFileData } from './patientFileData.service';
 
 // Clinical validity ranges — values outside these are measurement artifacts
 const CLINICAL_VALIDITY_RANGES: Record<string, { min: number; max: number }> = {
-  Variable_PIC: { min: 1, max: 80 },
+  Variable_PIC: { min: 2, max: 80 },
   Variable_PPC: { min: 10, max: 150 },
   Variable_PAM: { min: 20, max: 200 },
 };
