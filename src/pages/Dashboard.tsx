@@ -83,7 +83,14 @@ const Dashboard = () => {
               {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin text-muted-foreground" />}
             </div>
             
-            <PatientTable patients={displayedPatients} pedName={`PED ${selectedPed}`} averagePelod={averagePelod} showTitle={false} />
+            {displayedPatients.length > 0 ? (
+              <PatientTable patients={displayedPatients} pedName={`PED ${selectedPed}`} averagePelod={averagePelod} showTitle={false} />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border rounded-lg bg-card">
+                <p className="text-lg font-medium">Aucun patient dans cette unité</p>
+                <p className="text-sm mt-1">Il n'y a actuellement aucun patient en PED {selectedPed}.</p>
+              </div>
+            )}
           </div>
         </div>
       </main>
