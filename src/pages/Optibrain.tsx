@@ -44,6 +44,7 @@ import {
   getMonitoringInterventionsStatus,
   getClinicalIndicatorsStatus,
   getAdherenceStatus,
+  computeNeurologicalState,
   PatientFileData,
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
@@ -619,37 +620,43 @@ const Optibrain = () => {
   const picValue = realBrainValues.pic;
   const ppcValue = realBrainValues.ppc;
 
-  // Neurological state configuration per patient
+  // Dynamic neurological state computed from real PIC + PPC data
   const neurologicalStateConfig = useMemo(() => {
-    // Patient #8749 (John Doe) - specific configuration
-    if (patientId === "#8749") {
+    if (!patientFileData) {
       return {
         currentState: "Contrôlé",
-        currentStateColor: "text-grey-600",
-        currentStateSince: "depuis 5h du matin",
+        currentStateColor: "text-muted-foreground",
+        currentStateSince: null as string | null,
         history: {
           hyperemia: 0,
-          hticWithIschemia: 10,
-          htic: 30,
+          hticWithIschemia: 0,
+          htic: 0,
           ischemia: 0,
-          controlled: 60,
+          controlled: 100,
         },
+        hasData: false,
       };
     }
-    // Default configuration (patient #6312)
-    return {
-      currentState: "Contrôlé",
-      currentStateColor: "text-red-500",
-      currentStateSince: "depuis 6am",
-      history: {
-        hyperemia: 0,
-        hticWithIschemia: 0,
-        htic: 20,
-        ischemia: 0,
-        controlled: 80,
-      },
+
+    const result = computeNeurologicalState(patientFileData, hoursForAdherence);
+
+    // Map state to color
+    const stateColors: Record<string, string> = {
+      controlled: "text-muted-foreground",
+      htic: "text-status-warning",
+      htic_ischemia: "text-status-critical",
+      ischemia: "text-status-critical",
+      hyperemia: "text-status-warning",
     };
-  }, [patientId]);
+
+    return {
+      currentState: result.currentStateLabel,
+      currentStateColor: stateColors[result.currentState] || "text-muted-foreground",
+      currentStateSince: result.currentStateSince,
+      history: result.history,
+      hasData: result.hasData,
+    };
+  }, [patientFileData, hoursForAdherence]);
 
   const brainOptimisationMetrics = [
     {
