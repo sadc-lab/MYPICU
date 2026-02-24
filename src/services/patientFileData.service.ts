@@ -573,3 +573,184 @@ export function getClinicalIndicatorsStatus(
     };
   });
 }
+
+// ============================================================
+// NEUROLOGICAL STATE COMPUTATION
+// Determines current and historical neuro state from PIC + PPC data
+// ============================================================
+
+export type NeuroStateType = "controlled" | "htic" | "htic_ischemia" | "ischemia" | "hyperemia";
+
+export interface NeuroStateResult {
+  /** Current instantaneous state */
+  currentState: NeuroStateType;
+  /** Human-readable label */
+  currentStateLabel: string;
+  /** Time since last state change (formatted) */
+  currentStateSince: string | null;
+  /** Distribution of time in each state (percentage) */
+  history: {
+    hyperemia: number;
+    hticWithIschemia: number;
+    htic: number;
+    ischemia: number;
+    controlled: number;
+  };
+  /** Whether we have enough data to compute */
+  hasData: boolean;
+}
+
+const NEURO_STATE_LABELS: Record<NeuroStateType, string> = {
+  controlled: "Contrôlé",
+  htic: "HTIC",
+  htic_ischemia: "HTIC + Ischémie",
+  ischemia: "Ischémie",
+  hyperemia: "Hyperémie",
+};
+
+/**
+ * Determine the neurological state from a single PIC + PPC measurement.
+ * 
+ * Clinical logic:
+ * - PIC ≥ 20 mmHg → HTIC (intracranial hypertension)
+ * - PPC < 50 mmHg → Ischemia (cerebral hypoperfusion)
+ * - PIC ≥ 20 AND PPC < 50 → HTIC + Ischemia
+ * - PPC > 80 mmHg (with normal PIC) → Hyperemia
+ * - Otherwise → Controlled
+ */
+function classifyNeuroState(pic: number | null, ppc: number | null): NeuroStateType {
+  const isHtic = pic !== null && pic >= 20;
+  const isIschemia = ppc !== null && ppc < 50;
+  const isHyperemia = ppc !== null && ppc > 80 && !isHtic;
+
+  if (isHtic && isIschemia) return "htic_ischemia";
+  if (isHtic) return "htic";
+  if (isIschemia) return "ischemia";
+  if (isHyperemia) return "hyperemia";
+  return "controlled";
+}
+
+/**
+ * Compute the neurological state dynamically from PIC and PPC time-series data.
+ * 
+ * @param patientData - The loaded patient file data
+ * @param hoursBack - Number of hours to look back for history distribution
+ * @returns NeuroStateResult with current state and time distribution
+ */
+export function computeNeurologicalState(
+  patientData: PatientFileData,
+  hoursBack: number = 24,
+): NeuroStateResult {
+  const noDataResult: NeuroStateResult = {
+    currentState: "controlled",
+    currentStateLabel: "Contrôlé",
+    currentStateSince: null,
+    history: { hyperemia: 0, hticWithIschemia: 0, htic: 0, ischemia: 0, controlled: 100 },
+    hasData: false,
+  };
+
+  // Get PIC and PPC time series (normalized to today)
+  const picSeries = getTimeSeriesForRange(patientData, "Variable_PIC", hoursBack, 5, true);
+  const ppcSeries = getTimeSeriesForRange(patientData, "Variable_PPC", hoursBack, 5, true);
+
+  if (picSeries.length === 0 && ppcSeries.length === 0) return noDataResult;
+
+  // Build a merged timeline with closest PIC/PPC values
+  // Index PPC by timestamp for fast lookup
+  const ppcByTime = new Map<number, number>();
+  for (const p of ppcSeries) {
+    ppcByTime.set(new Date(p.charttime).getTime(), p.valeur);
+  }
+
+  // Use PIC as primary timeline (since PIC drives HTIC detection)
+  const primarySeries = picSeries.length > 0 ? picSeries : ppcSeries;
+  
+  // Compute state at each time point
+  interface StatePoint { time: number; state: NeuroStateType }
+  const stateTimeline: StatePoint[] = [];
+
+  for (const point of primarySeries) {
+    const time = new Date(point.charttime).getTime();
+    const picVal = picSeries.length > 0 ? point.valeur : null;
+    
+    // Find closest PPC value (within 30 min)
+    let closestPpc: number | null = null;
+    let minDiff = 30 * 60 * 1000; // 30 min max
+    for (const [ppcTime, ppcVal] of ppcByTime) {
+      const diff = Math.abs(ppcTime - time);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestPpc = ppcVal;
+      }
+    }
+
+    const state = classifyNeuroState(picVal, closestPpc);
+    stateTimeline.push({ time, state });
+  }
+
+  if (stateTimeline.length === 0) return noDataResult;
+
+  // Sort chronologically
+  stateTimeline.sort((a, b) => a.time - b.time);
+
+  // Current state = last data point
+  const currentState = stateTimeline[stateTimeline.length - 1].state;
+
+  // Find when current state started (walk backwards)
+  let stateChangeTime: number | null = null;
+  for (let i = stateTimeline.length - 2; i >= 0; i--) {
+    if (stateTimeline[i].state !== currentState) {
+      stateChangeTime = stateTimeline[i + 1].time;
+      break;
+    }
+  }
+
+  // Format "since" duration
+  let currentStateSince: string | null = null;
+  if (stateChangeTime) {
+    const diffMs = Date.now() - stateChangeTime;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    if (diffHours > 0) {
+      currentStateSince = `depuis ${diffHours}h${diffMins > 0 ? String(diffMins).padStart(2, '0') : ''}`;
+    } else {
+      currentStateSince = `depuis ${diffMins}min`;
+    }
+  }
+
+  // Calculate time distribution (weighted by inter-point intervals)
+  const totalDurations: Record<NeuroStateType, number> = {
+    controlled: 0, htic: 0, htic_ischemia: 0, ischemia: 0, hyperemia: 0,
+  };
+  let totalDuration = 0;
+
+  for (let i = 0; i < stateTimeline.length - 1; i++) {
+    const duration = stateTimeline[i + 1].time - stateTimeline[i].time;
+    totalDurations[stateTimeline[i].state] += duration;
+    totalDuration += duration;
+  }
+
+  // Add last segment (assume it extends to now)
+  if (stateTimeline.length > 0) {
+    const lastDuration = Date.now() - stateTimeline[stateTimeline.length - 1].time;
+    const cappedDuration = Math.min(lastDuration, 30 * 60 * 1000); // Cap at 30 min
+    totalDurations[stateTimeline[stateTimeline.length - 1].state] += cappedDuration;
+    totalDuration += cappedDuration;
+  }
+
+  const toPercent = (d: number) => totalDuration > 0 ? Math.round((d / totalDuration) * 100) : 0;
+
+  return {
+    currentState,
+    currentStateLabel: NEURO_STATE_LABELS[currentState],
+    currentStateSince,
+    history: {
+      hyperemia: toPercent(totalDurations.hyperemia),
+      hticWithIschemia: toPercent(totalDurations.htic_ischemia),
+      htic: toPercent(totalDurations.htic),
+      ischemia: toPercent(totalDurations.ischemia),
+      controlled: toPercent(totalDurations.controlled),
+    },
+    hasData: true,
+  };
+}

@@ -304,28 +304,55 @@ export function UnifiedBrainChart({
           // Sort by time
           const sortedData = Array.from(timeMap.values()).sort((a, b) => a.time - b.time);
           
-          // Generate simulated neurological states based on PIC values
-          // In real implementation, this would come from actual data
+          // Load PPC data for ischemia detection
+          const ppcSeries = getTimeSeriesForRange(data, "Variable_PPC", hours);
+          const ppcByTime = new Map<number, number>();
+          for (const p of ppcSeries) {
+            ppcByTime.set(new Date(p.charttime).getTime(), p.valeur);
+          }
+
+          // Determine neurological states from PIC + PPC values
           const neuroEvents: NeuroEvent[] = [];
           let currentState: NeuroState = "controlled";
           
           for (const point of sortedData) {
-            if (point.pic !== null) {
-              let newState: NeuroState = "controlled";
-              if (point.pic >= 25) {
-                newState = "htic_ischemia";
-              } else if (point.pic >= 20) {
-                newState = "htic";
+            const pic = point.pic;
+
+            // Find closest PPC value (within 30 min)
+            let closestPpc: number | null = null;
+            if (ppcByTime.size > 0) {
+              let minDiff = 30 * 60 * 1000;
+              for (const [ppcTime, ppcVal] of ppcByTime) {
+                const diff = Math.abs(ppcTime - point.time);
+                if (diff < minDiff) {
+                  minDiff = diff;
+                  closestPpc = ppcVal;
+                }
               }
-              
-              if (newState !== currentState) {
-                neuroEvents.push({ timestamp: point.time, state: newState });
-                point.neuroState = newState;
-                point.isTransition = true;
-                currentState = newState;
-              } else {
-                point.neuroState = currentState;
-              }
+            }
+
+            // Clinical classification:
+            // PIC ≥ 20 → HTIC
+            // PPC < 50 → Ischemia  
+            // Both → HTIC + Ischemia
+            // PIC ≥ 25 used as proxy for ischemia when PPC unavailable
+            let newState: NeuroState = "controlled";
+            const isHtic = pic !== null && pic >= 20;
+            const isIschemia = closestPpc !== null ? closestPpc < 50 : (pic !== null && pic >= 25);
+            
+            if (isHtic && isIschemia) {
+              newState = "htic_ischemia";
+            } else if (isHtic) {
+              newState = "htic";
+            }
+            
+            if (newState !== currentState) {
+              neuroEvents.push({ timestamp: point.time, state: newState });
+              point.neuroState = newState;
+              point.isTransition = true;
+              currentState = newState;
+            } else {
+              point.neuroState = currentState;
             }
           }
           
