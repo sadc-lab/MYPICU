@@ -67,9 +67,13 @@ export const Header = ({ selectedPed = 'A' }: HeaderProps) => {
     isInTour,
   } = useTourNavigation();
 
-  // Use active tour if set, otherwise use patients for selected PED
+  // Always align nav list with selected PED (even with active tour)
   const pedPatients = getPatientsForPed(selectedPed);
-  const displayedPatients = activeTour?.length ? activeTour : pedPatients;
+  const filteredTourPatients = (activeTour || []).filter((patient) => {
+    const patientPed = patient.picuId.startsWith('D') ? 'A' : patient.picuId.startsWith('B') ? 'B' : 'C';
+    return patientPed === selectedPed;
+  });
+  const displayedPatients = filteredTourPatients.length > 0 ? filteredTourPatients : pedPatients;
   const hasPatients = Boolean(displayedPatients?.length);
   
   const isOnDisplayedPatient = hasPatients && currentPatientId 
