@@ -1,5 +1,6 @@
-// Service to load full patient data from JSON files
+// Service to load full patient data from Supabase (or JSON files as fallback)
 // Patient data includes time-series vital signs, medications, and clinical data
+import { loadPatientDataFromSupabase, checkPatientExistsInSupabase, getAvailablePatientIdsFromSupabase } from './supabasePatientData.service';
 
 export interface TimeSeriesDataPoint {
   charttime: string;
@@ -49,6 +50,9 @@ export const BRAIN_VARIABLE_KEYS = {
 // Cache for loaded patient data
 const patientDataCache = new Map<string, PatientFileData>();
 
+// Known patient IDs cache (populated on first check)
+let knownPatientIds: string[] | null = null;
+
 export async function loadPatientFileData(patientId: string): Promise<PatientFileData | null> {
   // Normalize patient ID (remove # prefix if present)
   const normalizedId = patientId.replace("#", "");
@@ -58,6 +62,18 @@ export async function loadPatientFileData(patientId: string): Promise<PatientFil
     return patientDataCache.get(normalizedId)!;
   }
 
+  // Try Supabase first
+  try {
+    const supabaseData = await loadPatientDataFromSupabase(patientId);
+    if (supabaseData) {
+      patientDataCache.set(normalizedId, supabaseData);
+      return supabaseData;
+    }
+  } catch (error) {
+    console.warn(`Supabase load failed for ${normalizedId}, falling back to JSON:`, error);
+  }
+
+  // Fallback to static JSON file
   try {
     const response = await fetch(`/data/patients/${normalizedId}.json`);
     if (!response.ok) {
@@ -74,15 +90,35 @@ export async function loadPatientFileData(patientId: string): Promise<PatientFil
   }
 }
 
-// Get available patient IDs with file data
+// Get available patient IDs (from Supabase or fallback)
 export function getAvailablePatientFileIds(): string[] {
-  return ["8749", "6312"];
+  // Return cached known IDs or fallback
+  return knownPatientIds || ["8749", "6312", "8448"];
+}
+
+// Async version to populate from Supabase
+export async function refreshAvailablePatientIds(): Promise<string[]> {
+  try {
+    const ids = await getAvailablePatientIdsFromSupabase();
+    if (ids.length > 0) {
+      knownPatientIds = ids;
+      return ids;
+    }
+  } catch (error) {
+    console.warn('Failed to fetch patient IDs from Supabase:', error);
+  }
+  return getAvailablePatientFileIds();
 }
 
 // Check if patient has detailed file data available
+// Now checks Supabase first, with sync fallback for known patients
 export function hasPatientFileData(patientId: string): boolean {
   const normalizedId = patientId.replace("#", "");
-  return getAvailablePatientFileIds().includes(normalizedId);
+  // If we have cached data, it exists
+  if (patientDataCache.has(normalizedId)) return true;
+  // Check known IDs (includes Supabase-discovered patients)
+  const knownIds = getAvailablePatientFileIds();
+  return knownIds.includes(normalizedId);
 }
 
 // Helper function to parse values with French decimal notation (comma as separator)
