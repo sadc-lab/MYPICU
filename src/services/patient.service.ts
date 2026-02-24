@@ -26,6 +26,8 @@ const transformDbPatient = (row: any): Patient => ({
   heartScore: row.heart_score,
   lungsScore: row.lungs_score,
   kidneyScore: row.kidney_score,
+  ward: row.ward === 'pedB' ? 'pedB' : 'pedA',
+  gcs: row.gcs,
 });
 
 // Helper to transform Patient to database row
@@ -46,6 +48,8 @@ const transformToDbRow = (patient: Partial<Patient>) => {
   if (patient.heartScore !== undefined) row.heart_score = patient.heartScore;
   if (patient.lungsScore !== undefined) row.lungs_score = patient.lungsScore;
   if (patient.kidneyScore !== undefined) row.kidney_score = patient.kidneyScore;
+  if (patient.ward !== undefined) row.ward = patient.ward;
+  if (patient.gcs !== undefined) row.gcs = patient.gcs;
   return row;
 };
 

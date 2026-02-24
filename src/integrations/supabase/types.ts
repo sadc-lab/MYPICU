@@ -153,6 +153,7 @@ export type Database = {
           created_at: string | null
           diagnosis: string
           exam: string | null
+          gcs: number | null
           heart_score: number | null
           id: string
           kidney_score: number | null
@@ -173,6 +174,7 @@ export type Database = {
           created_at?: string | null
           diagnosis: string
           exam?: string | null
+          gcs?: number | null
           heart_score?: number | null
           id: string
           kidney_score?: number | null
@@ -193,6 +195,7 @@ export type Database = {
           created_at?: string | null
           diagnosis?: string
           exam?: string | null
+          gcs?: number | null
           heart_score?: number | null
           id?: string
           kidney_score?: number | null

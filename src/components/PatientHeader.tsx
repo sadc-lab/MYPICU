@@ -5,11 +5,10 @@ import { ChevronLeft, ExternalLink, ChevronDown, Bell } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";
-import { getPatientById } from "@/utils/patientData";
+import { usePatient } from "@/hooks/usePatients";
 import brainIcon from "@/assets/brain-icon.svg";
 import lungsIcon from "@/assets/lungs-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
-import { Patient } from "@/types/patient.types";
 
 const reminders = [
   "Objectif de Bilan Entrée/Sortie",
@@ -32,10 +31,11 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
-  const patient = getPatientById(patientId);
+  const { data: patient, isLoading } = usePatient(patientId);
   const [showVitals, setShowVitals] = useState(false);
   const [showReminders, setShowReminders] = useState(false);
 
+  if (isLoading) return <div className="bg-card border-b border-border mb-4 sm:mb-6 p-4 text-center text-muted-foreground">Chargement...</div>;
   if (!patient) return null;
 
   const getOrganBadgeClass = (score?: number) => {

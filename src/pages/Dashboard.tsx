@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePatients } from '@/hooks/usePatients';
 import { useRealtimePatients } from '@/hooks/useRealtimePatients';
-import { getAllPatients, getPatientsForPed } from '@/utils/patientData';
+import { Patient } from '@/types/patient.types';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -19,21 +19,14 @@ const Dashboard = () => {
   
   // Fetch patients from Supabase (falls back to static data if empty)
   const { data: patientResponse, isLoading } = usePatients();
-  const supabasePatients = patientResponse?.patients || [];
-  
-  // Use Supabase data if available, otherwise use static data
-  const allPatients = supabasePatients.length > 0 
-    ? supabasePatients 
-    : getAllPatients();
+  const allPatients = patientResponse?.patients || [];
 
   // Filter patients by selected PED
-  const displayedPatients = supabasePatients.length > 0
-    ? allPatients.filter(p => {
-        if (selectedPed === 'A') return p.ward === 'pedA' || !p.ward;
-        if (selectedPed === 'B') return p.ward === 'pedB';
-        return false;
-      })
-    : getPatientsForPed(selectedPed);
+  const displayedPatients = allPatients.filter(p => {
+    if (selectedPed === 'A') return p.ward === 'pedA' || !p.ward;
+    if (selectedPed === 'B') return p.ward === 'pedB';
+    return false;
+  });
   
   // Calculate unit average from ALL patients (all 3 PEDs)
   const unitAveragePelod = allPatients.length > 0 
