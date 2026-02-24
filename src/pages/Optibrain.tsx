@@ -61,6 +61,7 @@ import { getOptimalPAMFromNirs } from "@/services/nirsAutoregulation.service";
 import { AutoregulationChart } from "@/components/AutoregulationChart";
 import { UnifiedBrainChart } from "@/components/UnifiedBrainChart";
 import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowSelector";
+import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -979,12 +980,25 @@ const Optibrain = () => {
     return CHART_COLORS[index % CHART_COLORS.length];
   };
 
-  if (patientLoading || showPatientNotFound) {
+  if (patientLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-6 py-8 space-y-4">
+          <DataLoadingOverlay isLoading={true} label="Chargement du patient..." variant="skeleton">
+            <div />
+          </DataLoadingOverlay>
+        </div>
+      </div>
+    );
+  }
+
+  if (showPatientNotFound) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p className="text-foreground">{patientLoading ? "Chargement..." : "Patient non trouvé"}</p>
+          <p className="text-foreground">Patient non trouvé</p>
         </div>
       </div>
     );
@@ -1002,6 +1016,7 @@ const Optibrain = () => {
             <CardTitle className="text-base font-semibold text-foreground">Métriques cérébrales</CardTitle>
           </CardHeader>
           <CardContent>
+            <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cérébrales..." variant="skeleton">
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
               {brainMetrics.map((metric, index) => {
                 const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
@@ -1039,6 +1054,7 @@ const Optibrain = () => {
                 );
               })}
             </div>
+            </DataLoadingOverlay>
           </CardContent>
         </Card>
 

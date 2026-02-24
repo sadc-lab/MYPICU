@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePatient } from '@/hooks/usePatients';
 import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus } from 'lucide-react';
+import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 import { ObjectivesInterventionsCard } from '@/components/ObjectivesInterventionsCard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -228,12 +229,25 @@ const Optiheart = () => {
     return value >= min && value <= max;
   };
 
-  if (isLoading || showPatientNotFound) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-6 py-8 space-y-4">
+          <DataLoadingOverlay isLoading={true} label="Chargement du patient..." variant="skeleton">
+            <div />
+          </DataLoadingOverlay>
+        </div>
+      </div>
+    );
+  }
+
+  if (showPatientNotFound) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p className="text-foreground">{isLoading ? "Chargement..." : "Patient non trouvé"}</p>
+          <p className="text-foreground">Patient non trouvé</p>
         </div>
       </div>
     );
@@ -250,6 +264,7 @@ const Optiheart = () => {
             <CardTitle className="text-base font-semibold">Métriques Cardiaques</CardTitle>
           </CardHeader>
           <CardContent>
+            <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cardiaques..." variant="skeleton">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {heartMetrics.map((metric, index) => {
                 const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
@@ -299,6 +314,7 @@ const Optiheart = () => {
                 );
               })}
             </div>
+            </DataLoadingOverlay>
           </CardContent>
         </Card>
 
