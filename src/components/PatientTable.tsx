@@ -9,7 +9,7 @@ import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { useTourNavigation } from '@/hooks/useTourNavigation';
 import { getScoreTextColor, getScoreBgColor, getScoreColorFilter } from '@/utils/colorUtils';
-
+import { PatientCard } from '@/components/PatientCard';
 interface PatientTableProps {
   patients: Patient[];
   pedName: string;
@@ -100,7 +100,15 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
         </h2>
       )}
       
-      <div className="bg-card rounded-lg shadow-sm border overflow-hidden" data-guide="patient-table">
+      {/* Mobile: card layout */}
+      <div className="grid grid-cols-1 gap-3 md:hidden" data-guide="patient-table-mobile">
+        {patients.map((patient) => (
+          <PatientCard key={patient.id} patient={patient} />
+        ))}
+      </div>
+
+      {/* Desktop: table layout */}
+      <div className="bg-card rounded-lg shadow-sm border overflow-hidden hidden md:block" data-guide="patient-table">
         <div className="overflow-x-auto">
           <Table>
           <TableHeader>
