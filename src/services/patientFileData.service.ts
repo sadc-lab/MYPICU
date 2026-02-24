@@ -107,6 +107,67 @@ export function hasPatientFileData(patientId: string): boolean {
   return knownIds.includes(normalizedId);
 }
 
+// ============================================================
+// CLINICAL VALIDITY RANGES
+// Values outside these ranges are considered sensor artifacts
+// or physiologically impossible and are filtered out.
+// ============================================================
+const CLINICAL_VALIDITY_RANGES: Record<string, { min: number; max: number }> = {
+  Variable_PIC: { min: 0, max: 80 },         // ICP: 0-80 mmHg (normal 5-15)
+  Variable_PPC: { min: 10, max: 150 },        // CPP: 10-150 mmHg (normal 50-70)
+  Variable_PAM: { min: 20, max: 200 },        // MAP: 20-200 mmHg
+  Variable_PVC: { min: -5, max: 40 },         // CVP: -5 to 40 mmHg
+  Variable_FC: { min: 20, max: 300 },         // HR: 20-300 bpm
+  Variable_temperature: { min: 30, max: 43 }, // Temp: 30-43°C
+  Variable_EtCO2: { min: 5, max: 100 },       // EtCO2: 5-100 mmHg (normal ~35)
+  Variable_SPO2: { min: 40, max: 100 },       // SpO2: 40-100%
+  Variable_paco2: { min: 10, max: 120 },      // PaCO2: 10-120 mmHg
+  Variable_glycemie: { min: 0.5, max: 50 },   // Glycémie: 0.5-50 mmol/L
+  Variable_INR: { min: 0.5, max: 20 },        // INR: 0.5-20
+  Variable_plaquettes: { min: 1, max: 1500 }, // Plaquettes: 1-1500 x10⁹/L
+  Variable_hemoglobine: { min: 20, max: 250 },// Hb: 20-250 g/L
+};
+
+// Spike detection: if a value deviates more than this factor from
+// the local median (computed over a sliding window), it's a spike.
+const SPIKE_WINDOW_SIZE = 5;       // Points in each direction
+const SPIKE_DEVIATION_FACTOR = 3;  // Multiplier of local MAD
+
+/**
+ * Check if a value is within the clinically valid range for a variable.
+ */
+function isWithinClinicalRange(variableKey: string, value: number): boolean {
+  const range = CLINICAL_VALIDITY_RANGES[variableKey];
+  if (!range) return true; // No range defined → accept
+  return value >= range.min && value <= range.max;
+}
+
+/**
+ * Remove isolated spikes from a sorted time-series.
+ * Uses a sliding window median and MAD (median absolute deviation).
+ */
+function removeSpikes(data: TimeSeriesDataPoint[]): TimeSeriesDataPoint[] {
+  if (data.length < SPIKE_WINDOW_SIZE * 2 + 1) return data;
+
+  return data.filter((point, index) => {
+    const windowStart = Math.max(0, index - SPIKE_WINDOW_SIZE);
+    const windowEnd = Math.min(data.length - 1, index + SPIKE_WINDOW_SIZE);
+    const windowValues = data.slice(windowStart, windowEnd + 1).map(d => d.valeur);
+
+    // Calculate median
+    const sorted = [...windowValues].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+
+    // Calculate MAD (Median Absolute Deviation)
+    const deviations = sorted.map(v => Math.abs(v - median)).sort((a, b) => a - b);
+    const mad = deviations[Math.floor(deviations.length / 2)] || 1;
+
+    // If point deviates too far from local median, it's a spike
+    const deviation = Math.abs(point.valeur - median);
+    return deviation <= mad * SPIKE_DEVIATION_FACTOR;
+  });
+}
+
 // Helper function to parse values with French decimal notation (comma as separator)
 export function parseNumericValue(value: unknown): number | null {
   if (typeof value === "number") return value;
@@ -120,28 +181,29 @@ export function parseNumericValue(value: unknown): number | null {
 }
 
 // Extract time-series data for a specific variable key
+// Now applies clinical range filtering AND spike removal
 export function extractTimeSeriesData(patientData: PatientFileData, variableKey: string): TimeSeriesDataPoint[] {
   const data = patientData[variableKey];
   if (!Array.isArray(data)) return [];
 
-  return data
+  // Step 1: Parse and filter null values + clinical range
+  const parsed = data
     .filter((item: any) => {
       if (!item.charttime) return false;
-      const parsed = parseNumericValue(item.valeur);
-      return parsed !== null;
+      const value = parseNumericValue(item.valeur);
+      if (value === null) return false;
+      return isWithinClinicalRange(variableKey, value);
     })
     .map((item: any) => ({
       charttime: item.charttime,
       valeur: parseNumericValue(item.valeur)!,
     }));
+
+  // Step 2: Remove spikes (only for time-series with enough data)
+  return removeSpikes(parsed);
 }
 
-// Variables where certain values are not clinically valid (sensor error/disconnection)
-// PIC/PPC: values <= 0 or < 5 are likely sensor errors (normal ICP is 5-15 mmHg)
-const EXCLUDE_ZERO_VARIABLES = ["Variable_PIC", "Variable_PPC"];
-const MIN_VALID_PIC_VALUE = 5; // Minimum clinically valid PIC value in mmHg
-
-// Get latest value for a variable
+// Get latest value for a variable (uses same clinical filtering)
 export function getLatestValue(
   patientData: PatientFileData,
   variableKey: string,
@@ -150,21 +212,13 @@ export function getLatestValue(
 
   if (!Array.isArray(data) || data.length === 0) return null;
 
-  // Check if this variable should exclude invalid values
-  const excludeInvalid = EXCLUDE_ZERO_VARIABLES.includes(variableKey);
-
-  // Filter valid entries and ensure valeur is a number (handles French decimal notation)
+  // Filter valid entries using clinical ranges
   const validEntries = data
     .filter((item: any) => {
       if (!item.charttime) return false;
       const valeur = parseNumericValue(item.valeur);
       if (valeur === null) return false;
-      // Exclude zero and aberrant low values for PIC/PPC
-      if (excludeInvalid) {
-        if (variableKey === "Variable_PIC" && valeur < MIN_VALID_PIC_VALUE) return false;
-        if (variableKey === "Variable_PPC" && valeur <= 0) return false;
-      }
-      return true;
+      return isWithinClinicalRange(variableKey, valeur);
     })
     .map((item: any) => ({
       charttime: item.charttime,
