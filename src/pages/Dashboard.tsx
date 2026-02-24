@@ -47,7 +47,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header selectedPed={selectedPed} />
+      <Header selectedPed={selectedPed} patients={displayedPatients} />
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-[1600px]">
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 lg:gap-0 mb-6">
