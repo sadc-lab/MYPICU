@@ -155,6 +155,24 @@ export const pedAPatients: Patient[] = [
     lungsScore: 1,
     kidneyScore: 0,
   },
+  {
+    id: "#8448",
+    name: "John Doe (M)",
+    age: "6y 3m 20d",
+    weight: "22.0 kg",
+    picuId: "D7",
+    pelodScore: 26,
+    adherence: 68,
+    diagnosis: "Traumatisme crânien avec hypertension intracrânienne",
+    exam: "CT SCAN, EEG",
+    priority: "Élevée",
+    tour: "Prioritaire",
+    brainScore: 3,
+    heartScore: 2,
+    lungsScore: 1,
+    kidneyScore: 0,
+    gcs: 5,
+  },
 ];
 
 export const pedBPatients: Patient[] = [
