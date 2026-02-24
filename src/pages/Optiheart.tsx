@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { usePatient } from '@/hooks/usePatients';
 import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus } from 'lucide-react';
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
-import { ObjectivesInterventionsCard } from '@/components/ObjectivesInterventionsCard';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { heartMetrics as importedHeartMetrics } from '@/utils/organMetrics';
@@ -593,7 +593,7 @@ const Optiheart = () => {
           </CardContent>
         </Card>
 
-        <ObjectivesInterventionsCard patientId={patientId} organ="heart" />
+        
       </main>
     </div>
   );
