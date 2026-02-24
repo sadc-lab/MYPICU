@@ -8,7 +8,7 @@ import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePatient } from '@/hooks/usePatients';
-import { ObjectivesInterventionsCard } from '@/components/ObjectivesInterventionsCard';
+
 import {
   Info,
   ChevronDown,
@@ -1596,7 +1596,7 @@ const Optibrain = () => {
           </CardContent>
         </Card>
 
-        <ObjectivesInterventionsCard patientId={patientId} organ="brain" />
+        
       </main>
     </div>
   );
