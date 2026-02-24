@@ -35,9 +35,10 @@ import {
 
 interface HeaderProps {
   selectedPed?: 'A' | 'B' | 'C';
+  patients?: Patient[];
 }
 
-export const Header = ({ selectedPed = 'A' }: HeaderProps) => {
+export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProps) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -67,8 +68,8 @@ export const Header = ({ selectedPed = 'A' }: HeaderProps) => {
     isInTour,
   } = useTourNavigation();
 
-  // Always align nav list with selected PED (even with active tour)
-  const pedPatients = getPatientsForPed(selectedPed);
+  // Use prop patients if provided (from Supabase), otherwise fall back to static data
+  const pedPatients = propPatients || getPatientsForPed(selectedPed);
   const filteredTourPatients = (activeTour || []).filter((patient) => {
     const patientPed = patient.picuId.startsWith('D') ? 'A' : patient.picuId.startsWith('B') ? 'B' : 'C';
     return patientPed === selectedPed;
@@ -118,7 +119,7 @@ export const Header = ({ selectedPed = 'A' }: HeaderProps) => {
   }, []);
 
   // Filter patients based on search
-  const allPatients = getAllPatients();
+  const allPatients = propPatients || getAllPatients();
   const filteredPatients = searchQuery.trim() 
     ? allPatients.filter(patient => {
         const query = searchQuery.toLowerCase();
