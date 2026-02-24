@@ -113,7 +113,7 @@ export function hasPatientFileData(patientId: string): boolean {
 // or physiologically impossible and are filtered out.
 // ============================================================
 const CLINICAL_VALIDITY_RANGES: Record<string, { min: number; max: number }> = {
-  Variable_PIC: { min: 0, max: 80 },         // ICP: 0-80 mmHg (normal 5-15)
+  Variable_PIC: { min: 1, max: 80 },         // ICP: 1-80 mmHg (0 is artifact, normal 5-15)
   Variable_PPC: { min: 10, max: 150 },        // CPP: 10-150 mmHg (normal 50-70)
   Variable_PAM: { min: 20, max: 200 },        // MAP: 20-200 mmHg
   Variable_PVC: { min: -5, max: 40 },         // CVP: -5 to 40 mmHg

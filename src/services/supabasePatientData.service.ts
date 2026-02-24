@@ -3,7 +3,19 @@
 import { supabase } from '@/integrations/supabase/client';
 import { PatientFileData } from './patientFileData.service';
 
-// Cache for loaded patient data
+// Clinical validity ranges — values outside these are measurement artifacts
+const CLINICAL_VALIDITY_RANGES: Record<string, { min: number; max: number }> = {
+  Variable_PIC: { min: 1, max: 80 },
+  Variable_PPC: { min: 10, max: 150 },
+  Variable_PAM: { min: 20, max: 200 },
+};
+
+function isWithinClinicalRange(variableKey: string, value: number): boolean {
+  const range = CLINICAL_VALIDITY_RANGES[variableKey];
+  if (!range) return true;
+  return value >= range.min && value <= range.max;
+}
+
 const patientDataCache = new Map<string, PatientFileData>();
 
 // Medication type to JSON key mapping (reverse of import)
@@ -48,16 +60,23 @@ export async function loadPatientDataFromSupabase(patientId: string): Promise<Pa
       Variable_concentre_plaquettaire: [],
     };
 
-    // 1. Reconstruct vitals (grouped by variable_key)
+    // 1. Reconstruct vitals (grouped by variable_key) with clinical validity filtering
     for (const vital of vitalsRes) {
       const key = vital.variable_key;
+      const value = vital.valeur;
+      
+      // Filter out clinically impossible values
+      if (value !== null && !isWithinClinicalRange(key, value)) {
+        continue;
+      }
+      
       if (!data[key]) {
         data[key] = [];
       }
       (data[key] as any[]).push({
         noadmsip: parseInt(normalizedId) || 0,
         charttime: vital.charttime,
-        valeur: vital.valeur,
+        valeur: value,
       });
     }
 
