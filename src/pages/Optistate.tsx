@@ -3,7 +3,7 @@ import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getPatientById } from '@/utils/patientData';
+import { usePatient } from '@/hooks/usePatients';
 import { ChevronRight } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getProblematicIndicators } from '@/utils/organMetrics';
@@ -17,15 +17,15 @@ const Optistate = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const patientId = searchParams.get('patient') || '#25';
-  const patient = getPatientById(patientId);
+  const { data: patient, isLoading } = usePatient(patientId);
   const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
 
-  if (!patient) {
+  if (!patient || isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p>Patient non trouvé</p>
+          <p>{isLoading ? 'Chargement...' : 'Patient non trouvé'}</p>
         </div>
       </div>
     );

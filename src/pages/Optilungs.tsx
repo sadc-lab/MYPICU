@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getPatientById } from '@/utils/patientData';
+import { usePatient } from '@/hooks/usePatients';
 import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
@@ -25,7 +25,7 @@ const Optilungs = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
   const metricParam = searchParams.get('metric');
-  const patient = getPatientById(patientId);
+  const { data: patient, isLoading } = usePatient(patientId);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);

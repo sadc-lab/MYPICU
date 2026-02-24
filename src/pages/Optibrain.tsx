@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getPatientById } from "@/utils/patientData";
+import { usePatient } from '@/hooks/usePatients';
 import {
   Info,
   ChevronDown,
@@ -65,7 +65,7 @@ const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
   const metricParam = searchParams.get("metric");
-  const patient = getPatientById(patientId);
+  const { data: patient, isLoading: patientLoading } = usePatient(patientId);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
