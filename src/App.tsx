@@ -15,6 +15,7 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ManagerSignup from "./pages/auth/ManagerSignup";
 import WorkerSignup from "./pages/auth/WorkerSignup";
+import ImportPatientData from "./pages/admin/ImportPatientData";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/optiheart" element={<ProtectedRoute><Optiheart /></ProtectedRoute>} />
             <Route path="/optilungs" element={<ProtectedRoute><Optilungs /></ProtectedRoute>} />
             <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
+            <Route path="/admin/import" element={<ProtectedRoute><ImportPatientData /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

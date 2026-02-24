@@ -14,6 +14,137 @@ export type Database = {
   }
   public: {
     Tables: {
+      patient_clinical_info: {
+        Row: {
+          data: Json
+          id: number
+          info_type: string
+          patient_id: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          info_type: string
+          patient_id: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          info_type?: string
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_patient_clinical_info_patient"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_medications: {
+        Row: {
+          charttime: string
+          drugname: string
+          id: number
+          medication_type: string
+          patient_id: string
+          valeur: string | null
+          variable: string | null
+        }
+        Insert: {
+          charttime: string
+          drugname: string
+          id?: never
+          medication_type: string
+          patient_id: string
+          valeur?: string | null
+          variable?: string | null
+        }
+        Update: {
+          charttime?: string
+          drugname?: string
+          id?: never
+          medication_type?: string
+          patient_id?: string
+          valeur?: string | null
+          variable?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_patient_medications_patient"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_validity: {
+        Row: {
+          hour_index: number
+          id: number
+          indicator_key: string
+          is_adherent: boolean
+          patient_id: string
+        }
+        Insert: {
+          hour_index: number
+          id?: never
+          indicator_key: string
+          is_adherent: boolean
+          patient_id: string
+        }
+        Update: {
+          hour_index?: number
+          id?: never
+          indicator_key?: string
+          is_adherent?: boolean
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_patient_validity_patient"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_vitals: {
+        Row: {
+          charttime: string
+          id: number
+          patient_id: string
+          valeur: number | null
+          variable_key: string
+        }
+        Insert: {
+          charttime: string
+          id?: never
+          patient_id: string
+          valeur?: number | null
+          variable_key: string
+        }
+        Update: {
+          charttime?: string
+          id?: never
+          patient_id?: string
+          valeur?: number | null
+          variable_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_patient_vitals_patient"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           adherence: number | null
