@@ -128,16 +128,7 @@ const Optiheart = () => {
   const monitoringAdherence = Math.round(monitoringTargets.reduce((sum, t) => sum + t.adherencePercentage, 0) / totalTargets);
   const targetOutOfRangeCount = monitoringTargets.filter(t => t.status !== 'normal').length;
 
-  if (!patient) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container mx-auto px-6 py-8">
-          <p>Patient not found</p>
-        </div>
-      </div>
-    );
-  }
+  const showPatientNotFound = !patient && !isLoading;
 
   const heartMetrics = importedHeartMetrics;
 
@@ -236,6 +227,17 @@ const Optiheart = () => {
   const isInRange = (value: number, min: number, max: number) => {
     return value >= min && value <= max;
   };
+
+  if (isLoading || showPatientNotFound) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <p className="text-foreground">{isLoading ? "Chargement..." : "Patient non trouvé"}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
