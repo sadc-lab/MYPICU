@@ -544,16 +544,7 @@ const Optibrain = () => {
     };
   }, [patientFileData]);
 
-  if (!patient) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container mx-auto px-6 py-8">
-          <p className="text-foreground">Patient not found</p>
-        </div>
-      </div>
-    );
-  }
+  const showPatientNotFound = !patient && !patientLoading;
 
   // Override brainMetrics with real data when available
   const brainMetrics = useMemo(() => {
@@ -987,6 +978,17 @@ const Optibrain = () => {
     if (index === -1) return "#9ca3af";
     return CHART_COLORS[index % CHART_COLORS.length];
   };
+
+  if (patientLoading || showPatientNotFound) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <p className="text-foreground">{patientLoading ? "Chargement..." : "Patient non trouvé"}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

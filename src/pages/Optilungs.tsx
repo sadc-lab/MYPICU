@@ -128,16 +128,7 @@ const Optilungs = () => {
   const totalIndicators = clinicalIndicators.length;
   const outOfRangeCount = clinicalIndicators.filter(i => i.status !== 'normal').length;
 
-  if (!patient) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container mx-auto px-6 py-8">
-          <p>Patient non trouvé</p>
-        </div>
-      </div>
-    );
-  }
+  const showPatientNotFound = !patient && !isLoading;
 
   const lungMetrics = importedLungMetrics;
 
@@ -155,11 +146,22 @@ const Optilungs = () => {
   ];
 
 
+  if (isLoading || showPatientNotFound) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <p className="text-foreground">{isLoading ? "Chargement..." : "Patient non trouvé"}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <PatientHeader currentPage="optilungs" />
-      
+
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
         <Card className="shadow-sm mb-6">
           <CardHeader>
