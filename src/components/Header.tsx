@@ -127,7 +127,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
         
         return (
           patient.name.toLowerCase().includes(query) ||
-          patient.id.toLowerCase().includes(query) ||
+          patient.picuId.toLowerCase().includes(query) ||
           patient.pelodScore.toString().includes(query) ||
           ped === query ||
           `ped ${ped}`.includes(query)
@@ -150,7 +150,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
         const ped = patient.picuId.startsWith('D') ? 'a' : patient.picuId.startsWith('B') ? 'b' : 'c';
         return (
           patient.name.toLowerCase().includes(query) ||
-          patient.id.toLowerCase().includes(query) ||
+          patient.picuId.toLowerCase().includes(query) ||
           patient.pelodScore.toString().includes(query) ||
           ped === query ||
           `ped ${ped}`.includes(query)
@@ -243,7 +243,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
                                 >
                                   <div className="flex items-center gap-2 min-w-0">
                                     <span className={`text-xs font-bold ${isActive ? 'text-primary' : 'text-destructive'}`}>
-                                      {patient.id}
+                                      #{patient.picuId.replace(/\D/g, '').padStart(2, '0')}
                                     </span>
                                     <span className="text-sm truncate">{patient.name}</span>
                                   </div>
@@ -305,7 +305,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="font-medium text-foreground">{patient.name}</div>
-                              <div className="text-sm text-muted-foreground">{patient.id}</div>
+                              <div className="text-sm text-muted-foreground">#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</div>
                             </div>
                             <div className="text-xs text-muted-foreground">
                               PELOD: {patient.pelodScore}
@@ -363,7 +363,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-muted-foreground">{index + 1}.</span>
-                              <span className="text-destructive font-semibold text-sm">{patient.id}</span>
+                              <span className="text-destructive font-semibold text-sm">#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</span>
                               <span className="text-sm truncate">{patient.name}</span>
                             </div>
                           </div>

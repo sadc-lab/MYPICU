@@ -141,7 +141,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                   <div className="text-xs sm:text-sm text-muted-foreground">{patient.weight}</div>
                 </TableCell>
                 <TableCell className="text-foreground text-sm hidden sm:table-cell">{patient.age}</TableCell>
-                <TableCell className="text-foreground text-sm hidden md:table-cell">{patient.picuId}</TableCell>
+                <TableCell className="text-foreground text-sm hidden md:table-cell">#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</TableCell>
                 <TableCell>
                   <span className="text-foreground text-sm">
                     {patient.pelodScore}
