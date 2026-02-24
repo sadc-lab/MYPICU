@@ -12,6 +12,8 @@ import Optiheart from "./pages/Optiheart";
 import Optilungs from "./pages/Optilungs";
 import Feedback from "./pages/Feedback";
 import Login from "./pages/auth/Login";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Signup from "./pages/auth/Signup";
 import ManagerSignup from "./pages/auth/ManagerSignup";
 import WorkerSignup from "./pages/auth/WorkerSignup";
@@ -32,6 +34,8 @@ const App = () => (
             <Route path="/auth/signup" element={<Signup />} />
             <Route path="/auth/manager-signup" element={<ManagerSignup />} />
             <Route path="/auth/worker-signup" element={<WorkerSignup />} />
+            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/optistate" element={<ProtectedRoute><Optistate /></ProtectedRoute>} />
             <Route path="/optibrain" element={<ProtectedRoute><Optibrain /></ProtectedRoute>} />
