@@ -58,6 +58,11 @@ const Login = () => {
                 required
               />
             </div>
+            <div className="flex justify-end">
+              <Link to="/auth/forgot-password" className="text-xs text-muted-foreground hover:text-primary hover:underline">
+                Mot de passe oublié ?
+              </Link>
+            </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Connexion...' : 'Se connecter'}
             </Button>
