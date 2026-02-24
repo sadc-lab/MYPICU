@@ -366,6 +366,9 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
                               <span className="text-destructive font-semibold text-sm">#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</span>
                               <span className="text-sm truncate">{patient.name}</span>
                             </div>
+                            <Badge variant="outline" className="text-xs shrink-0 ml-2">
+                              {patient.pelodScore}
+                            </Badge>
                           </div>
                         </DropdownMenuItem>
                       ))}
