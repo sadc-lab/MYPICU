@@ -43,7 +43,8 @@ const Dashboard = () => {
       <Header selectedPed={selectedPed} patients={displayedPatients} />
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-[1600px]">
-        <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <Button variant="outline" className="bg-card text-sm sm:text-base">
               Accès TVL
             </Button>
@@ -51,28 +52,27 @@ const Dashboard = () => {
             <Button variant="outline" className="bg-card border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)} data-guide="organize-tour">
               Organiser tournée <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
+          </div>
+
+          <PelodBadges patients={displayedPatients} unitAverage={averagePelod} />
         </div>
 
         <div className="space-y-6">
           <div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
-              <div className="flex items-center gap-1">
-                <h2 className="text-lg sm:text-xl font-medium text-primary">Liste des patients -</h2>
-                <Select value={selectedPed} onValueChange={value => setSelectedPed(value as 'A' | 'B' | 'C')}>
-                  <SelectTrigger className="w-auto border-0 bg-transparent text-primary h-auto p-0 text-lg sm:text-xl font-medium hover:opacity-80 focus:ring-0 gap-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="z-50">
-                    <SelectItem value="A">PED A</SelectItem>
-                    <SelectItem value="B">PED B</SelectItem>
-                    <SelectItem value="C">PED C</SelectItem>
-                  </SelectContent>
-                </Select>
-                {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin text-muted-foreground" />}
-              </div>
+            <div className="flex items-center gap-1 mb-3">
+              <h2 className="text-lg sm:text-xl font-medium text-primary">Liste des patients -</h2>
+              <Select value={selectedPed} onValueChange={value => setSelectedPed(value as 'A' | 'B' | 'C')}>
+                <SelectTrigger className="w-auto border-0 bg-transparent text-primary h-auto p-0 text-lg sm:text-xl font-medium hover:opacity-80 focus:ring-0 gap-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="z-50">
+                  <SelectItem value="A">PED A</SelectItem>
+                  <SelectItem value="B">PED B</SelectItem>
+                  <SelectItem value="C">PED C</SelectItem>
+                </SelectContent>
+              </Select>
+              {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin text-muted-foreground" />}
             </div>
-            
-            <PelodBadges patients={displayedPatients} unitAverage={averagePelod} />
             
             {displayedPatients.length > 0 ? (
               <PatientTable patients={displayedPatients} pedName={`PED ${selectedPed}`} averagePelod={averagePelod} showTitle={false} />
