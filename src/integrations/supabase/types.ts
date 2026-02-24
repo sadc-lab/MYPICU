@@ -81,6 +81,47 @@ export type Database = {
           },
         ]
       }
+      patient_objectives: {
+        Row: {
+          content: string
+          created_at: string
+          id: number
+          organ: string
+          patient_id: string
+          sort_order: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: never
+          organ: string
+          patient_id: string
+          sort_order?: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: never
+          organ?: string
+          patient_id?: string
+          sort_order?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_objectives_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_validity: {
         Row: {
           hour_index: number
