@@ -33,7 +33,11 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 
-export const Header = () => {
+interface HeaderProps {
+  selectedPed?: 'A' | 'B' | 'C';
+}
+
+export const Header = ({ selectedPed = 'A' }: HeaderProps) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -44,7 +48,6 @@ export const Header = () => {
   const [searchParams] = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
-  const [selectedPed, setSelectedPed] = useState<'A' | 'B' | 'C'>('A');
   
   const isOnMainDashboard = location.pathname === '/';
   
@@ -322,17 +325,6 @@ export const Header = () => {
           <nav className="hidden md:flex gap-2 items-center" data-guide="patient-nav">
             {hasPatients && (
               <>
-                <Select value={selectedPed} onValueChange={(value) => setSelectedPed(value as 'A' | 'B' | 'C')}>
-                  <SelectTrigger className="h-7 w-auto px-2 text-xs font-medium border bg-muted">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="z-50">
-                    <SelectItem value="A">PED A</SelectItem>
-                    <SelectItem value="B">PED B</SelectItem>
-                    <SelectItem value="C">PED C</SelectItem>
-                  </SelectContent>
-                </Select>
-
                 <Badge variant="default" className="bg-primary text-white text-xs" data-guide="tour-info">
                   {isOnDisplayedPatient ? `${currentIndex + 1}/${displayedPatients.length}` : `${displayedPatients.length} patients`}
                 </Badge>
