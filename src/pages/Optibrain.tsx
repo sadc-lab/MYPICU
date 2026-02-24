@@ -8,6 +8,7 @@ import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePatient } from '@/hooks/usePatients';
+import { ObjectivesInterventionsCard } from '@/components/ObjectivesInterventionsCard';
 import {
   Info,
   ChevronDown,
@@ -72,21 +73,7 @@ const Optibrain = () => {
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
   const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
-  const [objectives, setObjectives] = useState<string[]>([
-    "Maintain ICP < 20 mmHg",
-    "Maintain CPP 50-70 mmHg",
-    "Normocapnia (PaCO2 35-45 mmHg)",
-    "Head of bed elevated 30°",
-  ]);
-  const [interventions, setInterventions] = useState<string[]>([
-    "Osmotherapy with mannitol administered",
-    "Sedation optimized",
-    "Continuous ICP monitorage",
-  ]);
-  const [isEditingObjectives, setIsEditingObjectives] = useState(false);
-  const [editedObjectives, setEditedObjectives] = useState<string[]>([]);
-  const [isEditingInterventions, setIsEditingInterventions] = useState(false);
-  const [editedInterventions, setEditedInterventions] = useState<string[]>([]);
+  // Objectives and interventions are now handled by ObjectivesInterventionsCard component
   const [picDialogTimeRange, setPicDialogTimeRange] = useState<TimeWindowValue>("24h");
   const [selectedBrainIndicators, setSelectedBrainIndicators] = useState<string[]>([]);
   const [showTargetZones, setShowTargetZones] = useState(true);
@@ -1590,6 +1577,8 @@ const Optibrain = () => {
             </Card>
           </CardContent>
         </Card>
+
+        <ObjectivesInterventionsCard patientId={patientId} organ="brain" />
       </main>
     </div>
   );
