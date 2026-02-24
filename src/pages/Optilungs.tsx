@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { usePatient } from '@/hooks/usePatients';
 import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
-import { ObjectivesInterventionsCard } from '@/components/ObjectivesInterventionsCard';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
 import { useTimeRange } from '@/hooks/useTimeRange';
@@ -505,7 +505,7 @@ const Optilungs = () => {
           </Card>
         </div>
 
-        <ObjectivesInterventionsCard patientId={patientId} organ="lungs" />
+        
       </main>
     </div>
   );
