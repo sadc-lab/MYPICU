@@ -14,7 +14,7 @@ export const PelodBadges = ({
   const topPatients = [...patients].sort((a, b) => b.pelodScore - a.pelodScore).slice(0, 5);
   return <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
       <div className="text-center">
-        <div className="text-xs text-gray-600 mb-2">PELOD de l&apos;unité</div>
+        <div className="text-xs text-muted-foreground mb-2">Moyenne PELOD</div>
         <div className="flex flex-col items-center gap-1">
           <div className="flex items-center justify-center">
             
