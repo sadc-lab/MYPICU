@@ -62,7 +62,7 @@ export async function loadPatientFileData(patientId: string): Promise<PatientFil
     return patientDataCache.get(normalizedId)!;
   }
 
-  // Try Supabase first
+  // Load from Supabase
   try {
     const supabaseData = await loadPatientDataFromSupabase(patientId);
     if (supabaseData) {
@@ -70,24 +70,10 @@ export async function loadPatientFileData(patientId: string): Promise<PatientFil
       return supabaseData;
     }
   } catch (error) {
-    console.warn(`Supabase load failed for ${normalizedId}, falling back to JSON:`, error);
+    console.error(`Failed to load patient data from Supabase for ${normalizedId}:`, error);
   }
 
-  // Fallback to static JSON file
-  try {
-    const response = await fetch(`/data/patients/${normalizedId}.json`);
-    if (!response.ok) {
-      console.warn(`Patient file data not found for ID: ${normalizedId}`);
-      return null;
-    }
-
-    const data: PatientFileData = await response.json();
-    patientDataCache.set(normalizedId, data);
-    return data;
-  } catch (error) {
-    console.error(`Error loading patient file data for ID: ${normalizedId}`, error);
-    return null;
-  }
+  return null;
 }
 
 // Get available patient IDs (from Supabase or fallback)
