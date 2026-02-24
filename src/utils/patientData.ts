@@ -4,6 +4,7 @@ import { Patient } from "@/types/patient.types";
 // Re-export Patient type for backward compatibility
 export type { Patient };
 
+// Static patient data - synchronized with Supabase
 export const pedAPatients: Patient[] = [
   {
     id: "#8749",
@@ -41,70 +42,6 @@ export const pedAPatients: Patient[] = [
     kidneyScore: 0,
   },
   {
-    id: "#23",
-    name: "Brassel, Benjamin (M)",
-    age: "10d",
-    weight: "4.5 kg",
-    picuId: "D3",
-    pelodScore: 18,
-    adherence: 70,
-    diagnosis: "Syndrome de détresse respiratoire",
-    exam: "Radio thoracique",
-    priority: "Moyenne",
-    brainScore: 0,
-    heartScore: 1,
-    lungsScore: 3,
-    kidneyScore: 1,
-  },
-  {
-    id: "#24",
-    name: "Gagnon, Eli (F)",
-    age: "3y 4m 12d",
-    weight: "14.8 kg",
-    picuId: "D5",
-    pelodScore: 17,
-    adherence: 74,
-    diagnosis: "Pneumonie sévère avec complications",
-    exam: "CT Thorax",
-    priority: "Moyenne",
-    brainScore: 2,
-    heartScore: 1,
-    lungsScore: 2,
-    kidneyScore: 0,
-  },
-  {
-    id: "#22",
-    name: "Bureaux, Charlotte (F)",
-    age: "12d",
-    weight: "3.5 kg",
-    picuId: "D3",
-    pelodScore: 17,
-    adherence: 78,
-    diagnosis: "Convulsions néonatales",
-    exam: "CT SCAN, EEG",
-    priority: "Moyenne",
-    brainScore: 3,
-    heartScore: 0,
-    lungsScore: 0,
-    kidneyScore: 0,
-  },
-  {
-    id: "#21",
-    name: "Dagenais, Etienne (M)",
-    age: "7y 2m 6d",
-    weight: "24.3 kg",
-    picuId: "D2",
-    pelodScore: 12,
-    adherence: 89,
-    diagnosis: "Post-op Adéno-Amygdalectomie",
-    exam: "",
-    priority: "Faible",
-    brainScore: 0,
-    heartScore: 0,
-    lungsScore: 1,
-    kidneyScore: 0,
-  },
-  {
     id: "#6312",
     name: "Jules Moreault (M)",
     age: "9y 11m 18d",
@@ -123,24 +60,8 @@ export const pedAPatients: Patient[] = [
     gcs: 7,
   },
   {
-    id: "#16",
-    name: "Ibrahim, Hakim (M)",
-    age: "5y",
-    weight: "19.2 kg",
-    picuId: "D113",
-    pelodScore: 9,
-    adherence: 71,
-    diagnosis: "Cardiomyopathie dilatée",
-    exam: "ECHO, ECG",
-    priority: "Faible",
-    brainScore: 0,
-    heartScore: 3,
-    lungsScore: 1,
-    kidneyScore: 0,
-  },
-  {
     id: "#8448",
-    name: "John Doe (M)",
+    name: "Tremblay, Lucas (M)",
     age: "6y 3m 20d",
     weight: "22.0 kg",
     picuId: "D7",
@@ -241,23 +162,7 @@ export const pedBPatients: Patient[] = [
   },
 ];
 
-export const pedCPatients: Patient[] = [
-  {
-    id: "#6",
-    name: "Miller, Ava (F)",
-    age: "1y 9m 3d",
-    weight: "10.8 kg",
-    picuId: "C1",
-    pelodScore: 35,
-    adherence: 58,
-    diagnosis: "Arrêt cardiaque",
-    exam: "ECG",
-    priority: "Critique",
-    brainScore: 3,
-    heartScore: 3,
-    lungsScore: 3,
-  },
-];
+export const pedCPatients: Patient[] = [];
 
 export const getPatientsForPed = (ped: "A" | "B" | "C"): Patient[] => {
   switch (ped) {
