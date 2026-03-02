@@ -214,12 +214,12 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                         <Badge 
                           variant="secondary"
                           className={`text-xs ${
-                            patient.tour === 'Priority' 
+                            patient.tour === 'Priority' || patient.tour === 'Prioritaire'
                               ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
                               : 'bg-muted-foreground hover:bg-muted-foreground/90 text-status-normal-fg'
                           }`}
                         >
-                          {patient.tour}
+                          {patient.tour === 'Priority' || patient.tour === 'Prioritaire' ? 'Priorité' : patient.tour}
                         </Badge>
                       );
                     }
