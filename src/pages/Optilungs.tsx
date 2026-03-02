@@ -330,7 +330,7 @@ const Optilungs = () => {
           {optimisationExpanded && (
             <CardContent className="pt-0 space-y-4">
               {/* Selectable Lung Metrics - Optibrain style */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-6 pt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6 pt-4">
                 {/* État Pulmonaire */}
                 <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg border-2 border-transparent">
                   <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
@@ -369,6 +369,23 @@ const Optilungs = () => {
                   </div>
                   <div className="text-[10px] sm:text-xs font-medium text-status-critical text-center leading-tight">
                     Cible &gt; 300
+                  </div>
+                </div>
+
+                {/* Paramètres Ventilateur */}
+                <div 
+                  className="flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 border-transparent hover:bg-muted/50"
+                  onClick={(e) => { e.stopPropagation(); setOpenDialog('ventilateur'); }}
+                >
+                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
+                    Ventilateur
+                  </div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <Gauge className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                    <div className="text-lg sm:text-2xl font-bold text-foreground">SIMV</div>
+                  </div>
+                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground text-center leading-tight">
+                    Voir détails
                   </div>
                 </div>
               </div>
@@ -678,38 +695,25 @@ const Optilungs = () => {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <Card className="lg:col-span-2 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Wind className="h-5 w-5 text-primary" />
-                Mécanique Respiratoire
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-border rounded-lg">
-                <p className="text-muted-foreground">Courbe Pression-Volume affichée ici</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
+        {/* Ventilateur Dialog */}
+        <Dialog open={openDialog === 'ventilateur'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
                 <Gauge className="h-5 w-5 text-primary" />
                 Paramètres du Ventilateur
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
               {ventilatorSettings.map((setting, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{setting.label} :</span>
+                <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <span className="text-sm text-muted-foreground">{setting.label}</span>
                   <span className="font-semibold text-sm text-foreground">{setting.value}</span>
                 </div>
               ))}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <Card className="shadow-sm">
