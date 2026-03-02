@@ -456,7 +456,7 @@ const Optilungs = () => {
           <CardHeader className="px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="text-base sm:text-lg">
-                Adhérence & Monitorage {timeRange === "stay" ? "sur le séjour" : `sur ${timeRange}`}
+                Monitorage {timeRange === "stay" ? "sur le séjour" : `sur ${timeRange}`}
               </CardTitle>
               <TimeWindowSelector
                 value={timeRange}
