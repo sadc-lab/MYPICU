@@ -179,7 +179,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                     if (visitStatus) {
                       const getStatusDisplay = (status: string) => {
                         switch(status) {
-                          case 'Priority': return 'Prioritaire';
+                          case 'Priority': return 'Priorité';
                           case 'Confirmed': return 'Confirmé';
                           case 'Leaving': return 'Sortant';
                           case 'To Check': return 'À vérifier';

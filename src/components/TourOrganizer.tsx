@@ -155,7 +155,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
 
       {patient.tour && (
         <Badge variant="destructive" className="text-xs">
-          Prioritaire
+          Priorité
         </Badge>
       )}
     </div>
