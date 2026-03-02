@@ -10,6 +10,7 @@ import { usePatient } from '@/hooks/usePatients';
 import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
+import lungsIcon from '@/assets/lungs-icon.svg';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
@@ -252,7 +253,7 @@ const Optilungs = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 sm:gap-4">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-destructive text-destructive bg-destructive/10 shrink-0">
-                  <Wind className="h-6 w-6 sm:h-8 sm:w-8" />
+                  <img src={lungsIcon} alt="lungs" className="h-6 w-6 sm:h-8 sm:w-8" style={{ filter: "invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)" }} />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation pulmonaire</h3>
