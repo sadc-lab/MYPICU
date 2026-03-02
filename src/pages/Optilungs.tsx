@@ -10,6 +10,7 @@ import { usePatient } from '@/hooks/usePatients';
 import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
+import { MetricRangeBar } from '@/components/MetricRangeBar';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 
@@ -342,7 +343,7 @@ const Optilungs = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {lungMetrics.map((metric, index) => {
                 const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                const valueColor = inRange ? 'text-muted-foreground' : 'text-destructive';
+                const valueColor = inRange ? 'text-muted-foreground' : 'text-status-critical';
                 
                 return (
                   <div key={index} className="flex flex-col items-center">
@@ -353,36 +354,13 @@ const Optilungs = () => {
                       {metric.value}
                     </div>
                     
-                    <div className="w-full max-w-[180px]">
-                      {/* Range bar */}
-                      <div className="relative h-3 bg-muted rounded-full overflow-visible">
-                        {/* Target range (light grey zone) */}
-                        <div 
-                          className="absolute top-0 bottom-0 bg-muted/70 rounded-full"
-                          style={{
-                            left: `${((metric.targetMin - metric.min) / (metric.max - metric.min)) * 100}%`,
-                            width: `${((metric.targetMax - metric.targetMin) / (metric.max - metric.min)) * 100}%`
-                          }}>
-                        </div>
-                        
-                        {/* Current value position on bar */}
-                        <div 
-                          className={`absolute w-3 h-3 rounded-full border-2 ${
-                            inRange ? 'bg-muted-foreground border-foreground' : 'bg-destructive border-destructive'
-                          } z-10 top-0`}
-                          style={{
-                            left: `${Math.max(0, Math.min(100, ((metric.value - metric.min) / (metric.max - metric.min)) * 100))}%`,
-                            transform: 'translateX(-50%)'
-                          }}>
-                        </div>
-                      </div>
-                      
-                      {/* Target range labels */}
-                      <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
-                        <span>{metric.targetMin}</span>
-                        <span>{metric.targetMax}</span>
-                      </div>
-                    </div>
+                    <MetricRangeBar
+                      value={metric.value}
+                      min={metric.min}
+                      max={metric.max}
+                      targetMin={metric.targetMin}
+                      targetMax={metric.targetMax}
+                    />
                   </div>
                 );
               })}
