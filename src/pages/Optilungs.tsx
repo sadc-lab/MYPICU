@@ -477,18 +477,19 @@ const Optilungs = () => {
                             />
                           );
                         })}
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="time" tick={{ fontSize: 11 }} stroke="#9ca3af" tickLine={false} />
-                        <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" tickLine={false} axisLine={false} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(255, 255, 255, 0.98)",
-                            border: "1px solid #e5e7eb",
-                            borderRadius: "8px",
-                            fontSize: "12px",
-                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                            padding: "12px",
-                          }}
+                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                         <XAxis dataKey="time" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickLine={false} />
+                         <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+                         <Tooltip
+                            contentStyle={{
+                              backgroundColor: "hsl(var(--popover))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                              padding: "12px",
+                              color: "hsl(var(--popover-foreground))",
+                            }}
                           labelStyle={{ fontWeight: 600, marginBottom: 8 }}
                         />
                         <Legend
@@ -547,16 +548,16 @@ const Optilungs = () => {
                 {/* Gradient Bar */}
                 <div className="mb-6">
                   <div className="relative h-8 rounded-full overflow-hidden flex">
-                    <div className="w-[10%] bg-red-500"></div>
-                    <div className="w-[10%] bg-red-400"></div>
-                    <div className="w-[10%] bg-orange-400"></div>
-                    <div className="w-[10%] bg-orange-300"></div>
-                    <div className="w-[10%] bg-yellow-300"></div>
-                    <div className="w-[10%] bg-yellow-200"></div>
-                    <div className="w-[10%] bg-lime-300"></div>
-                    <div className="w-[10%] bg-lime-400"></div>
-                    <div className="w-[10%] bg-green-400"></div>
-                    <div className="w-[10%] bg-green-500"></div>
+                     <div className="w-[10%] bg-destructive"></div>
+                     <div className="w-[10%] bg-destructive/80"></div>
+                     <div className="w-[10%] bg-status-warning"></div>
+                     <div className="w-[10%] bg-status-warning/80"></div>
+                     <div className="w-[10%] bg-status-warning/60"></div>
+                     <div className="w-[10%] bg-status-warning/40"></div>
+                     <div className="w-[10%] bg-success/40"></div>
+                     <div className="w-[10%] bg-success/60"></div>
+                     <div className="w-[10%] bg-success/80"></div>
+                     <div className="w-[10%] bg-success"></div>
                   </div>
                   
                   {/* Scale markers */}
@@ -578,7 +579,7 @@ const Optilungs = () => {
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>FiO2 : <span className="font-semibold">N/A</span></span>
                     <span>PEEP : <span className="font-semibold">N/A</span></span>
-                    <span>Fiabilité : <span className="font-semibold text-orange-500 dark:text-orange-400">77.9%</span></span>
+                    <span>Fiabilité : <span className="font-semibold text-status-warning">77.9%</span></span>
                   </div>
                 </div>
               </div>
@@ -766,17 +767,18 @@ const Optilungs = () => {
                               />
                             );
                           })}
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                          <XAxis dataKey="time" tick={{ fontSize: 11 }} stroke="#9ca3af" tickLine={false} />
-                          <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" tickLine={false} axisLine={false} />
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                          <XAxis dataKey="time" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickLine={false} />
+                          <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
                           <Tooltip
                             contentStyle={{
-                              backgroundColor: "rgba(255, 255, 255, 0.98)",
-                              border: "1px solid #e5e7eb",
+                              backgroundColor: "hsl(var(--popover))",
+                              border: "1px solid hsl(var(--border))",
                               borderRadius: "8px",
                               fontSize: "12px",
                               boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                               padding: "12px",
+                              color: "hsl(var(--popover-foreground))",
                             }}
                             labelStyle={{ fontWeight: 600, marginBottom: 8 }}
                             formatter={(value: number, name: string) => {
@@ -889,10 +891,10 @@ const Optilungs = () => {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted-foreground">Gradient Alvéolo-artériel</span>
-                    <Badge className="bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400">35 mmHg</Badge>
+                    <Badge className="bg-status-warning/10 text-status-warning">35 mmHg</Badge>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-orange-500 dark:bg-orange-400" style={{ width: '45%' }}></div>
+                    <div className="h-full bg-status-warning" style={{ width: '45%' }}></div>
                   </div>
                 </div>
               </div>

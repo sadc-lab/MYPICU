@@ -72,7 +72,7 @@ export const PatientCard = ({ patient }: PatientCardProps) => {
           {visitStatus ? (
             <Badge
               variant="secondary"
-              className={`text-xs ${visitStatus === 'Priority' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-muted-foreground hover:bg-muted-foreground/90 text-white'}`}
+              className={`text-xs ${visitStatus === 'Priority' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-muted-foreground hover:bg-muted-foreground/90 text-status-normal-fg'}`}
             >
               {getStatusDisplay(visitStatus)}
             </Badge>
@@ -81,7 +81,7 @@ export const PatientCard = ({ patient }: PatientCardProps) => {
           ) : patient.tour ? (
             <Badge
               variant="secondary"
-              className={`text-xs ${patient.tour === 'Priority' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-muted-foreground hover:bg-muted-foreground/90 text-white'}`}
+              className={`text-xs ${patient.tour === 'Priority' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-muted-foreground hover:bg-muted-foreground/90 text-status-normal-fg'}`}
             >
               {patient.tour}
             </Badge>
