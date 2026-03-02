@@ -36,6 +36,7 @@ const Optilungs = () => {
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
+  const [showTargetZones, setShowTargetZones] = useState(true);
   const chartRef = useRef<HTMLDivElement>(null);
 
   // Patient file data state
@@ -567,9 +568,22 @@ const Optilungs = () => {
             {/* Monitoring Chart */}
             <Card ref={chartRef} className="border-2 border-border">
               <CardHeader className="px-3 sm:px-6">
-                <CardTitle className="text-sm sm:text-lg">
-                  {timeRange === "stay" ? "Monitorage (Séjour)" : `Monitorage (${timeRange.toUpperCase()})`}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm sm:text-lg">
+                    {timeRange === "stay" ? "Monitorage (Séjour)" : `Monitorage (${timeRange.toUpperCase()})`}
+                  </CardTitle>
+                  {selectedIndicators.length > 0 && (
+                    <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={showTargetZones}
+                        onChange={(e) => setShowTargetZones(e.target.checked)}
+                        className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-border text-primary focus:ring-primary"
+                      />
+                      Zones cibles
+                    </label>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="px-3 sm:px-6">
                 <div
@@ -587,7 +601,7 @@ const Optilungs = () => {
                     <div className="h-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={lungChartData}>
-                          {selectedIndicators.map((label) => {
+                          {showTargetZones && selectedIndicators.map((label) => {
                             const indicator = clinicalIndicators.find((i) => i.label === label);
                             if (!indicator) return null;
                             const target = parseTargetRange(indicator.target);
