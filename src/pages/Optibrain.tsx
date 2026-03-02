@@ -277,16 +277,10 @@ const Optibrain = () => {
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRangeForAdherence = (range: string): number => {
     switch (range) {
-      case "3h":
-        return 3;
-      case "6h":
-        return 6;
-      case "12h":
-        return 12;
       case "24h":
         return 24;
       case "stay":
-        return 96; // ~4 days, or use undefined for all data
+        return 96;
       default:
         return 24;
     }
@@ -730,12 +724,6 @@ const Optibrain = () => {
     // Map picDialogTimeRange to hours
     const getHoursForPicDialog = (range: string): number => {
       switch (range) {
-        case "3h":
-          return 3;
-        case "6h":
-          return 6;
-        case "12h":
-          return 12;
         case "24h":
           return 24;
         case "stay":
@@ -838,16 +826,10 @@ const Optibrain = () => {
   // Map time range to hours
   const getHoursFromTimeRange = (range: string): number => {
     switch (range) {
-      case "3h":
-        return 3;
-      case "6h":
-        return 6;
-      case "12h":
-        return 12;
       case "24h":
         return 24;
       case "stay":
-        return 96; // ~4 days
+        return 96;
       default:
         return 24;
     }
@@ -1541,7 +1523,7 @@ const Optibrain = () => {
                           {selectedIndicators.map((label, idx) => {
                             const isSparse = sparseIndicators.has(label);
                             const color = getIndicatorColor(label);
-                            const showDots = timeRange === "3h";
+                            const showDots = false;
                             return (
                               <Line
                                 key={label}

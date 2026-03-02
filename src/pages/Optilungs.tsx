@@ -62,9 +62,6 @@ const Optilungs = () => {
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRange = (range: string): number => {
     switch (range) {
-      case '3h': return 3;
-      case '6h': return 6;
-      case '12h': return 12;
       case '24h': return 24;
       case 'stay': return 96;
       default: return 24;
@@ -214,7 +211,7 @@ const Optilungs = () => {
   // Generate demo chart data for lung optimisation indicators
   const lungOptChartData = useMemo(() => {
     if (selectedLungOptIndicators.length === 0) return [];
-    const hoursMap: Record<string, number> = { '3h': 3, '6h': 6, '12h': 12, '24h': 24, 'stay': 96 };
+    const hoursMap: Record<string, number> = { '24h': 24, 'stay': 96 };
     const hours = hoursMap[optChartTimeRange] || 24;
     const points = Math.min(hours * 4, 200);
     const now = Date.now();
@@ -272,7 +269,7 @@ const Optilungs = () => {
 
   // Generate demo chart data for lung indicators
   const lungChartData = useMemo(() => {
-    const hoursMap: Record<string, number> = { '3h': 3, '6h': 6, '12h': 12, '24h': 24, 'stay': 96 };
+    const hoursMap: Record<string, number> = { '24h': 24, 'stay': 96 };
     const hours = hoursMap[timeRange] || 24;
     const points = Math.min(hours * 4, 200);
     const now = Date.now();

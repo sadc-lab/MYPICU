@@ -5,7 +5,7 @@ import { brainMetrics, heartMetrics, lungMetrics, brainMonitoringTargets, heartM
 interface MiniMetricChartProps {
   metricLabel: string;
   organ: string;
-  timeRange?: 'now' | '3h' | '6h' | '12h' | '24h' | 'stay';
+  timeRange?: '24h' | 'stay';
 }
 
 // Parse target string to get min/max values
@@ -82,22 +82,6 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
     let intervalMinutes: number;
     
     switch (timeRange) {
-      case 'now':
-        dataPoints = 1;
-        intervalMinutes = 0;
-        break;
-      case '3h':
-        dataPoints = 18;
-        intervalMinutes = 10;
-        break;
-      case '6h':
-        dataPoints = 24;
-        intervalMinutes = 15;
-        break;
-      case '12h':
-        dataPoints = 24;
-        intervalMinutes = 30;
-        break;
       case '24h':
         dataPoints = 24;
         intervalMinutes = 60;
@@ -114,9 +98,7 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
     
     for (let i = dataPoints - 1; i >= 0; i--) {
       const time = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
-      const timeStr = timeRange === 'now' 
-        ? 'Now'
-        : `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+      const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
       
       const baseValue = metricData.value;
       let variation = (Math.random() - 0.5) * (baseValue * 0.15);
