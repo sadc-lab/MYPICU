@@ -62,6 +62,7 @@ import { AutoregulationChart } from "@/components/AutoregulationChart";
 import { UnifiedBrainChart } from "@/components/UnifiedBrainChart";
 import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
+import { MetricRangeBar } from "@/components/MetricRangeBar";
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -1028,28 +1029,13 @@ const Optibrain = () => {
                       <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
                     </div>
 
-                    <div className="w-full max-w-[180px]">
-                        <div className="relative h-3 bg-muted rounded-full overflow-visible">
-                          <div
-                            className="absolute top-0 bottom-0 bg-muted-foreground/30 rounded-full"
-                            style={{
-                              left: `${((metric.targetMin - metric.min) / (metric.max - metric.min)) * 100}%`,
-                              width: `${((metric.targetMax - metric.targetMin) / (metric.max - metric.min)) * 100}%`,
-                            }}
-                          ></div>
-                          <div
-                            className={`absolute w-3 h-3 rounded-full border-2 ${inRange ? "bg-muted-foreground border-muted-foreground" : "bg-status-critical border-status-critical"} z-10 top-0`}
-                          style={{
-                            left: `${Math.max(0, Math.min(100, ((metric.value - metric.min) / (metric.max - metric.min)) * 100))}%`,
-                            transform: "translateX(-50%)",
-                          }}
-                        ></div>
-                      </div>
-                      <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
-                        <span>{metric.targetMin}</span>
-                        <span>{metric.targetMax}</span>
-                      </div>
-                    </div>
+                    <MetricRangeBar
+                      value={metric.value}
+                      min={metric.min}
+                      max={metric.max}
+                      targetMin={metric.targetMin}
+                      targetMax={metric.targetMax}
+                    />
                   </div>
                 );
               })}

@@ -8,6 +8,7 @@ import { ChevronRight } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { getProblematicIndicators } from '@/utils/organMetrics';
 import { MiniMetricChart } from '@/components/MiniMetricChart';
+import { MetricRangeBar } from '@/components/MetricRangeBar';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { useTimeRange } from '@/hooks/useTimeRange';
@@ -172,7 +173,7 @@ const Optistate = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
               {vitalSigns.map((vital, index) => {
                 const inRange = isInRange(vital.value, vital.targetMin, vital.targetMax);
-                const valueColor = inRange ? 'text-muted-foreground' : 'text-destructive';
+                const valueColor = inRange ? 'text-muted-foreground' : 'text-status-critical';
                 
                 return (
                   <div key={index} className="flex flex-col items-center">
@@ -183,36 +184,13 @@ const Optistate = () => {
                       {vital.value}
                     </div>
                     
-                    <div className="w-full max-w-[180px]">
-                      {/* Range bar */}
-                      <div className="relative h-3 bg-muted rounded-full overflow-visible">
-                        {/* Target range (light grey zone) */}
-                        <div 
-                          className="absolute top-0 bottom-0 bg-muted/70 rounded-full"
-                          style={{
-                            left: `${((vital.targetMin - vital.min) / (vital.max - vital.min)) * 100}%`,
-                            width: `${((vital.targetMax - vital.targetMin) / (vital.max - vital.min)) * 100}%`
-                          }}>
-                        </div>
-                        
-                        {/* Current value position on bar */}
-                        <div 
-                          className={`absolute w-3 h-3 rounded-full border-2 ${
-                            inRange ? 'bg-muted-foreground border-foreground' : 'bg-destructive border-destructive'
-                          } z-10 top-0`}
-                          style={{
-                            left: `${Math.max(0, Math.min(100, ((vital.value - vital.min) / (vital.max - vital.min)) * 100))}%`,
-                            transform: 'translateX(-50%)'
-                          }}>
-                        </div>
-                      </div>
-                      
-                      {/* Target range labels */}
-                      <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
-                        <span>{vital.targetMin}</span>
-                        <span>{vital.targetMax}</span>
-                      </div>
-                    </div>
+                    <MetricRangeBar
+                      value={vital.value}
+                      min={vital.min}
+                      max={vital.max}
+                      targetMin={vital.targetMin}
+                      targetMax={vital.targetMax}
+                    />
                   </div>
                 );
               })}
