@@ -185,6 +185,21 @@ const Optilungs = () => {
       <PatientHeader currentPage="optilungs" />
 
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
+        {/* État Pulmonaire */}
+        <Card className="shadow-sm mb-6 border-l-4 border-l-destructive">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-destructive flex items-center justify-center shrink-0">
+                <Wind className="h-6 w-6 text-destructive-foreground" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">État pulmonaire</p>
+                <p className="text-lg font-bold text-destructive">Hypoxémie sévère</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="text-base font-semibold">Métriques Pulmonaires</CardTitle>
