@@ -288,7 +288,7 @@ const Optiheart = () => {
           <CardContent>
             <div className="grid grid-cols-1 gap-8">
               {heartOptimisationMetrics.map((metric, index) => {
-                const statusColor = metric.status === 'critical' ? 'text-destructive' : metric.status === 'warning' ? 'text-orange-500 dark:text-orange-400' : 'text-muted-foreground';
+                const statusColor = metric.status === 'critical' ? 'text-destructive' : metric.status === 'warning' ? 'text-status-warning' : 'text-muted-foreground';
                 return (
                   <div 
                     key={index} 
@@ -338,7 +338,7 @@ const Optiheart = () => {
                       <span className="text-foreground">{state.label}</span>
                       <span className={
                         state.status === 'critical' ? 'text-destructive font-semibold' :
-                        state.status === 'warning' ? 'text-orange-500 dark:text-orange-400 font-semibold' :
+                        state.status === 'warning' ? 'text-status-warning font-semibold' :
                         'text-muted-foreground font-semibold'
                       }>
                         {state.percent}%
@@ -348,7 +348,7 @@ const Optiheart = () => {
                       <div 
                         className={`h-2 rounded-full transition-all ${
                           state.status === 'critical' ? 'bg-destructive' :
-                          state.status === 'warning' ? 'bg-orange-400 dark:bg-orange-500' :
+                          state.status === 'warning' ? 'bg-status-warning' :
                           'bg-muted-foreground'
                         }`}
                         style={{ width: `${state.percent}%` }}
@@ -387,8 +387,8 @@ const Optiheart = () => {
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
                       outOfRangeCount === 0 ? 'border-muted-foreground text-muted-foreground bg-muted/50' : 
-                      outOfRangeCount <= 2 ? 'border-orange-400 dark:border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950' : 
-                      'border-destructive text-destructive bg-red-50 dark:bg-red-950'
+                       outOfRangeCount <= 2 ? 'border-status-warning text-status-warning bg-status-warning/10' : 
+                       'border-destructive text-destructive bg-destructive/10'
                     }`}>
                       {outOfRangeCount}
                     </div>
@@ -409,7 +409,7 @@ const Optiheart = () => {
                   <div className="grid grid-cols-3 gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
-                      const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-orange-400 dark:bg-orange-500' : 'bg-muted-foreground';
+                       const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-status-warning' : 'bg-muted-foreground';
                       return (
                         <div 
                           key={index}
@@ -451,8 +451,8 @@ const Optiheart = () => {
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
                       monitoringAdherence >= 90 ? 'border-muted-foreground text-muted-foreground bg-muted/50' : 
-                      monitoringAdherence >= 80 ? 'border-orange-400 dark:border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950' : 
-                      'border-destructive text-destructive bg-red-50 dark:bg-red-950'
+                       monitoringAdherence >= 80 ? 'border-status-warning text-status-warning bg-status-warning/10' : 
+                       'border-destructive text-destructive bg-destructive/10'
                     }`}>
                       {monitoringAdherence}%
                     </div>
@@ -472,7 +472,7 @@ const Optiheart = () => {
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
-                      const statusColor = target.status === 'critical' ? 'bg-destructive' : target.status === 'warning' ? 'bg-orange-400 dark:bg-orange-500' : 'bg-muted-foreground';
+                      const statusColor = target.status === 'critical' ? 'bg-destructive' : target.status === 'warning' ? 'bg-status-warning' : 'bg-muted-foreground';
                       return (
                         <div 
                           key={index}
@@ -486,7 +486,7 @@ const Optiheart = () => {
                               </p>
                               <span className={`text-xs font-medium ${
                                 target.status === 'critical' ? 'text-destructive' : 
-                                target.status === 'warning' ? 'text-orange-500 dark:text-orange-400' : 'text-muted-foreground'
+                                target.status === 'warning' ? 'text-status-warning' : 'text-muted-foreground'
                               }`}>
                                 {target.adherencePercentage}%
                               </span>
@@ -518,9 +518,9 @@ const Optiheart = () => {
                         {selectedIndicators.map(label => {
                           const indicator = clinicalIndicators.find(i => i.label === label);
                           if (!indicator) return null;
-                          const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-orange-400 dark:bg-orange-500' : 'bg-muted-foreground';
-                          return (
-                            <Badge key={label} className={`${statusColor} text-white dark:text-white`}>
+                           const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-status-warning' : 'bg-muted-foreground';
+                           return (
+                             <Badge key={label} className={`${statusColor} text-status-critical-fg`}>
                               {label}: {indicator.value}{indicator.unit}
                             </Badge>
                           );

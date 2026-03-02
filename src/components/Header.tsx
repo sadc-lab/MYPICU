@@ -188,7 +188,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
                   {/* Mobile Search */}
                   <div className="p-4 border-b">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
                         type="text"
                         value={mobileSearchQuery}
@@ -267,7 +267,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
             </Link>
             
             <div ref={searchRef} className="relative hidden sm:block" data-guide="search">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
               <Input 
                 type="text"
                 value={searchQuery}
@@ -330,7 +330,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
           <nav className="hidden md:flex gap-2 items-center" data-guide="patient-nav">
             {hasPatients && (
               <>
-                <Badge variant="default" className="bg-primary text-white text-xs" data-guide="tour-info">
+                <Badge variant="default" className="bg-primary text-primary-foreground text-xs" data-guide="tour-info">
                   {isOnDisplayedPatient ? `${currentIndex + 1}/${displayedPatients.length}` : `${displayedPatients.length} patients`}
                 </Badge>
                 

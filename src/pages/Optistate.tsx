@@ -121,9 +121,9 @@ const Optistate = () => {
 
     const getHeartColor = (status: string) => {
       if (status === 'critical') {
-        return 'text-red-600 dark:text-red-400';
-      }
-      return 'text-orange-600 dark:text-orange-400';
+         return 'text-status-critical';
+       }
+       return 'text-status-warning';
     };
 
     return {
@@ -136,9 +136,9 @@ const Optistate = () => {
         target: ind.target,
         trend: ind.trend,
         trendIcon: ind.trend,
-        trendColor: ind.status === 'critical' 
-          ? 'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400' 
-          : 'bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400',
+         trendColor: ind.status === 'critical' 
+          ? 'bg-status-critical/10 text-status-critical' 
+          : 'bg-status-warning/10 text-status-warning',
         status: ind.status === 'critical' ? 'red' : 'orange'
       }))
     };
@@ -238,7 +238,7 @@ const Optistate = () => {
                           {/* Module icon - always show */}
                           <div>
                             <div className={`w-10 h-10 rounded-lg ${
-                              indicator.status === 'red' ? 'bg-red-100 dark:bg-red-950' : 'bg-orange-100 dark:bg-orange-950'
+                              indicator.status === 'red' ? 'bg-status-critical/10' : 'bg-status-warning/10'
                             } flex items-center justify-center`}>
                               {item.module === 'heart' ? (
                                 <HeartIcon className={`h-6 w-6 ${item.heartColor(indicator.status)}`} />
@@ -256,7 +256,7 @@ const Optistate = () => {
                           {/* Problematic indicator */}
                           <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${
-                              indicator.status === 'red' ? 'bg-red-500 dark:bg-red-400' : 'bg-orange-500 dark:bg-orange-400'
+                              indicator.status === 'red' ? 'bg-status-critical' : 'bg-status-warning'
                             }`}></div>
                             <span className="text-sm font-medium text-foreground">{indicator.label}</span>
                           </div>

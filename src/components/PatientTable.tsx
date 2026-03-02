@@ -23,7 +23,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
 
   const getAdherenceColor = (adherence: number) => {
     if (adherence >= 85) return 'text-muted-foreground';
-    if (adherence >= 70) return 'text-orange-500';
+    if (adherence >= 70) return 'text-status-warning';
     return 'text-destructive';
   };
 
@@ -193,7 +193,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                           className={`text-xs ${
                             visitStatus === 'Priority' 
                               ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
-                              : 'bg-muted-foreground hover:bg-muted-foreground/90 text-white dark:text-white'
+                              : 'bg-muted-foreground hover:bg-muted-foreground/90 text-status-normal-fg'
                           }`}
                         >
                           {getStatusDisplay(visitStatus)}
@@ -216,7 +216,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
                           className={`text-xs ${
                             patient.tour === 'Priority' 
                               ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
-                              : 'bg-muted-foreground hover:bg-muted-foreground/90 text-white dark:text-white'
+                              : 'bg-muted-foreground hover:bg-muted-foreground/90 text-status-normal-fg'
                           }`}
                         >
                           {patient.tour}

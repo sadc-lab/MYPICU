@@ -22,12 +22,12 @@ export const PelodBadges = ({
           <div className="border-2 border-primary text-foreground bg-background rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 min-w-[40px] sm:min-w-[50px] font-bold text-base sm:text-lg text-center">
             {unitAverage}
           </div>
-          <div className="text-xs text-gray-500">/70</div>
+          <div className="text-xs text-muted-foreground">/70</div>
         </div>
       </div>
 
       <div className="text-center w-full sm:w-auto">
-        <div className="text-xs text-gray-600 mb-2">Score des Patients</div>
+        <div className="text-xs text-muted-foreground mb-2">Score des Patients</div>
         <div className="flex flex-wrap gap-2 justify-center">
           {topPatients.map(patient => (
             <div key={patient.id} className="flex flex-col items-center gap-1">

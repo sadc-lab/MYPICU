@@ -648,7 +648,7 @@ const Optibrain = () => {
         : neurologicalStateConfig.history.htic > 0 
           ? `${neurologicalStateConfig.history.htic}% HTIC`
           : null,
-      criticalColor: neurologicalStateConfig.history.hticWithIschemia > 0 ? "text-red-500" : "text-orange-500",
+      criticalColor: neurologicalStateConfig.history.hticWithIschemia > 0 ? "text-status-critical" : "text-status-warning",
     },
     {
       label: "PIC",
@@ -664,7 +664,7 @@ const Optibrain = () => {
       criticalLabel: realBrainValues.picMax !== null && realBrainValues.picMax >= 20 
         ? `Max 24h: ${Math.round(realBrainValues.picMax)} mmHg` 
         : null,
-      criticalColor: realBrainValues.picMax !== null && realBrainValues.picMax >= 25 ? "text-red-500" : "text-orange-500",
+      criticalColor: realBrainValues.picMax !== null && realBrainValues.picMax >= 25 ? "text-status-critical" : "text-status-warning",
     },
     {
       label: "Autorégulation",
@@ -1059,9 +1059,9 @@ const Optibrain = () => {
                 </div>
               </div>
               {optimisationExpanded ? (
-                <ChevronUp className="h-5 w-5 text-gray-400 shrink-0" />
+              <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
               ) : (
-                <ChevronDown className="h-5 w-5 text-gray-400 shrink-0" />
+                <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
               )}
             </div>
           </CardHeader>
@@ -1266,7 +1266,7 @@ const Optibrain = () => {
                       return (
                         <div
                           key={index}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-all"
+                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-all"
                         >
                           <TooltipProvider delayDuration={200}>
                             <UITooltip>
@@ -1278,13 +1278,13 @@ const Optibrain = () => {
                                   <div>
                                     <div className="font-semibold">{target.contextInfo}</div>
                                     {target.adherencePercentage !== null && (
-                                      <div className="text-gray-400 mt-1">{target.adherencePercentage}% adhérence aux cibles</div>
+                                      <div className="text-muted-foreground mt-1">{target.adherencePercentage}% adhérence aux cibles</div>
                                     )}
                                   </div>
                                 ) : target.adherencePercentage !== null ? (
                                   <div>
                                     <div className="font-semibold">{target.adherencePercentage}% adhérence</div>
-                                    <div className="text-gray-400 mt-1">% du temps passé dans la cible recommandée</div>
+                                    <div className="text-muted-foreground mt-1">% du temps passé dans la cible recommandée</div>
                                   </div>
                                 ) : (
                                   "Pas de données"
@@ -1293,8 +1293,8 @@ const Optibrain = () => {
                             </UITooltip>
                           </TooltipProvider>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-700">{target.label}</p>
-                            <p className="text-xs text-gray-500">{target.description}</p>
+                            <p className="text-sm font-medium text-foreground">{target.label}</p>
+                            <p className="text-xs text-muted-foreground">{target.description}</p>
                           </div>
                         </div>
                       );
@@ -1314,27 +1314,27 @@ const Optibrain = () => {
                     <div
                       className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold border-4 shrink-0 ${
                         clinicalAdherence === null
-                          ? "border-gray-300 text-gray-400 bg-gray-50"
+                          ? "border-muted-foreground/30 text-muted-foreground bg-muted"
                           : clinicalAdherence >= 90
-                            ? "border-gray-400 text-gray-600 bg-gray-50"
+                            ? "border-muted-foreground text-muted-foreground bg-muted"
                             : clinicalAdherence >= 80
-                              ? "border-orange-400 text-orange-600 bg-orange-50"
-                              : "border-red-400 text-red-600 bg-red-50"
+                              ? "border-status-warning text-status-warning bg-status-warning/10"
+                              : "border-status-critical text-status-critical bg-status-critical/10"
                       }`}
                     >
                       {clinicalAdherence !== null ? `${clinicalAdherence}%` : "--"}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm font-semibold text-gray-700">Adhérence aux cibles recommandées</h3>
-                      <p className="text-xs text-gray-500 mt-1">
+                       <h3 className="text-xs sm:text-sm font-semibold text-foreground">Adhérence aux cibles recommandées</h3>
+                       <p className="text-xs text-muted-foreground mt-1">
                         {patientFileData ? `${outOfRangeCount} Indicateurs à surveiller` : "Pas de données disponibles"}
                       </p>
                     </div>
                   </div>
                   {clinicalExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-gray-400 shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-400 shrink-0" />
+                     <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
+                   ) : (
+                     <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
                   )}
                 </div>
               </CardHeader>
@@ -1426,7 +1426,7 @@ const Optibrain = () => {
                       <span className="sm:hidden">Cibles</span>
                     </label>
                   </div>
-                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 self-start sm:self-auto">
+                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 self-start sm:self-auto">
                     {fileDataLoading ? (
                       <span className="flex items-center gap-1">
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -1476,27 +1476,30 @@ const Optibrain = () => {
                               />
                             );
                           })}
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                           <XAxis
                             dataKey="time"
                             tick={{ fontSize: 11 }}
-                            stroke="#9ca3af"
+                            className="text-muted-foreground"
+                            stroke="hsl(var(--muted-foreground))"
                             tickLine={false}
                           />
                           <YAxis
                             tick={{ fontSize: 11 }}
-                            stroke="#9ca3af"
+                            className="text-muted-foreground"
+                            stroke="hsl(var(--muted-foreground))"
                             tickLine={false}
                             axisLine={false}
                           />
                           <Tooltip
                             contentStyle={{
-                              backgroundColor: "rgba(255, 255, 255, 0.98)",
-                              border: "1px solid #e5e7eb",
+                              backgroundColor: "hsl(var(--popover))",
+                              border: "1px solid hsl(var(--border))",
                               borderRadius: "8px",
                               fontSize: "12px",
                               boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                               padding: "12px",
+                              color: "hsl(var(--popover-foreground))",
                             }}
                             labelStyle={{ fontWeight: 600, marginBottom: 8 }}
                             formatter={(value: number, name: string) => {
