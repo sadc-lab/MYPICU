@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronU
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 import lungsIcon from '@/assets/lungs-icon.svg';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
@@ -35,7 +36,7 @@ const Optilungs = () => {
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
-  // File data and editing states remain for other functionality
+  const chartRef = useRef<HTMLDivElement>(null);
 
   // Patient file data state
   const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
@@ -155,6 +156,62 @@ const Optilungs = () => {
     { label: 'Pression crête', value: '22 cmH2O' },
     { label: 'Compliance', value: '45 mL/cmH2O' },
   ];
+
+  // Chart colors for indicators
+  const CHART_COLORS = [
+    "#3b82f6", "#ef4444", "#10b981", "#f59e0b",
+    "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16",
+  ];
+
+  const getIndicatorColor = (label: string) => {
+    const index = selectedIndicators.indexOf(label);
+    if (index === -1) return "#9ca3af";
+    return CHART_COLORS[index % CHART_COLORS.length];
+  };
+
+  const parseTargetRange = (target: string): { min: number; max: number } => {
+    const cleanTarget = target.toLowerCase().replace(/°/g, "").trim();
+    const rangeMatch = cleanTarget.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
+    if (rangeMatch) return { min: parseFloat(rangeMatch[1]), max: parseFloat(rangeMatch[2]) };
+    const lessThanMatch = cleanTarget.match(/<\s*(\d+(?:\.\d+)?)/);
+    if (lessThanMatch) return { min: -Infinity, max: parseFloat(lessThanMatch[1]) };
+    const greaterThanMatch = cleanTarget.match(/>\s*(\d+(?:\.\d+)?)/);
+    if (greaterThanMatch) return { min: parseFloat(greaterThanMatch[1]), max: Infinity };
+    return { min: -Infinity, max: Infinity };
+  };
+
+  // Generate demo chart data for lung indicators
+  const lungChartData = useMemo(() => {
+    const hoursMap: Record<string, number> = { '3h': 3, '6h': 6, '12h': 12, '24h': 24, 'stay': 96 };
+    const hours = hoursMap[timeRange] || 24;
+    const points = Math.min(hours * 4, 200);
+    const now = Date.now();
+    
+    const generators: Record<string, (t: number) => number> = {
+      'eOI & OI': (t) => 4 + Math.sin(t * 3) * 3 + Math.random() * 4 + (Math.random() > 0.95 ? 6 : 0),
+      'PaO2/FiO2': (t) => 140 + Math.sin(t * 2) * 40 + Math.random() * 30,
+      'SpO2': (t) => 92 + Math.sin(t) * 3 + Math.random() * 2,
+      'Pressions ventilation': (t) => 18 + Math.sin(t * 2) * 5 + Math.random() * 4,
+      'FiO2': (t) => 35 + Math.sin(t * 1.5) * 10 + Math.random() * 5,
+      'Volume courant expiré': (t) => 280 + Math.sin(t * 2) * 50 + Math.random() * 30,
+      'pH': (t) => 7.35 + Math.sin(t) * 0.05 + Math.random() * 0.03,
+      'Balance ingesta-excreta': (t) => 80 + Math.sin(t * 0.5) * 60 + Math.random() * 40,
+    };
+
+    return Array.from({ length: points }, (_, i) => {
+      const timestamp = now - (points - i) * (hours * 3600000 / points);
+      const time = new Date(timestamp);
+      const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+      const t = i / points * Math.PI * 4;
+
+      const dataPoint: any = { time: timeStr, timestamp };
+      selectedIndicators.forEach(label => {
+        const gen = generators[label];
+        if (gen) dataPoint[label] = Math.round(gen(t) * 100) / 100;
+      });
+      return dataPoint;
+    });
+  }, [timeRange, selectedIndicators]);
 
 
   if (isLoading) {
@@ -470,6 +527,9 @@ const Optilungs = () => {
                                 ? prev.filter(label => label !== indicator.label)
                                 : [...prev, indicator.label]
                             );
+                            setTimeout(() => {
+                              chartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }, 100);
                           }}
                         >
                           <TooltipProvider delayDuration={200}>
@@ -503,6 +563,105 @@ const Optilungs = () => {
                   </p>
                 </CardContent>
               )}
+            </Card>
+            {/* Monitoring Chart */}
+            <Card ref={chartRef} className="border-2 border-border">
+              <CardHeader className="px-3 sm:px-6">
+                <CardTitle className="text-sm sm:text-lg">
+                  {timeRange === "stay" ? "Monitorage (Séjour)" : `Monitorage (${timeRange.toUpperCase()})`}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 sm:px-6">
+                <div
+                  className={`border-2 border-border rounded-lg p-2 sm:p-4 ${
+                    selectedIndicators.length === 0 ? "h-24 sm:h-32" : "h-[250px] sm:h-[300px]"
+                  }`}
+                >
+                  {selectedIndicators.length === 0 ? (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-muted-foreground text-xs sm:text-base text-center px-2">
+                        Sélectionnez des indicateurs ci-dessus pour afficher leurs tendances
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={lungChartData}>
+                          {selectedIndicators.map((label) => {
+                            const indicator = clinicalIndicators.find((i) => i.label === label);
+                            if (!indicator) return null;
+                            const target = parseTargetRange(indicator.target);
+                            if (target.min === -Infinity && target.max === Infinity) return null;
+                            const color = getIndicatorColor(label);
+                            const yMin = target.min === -Infinity ? 0 : target.min;
+                            const yMax = target.max === Infinity ? target.min * 2 : target.max;
+                            return (
+                              <ReferenceArea
+                                key={`zone-${label}`}
+                                y1={yMin}
+                                y2={yMax}
+                                fill={color}
+                                fillOpacity={0.08}
+                                stroke={color}
+                                strokeOpacity={0.3}
+                                strokeDasharray="4 2"
+                              />
+                            );
+                          })}
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis dataKey="time" tick={{ fontSize: 11 }} stroke="#9ca3af" tickLine={false} />
+                          <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" tickLine={false} axisLine={false} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "rgba(255, 255, 255, 0.98)",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                              padding: "12px",
+                            }}
+                            labelStyle={{ fontWeight: 600, marginBottom: 8 }}
+                            formatter={(value: number, name: string) => {
+                              const color = getIndicatorColor(name);
+                              return [
+                                <span key={name} style={{ color, fontWeight: 600 }}>
+                                  {name}: {value.toFixed(1)}
+                                </span>,
+                                null
+                              ];
+                            }}
+                          />
+                          <Legend
+                            wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
+                            iconType="plainline"
+                            formatter={(value: string) => (
+                              <span style={{ color: getIndicatorColor(value), fontWeight: 500 }}>
+                                {value}
+                              </span>
+                            )}
+                          />
+                          {selectedIndicators.map((label, idx) => {
+                            const color = getIndicatorColor(label);
+                            return (
+                              <Line
+                                key={label}
+                                type="monotone"
+                                dataKey={label}
+                                stroke={color}
+                                strokeWidth={2.5}
+                                strokeDasharray={idx > 0 ? (idx % 2 === 1 ? "8 4" : undefined) : undefined}
+                                dot={false}
+                                activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2, fill: color }}
+                                connectNulls={false}
+                              />
+                            );
+                          })}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
             </Card>
           </CardContent>
         </Card>
