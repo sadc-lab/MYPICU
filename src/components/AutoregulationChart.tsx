@@ -78,7 +78,7 @@ export function AutoregulationChart({
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesPoint[]>([]);
   const [optimalValue, setOptimalValue] = useState<number | null>(null);
   const [lowerLimit, setLowerLimit] = useState<number | null>(null);
-  const [internalWindow, setInternalWindow] = useState<TimeWindowValue>("6h");
+  const [internalWindow, setInternalWindow] = useState<TimeWindowValue>("24h");
   const [upperLimit, setUpperLimit] = useState<number | null>(null);
   const [isNirsBased, setIsNirsBased] = useState(false);
   

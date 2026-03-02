@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export type TimeWindowValue = "3h" | "6h" | "12h" | "24h" | "stay";
+export type TimeWindowValue = "24h" | "stay";
 
 interface TimeWindowOption {
   value: TimeWindowValue;
@@ -8,17 +8,11 @@ interface TimeWindowOption {
 }
 
 const DEFAULT_OPTIONS: TimeWindowOption[] = [
-  { value: "3h", label: "3h" },
-  { value: "6h", label: "6h" },
-  { value: "12h", label: "12h" },
   { value: "24h", label: "24h" },
   { value: "stay", label: "Séjour" },
 ];
 
 const WITHOUT_STAY_OPTIONS: TimeWindowOption[] = [
-  { value: "3h", label: "3h" },
-  { value: "6h", label: "6h" },
-  { value: "12h", label: "12h" },
   { value: "24h", label: "24h" },
 ];
 
@@ -126,11 +120,8 @@ export function TimeWindowSelector({
 // Helper to convert numeric hours to TimeWindowValue
 export function hoursToTimeWindow(hours: number): TimeWindowValue {
   switch (hours) {
-    case 3: return "3h";
-    case 6: return "6h";
-    case 12: return "12h";
     case 24: return "24h";
-    default: return "6h";
+    default: return "24h";
   }
 }
 

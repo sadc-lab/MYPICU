@@ -59,9 +59,6 @@ const Optiheart = () => {
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRange = (range: string): number => {
     switch (range) {
-      case '3h': return 3;
-      case '6h': return 6;
-      case '12h': return 12;
       case '24h': return 24;
       case 'stay': return 96;
       default: return 24;
@@ -174,24 +171,12 @@ const Optiheart = () => {
     let intervalMinutes: number;
     
     switch (timeRange) {
-      case '3h':
-        dataPoints = 18;
-        intervalMinutes = 10;
-        break;
-      case '6h':
-        dataPoints = 24;
-        intervalMinutes = 15;
-        break;
-      case '12h':
-        dataPoints = 24;
-        intervalMinutes = 30;
-        break;
       case '24h':
         dataPoints = 24;
         intervalMinutes = 60;
         break;
       case 'stay':
-        dataPoints = 48; // One point every 2 hours for a typical ICU stay
+        dataPoints = 48;
         intervalMinutes = 120;
         break;
       default:
