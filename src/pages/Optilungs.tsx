@@ -32,6 +32,7 @@ const Optilungs = () => {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
+  const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
   // File data and editing states remain for other functionality
 
@@ -185,21 +186,6 @@ const Optilungs = () => {
       <PatientHeader currentPage="optilungs" />
 
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        {/* État Pulmonaire */}
-        <Card className="shadow-sm mb-6 border-l-4 border-l-destructive">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-destructive flex items-center justify-center shrink-0">
-                <Wind className="h-6 w-6 text-destructive-foreground" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">État pulmonaire</p>
-                <p className="text-lg font-bold text-destructive">Hypoxémie sévère</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="text-base font-semibold">Métriques Pulmonaires</CardTitle>
@@ -258,29 +244,60 @@ const Optilungs = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm mb-6">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">Optimisation Pulmonaire</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-8">
-              <div 
-                className="flex flex-col items-center cursor-pointer hover:bg-muted/50 p-4 rounded-lg transition-colors"
-                onClick={() => setOpenDialog('vap1')}
-              >
-                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-                  VAP Prediction 1
+        <Card className="bg-card shadow-sm mb-6">
+          <CardHeader
+            className="cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => setOptimisationExpanded(prev => !prev)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-destructive text-destructive bg-destructive/10 shrink-0">
+                  <Wind className="h-6 w-6 sm:h-8 sm:w-8" />
                 </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="text-4xl font-bold text-orange-500 dark:text-orange-400">75</div>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
-                  <Info className="h-3 w-3" />
-                  <span>Voir détails</span>
+                <div className="min-w-0">
+                  <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation pulmonaire</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <span className="font-semibold text-destructive">Hypoxémie sévère</span> • VAP Prediction : 75%
+                  </p>
                 </div>
               </div>
+              {optimisationExpanded ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
+              )}
             </div>
-          </CardContent>
+          </CardHeader>
+          {optimisationExpanded && (
+            <CardContent className="pt-0 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                {/* État pulmonaire */}
+                <div className="flex flex-col items-center p-4 rounded-lg border border-border">
+                  <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+                    État Pulmonaire
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-destructive mb-2"></div>
+                  <div className="text-sm font-bold text-destructive">Hypoxémie</div>
+                  <div className="text-xs font-semibold text-destructive">Sévère</div>
+                </div>
+
+                {/* VAP Prediction */}
+                <div 
+                  className="flex flex-col items-center p-4 rounded-lg border border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setOpenDialog('vap1'); }}
+                >
+                  <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+                    VAP Prediction 1
+                  </div>
+                  <div className="text-4xl font-bold text-status-warning mb-2">75</div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Info className="h-3 w-3" />
+                    <span>Voir détails</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          )}
         </Card>
 
         {/* VAP Prediction 1 Dialog */}
