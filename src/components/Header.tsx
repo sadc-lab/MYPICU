@@ -417,7 +417,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
                         onClick={() => confirmVisit(currentPatientId, 'Priority')}
                         className="cursor-pointer"
                       >
-                        Prioritaire
+                        Priorité
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => confirmVisit(currentPatientId, 'Leaving')}

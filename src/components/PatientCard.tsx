@@ -47,7 +47,7 @@ export const PatientCard = ({ patient }: PatientCardProps) => {
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
-      case 'Priority': return 'Prioritaire';
+      case 'Priority': return 'Priorité';
       case 'Confirmed': return 'Confirmé';
       case 'Leaving': return 'Sortant';
       case 'To Check': return 'À vérifier';
