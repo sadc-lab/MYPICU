@@ -476,19 +476,17 @@ const Optilungs = () => {
                   <div className="flex items-center gap-2 sm:gap-4">
                     <div
                       className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold border-4 shrink-0 ${
-                        clinicalAdherence === null
-                          ? "border-muted-foreground/30 text-muted-foreground bg-muted"
-                          : clinicalAdherence >= 90
-                            ? "border-muted-foreground text-muted-foreground bg-muted"
-                            : clinicalAdherence >= 80
-                              ? "border-status-warning text-status-warning bg-status-warning/10"
-                              : "border-status-critical text-status-critical bg-status-critical/10"
+                        outOfRangeCount === 0
+                          ? "border-muted-foreground text-muted-foreground bg-muted"
+                          : outOfRangeCount <= 2
+                            ? "border-status-warning text-status-warning bg-status-warning/10"
+                            : "border-status-critical text-status-critical bg-status-critical/10"
                       }`}
                     >
-                      {clinicalAdherence !== null ? `${clinicalAdherence}%` : "--"}
+                      {outOfRangeCount}/{totalIndicators}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">Adhérence aux cibles recommandées</h3>
+                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">Indicateurs à surveiller</h3>
                       <p className="text-xs text-muted-foreground mt-1">
                         {outOfRangeCount > 0 ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? 's' : ''} à surveiller` : "Tous les indicateurs dans la cible"}
                       </p>
