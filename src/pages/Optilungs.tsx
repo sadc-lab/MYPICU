@@ -270,29 +270,46 @@ const Optilungs = () => {
           </CardHeader>
           {optimisationExpanded && (
             <CardContent className="pt-0 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                {/* État pulmonaire */}
-                <div className="flex flex-col items-center p-4 rounded-lg border border-border">
-                  <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+              {/* Selectable Lung Metrics - Optibrain style */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-6 pt-4">
+                {/* État Pulmonaire */}
+                <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg border-2 border-transparent">
+                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
                     État Pulmonaire
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-destructive mb-2"></div>
-                  <div className="text-sm font-bold text-destructive">Hypoxémie</div>
-                  <div className="text-xs font-semibold text-destructive">Sévère</div>
+                  <div className="text-lg sm:text-2xl font-bold text-status-critical">Hypoxémie</div>
+                  <div className="text-[10px] sm:text-xs font-medium text-status-critical text-center leading-tight">
+                    Sévère
+                  </div>
                 </div>
 
                 {/* VAP Prediction */}
                 <div 
-                  className="flex flex-col items-center p-4 rounded-lg border border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                  className="flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 border-transparent hover:bg-muted/50"
                   onClick={(e) => { e.stopPropagation(); setOpenDialog('vap1'); }}
                 >
-                  <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-                    VAP Prediction 1
+                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
+                    VAP Prediction
                   </div>
-                  <div className="text-4xl font-bold text-status-warning mb-2">75</div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Info className="h-3 w-3" />
-                    <span>Voir détails</span>
+                  <div className="flex items-center gap-1 mb-1">
+                    <div className="text-lg sm:text-2xl font-bold text-status-warning">75</div>
+                    <span className="text-xs text-muted-foreground">%</span>
+                  </div>
+                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground text-center leading-tight">
+                    Fiabilité : 77.9%
+                  </div>
+                </div>
+
+                {/* P/F Ratio */}
+                <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg border-2 border-transparent">
+                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
+                    Ratio P/F
+                  </div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <div className="text-lg sm:text-2xl font-bold text-status-critical">167</div>
+                  </div>
+                  <div className="text-[10px] sm:text-xs font-medium text-status-critical text-center leading-tight">
+                    Cible &gt; 300
                   </div>
                 </div>
               </div>
