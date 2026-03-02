@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePatient } from '@/hooks/usePatients';
 import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -80,18 +81,16 @@ const Optilungs = () => {
     { label: 'Température', validityKey: 'TemperatureData_validite' },
   ];
 
-  // Clinical indicators with adherence data
   const clinicalIndicators = useMemo(() => {
     const baseIndicators = [
-      { label: 'SpO2', value: 95, unit: '%', target: '> 92%', trend: 'stable', change: 0 },
-      { label: 'PaO2', value: 75, unit: 'mmHg', target: '80-100 mmHg', trend: 'up', change: 3 },
-      { label: 'PaCO2', value: 42, unit: 'mmHg', target: '35-45 mmHg', trend: 'stable', change: 0 },
-      { label: 'pH', value: 7.38, unit: '', target: '7.35-7.45', trend: 'stable', change: 0 },
-      { label: 'FiO2', value: 45, unit: '%', target: '< 40%', trend: 'down', change: -5 },
-      { label: 'P/F Ratio', value: 167, unit: '', target: '> 300', trend: 'up', change: 12 },
-      { label: 'Pplat', value: 28, unit: 'cmH2O', target: '< 30 cmH2O', trend: 'stable', change: 0 },
-      { label: 'Driving P', value: 14, unit: 'cmH2O', target: '< 15 cmH2O', trend: 'down', change: -1 },
-      { label: 'Compliance', value: 32, unit: 'mL/cmH2O', target: '> 40 mL/cmH2O', trend: 'up', change: 2 },
+      { label: 'eOI & OI', target: '< 8' },
+      { label: 'PaO2/FiO2', target: '> 300' },
+      { label: 'SpO2', target: '92-100%' },
+      { label: 'Pressions ventilation', target: '< 30 cmH2O' },
+      { label: 'FiO2', target: '< 40%' },
+      { label: 'Volume courant expiré', target: '200-400 mL' },
+      { label: 'pH', target: '7.35-7.45' },
+      { label: 'Balance ingesta-excreta', target: '< 200 mL' },
     ];
 
     return baseIndicators.map((indicator) => {
@@ -104,30 +103,39 @@ const Optilungs = () => {
         if (hasData) {
           return {
             ...indicator,
-            adherencePercentage: percentage,
-            status: getAdherenceStatus(percentage),
+            adherencePercentage: percentage as number | null,
+            status: getAdherenceStatus(percentage) as 'normal' | 'warning' | 'critical' | null,
           };
         }
       }
       
-      // Default status based on indicator value ranges
+      // Default status based on indicator
       let defaultStatus: 'normal' | 'warning' | 'critical' = 'normal';
-      if (indicator.label === 'PaO2' || indicator.label === 'FiO2' || indicator.label === 'Compliance') {
+      if (indicator.label === 'FiO2' || indicator.label === 'Volume courant expiré') {
         defaultStatus = 'warning';
-      } else if (indicator.label === 'P/F Ratio') {
+      } else if (indicator.label === 'PaO2/FiO2') {
         defaultStatus = 'critical';
       }
       
+      const defaultAdherence = defaultStatus === 'normal' ? 100 : defaultStatus === 'warning' ? 85 : 70;
+      
       return {
         ...indicator,
-        adherencePercentage: defaultStatus === 'normal' ? 100 : defaultStatus === 'warning' ? 85 : 70,
-        status: defaultStatus,
+        adherencePercentage: defaultAdherence as number | null,
+        status: defaultStatus as 'normal' | 'warning' | 'critical' | null,
       };
     });
   }, [patientFileData, hoursForAdherence]);
 
+  // Clinical adherence (average of indicators with real data)
+  const clinicalAdherence = useMemo(() => {
+    const withData = clinicalIndicators.filter(i => i.adherencePercentage !== null);
+    if (withData.length === 0) return null;
+    return Math.round(withData.reduce((sum, i) => sum + (i.adherencePercentage ?? 0), 0) / withData.length);
+  }, [clinicalIndicators]);
+
   const totalIndicators = clinicalIndicators.length;
-  const outOfRangeCount = clinicalIndicators.filter(i => i.status !== 'normal').length;
+  const outOfRangeCount = clinicalIndicators.filter(i => i.status !== null && i.status !== 'normal').length;
 
   const showPatientNotFound = !patient && !isLoading;
 
@@ -335,53 +343,76 @@ const Optilungs = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Clinical Indicators Section */}
-        <Card className="shadow-sm mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Indicateurs Cliniques</CardTitle>
+        {/* Clinical Indicators Section - Optibrain style */}
+        <Card className="bg-card shadow-sm mb-6">
+          <CardHeader className="px-4 sm:px-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <CardTitle className="text-base sm:text-lg">
+                Adhérence & Monitorage {timeRange === "stay" ? "sur le séjour" : `sur ${timeRange}`}
+              </CardTitle>
               <TimeWindowSelector
                 value={timeRange}
                 onChange={(value) => setTimeRange(value as any)}
                 includeStay={true}
+                size="sm"
               />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Card className="border-2 border-border">
-              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setClinicalExpanded(!clinicalExpanded)}>
+              <CardHeader
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => setClinicalExpanded(!clinicalExpanded)}
+              >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                      outOfRangeCount === 0 ? 'border-muted-foreground text-muted-foreground bg-muted/50' : 
-                      outOfRangeCount <= 2 ? 'border-orange-400 dark:border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950' : 
-                      'border-destructive text-destructive bg-red-50 dark:bg-red-950'
-                    }`}>
-                      {outOfRangeCount}
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <div
+                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold border-4 shrink-0 ${
+                        clinicalAdherence === null
+                          ? "border-muted-foreground/30 text-muted-foreground bg-muted"
+                          : clinicalAdherence >= 90
+                            ? "border-muted-foreground text-muted-foreground bg-muted"
+                            : clinicalAdherence >= 80
+                              ? "border-status-warning text-status-warning bg-status-warning/10"
+                              : "border-status-critical text-status-critical bg-status-critical/10"
+                      }`}
+                    >
+                      {clinicalAdherence !== null ? `${clinicalAdherence}%` : "--"}
                     </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">
-                        Indicateurs respiratoires problématiques : surveiller PaO2, FiO2, P/F Ratio
-                      </h3>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">Adhérence aux cibles recommandées</h3>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {outOfRangeCount} indicateur{outOfRangeCount > 1 ? 's' : ''} hors cible sur {totalIndicators}
+                        {outOfRangeCount > 0 ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? 's' : ''} à surveiller` : "Tous les indicateurs dans la cible"}
                       </p>
                     </div>
                   </div>
-                  {clinicalExpanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
+                  {clinicalExpanded ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
+                  )}
                 </div>
               </CardHeader>
               {clinicalExpanded && (
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-3 gap-4 pt-4">
+                <CardContent className="pt-0 px-3 sm:px-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
-                      const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-orange-400 dark:bg-orange-500' : 'bg-muted-foreground';
+                      const adherenceDotColor =
+                        indicator.adherencePercentage === null
+                          ? "bg-muted-foreground/30"
+                          : (indicator.adherencePercentage ?? 0) >= 90
+                            ? "bg-muted-foreground"
+                            : (indicator.adherencePercentage ?? 0) >= 80
+                              ? "bg-status-warning"
+                              : "bg-status-critical";
                       return (
-                        <div 
+                        <div
                           key={index}
-                          className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${
-                            isSelected ? 'bg-primary/10 border-2 border-primary' : 'hover:bg-muted/50'
+                          className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all border-2 ${
+                            isSelected
+                              ? "bg-card shadow-sm border-primary"
+                              : "border-transparent hover:bg-muted/50"
                           }`}
                           onClick={() => {
                             setSelectedIndicators(prev =>
@@ -391,25 +422,35 @@ const Optilungs = () => {
                             );
                           }}
                         >
-                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}`}></div>
+                          <TooltipProvider delayDuration={200}>
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <div className={`w-3 h-3 rounded-full mt-1 ${adherenceDotColor} cursor-help`}></div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs max-w-48">
+                                {indicator.adherencePercentage !== null
+                                  ? (
+                                    <div>
+                                      <div className="font-semibold">{indicator.adherencePercentage}% adhérence</div>
+                                      <div className="text-muted-foreground mt-1">% du temps passé dans la cible recommandée</div>
+                                    </div>
+                                  )
+                                  : "Pas de données"
+                                }
+                              </TooltipContent>
+                            </UITooltip>
+                          </TooltipProvider>
                           <div className="flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <p className="text-sm font-medium text-foreground">
-                                {indicator.label} : {indicator.value}{indicator.unit}
-                              </p>
-                              <span className={`text-xs font-medium ${
-                                indicator.status === 'critical' ? 'text-destructive' : 
-                                indicator.status === 'warning' ? 'text-orange-500 dark:text-orange-400' : 'text-muted-foreground'
-                              }`}>
-                                {indicator.adherencePercentage}%
-                              </span>
-                            </div>
+                            <p className="text-sm font-medium text-foreground">{indicator.label}</p>
                             <p className="text-xs text-muted-foreground">{indicator.target}</p>
                           </div>
                         </div>
                       );
                     })}
                   </div>
+                  <p className="text-xs text-muted-foreground mt-4 text-center">
+                    Cliquez sur un indicateur pour l'afficher dans le graphique
+                  </p>
                 </CardContent>
               )}
             </Card>
