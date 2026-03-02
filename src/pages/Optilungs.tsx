@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePatient } from '@/hooks/usePatients';
-import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 import lungsIcon from '@/assets/lungs-icon.svg';
@@ -16,7 +16,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
 import { useTimeRange } from '@/hooks/useTimeRange';
-import { TimeWindowSelector } from '@/components/ui/TimeWindowSelector';
+import { TimeWindowSelector, TimeWindowValue } from '@/components/ui/TimeWindowSelector';
 import {
   loadPatientFileData,
   hasPatientFileData,
@@ -37,6 +37,8 @@ const Optilungs = () => {
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
   const [showTargetZones, setShowTargetZones] = useState(true);
+  const [selectedLungOptIndicators, setSelectedLungOptIndicators] = useState<string[]>([]);
+  const [optChartTimeRange, setOptChartTimeRange] = useState<string>("24h");
   const chartRef = useRef<HTMLDivElement>(null);
 
   // Patient file data state
@@ -157,6 +159,92 @@ const Optilungs = () => {
     { label: 'Pression crête', value: '22 cmH2O' },
     { label: 'Compliance', value: '45 mL/cmH2O' },
   ];
+
+  // Lung optimisation metrics (selectable like Optibrain)
+  const lungOptimisationMetrics = [
+    {
+      label: "État Pulmonaire",
+      displayValue: "Hypoxémie",
+      unit: "",
+      status: "critical" as const,
+      selectable: true,
+      criticalLabel: "Sévère",
+      criticalColor: "text-status-critical",
+    },
+    {
+      label: "VAP Prediction",
+      displayValue: "75",
+      unit: "%",
+      status: "warning" as const,
+      selectable: true,
+      criticalLabel: "Fiabilité : 77.9%",
+      criticalColor: "text-muted-foreground",
+    },
+    {
+      label: "Ratio P/F",
+      displayValue: "167",
+      unit: "",
+      status: "critical" as const,
+      selectable: true,
+      criticalLabel: "Cible > 300",
+      criticalColor: "text-status-critical",
+    },
+    {
+      label: "Ventilateur",
+      displayValue: "SIMV",
+      unit: "",
+      status: "normal" as const,
+      selectable: false, // Opens dialog instead
+      criticalLabel: "Voir détails",
+      criticalColor: "text-muted-foreground",
+      icon: true,
+    },
+  ];
+
+  // Optimisation chart colors
+  const OPT_CHART_COLORS = ["#3b82f6", "#f59e0b", "#ef4444"];
+
+  const getOptIndicatorColor = (label: string) => {
+    const index = selectedLungOptIndicators.indexOf(label);
+    if (index === -1) return "#9ca3af";
+    return OPT_CHART_COLORS[index % OPT_CHART_COLORS.length];
+  };
+
+  // Generate demo chart data for lung optimisation indicators
+  const lungOptChartData = useMemo(() => {
+    if (selectedLungOptIndicators.length === 0) return [];
+    const hoursMap: Record<string, number> = { '3h': 3, '6h': 6, '12h': 12, '24h': 24, 'stay': 96 };
+    const hours = hoursMap[optChartTimeRange] || 24;
+    const points = Math.min(hours * 4, 200);
+    const now = Date.now();
+
+    const generators: Record<string, (t: number) => number> = {
+      'État Pulmonaire': (t) => 88 + Math.sin(t) * 4 + Math.random() * 3, // SpO2-like
+      'VAP Prediction': (t) => 60 + Math.sin(t * 0.8) * 15 + Math.random() * 10, // Risk %
+      'Ratio P/F': (t) => 140 + Math.sin(t * 1.2) * 50 + Math.random() * 30, // P/F ratio
+    };
+
+    return Array.from({ length: points }, (_, i) => {
+      const timestamp = now - (points - i) * (hours * 3600000 / points);
+      const time = new Date(timestamp);
+      const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+      const t = i / points * Math.PI * 4;
+
+      const dataPoint: any = { time: timeStr, timestamp };
+      selectedLungOptIndicators.forEach(label => {
+        const gen = generators[label];
+        if (gen) dataPoint[label] = Math.round(gen(t) * 100) / 100;
+      });
+      return dataPoint;
+    });
+  }, [optChartTimeRange, selectedLungOptIndicators]);
+
+  // Target zones for optimisation chart
+  const optTargetZones: Record<string, { min: number; max: number }> = {
+    'État Pulmonaire': { min: 92, max: 100 },
+    'VAP Prediction': { min: 0, max: 30 },
+    'Ratio P/F': { min: 300, max: 500 },
+  };
 
   // Chart colors for indicators
   const CHART_COLORS = [
@@ -331,64 +419,130 @@ const Optilungs = () => {
             <CardContent className="pt-0 space-y-4">
               {/* Selectable Lung Metrics - Optibrain style */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6 pt-4">
-                {/* État Pulmonaire */}
-                <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg border-2 border-transparent">
-                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
-                    État Pulmonaire
-                  </div>
-                  <div className="text-lg sm:text-2xl font-bold text-status-critical">Hypoxémie</div>
-                  <div className="text-[10px] sm:text-xs font-medium text-status-critical text-center leading-tight">
-                    Sévère
-                  </div>
-                </div>
+                {lungOptimisationMetrics.map((metric, index) => {
+                  const isSelected = selectedLungOptIndicators.includes(metric.label);
+                  const statusColor = metric.status === "critical" 
+                    ? "text-status-critical" 
+                    : metric.status === "warning" 
+                      ? "text-status-warning" 
+                      : "text-foreground";
 
-                {/* VAP Prediction */}
-                <div 
-                  className="flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 border-transparent hover:bg-muted/50"
-                  onClick={(e) => { e.stopPropagation(); setOpenDialog('vap1'); }}
-                >
-                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
-                    VAP Prediction
-                  </div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="text-lg sm:text-2xl font-bold text-status-warning">75</div>
-                    <span className="text-xs text-muted-foreground">%</span>
-                  </div>
-                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground text-center leading-tight">
-                    Fiabilité : 77.9%
-                  </div>
-                </div>
-
-                {/* P/F Ratio */}
-                <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg border-2 border-transparent">
-                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
-                    Ratio P/F
-                  </div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="text-lg sm:text-2xl font-bold text-status-critical">167</div>
-                  </div>
-                  <div className="text-[10px] sm:text-xs font-medium text-status-critical text-center leading-tight">
-                    Cible &gt; 300
-                  </div>
-                </div>
-
-                {/* Paramètres Ventilateur */}
-                <div 
-                  className="flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 border-transparent hover:bg-muted/50"
-                  onClick={(e) => { e.stopPropagation(); setOpenDialog('ventilateur'); }}
-                >
-                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
-                    Ventilateur
-                  </div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <Gauge className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                    <div className="text-lg sm:text-2xl font-bold text-foreground">SIMV</div>
-                  </div>
-                  <div className="text-[10px] sm:text-xs font-medium text-muted-foreground text-center leading-tight">
-                    Voir détails
-                  </div>
-                </div>
+                  return (
+                    <div
+                      key={index}
+                      className={`flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 ${
+                        isSelected
+                          ? "bg-card shadow-sm border-primary"
+                          : "border-transparent hover:bg-muted/50"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!metric.selectable) {
+                          setOpenDialog('ventilateur');
+                          return;
+                        }
+                        setSelectedLungOptIndicators((prev) =>
+                          prev.includes(metric.label)
+                            ? prev.filter((l) => l !== metric.label)
+                            : [...prev, metric.label]
+                        );
+                      }}
+                    >
+                      <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
+                        {metric.label}
+                      </div>
+                      <div className="flex items-center gap-1 mb-1">
+                        {metric.icon && <Gauge className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />}
+                        <div className={`text-lg sm:text-2xl font-bold ${statusColor}`}>{metric.displayValue}</div>
+                        {metric.unit && <span className="text-xs text-muted-foreground">{metric.unit}</span>}
+                      </div>
+                      {metric.criticalLabel && (
+                        <div className={`text-[10px] sm:text-xs font-medium ${metric.criticalColor} text-center leading-tight`}>
+                          {metric.criticalLabel}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Cliquez sur un indicateur pour l'afficher dans le graphique
+              </p>
+
+              {/* Embedded Chart - shown when indicators are selected */}
+              {selectedLungOptIndicators.length > 0 && (
+                <div className="border-t border-border pt-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-foreground">Évolution temporelle</div>
+                    <TimeWindowSelector
+                      value={optChartTimeRange as TimeWindowValue}
+                      onChange={(v) => setOptChartTimeRange(v)}
+                      includeStay={true}
+                      size="sm"
+                      variant="compact"
+                    />
+                  </div>
+                  <div className="h-[250px] sm:h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={lungOptChartData}>
+                        {selectedLungOptIndicators.map((label) => {
+                          const zone = optTargetZones[label];
+                          if (!zone) return null;
+                          const color = getOptIndicatorColor(label);
+                          return (
+                            <ReferenceArea
+                              key={`zone-${label}`}
+                              y1={zone.min}
+                              y2={zone.max}
+                              fill={color}
+                              fillOpacity={0.08}
+                              stroke={color}
+                              strokeOpacity={0.3}
+                              strokeDasharray="4 2"
+                            />
+                          );
+                        })}
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="time" tick={{ fontSize: 11 }} stroke="#9ca3af" tickLine={false} />
+                        <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" tickLine={false} axisLine={false} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "rgba(255, 255, 255, 0.98)",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                            padding: "12px",
+                          }}
+                          labelStyle={{ fontWeight: 600, marginBottom: 8 }}
+                        />
+                        <Legend
+                          wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
+                          iconType="plainline"
+                          formatter={(value: string) => (
+                            <span style={{ color: getOptIndicatorColor(value), fontWeight: 500 }}>{value}</span>
+                          )}
+                        />
+                        {selectedLungOptIndicators.map((label, idx) => {
+                          const color = getOptIndicatorColor(label);
+                          return (
+                            <Line
+                              key={label}
+                              type="monotone"
+                              dataKey={label}
+                              stroke={color}
+                              strokeWidth={2.5}
+                              dot={false}
+                              activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2, fill: color }}
+                              connectNulls={false}
+                            />
+                          );
+                        })}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
             </CardContent>
           )}
         </Card>
