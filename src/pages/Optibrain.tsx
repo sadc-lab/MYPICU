@@ -1655,7 +1655,7 @@ const Optibrain = () => {
           </CardContent>
         </Card>
 
-        
+        <CdssRecommendations patientId={patientId} organ="cerveau" className="mt-4" />
       </main>
     </div>
   );

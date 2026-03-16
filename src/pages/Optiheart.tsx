@@ -557,7 +557,7 @@ const Optiheart = () => {
           </CardContent>
         </Card>
 
-        
+        <CdssRecommendations patientId={patientId} organ="coeur" className="mt-4" />
       </main>
     </div>
   );

@@ -29,6 +29,7 @@ const Optigastro = () => {
             </div>
           </CardContent>
         </Card>
+        <CdssRecommendations patientId={patientId} organ="gastro" className="mt-4" />
       </main>
     </div>
   );

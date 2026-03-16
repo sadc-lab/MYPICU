@@ -903,7 +903,7 @@ const Optilungs = () => {
           </Card>
         </div>
 
-        
+        <CdssRecommendations patientId={patientId} organ="poumons" className="mt-4" />
       </main>
     </div>
   );

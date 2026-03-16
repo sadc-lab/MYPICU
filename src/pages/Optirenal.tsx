@@ -29,6 +29,7 @@ const Optirenal = () => {
             </div>
           </CardContent>
         </Card>
+        <CdssRecommendations patientId={patientId} organ="renal" className="mt-4" />
       </main>
     </div>
   );
