@@ -10,6 +10,8 @@ import Optistate from "./pages/Optistate";
 import Optibrain from "./pages/Optibrain";
 import Optiheart from "./pages/Optiheart";
 import Optilungs from "./pages/Optilungs";
+import Optirenal from "./pages/Optirenal";
+import Optigastro from "./pages/Optigastro";
 import Feedback from "./pages/Feedback";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
