@@ -63,6 +63,7 @@ import { UnifiedBrainChart } from "@/components/UnifiedBrainChart";
 import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
+import { CdssRecommendations } from "@/components/CdssRecommendations";
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -1654,7 +1655,7 @@ const Optibrain = () => {
           </CardContent>
         </Card>
 
-        
+        <CdssRecommendations patientId={patientId} organ="cerveau" className="mt-4" />
       </main>
     </div>
   );

@@ -2,9 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useSearchParams, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { CdssChat } from "@/components/CdssChat";
 import Dashboard from "./pages/Dashboard";
 import Optistate from "./pages/Optistate";
 import Optibrain from "./pages/Optibrain";
@@ -23,6 +24,28 @@ import ImportPatientData from "./pages/admin/ImportPatientData";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+const ORGAN_MAP: Record<string, string> = {
+  "/optibrain": "cerveau",
+  "/optiheart": "coeur",
+  "/optilungs": "poumons",
+  "/optirenal": "renal",
+  "/optigastro": "gastro",
+  "/optistate": "general",
+};
+
+const CdssChatWrapper = () => {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const patientId = searchParams.get("patient") || undefined;
+  const organ = ORGAN_MAP[location.pathname];
+
+  // Only show on protected clinical pages
+  const showChat = ["/", "/optistate", "/optibrain", "/optiheart", "/optilungs", "/optirenal", "/optigastro"].includes(location.pathname);
+
+  if (!showChat) return null;
+  return <CdssChat patientId={patientId} organ={organ} />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -50,6 +73,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <CdssChatWrapper />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
