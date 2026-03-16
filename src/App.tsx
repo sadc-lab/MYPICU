@@ -43,6 +43,8 @@ const App = () => (
             <Route path="/optibrain" element={<ProtectedRoute><Optibrain /></ProtectedRoute>} />
             <Route path="/optiheart" element={<ProtectedRoute><Optiheart /></ProtectedRoute>} />
             <Route path="/optilungs" element={<ProtectedRoute><Optilungs /></ProtectedRoute>} />
+            <Route path="/optirenal" element={<ProtectedRoute><Optirenal /></ProtectedRoute>} />
+            <Route path="/optigastro" element={<ProtectedRoute><Optigastro /></ProtectedRoute>} />
             <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
             <Route path="/admin/import" element={<ProtectedRoute><ImportPatientData /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

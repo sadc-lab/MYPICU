@@ -24,7 +24,7 @@ const reminders = [
 ];
 
 interface PatientHeaderProps {
-  currentPage: "optistate" | "optibrain" | "optiheart" | "optilungs";
+  currentPage: "optistate" | "optibrain" | "optiheart" | "optilungs" | "optirenal" | "optigastro";
 }
 
 export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
