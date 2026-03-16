@@ -4,6 +4,7 @@ import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePatient } from '@/hooks/usePatients';
 import { Construction } from 'lucide-react';
+import { CdssRecommendations } from '@/components/CdssRecommendations';
 
 const Optigastro = () => {
   const [searchParams] = useSearchParams();
