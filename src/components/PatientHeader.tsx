@@ -174,7 +174,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                     src={stateIcon}
                     alt="state"
                     className="h-6 w-6 sm:h-7 sm:w-7"
-                    style={{ filter: getColorFilter(0) }}
+                    style={{ filter: getColorFilter(patient.pelodScore) }}
                   />
                   <span className="ml-1 font-semibold">State</span>
                 </Badge>
