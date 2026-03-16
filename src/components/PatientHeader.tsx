@@ -174,7 +174,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                     src={stateIcon}
                     alt="state"
                     className="h-6 w-6 sm:h-7 sm:w-7"
-                    style={{ filter: getColorFilter(0) }}
+                    style={{ filter: getColorFilter(patient.pelodScore) }}
                   />
                   <span className="ml-1 font-semibold">State</span>
                 </Badge>
@@ -197,7 +197,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                     src={brainIcon}
                     alt="brain"
                     className="h-6 w-6 sm:h-7 sm:w-7"
-                    style={{ filter: getColorFilter(0) }}
+                    style={{ filter: getColorFilter(patient.brainScore) }}
                   />
                   <span className="ml-1 font-semibold">{patient.brainScore || 0}</span>
                 </Badge>
@@ -216,7 +216,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(patient.heartScore)} text-xs`}>
-                  <HeartIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${getTextColor(0)}`} />
+                  <HeartIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${getTextColor(patient.heartScore)}`} />
                   <span className="ml-1 font-semibold">{patient.heartScore || 0}</span>
                 </Badge>
               </button>
@@ -238,7 +238,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                     src={lungsIcon}
                     alt="lungs"
                     className="h-6 w-6 sm:h-7 sm:w-7"
-                    style={{ filter: getColorFilter(0) }}
+                    style={{ filter: getColorFilter(patient.lungsScore) }}
                   />
                   <span className="ml-1 font-semibold">{patient.lungsScore || 0}</span>
                 </Badge>
