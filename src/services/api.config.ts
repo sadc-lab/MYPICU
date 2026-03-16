@@ -17,7 +17,7 @@ export const API_CONFIG = {
   // For custom backend APIs (not Supabase)
   // In Docker, this could be 'http://backend:3001/api'
   BASE_URL: import.meta.env.VITE_API_BASE_URL || 
-    (process.env.NODE_ENV === 'production' ? '/api' : '/api'),
+    (import.meta.env.MODE === 'production' ? '/api' : '/api'),
   
   TIMEOUT: 30000, // 30 seconds
   
