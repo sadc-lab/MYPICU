@@ -1080,7 +1080,7 @@ const Optibrain = () => {
                 </div>
               )}
               
-              {/* Selectable Brain Metrics */}
+              {/* Selectable Brain Metrics with distribution bars below each */}
               <div className="grid grid-cols-3 gap-2 sm:gap-6 pt-4">
                 {brainOptimisationMetrics.map((metric, index) => {
                   const isSelected = selectedBrainIndicators.includes(metric.label);
@@ -1091,139 +1091,125 @@ const Optibrain = () => {
                       : "text-foreground";
                   
                   return (
-                    <div
-                      key={index}
-                      className={`flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 ${
-                        isSelected 
-                          ? "bg-card shadow-sm border-primary" 
-                          : "border-transparent hover:bg-muted/50"
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (metric.hasDetails) {
-                          setSelectedBrainIndicators((prev) =>
-                            prev.includes(metric.label)
-                              ? prev.filter((label) => label !== metric.label)
-                              : [...prev, metric.label]
-                          );
-                        }
-                      }}
-                    >
-                      <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
-                        {metric.label}
-                      </div>
-                      <div className="flex items-center gap-1 mb-1">
-                        <div className={`text-lg sm:text-2xl font-bold ${statusColor}`}>{metric.displayValue}</div>
-                        {metric.unit && (
-                          <span className="text-xs text-muted-foreground">{metric.unit}</span>
+                    <div key={index} className="flex flex-col">
+                      {/* Metric card */}
+                      <div
+                        className={`flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 ${
+                          isSelected 
+                            ? "bg-card shadow-sm border-primary" 
+                            : "border-transparent hover:bg-muted/50"
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (metric.hasDetails) {
+                            setSelectedBrainIndicators((prev) =>
+                              prev.includes(metric.label)
+                                ? prev.filter((label) => label !== metric.label)
+                                : [...prev, metric.label]
+                            );
+                          }
+                        }}
+                      >
+                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
+                          {metric.label}
+                        </div>
+                        <div className="flex items-center gap-1 mb-1">
+                          <div className={`text-lg sm:text-2xl font-bold ${statusColor}`}>{metric.displayValue}</div>
+                          {metric.unit && (
+                            <span className="text-xs text-muted-foreground">{metric.unit}</span>
+                          )}
+                        </div>
+                        {/* Dernière valeur critique */}
+                        {metric.criticalLabel && (
+                          <div className={`text-[10px] sm:text-xs font-medium ${metric.criticalColor} text-center leading-tight`}>
+                            {metric.criticalLabel}
+                          </div>
                         )}
                       </div>
-                      {/* Dernière valeur critique */}
-                      {metric.criticalLabel && (
-                        <div className={`text-[10px] sm:text-xs font-medium ${metric.criticalColor} text-center leading-tight`}>
-                          {metric.criticalLabel}
-                        </div>
-                      )}
+
+                      {/* Distribution bar below État Neuro */}
+                      {metric.label === "État Neuro" && neurologicalStateConfig.hasData && (() => {
+                        const segments = [
+                          { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, color: 'bg-emerald-500' },
+                          { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, color: 'bg-orange-500' },
+                          { key: 'hyperemia', label: 'Hypérémie', pct: neurologicalStateConfig.history.hyperemia, color: 'bg-amber-500' },
+                          { key: 'htic', label: 'HTIC', pct: neurologicalStateConfig.history.htic, color: 'bg-orange-600' },
+                          { key: 'htic_ischemia', label: 'HTIC+Isch.', pct: neurologicalStateConfig.history.hticWithIschemia, color: 'bg-red-500' },
+                        ].filter(s => s.pct > 0);
+                        const totalMinutes = Math.round(hoursForAdherence * 60);
+                        return (
+                          <div className="mt-2 px-1">
+                            <div className="flex h-4 rounded-full overflow-hidden mb-1.5">
+                              {segments.map(s => (
+                                <div key={s.key} className={`${s.color}`} style={{ width: `${s.pct}%` }} />
+                              ))}
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                              {segments.map(s => {
+                                const mins = Math.round(totalMinutes * s.pct / 100);
+                                const durLabel = mins >= 60 ? `${Math.floor(mins/60)}h${mins%60 > 0 ? (mins%60).toString().padStart(2,'0') : ''}` : `${mins} min`;
+                                return (
+                                  <div key={s.key} className="flex items-center gap-1 text-[9px] sm:text-[10px] text-muted-foreground">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${s.color} inline-block shrink-0`} />
+                                    <span className="truncate">{s.pct}% {s.label}</span>
+                                    <span className="text-muted-foreground/60 ml-auto">{durLabel}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Distribution bar below PIC */}
+                      {metric.label === "PIC" && neurologicalStateConfig.hasData && (() => {
+                        const picSegments = [
+                          { key: 'below20', label: '< 20', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.minutes || 0, color: 'bg-emerald-500' },
+                          { key: 'range20_25', label: '20–25', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.minutes || 0, color: 'bg-orange-400' },
+                          { key: 'range25_30', label: '25–30', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.minutes || 0, color: 'bg-red-400' },
+                          { key: 'above30', label: '> 30', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, color: 'bg-red-600' },
+                        ].filter(s => s.pct > 0);
+                        return (
+                          <div className="mt-2 px-1">
+                            <div className="flex h-4 rounded-full overflow-hidden mb-1.5">
+                              {picSegments.map(s => (
+                                <div key={s.key} className={`${s.color}`} style={{ width: `${s.pct}%` }} />
+                              ))}
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                              {picSegments.map(s => {
+                                const durLabel = s.minutes >= 60 ? `${Math.floor(s.minutes/60)}h${s.minutes%60 > 0 ? (s.minutes%60).toString().padStart(2,'0') : ''}` : `${s.minutes} min`;
+                                return (
+                                  <div key={s.key} className="flex items-center gap-1 text-[9px] sm:text-[10px] text-muted-foreground">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${s.color} inline-block shrink-0`} />
+                                    <span className="truncate">{s.label} mmHg</span>
+                                    <span className="text-muted-foreground/60 ml-auto">{durLabel}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {/* Current & Mean Intensity */}
+                            {(picRangeData.currentPic !== null || picRangeData.averagePic !== null) && (
+                              <div className="flex flex-col items-center gap-0.5 mt-1.5 text-[9px] sm:text-[10px]">
+                                {picRangeData.currentPic !== null && (
+                                  <span>
+                                    Actuelle : <span className={`font-semibold ${picRangeData.currentPic >= 20 ? 'text-status-critical' : 'text-foreground'}`}>{Math.round(picRangeData.currentPic)} mmHg</span>
+                                  </span>
+                                )}
+                                {picRangeData.averagePic !== null && (
+                                  <span>
+                                    Moyenne : <span className={`font-semibold ${picRangeData.averagePic >= 20 ? 'text-status-warning' : 'text-foreground'}`}>{Math.round(picRangeData.averagePic)} mmHg</span>
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}
               </div>
-
-              {/* Distribution bars: Neurological State + PIC Levels */}
-              {neurologicalStateConfig.hasData && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  {/* Neurological State Distribution */}
-                  <div>
-                    <h4 className="text-xs font-semibold text-foreground mb-2 text-center">État Neurologique</h4>
-                    {(() => {
-                      const segments = [
-                        { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, color: 'bg-emerald-500' },
-                        { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, color: 'bg-orange-500' },
-                        { key: 'hyperemia', label: 'Hypérémie', pct: neurologicalStateConfig.history.hyperemia, color: 'bg-amber-500' },
-                        { key: 'htic', label: 'HTIC', pct: neurologicalStateConfig.history.htic, color: 'bg-orange-600' },
-                        { key: 'htic_ischemia', label: 'HTIC + Ischémie', pct: neurologicalStateConfig.history.hticWithIschemia, color: 'bg-red-500' },
-                      ].filter(s => s.pct > 0);
-                      const totalMinutes = Math.round(hoursForAdherence * 60);
-                      return (
-                        <>
-                          <div className="flex h-5 rounded-full overflow-hidden mb-2">
-                            {segments.map(s => (
-                              <div key={s.key} className={`${s.color} transition-all`} style={{ width: `${s.pct}%` }} />
-                            ))}
-                          </div>
-                          <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center">
-                            {segments.map(s => {
-                              const mins = Math.round(totalMinutes * s.pct / 100);
-                              const durLabel = mins >= 60 ? `${Math.floor(mins/60)}h${mins%60 > 0 ? (mins%60).toString().padStart(2,'0') : ''}` : `${mins} min`;
-                              return (
-                                <div key={s.key} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                  <span className={`w-2 h-2 rounded-full ${s.color} inline-block`} />
-                                  <span>{s.pct}% {s.label}</span>
-                                  <span className="text-muted-foreground/60">{durLabel}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-
-                  {/* PIC Levels Distribution */}
-                  <div>
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <h4 className="text-xs font-semibold text-foreground text-center">Niveaux de PIC</h4>
-                      <span className="text-[10px] text-primary font-medium">
-                        {timeRange === 'stay' ? 'Séjour' : timeRange}
-                      </span>
-                    </div>
-                    {(() => {
-                      const picSegments = [
-                        { key: 'below20', label: '< 20 mmHg', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.minutes || 0, color: 'bg-emerald-500' },
-                        { key: 'range20_25', label: '20 – 25 mmHg', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.minutes || 0, color: 'bg-orange-400' },
-                        { key: 'range25_30', label: '25 – 30 mmHg', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.minutes || 0, color: 'bg-red-400' },
-                        { key: 'above30', label: '> 30 mmHg', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, color: 'bg-red-600' },
-                      ].filter(s => s.pct > 0);
-                      return (
-                        <>
-                          <div className="flex h-5 rounded-full overflow-hidden mb-2">
-                            {picSegments.map(s => (
-                              <div key={s.key} className={`${s.color} transition-all`} style={{ width: `${s.pct}%` }} />
-                            ))}
-                          </div>
-                          <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center">
-                            {picSegments.map(s => {
-                              const durLabel = s.minutes >= 60 ? `${Math.floor(s.minutes/60)}h${s.minutes%60 > 0 ? (s.minutes%60).toString().padStart(2,'0') : ''}` : `${s.minutes} min`;
-                              return (
-                                <div key={s.key} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                  <span className={`w-2 h-2 rounded-full ${s.color} inline-block`} />
-                                  <span>{s.label}</span>
-                                  <span className="text-muted-foreground/60">{durLabel}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          {/* Current & Mean Intensity */}
-                          {(picRangeData.currentPic !== null || picRangeData.averagePic !== null) && (
-                            <div className="flex items-center justify-center gap-4 mt-2 text-xs">
-                              {picRangeData.currentPic !== null && (
-                                <span>
-                                  Intensité actuelle : <span className={`font-semibold ${picRangeData.currentPic >= 20 ? 'text-status-critical' : 'text-foreground'}`}>{Math.round(picRangeData.currentPic)} mmHg</span>
-                                </span>
-                              )}
-                              {picRangeData.averagePic !== null && (
-                                <span>
-                                  Intensité moyenne : <span className={`font-semibold ${picRangeData.averagePic >= 20 ? 'text-status-warning' : 'text-foreground'}`}>{Math.round(picRangeData.averagePic)} mmHg</span>
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-              )}
 
               <p className="text-xs text-muted-foreground mt-4 text-center">
                 Cliquez sur un indicateur pour l'afficher dans le graphique
