@@ -1203,21 +1203,6 @@ const Optibrain = () => {
                                 );
                               })}
                             </div>
-                            {/* Current & Mean Intensity */}
-                            {(picRangeData.currentPic !== null || picRangeData.averagePic !== null) && (
-                              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/30 text-[9px] sm:text-[10px]">
-                                {picRangeData.currentPic !== null && (
-                                  <span className="text-muted-foreground">
-                                    Actuelle : <span className={`font-bold ${picRangeData.currentPic >= 20 ? 'text-status-critical' : 'text-foreground'}`}>{Math.round(picRangeData.currentPic)}</span>
-                                  </span>
-                                )}
-                                {picRangeData.averagePic !== null && (
-                                  <span className="text-muted-foreground">
-                                    Moy : <span className={`font-bold ${picRangeData.averagePic >= 20 ? 'text-status-warning' : 'text-foreground'}`}>{Math.round(picRangeData.averagePic)}</span>
-                                  </span>
-                                )}
-                              </div>
-                            )}
                           </div>
                         );
                       })()}
