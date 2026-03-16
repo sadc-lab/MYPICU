@@ -1066,7 +1066,7 @@ const Optibrain = () => {
             </div>
           </CardHeader>
           {optimisationExpanded && (
-            <CardContent className="pt-0 space-y-4">
+            <CardContent className="pt-0 space-y-5">
               {/* Alert if no autoregulation data available yet */}
               {!optimalPPCResult.hasData && (
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-status-warning/10 border border-status-warning/30 mt-4">
@@ -1081,7 +1081,7 @@ const Optibrain = () => {
               )}
               
               {/* Selectable Brain Metrics with distribution bars below each */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-6 pt-4">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-3">
                 {brainOptimisationMetrics.map((metric, index) => {
                   const isSelected = selectedBrainIndicators.includes(metric.label);
                   const statusColor = metric.status === "critical" 
@@ -1090,14 +1090,21 @@ const Optibrain = () => {
                       ? "text-status-warning" 
                       : "text-foreground";
                   
+                  // Subtle status background for the card
+                  const statusBg = metric.status === "critical" 
+                    ? "bg-status-critical/5" 
+                    : metric.status === "warning" 
+                      ? "bg-status-warning/5" 
+                      : "bg-muted/30";
+                  
                   return (
-                    <div key={index} className="flex flex-col">
+                    <div key={index} className="flex flex-col gap-2">
                       {/* Metric card */}
                       <div
-                        className={`flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 ${
+                        className={`flex flex-col items-center cursor-pointer p-3 sm:p-4 rounded-xl transition-all border-2 ${statusBg} ${
                           isSelected 
-                            ? "bg-card shadow-sm border-primary" 
-                            : "border-transparent hover:bg-muted/50"
+                            ? "border-primary shadow-md ring-1 ring-primary/20" 
+                            : "border-transparent hover:border-border hover:shadow-sm"
                         }`}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1110,18 +1117,24 @@ const Optibrain = () => {
                           }
                         }}
                       >
-                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
+                        <div className="text-[10px] sm:text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider text-center">
                           {metric.label}
                         </div>
-                        <div className="flex items-center gap-1 mb-1">
-                          <div className={`text-lg sm:text-2xl font-bold ${statusColor}`}>{metric.displayValue}</div>
+                        <div className="flex items-baseline gap-1 mb-1">
+                          <div className={`text-xl sm:text-3xl font-bold ${statusColor} tabular-nums`}>{metric.displayValue}</div>
                           {metric.unit && (
-                            <span className="text-xs text-muted-foreground">{metric.unit}</span>
+                            <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">{metric.unit}</span>
                           )}
                         </div>
+                        {/* Description for Autorégulation */}
+                        {metric.description && (
+                          <div className="text-[10px] sm:text-xs text-muted-foreground text-center leading-tight mb-0.5">
+                            {metric.description}
+                          </div>
+                        )}
                         {/* Dernière valeur critique */}
                         {metric.criticalLabel && (
-                          <div className={`text-[10px] sm:text-xs font-medium ${metric.criticalColor} text-center leading-tight`}>
+                          <div className={`text-[10px] sm:text-xs font-semibold ${metric.criticalColor} text-center leading-tight mt-0.5`}>
                             {metric.criticalLabel}
                           </div>
                         )}
@@ -1130,29 +1143,30 @@ const Optibrain = () => {
                       {/* Distribution bar below État Neuro */}
                       {metric.label === "État Neuro" && neurologicalStateConfig.hasData && (() => {
                         const segments = [
-                          { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, color: 'bg-emerald-500' },
-                          { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, color: 'bg-orange-500' },
-                          { key: 'hyperemia', label: 'Hypérémie', pct: neurologicalStateConfig.history.hyperemia, color: 'bg-amber-500' },
-                          { key: 'htic', label: 'HTIC', pct: neurologicalStateConfig.history.htic, color: 'bg-orange-600' },
-                          { key: 'htic_ischemia', label: 'HTIC+Isch.', pct: neurologicalStateConfig.history.hticWithIschemia, color: 'bg-red-500' },
+                          { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, colorClass: 'bg-status-normal', dotClass: 'bg-status-normal' },
+                          { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, colorClass: 'bg-status-warning', dotClass: 'bg-status-warning' },
+                          { key: 'hyperemia', label: 'Hypérémie', pct: neurologicalStateConfig.history.hyperemia, colorClass: 'bg-amber-400', dotClass: 'bg-amber-400' },
+                          { key: 'htic', label: 'HTIC', pct: neurologicalStateConfig.history.htic, colorClass: 'bg-status-warning', dotClass: 'bg-status-warning' },
+                          { key: 'htic_ischemia', label: 'HTIC+Isch.', pct: neurologicalStateConfig.history.hticWithIschemia, colorClass: 'bg-status-critical', dotClass: 'bg-status-critical' },
                         ].filter(s => s.pct > 0);
                         const totalMinutes = Math.round(hoursForAdherence * 60);
                         return (
-                          <div className="mt-2 px-1">
-                            <div className="flex h-4 rounded-full overflow-hidden mb-1.5">
+                          <div className="rounded-lg bg-muted/40 p-2.5 border border-border/50">
+                            <div className="flex h-3 rounded-full overflow-hidden mb-2 shadow-inner">
                               {segments.map(s => (
-                                <div key={s.key} className={`${s.color}`} style={{ width: `${s.pct}%` }} />
+                                <div key={s.key} className={`${s.colorClass} transition-all`} style={{ width: `${s.pct}%` }} />
                               ))}
                             </div>
-                            <div className="flex flex-col gap-0.5">
+                            <div className="flex flex-col gap-1">
                               {segments.map(s => {
                                 const mins = Math.round(totalMinutes * s.pct / 100);
                                 const durLabel = mins >= 60 ? `${Math.floor(mins/60)}h${mins%60 > 0 ? (mins%60).toString().padStart(2,'0') : ''}` : `${mins} min`;
                                 return (
-                                  <div key={s.key} className="flex items-center gap-1 text-[9px] sm:text-[10px] text-muted-foreground">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${s.color} inline-block shrink-0`} />
-                                    <span className="truncate">{s.pct}% {s.label}</span>
-                                    <span className="text-muted-foreground/60 ml-auto">{durLabel}</span>
+                                  <div key={s.key} className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-muted-foreground leading-tight">
+                                    <span className={`w-2 h-2 rounded-full ${s.dotClass} inline-block shrink-0`} />
+                                    <span className="font-medium">{s.pct}%</span>
+                                    <span className="truncate">{s.label}</span>
+                                    <span className="text-muted-foreground/50 ml-auto tabular-nums">{durLabel}</span>
                                   </div>
                                 );
                               })}
@@ -1164,41 +1178,42 @@ const Optibrain = () => {
                       {/* Distribution bar below PIC */}
                       {metric.label === "PIC" && neurologicalStateConfig.hasData && (() => {
                         const picSegments = [
-                          { key: 'below20', label: '< 20', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.minutes || 0, color: 'bg-emerald-500' },
-                          { key: 'range20_25', label: '20–25', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.minutes || 0, color: 'bg-orange-400' },
-                          { key: 'range25_30', label: '25–30', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.minutes || 0, color: 'bg-red-400' },
-                          { key: 'above30', label: '> 30', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, color: 'bg-red-600' },
+                          { key: 'below20', label: '< 20', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.minutes || 0, colorClass: 'bg-status-normal', dotClass: 'bg-status-normal' },
+                          { key: 'range20_25', label: '20–25', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.minutes || 0, colorClass: 'bg-status-warning', dotClass: 'bg-status-warning' },
+                          { key: 'range25_30', label: '25–30', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical/80', dotClass: 'bg-status-critical/80' },
+                          { key: 'above30', label: '> 30', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical', dotClass: 'bg-status-critical' },
                         ].filter(s => s.pct > 0);
                         return (
-                          <div className="mt-2 px-1">
-                            <div className="flex h-4 rounded-full overflow-hidden mb-1.5">
+                          <div className="rounded-lg bg-muted/40 p-2.5 border border-border/50">
+                            <div className="flex h-3 rounded-full overflow-hidden mb-2 shadow-inner">
                               {picSegments.map(s => (
-                                <div key={s.key} className={`${s.color}`} style={{ width: `${s.pct}%` }} />
+                                <div key={s.key} className={`${s.colorClass} transition-all`} style={{ width: `${s.pct}%` }} />
                               ))}
                             </div>
-                            <div className="flex flex-col gap-0.5">
+                            <div className="flex flex-col gap-1">
                               {picSegments.map(s => {
                                 const durLabel = s.minutes >= 60 ? `${Math.floor(s.minutes/60)}h${s.minutes%60 > 0 ? (s.minutes%60).toString().padStart(2,'0') : ''}` : `${s.minutes} min`;
                                 return (
-                                  <div key={s.key} className="flex items-center gap-1 text-[9px] sm:text-[10px] text-muted-foreground">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${s.color} inline-block shrink-0`} />
+                                  <div key={s.key} className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-muted-foreground leading-tight">
+                                    <span className={`w-2 h-2 rounded-full ${s.dotClass} inline-block shrink-0`} />
+                                    <span className="font-medium">{s.pct}%</span>
                                     <span className="truncate">{s.label} mmHg</span>
-                                    <span className="text-muted-foreground/60 ml-auto">{durLabel}</span>
+                                    <span className="text-muted-foreground/50 ml-auto tabular-nums">{durLabel}</span>
                                   </div>
                                 );
                               })}
                             </div>
                             {/* Current & Mean Intensity */}
                             {(picRangeData.currentPic !== null || picRangeData.averagePic !== null) && (
-                              <div className="flex flex-col items-center gap-0.5 mt-1.5 text-[9px] sm:text-[10px]">
+                              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/30 text-[9px] sm:text-[10px]">
                                 {picRangeData.currentPic !== null && (
-                                  <span>
-                                    Actuelle : <span className={`font-semibold ${picRangeData.currentPic >= 20 ? 'text-status-critical' : 'text-foreground'}`}>{Math.round(picRangeData.currentPic)} mmHg</span>
+                                  <span className="text-muted-foreground">
+                                    Actuelle : <span className={`font-bold ${picRangeData.currentPic >= 20 ? 'text-status-critical' : 'text-foreground'}`}>{Math.round(picRangeData.currentPic)}</span>
                                   </span>
                                 )}
                                 {picRangeData.averagePic !== null && (
-                                  <span>
-                                    Moyenne : <span className={`font-semibold ${picRangeData.averagePic >= 20 ? 'text-status-warning' : 'text-foreground'}`}>{Math.round(picRangeData.averagePic)} mmHg</span>
+                                  <span className="text-muted-foreground">
+                                    Moy : <span className={`font-bold ${picRangeData.averagePic >= 20 ? 'text-status-warning' : 'text-foreground'}`}>{Math.round(picRangeData.averagePic)}</span>
                                   </span>
                                 )}
                               </div>
@@ -1211,15 +1226,19 @@ const Optibrain = () => {
                 })}
               </div>
 
-              <p className="text-xs text-muted-foreground mt-4 text-center">
-                Cliquez sur un indicateur pour l'afficher dans le graphique
-              </p>
+              {/* Hint to interact */}
+              {selectedBrainIndicators.length === 0 && (
+                <p className="text-[10px] sm:text-xs text-muted-foreground/70 text-center italic flex items-center justify-center gap-1.5">
+                  <ChevronDown className="h-3 w-3" />
+                  Cliquez sur un indicateur pour afficher le graphique
+                </p>
+              )}
 
               {/* Embedded Charts */}
               {selectedBrainIndicators.length > 0 && (
                 <div className="border-t border-border pt-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-foreground">
+                    <div className="text-sm font-semibold text-foreground">
                       {selectedBrainIndicators.includes("Autorégulation") 
                         ? "Courbe d'autorégulation" 
                         : "Évolution temporelle"}
