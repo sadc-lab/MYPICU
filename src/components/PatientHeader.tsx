@@ -277,7 +277,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(0)} text-xs`}>
-                  <span className="text-base sm:text-lg">🫁</span>
+                  <img src={intestineIcon} alt="gastro" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(0) }} />
                   <span className="ml-1 font-semibold">GI</span>
                 </Badge>
               </button>
