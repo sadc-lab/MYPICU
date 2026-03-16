@@ -48,6 +48,35 @@ const SYSTEM_PROMPT = `Tu es un assistant clinique spécialisé en soins intensi
 - Tu aides à la DÉCISION, tu ne remplaces PAS le clinicien
 - Toujours préciser les limites de ton analyse`;
 
+/**
+ * Determine which AI provider to use:
+ * - OLLAMA_BASE_URL set → use Ollama (self-hosted / hospital)
+ * - Otherwise → use Lovable AI Gateway (dev/cloud)
+ */
+function getAIConfig() {
+  const ollamaUrl = Deno.env.get("OLLAMA_BASE_URL");
+  if (ollamaUrl) {
+    return {
+      provider: "ollama" as const,
+      url: `${ollamaUrl.replace(/\/$/, "")}/v1/chat/completions`,
+      model: Deno.env.get("OLLAMA_MODEL") || "llama3.1",
+      apiKey: "ollama", // Ollama doesn't need a real key but OpenAI-compat API expects one
+    };
+  }
+
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!lovableKey) {
+    throw new Error("No AI provider configured. Set OLLAMA_BASE_URL or LOVABLE_API_KEY.");
+  }
+
+  return {
+    provider: "lovable" as const,
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    model: "google/gemini-3-flash-preview",
+    apiKey: lovableKey,
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -80,10 +109,7 @@ serve(async (req) => {
 
     const { messages, patientId, mode, organ } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    const aiConfig = getAIConfig();
 
     // Fetch patient context if patientId is provided
     let patientContext = "";
@@ -108,14 +134,14 @@ serve(async (req) => {
 
     const isStreaming = mode !== "recommendations";
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(aiConfig.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${aiConfig.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: aiConfig.model,
         messages: finalMessages,
         stream: isStreaming,
       }),
@@ -135,7 +161,7 @@ serve(async (req) => {
         });
       }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error(`AI error (${aiConfig.provider}):`, response.status, errorText);
       return new Response(JSON.stringify({ error: "Erreur du service IA" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -170,7 +196,6 @@ async function buildPatientContext(supabase: any, patientId: string, organ?: str
   const normalizedId = patientId.replace("#", "");
 
   try {
-    // Fetch patient info, vitals (latest), medications, and clinical info in parallel
     const [patientRes, vitalsRes, medsRes, clinicalRes] = await Promise.all([
       supabase.from("patients").select("*").eq("id", dbPatientId).single(),
       supabase
@@ -193,7 +218,6 @@ async function buildPatientContext(supabase: any, patientId: string, organ?: str
 
     let context = "";
 
-    // Patient demographics
     if (patientRes.data) {
       const p = patientRes.data;
       context += `### Informations patient\n`;
@@ -204,7 +228,6 @@ async function buildPatientContext(supabase: any, patientId: string, organ?: str
       context += `- Scores organes - Cerveau: ${p.brain_score ?? "N/A"}, Cœur: ${p.heart_score ?? "N/A"}, Poumons: ${p.lungs_score ?? "N/A"}, Reins: ${p.kidney_score ?? "N/A"}\n\n`;
     }
 
-    // Latest vitals (grouped by variable)
     if (vitalsRes.data && vitalsRes.data.length > 0) {
       const latestByVar = new Map<string, { charttime: string; valeur: number }>();
       for (const v of vitalsRes.data) {
@@ -220,7 +243,6 @@ async function buildPatientContext(supabase: any, patientId: string, organ?: str
       context += "\n";
     }
 
-    // Active medications
     if (medsRes.data && medsRes.data.length > 0) {
       const uniqueMeds = new Map<string, { type: string; lastTime: string; valeur: string | null }>();
       for (const m of medsRes.data) {
@@ -235,7 +257,6 @@ async function buildPatientContext(supabase: any, patientId: string, organ?: str
       context += "\n";
     }
 
-    // Clinical info
     if (clinicalRes.data && clinicalRes.data.length > 0) {
       context += `### Informations cliniques\n`;
       for (const info of clinicalRes.data) {
