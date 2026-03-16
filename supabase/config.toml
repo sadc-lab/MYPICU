@@ -2,3 +2,6 @@ project_id = "wzfdfrruaxqldhsfuxpe"
 
 [functions.import-patient-data]
 verify_jwt = false
+
+[functions.cdss-agent]
+verify_jwt = false
