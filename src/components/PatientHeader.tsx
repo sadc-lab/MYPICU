@@ -243,6 +243,42 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   <span className="ml-1 font-semibold">{patient.lungsScore || 0}</span>
                 </Badge>
               </button>
+
+              <button
+                onClick={() => {
+                  const timeRange = searchParams.get("timeRange");
+                  const params = new URLSearchParams();
+                  params.set("patient", patientId);
+                  if (timeRange) params.set("timeRange", timeRange);
+                  navigate(`/optirenal?${params.toString()}`);
+                }}
+                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+                  isActivePage("optirenal") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                }`}
+              >
+                <Badge variant="outline" className={`${getOrganBadgeClass(patient.kidneyScore)} text-xs`}>
+                  <span className="text-base sm:text-lg">🫘</span>
+                  <span className="ml-1 font-semibold">{patient.kidneyScore || 0}</span>
+                </Badge>
+              </button>
+
+              <button
+                onClick={() => {
+                  const timeRange = searchParams.get("timeRange");
+                  const params = new URLSearchParams();
+                  params.set("patient", patientId);
+                  if (timeRange) params.set("timeRange", timeRange);
+                  navigate(`/optigastro?${params.toString()}`);
+                }}
+                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+                  isActivePage("optigastro") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                }`}
+              >
+                <Badge variant="outline" className={`${getOrganBadgeClass(0)} text-xs`}>
+                  <span className="text-base sm:text-lg">🫁</span>
+                  <span className="ml-1 font-semibold">GI</span>
+                </Badge>
+              </button>
             </div>
           </div>
         </div>
