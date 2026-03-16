@@ -256,7 +256,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   isActivePage("optirenal") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 }`}
               >
-                <Badge variant="outline" className={`${getOrganBadgeClass(patient.kidneyScore)} text-xs`}>
+                <Badge variant="outline" className={`${getOrganBadgeClass(0)} text-xs`}>
                   <span className="text-base sm:text-lg">🫘</span>
                   <span className="ml-1 font-semibold">{patient.kidneyScore || 0}</span>
                 </Badge>
