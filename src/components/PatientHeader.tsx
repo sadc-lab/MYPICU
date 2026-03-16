@@ -238,7 +238,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                     src={lungsIcon}
                     alt="lungs"
                     className="h-6 w-6 sm:h-7 sm:w-7"
-                    style={{ filter: getColorFilter(0) }}
+                    style={{ filter: getColorFilter(patient.lungsScore) }}
                   />
                   <span className="ml-1 font-semibold">{patient.lungsScore || 0}</span>
                 </Badge>
