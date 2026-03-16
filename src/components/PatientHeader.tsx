@@ -9,6 +9,8 @@ import { usePatient } from "@/hooks/usePatients";
 import brainIcon from "@/assets/brain-icon.svg";
 import lungsIcon from "@/assets/lungs-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
+import kidneyIcon from "@/assets/kidney-icon.svg";
+import intestineIcon from "@/assets/intestine-icon.svg";
 
 const reminders = [
   "Objectif de Bilan Entrée/Sortie",
@@ -257,7 +259,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(0)} text-xs`}>
-                  <span className="text-base sm:text-lg">🫘</span>
+                  <img src={kidneyIcon} alt="kidney" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(0) }} />
                   <span className="ml-1 font-semibold">{patient.kidneyScore || 0}</span>
                 </Badge>
               </button>
@@ -275,7 +277,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 }`}
               >
                 <Badge variant="outline" className={`${getOrganBadgeClass(0)} text-xs`}>
-                  <span className="text-base sm:text-lg">🫁</span>
+                  <img src={intestineIcon} alt="gastro" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(0) }} />
                   <span className="ml-1 font-semibold">GI</span>
                 </Badge>
               </button>
