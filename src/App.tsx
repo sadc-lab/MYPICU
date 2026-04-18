@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useSearchParams, useLocation } from "reac
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { CopilotPromptGenerator } from "@/components/CopilotPromptGenerator";
+import { usePatient } from "@/hooks/usePatients";
 import Dashboard from "./pages/Dashboard";
 import Optistate from "./pages/Optistate";
 import Optibrain from "./pages/Optibrain";
