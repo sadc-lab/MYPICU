@@ -25,6 +25,7 @@ import lungsIcon from '@/assets/lungs-icon.svg';
 import kidneyIcon from '@/assets/kidney-icon.svg';
 import intestineIcon from '@/assets/intestine-icon.svg';
 import { cn } from '@/lib/utils';
+import { PhysiopathChains } from '@/components/PhysiopathChains';
 
 type ModuleKey = 'optibrain' | 'optiheart' | 'optilungs' | 'optirenal' | 'optigastro';
 
@@ -200,6 +201,40 @@ const Optistate = () => {
 
   const failingCount = failingModules.length;
 
+  // Aggregate all failing indicators across modules + abnormal vital signs
+  // for physiopath chain matching.
+  const allFailingIndicators = [
+    ...allModules.flatMap((m) =>
+      m.indicators.map((ind) => ({
+        label: ind.label,
+        module: m.key,
+        status: ind.status,
+        trend: ind.trend,
+        value: ind.value,
+        unit: ind.unit,
+      })),
+    ),
+    // Abnormal vitals are mapped to the most relevant module so chains can match.
+    ...vitalSigns
+      .filter((v) => !isInRange(v.value, v.targetMin, v.targetMax))
+      .map((v) => {
+        const moduleByVital: Record<string, ModuleKey> = {
+          FC: 'optiheart',
+          TAM: 'optiheart',
+          FR: 'optilungs',
+          SPO2: 'optilungs',
+          'T°': 'optiheart',
+        };
+        return {
+          label: v.label === 'SPO2' ? 'SpO2' : v.label,
+          module: moduleByVital[v.label] ?? 'optiheart',
+          status: 'critical',
+          value: v.value,
+          unit: v.unit,
+        };
+      }),
+  ];
+
 
 
   const getStatusColor = (status: string) => {
@@ -288,6 +323,14 @@ const Optistate = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* SECTION 1.5: Cross-system physiopath chains */}
+        <PhysiopathChains
+          failingIndicators={allFailingIndicators}
+          onModuleClick={(mod) =>
+            navigate(`/${mod}?patient=${encodeURIComponent(patientId)}`)
+          }
+        />
 
         {/* SECTION 2: Failing modules — clinical detail */}
         <Card className="shadow-sm">
