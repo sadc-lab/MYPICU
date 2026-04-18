@@ -72,6 +72,13 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
     return { border: "border-red-600", fill: "bg-red-600" };
   };
 
+  const getActiveBorderClass = (score?: number) => {
+    if (!score || score === 0) return "border-2 border-muted-foreground";
+    if (score === 1) return "border-2 border-orange-500";
+    if (score === 2) return "border-2 border-orange-600";
+    return "border-2 border-red-600";
+  };
+
   const isActivePage = (page: string) => currentPage === page;
 
   return (
@@ -272,7 +279,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                       variant="outline"
                       className={`${getOrganBadgeClass(tab.score)} text-xs transition-all duration-150 gap-1 ${
                         active
-                          ? "border-2 border-foreground/70 dark:border-foreground/80"
+                          ? getActiveBorderClass(tab.score)
                           : "hover:-translate-y-[1px]"
                       }`}
                     >
