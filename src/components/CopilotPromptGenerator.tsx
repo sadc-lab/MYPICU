@@ -52,38 +52,95 @@ interface CopilotPromptGeneratorProps {
   organSeverities?: Record<string, number>;
 }
 
-// Organ pastille definitions matching the rest of the app
+// Severity helpers — score 1 = warning (orange), score >= 2 = critical (red).
+type Severity = "critical" | "warning" | null;
+const getSeverity = (score?: number): Severity => {
+  if (!score || score < 1) return null;
+  if (score >= 2) return "critical";
+  return "warning";
+};
+
+// Filter to tint a black/dark SVG icon to a target color.
+// status-critical (red) and status-warning (orange) approximations.
+const SVG_TINT: Record<NonNullable<Severity>, string> = {
+  critical:
+    "invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)",
+  warning:
+    "invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)",
+};
+
+// Cage (rounded background) classes per state.
+const CAGE_CLASSES = (severity: Severity, active: boolean) => {
+  if (severity === "critical") {
+    return "bg-status-critical/15 ring-1 ring-status-critical/40";
+  }
+  if (severity === "warning") {
+    return "bg-status-warning/15 ring-1 ring-status-warning/40";
+  }
+  return active ? "bg-primary/10" : "bg-muted/60";
+};
+
+// Border classes for the outer pastille button.
+const BORDER_CLASSES = (severity: Severity, active: boolean) => {
+  if (severity === "critical") {
+    return active
+      ? "bg-status-critical/5 border-status-critical shadow-sm"
+      : "bg-status-critical/5 border-status-critical/60 hover:border-status-critical";
+  }
+  if (severity === "warning") {
+    return active
+      ? "bg-status-warning/5 border-status-warning shadow-sm"
+      : "bg-status-warning/5 border-status-warning/60 hover:border-status-warning";
+  }
+  return active
+    ? "bg-primary/5 border-primary shadow-sm"
+    : "bg-background border-border hover:border-primary/40 hover:bg-accent/40";
+};
+
+// Heart icon color per severity / active.
+const heartColor = (severity: Severity, active: boolean) => {
+  if (severity === "critical") return "text-status-critical";
+  if (severity === "warning") return "text-status-warning";
+  return active ? "text-destructive" : "text-muted-foreground";
+};
+
+// Render an SVG image with optional severity tint.
+const renderSvgIcon = (
+  src: string,
+  active: boolean,
+  severity: Severity,
+) => (
+  <img
+    src={src}
+    alt=""
+    className={cn(
+      "h-6 w-6 transition-opacity",
+      active || severity ? "opacity-100" : "opacity-50",
+    )}
+    style={severity ? { filter: SVG_TINT[severity] } : undefined}
+  />
+);
+
+// Organ pastille definitions matching the rest of the app.
 const ORGAN_PASTILLES: Array<{
   value: string;
   short: string;
   full: string;
-  render: (active: boolean) => JSX.Element;
+  render: (active: boolean, severity: Severity) => JSX.Element;
 }> = [
   {
     value: "cerveau",
     short: "OptiBrain",
     full: "OptiBrain (neurologique)",
-    render: (active) => (
-      <img
-        src={brainIcon}
-        alt=""
-        className={cn(
-          "h-6 w-6 transition-opacity",
-          active ? "opacity-100" : "opacity-50"
-        )}
-      />
-    ),
+    render: (active, severity) => renderSvgIcon(brainIcon, active, severity),
   },
   {
     value: "coeur",
     short: "OptiHeart",
     full: "OptiHeart (cardiovasculaire)",
-    render: (active) => (
+    render: (active, severity) => (
       <HeartIcon
-        className={cn(
-          "h-6 w-6 transition-colors",
-          active ? "text-destructive" : "text-muted-foreground"
-        )}
+        className={cn("h-6 w-6 transition-colors", heartColor(severity, active))}
       />
     ),
   },
@@ -91,61 +148,25 @@ const ORGAN_PASTILLES: Array<{
     value: "poumons",
     short: "OptiLungs",
     full: "OptiLungs (respiratoire)",
-    render: (active) => (
-      <img
-        src={lungsIcon}
-        alt=""
-        className={cn(
-          "h-6 w-6 transition-opacity",
-          active ? "opacity-100" : "opacity-50"
-        )}
-      />
-    ),
+    render: (active, severity) => renderSvgIcon(lungsIcon, active, severity),
   },
   {
     value: "renal",
     short: "OptiRenal",
     full: "OptiRenal (rénal)",
-    render: (active) => (
-      <img
-        src={kidneyIcon}
-        alt=""
-        className={cn(
-          "h-6 w-6 transition-opacity",
-          active ? "opacity-100" : "opacity-50"
-        )}
-      />
-    ),
+    render: (active, severity) => renderSvgIcon(kidneyIcon, active, severity),
   },
   {
     value: "gastro",
     short: "OptiGastro",
     full: "OptiGastro (gastro-intestinal)",
-    render: (active) => (
-      <img
-        src={intestineIcon}
-        alt=""
-        className={cn(
-          "h-6 w-6 transition-opacity",
-          active ? "opacity-100" : "opacity-50"
-        )}
-      />
-    ),
+    render: (active, severity) => renderSvgIcon(intestineIcon, active, severity),
   },
   {
     value: "general",
     short: "OptiState",
     full: "OptiState (global)",
-    render: (active) => (
-      <img
-        src={stateIcon}
-        alt=""
-        className={cn(
-          "h-6 w-6 transition-opacity",
-          active ? "opacity-100" : "opacity-50"
-        )}
-      />
-    ),
+    render: (active, severity) => renderSvgIcon(stateIcon, active, severity),
   },
 ];
 
