@@ -163,6 +163,7 @@ export const CopilotPromptGenerator = ({
   defaultTemplateIds,
   hideHeader = false,
   heightClassName = "h-[600px]",
+  organSeverities = {},
 }: CopilotPromptGeneratorProps) => {
   const [open, setOpen] = useState(false);
   const [context, setContext] = useState<DeidentifiedContext | null>(null);
