@@ -424,11 +424,10 @@ const Optistate = () => {
                             Indicateurs hors cible ({m.indicators.length}) · Interventions actives ({m.interventions.length})
                           </div>
                           <div className="rounded-md border overflow-hidden">
-                            <div className="grid grid-cols-[1.2fr_1fr_1fr_auto] gap-2 px-3 py-2 bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-b">
+                            <div className="grid grid-cols-[1.2fr_1fr_1fr] gap-2 px-3 py-2 bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-b">
                               <div>Élément</div>
                               <div>Valeur</div>
                               <div>Cible</div>
-                              <div className="text-right">Tendance</div>
                             </div>
 
                             {/* Sub-header: Indicators */}
@@ -446,7 +445,7 @@ const Optistate = () => {
                                   <div
                                     key={`ind-${i}`}
                                     className={cn(
-                                      'grid grid-cols-[1.2fr_1fr_1fr_auto] gap-2 px-3 py-2 text-xs items-center border-b last:border-b-0',
+                                      'grid grid-cols-[1.2fr_1fr_1fr] gap-2 px-3 py-2 text-xs items-center border-b last:border-b-0',
                                       i % 2 === 1 ? 'bg-muted/10' : 'bg-background'
                                     )}
                                   >
@@ -467,9 +466,6 @@ const Optistate = () => {
                                       ) : null}
                                     </div>
                                     <div className="text-muted-foreground">{ind.target}</div>
-                                    <div className={cn('flex items-center justify-end', c.text)}>
-                                      <TrendIcon trend={ind.trend} />
-                                    </div>
                                   </div>
                                 );
                               })
@@ -488,11 +484,11 @@ const Optistate = () => {
                                 <div
                                   key={`itv-${i}`}
                                   className={cn(
-                                    'grid grid-cols-[1.2fr_1fr_1fr_auto] gap-2 px-3 py-2 text-xs items-center border-b last:border-b-0',
+                                    'grid grid-cols-[1.2fr_1fr_1fr] gap-2 px-3 py-2 text-xs items-center border-b last:border-b-0',
                                     i % 2 === 1 ? 'bg-muted/10' : 'bg-background'
                                   )}
                                 >
-                                  <div className="flex items-center gap-2 min-w-0 col-span-4">
+                                  <div className="flex items-center gap-2 min-w-0 col-span-3">
                                     <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
                                     <span className="font-medium text-foreground leading-snug">
                                       {it}
