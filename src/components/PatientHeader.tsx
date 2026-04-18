@@ -256,8 +256,14 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                       navigate(`${tab.path}?${params.toString()}`);
                     }}
                     aria-current={active ? "page" : undefined}
-                    className="relative flex items-center justify-center p-1 bg-transparent border-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
+                    className="relative flex items-center justify-center p-1 pt-2.5 bg-transparent border-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
                   >
+                    {active && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute top-0 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_0_2px_hsl(var(--card)),0_0_6px_hsl(var(--primary)/0.6)]"
+                      />
+                    )}
                     <Badge
                       variant="outline"
                       style={
