@@ -419,9 +419,9 @@ const Optistate = () => {
                           </Button>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                          {/* Indicators table — 2 columns wide */}
-                          <div className="lg:col-span-2">
+                        <div className="space-y-4">
+                          {/* Indicators table — full width */}
+                          <div>
                             <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
                               Indicateurs hors cible ({m.indicators.length})
                             </div>
