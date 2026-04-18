@@ -710,6 +710,36 @@ const Optibrain = () => {
     },
   ];
 
+  // Auto-select all problematic clinical indicators by default (once data arrives)
+  useEffect(() => {
+    if (clinicalAutoSelectedRef.current) return;
+    if (!patientFileData) return;
+    const problematic = clinicalIndicators
+      .filter((i) => i.status === "warning" || i.status === "critical")
+      .map((i) => i.label);
+    if (problematic.length === 0) return;
+    clinicalAutoSelectedRef.current = true;
+    setSelectedIndicators((prev) => {
+      const merged = new Set([...prev, ...problematic]);
+      return Array.from(merged);
+    });
+  }, [patientFileData, clinicalIndicators]);
+
+  // Auto-select all problematic brain optimisation metrics by default
+  useEffect(() => {
+    if (brainAutoSelectedRef.current) return;
+    if (!patientFileData) return;
+    const problematic = brainOptimisationMetrics
+      .filter((m) => m.hasDetails && (m.status === "warning" || m.status === "critical"))
+      .map((m) => m.label);
+    if (problematic.length === 0) return;
+    brainAutoSelectedRef.current = true;
+    setSelectedBrainIndicators((prev) => {
+      const merged = new Set([...prev, ...problematic]);
+      return Array.from(merged);
+    });
+  }, [patientFileData, brainOptimisationMetrics]);
+
   const isInRange = (value: number, min: number, max: number) => {
     return value >= min && value <= max;
   };
