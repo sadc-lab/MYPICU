@@ -12,6 +12,7 @@ import {
   TrendingDown,
   Minus,
   CheckCircle2,
+  Eye,
 } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { MetricRangeBar } from '@/components/MetricRangeBar';
@@ -406,14 +407,15 @@ const Optistate = () => {
                           </div>
                           <Button
                             variant="ghost"
-                            size="sm"
-                            className="text-xs gap-1 shrink-0"
+                            size="icon"
+                            className="shrink-0 h-8 w-8"
+                            aria-label={`Voir le module ${m.label}`}
+                            title={`Voir le module ${m.label}`}
                             onClick={() =>
                               navigate(`/${m.key}?patient=${encodeURIComponent(patientId)}`)
                             }
                           >
-                            Voir le module
-                            <ChevronRight className="h-3.5 w-3.5" />
+                            <Eye className="h-4 w-4" />
                           </Button>
                         </div>
 
