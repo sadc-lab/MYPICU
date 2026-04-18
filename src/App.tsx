@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useSearchParams, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { CdssChat } from "@/components/CdssChat";
+import { CopilotPromptGenerator } from "@/components/CopilotPromptGenerator";
 import Dashboard from "./pages/Dashboard";
 import Optistate from "./pages/Optistate";
 import Optibrain from "./pages/Optibrain";
@@ -34,17 +34,17 @@ const ORGAN_MAP: Record<string, string> = {
   "/optistate": "general",
 };
 
-const CdssChatWrapper = () => {
+const CopilotPromptWrapper = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || undefined;
   const organ = ORGAN_MAP[location.pathname];
 
   // Only show on protected clinical pages
-  const showChat = ["/", "/optistate", "/optibrain", "/optiheart", "/optilungs", "/optirenal", "/optigastro"].includes(location.pathname);
+  const showOn = ["/", "/optistate", "/optibrain", "/optiheart", "/optilungs", "/optirenal", "/optigastro"].includes(location.pathname);
 
-  if (!showChat) return null;
-  return <CdssChat patientId={patientId} organ={organ} />;
+  if (!showOn) return null;
+  return <CopilotPromptGenerator patientId={patientId} organ={organ} />;
 };
 
 const App = () => (
@@ -73,7 +73,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <CdssChatWrapper />
+          <CopilotPromptWrapper />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
