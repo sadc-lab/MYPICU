@@ -298,4 +298,4 @@ export function getTemplatesForOrgan(organ?: string): PromptTemplate[] {
   return PROMPT_TEMPLATES.filter((t) => !t.organs || t.organs.includes(organ));
 }
 
-export const COPILOT_URL = "https://copilot.microsoft.com/";
+export const COPILOT_URL = "https://m365.cloud.microsoft/chat/?titleId=T_30cd0c45-1a97-594b-3a2d-dd9154f328ef";
