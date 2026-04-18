@@ -157,12 +157,20 @@ export const CopilotPromptGenerator = ({
   organ,
   inline = false,
   className,
+  defaultOrgans,
+  defaultTemplateIds,
+  hideHeader = false,
+  heightClassName = "h-[600px]",
 }: CopilotPromptGeneratorProps) => {
   const [open, setOpen] = useState(false);
   const [context, setContext] = useState<DeidentifiedContext | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedOrgans, setSelectedOrgans] = useState<string[]>(organ ? [organ] : []);
-  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+  const [selectedOrgans, setSelectedOrgans] = useState<string[]>(
+    defaultOrgans && defaultOrgans.length ? defaultOrgans : organ ? [organ] : []
+  );
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>(
+    defaultTemplateIds ?? []
+  );
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
