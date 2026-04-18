@@ -72,7 +72,13 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
     return { border: "border-red-600", fill: "bg-red-600" };
   };
 
-  const isActivePage = (page: string) => currentPage === page;
+  const getActiveBorderClass = (score?: number) => {
+    if (!score || score === 0) return "border-2 border-muted-foreground";
+    if (score === 1) return "border-2 border-orange-500";
+    if (score === 2) return "border-2 border-orange-600";
+    return "border-2 border-red-600";
+  };
+
 
   return (
     <div className="bg-card border-b border-border mb-4 sm:mb-6">
