@@ -79,6 +79,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
     return "border-2 border-red-600";
   };
 
+  const isActivePage = (page: string) => currentPage === page;
 
   return (
     <div className="bg-card border-b border-border mb-4 sm:mb-6">
