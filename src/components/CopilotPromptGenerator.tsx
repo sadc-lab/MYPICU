@@ -82,22 +82,43 @@ export const CopilotPromptGenerator = ({
   };
 
   const handleCopy = async () => {
-    if (!generatedPrompt) return;
+    if (!generatedPrompt) return false;
+    let success = false;
     try {
-      await navigator.clipboard.writeText(generatedPrompt);
-      setCopied(true);
-      toast({
-        title: "Copié",
-        description: "Le prompt est dans votre presse-papiers.",
-      });
-      setTimeout(() => setCopied(false), 2000);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(generatedPrompt);
+        success = true;
+      }
     } catch {
+      success = false;
+    }
+    if (!success) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = generatedPrompt;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.setAttribute("readonly", "");
+        document.body.appendChild(ta);
+        ta.select();
+        success = document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {
+        success = false;
+      }
+    }
+    if (success) {
+      setCopied(true);
+      toast({ title: "Copié", description: "Le prompt est dans votre presse-papiers." });
+      setTimeout(() => setCopied(false), 2000);
+    } else {
       toast({
         title: "Erreur",
         description: "Impossible de copier. Sélectionnez le texte manuellement.",
         variant: "destructive",
       });
     }
+    return success;
   };
 
   const handleOpenCopilot = async () => {
