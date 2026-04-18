@@ -256,14 +256,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                       navigate(`${tab.path}?${params.toString()}`);
                     }}
                     aria-current={active ? "page" : undefined}
-                    className="relative flex items-center justify-center p-1 pt-2.5 bg-transparent border-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
+                    className="relative flex items-center justify-center p-1 bg-transparent border-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
                   >
-                    {active && (
-                      <span
-                        aria-hidden="true"
-                        className="absolute top-0 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_0_2px_hsl(var(--card)),0_0_6px_hsl(var(--primary)/0.6)]"
-                      />
-                    )}
                     <Badge
                       variant="outline"
                       style={
@@ -278,12 +272,18 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                                 "0 1px 2px hsl(var(--foreground) / 0.15), inset 0 1px 0 hsl(var(--background) / 0.6)",
                             }
                       }
-                      className={`${getOrganBadgeClass(tab.score)} text-xs transition-all duration-150 ${
+                      className={`${getOrganBadgeClass(tab.score)} text-xs transition-all duration-150 gap-1 ${
                         active ? "" : "hover:-translate-y-[1px]"
                       }`}
                     >
                       {tab.icon}
-                      <span className="ml-1 font-semibold">{tab.label}</span>
+                      <span className="font-semibold">{tab.label}</span>
+                      <span
+                        aria-hidden="true"
+                        className={`ml-0.5 h-2 w-2 rounded-full border border-primary transition-colors ${
+                          active ? "bg-primary" : "bg-transparent"
+                        }`}
+                      />
                     </Badge>
                   </button>
                 );
