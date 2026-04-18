@@ -279,7 +279,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                       variant="outline"
                       className={`${getOrganBadgeClass(tab.score)} text-xs transition-all duration-150 gap-1 ${
                         active
-                          ? "border-2 border-foreground/70 dark:border-foreground/80"
+                          ? getActiveBorderClass(tab.score)
                           : "hover:-translate-y-[1px]"
                       }`}
                     >
