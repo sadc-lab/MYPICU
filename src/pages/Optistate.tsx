@@ -295,36 +295,7 @@ const Optistate = () => {
       <PatientHeader currentPage="optistate" />
 
       <main className="container mx-auto px-6 pb-8 max-w-[1600px] space-y-6">
-        {/* SECTION 1: Vital signs */}
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">Signes Vitaux</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-              {vitalSigns.map((vital, index) => {
-                const inRange = isInRange(vital.value, vital.targetMin, vital.targetMax);
-                const valueColor = inRange ? 'text-foreground' : 'text-status-critical';
-                return (
-                  <div key={index} className="flex flex-col items-center">
-                    <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-                      {vital.label}
-                    </div>
-                    <div className={`text-4xl font-bold ${valueColor} mb-1`}>{vital.value}</div>
-                    <div className="text-[11px] text-muted-foreground mb-3">{vital.unit}</div>
-                    <MetricRangeBar
-                      value={vital.value}
-                      min={vital.min}
-                      max={vital.max}
-                      targetMin={vital.targetMin}
-                      targetMax={vital.targetMax}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Vital signs are now in the PatientHeader (auto-expanded on Optistate) */}
 
         {/* SECTION 1.5: Cross-system physiopath chains */}
         <PhysiopathChains
