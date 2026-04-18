@@ -25,6 +25,7 @@ import lungsIcon from '@/assets/lungs-icon.svg';
 import kidneyIcon from '@/assets/kidney-icon.svg';
 import intestineIcon from '@/assets/intestine-icon.svg';
 import { cn } from '@/lib/utils';
+import { PhysiopathChains } from '@/components/PhysiopathChains';
 
 type ModuleKey = 'optibrain' | 'optiheart' | 'optilungs' | 'optirenal' | 'optigastro';
 
