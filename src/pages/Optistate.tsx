@@ -324,6 +324,14 @@ const Optistate = () => {
           </CardContent>
         </Card>
 
+        {/* SECTION 1.5: Cross-system physiopath chains */}
+        <PhysiopathChains
+          failingIndicators={allFailingIndicators}
+          onModuleClick={(mod) =>
+            navigate(`/${mod}?patient=${encodeURIComponent(patientId)}`)
+          }
+        />
+
         {/* SECTION 2: Failing modules — clinical detail */}
         <Card className="shadow-sm">
           <CardHeader className="border-b">
