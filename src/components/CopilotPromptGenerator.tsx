@@ -44,6 +44,10 @@ interface CopilotPromptGeneratorProps {
   organ?: string;
   inline?: boolean;
   className?: string;
+  defaultOrgans?: string[];
+  defaultTemplateIds?: string[];
+  hideHeader?: boolean;
+  heightClassName?: string;
 }
 
 // Organ pastille definitions matching the rest of the app
