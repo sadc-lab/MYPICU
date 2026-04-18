@@ -473,30 +473,6 @@ const Optistate = () => {
           </CardContent>
         </Card>
 
-        {/* SECTION 3: Copilot export pre-filled */}
-        <Card className="shadow-sm overflow-hidden">
-          <CardHeader className="border-b bg-primary/5">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <div>
-                <CardTitle className="text-base font-semibold">Export Copilot adapté</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Systèmes en alerte pré-sélectionnés. Ajustez et générez votre PDF.
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <CopilotPromptGenerator
-              patientId={patientId}
-              inline
-              hideHeader
-              heightClassName="h-[680px]"
-              defaultOrgans={defaultOrgans}
-              className="border-0 rounded-none shadow-none"
-            />
-          </CardContent>
-        </Card>
       </main>
     </div>
   );
