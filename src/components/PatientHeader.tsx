@@ -146,27 +146,29 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 <ChevronDown className={`h-4 w-4 transition-transform ${showVitals ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-2 border-t border-border">
-                  <div className="text-xs">
-                    <span className="text-muted-foreground block">FC</span>
-                    <span className="font-semibold text-foreground">85 bpm</span>
-                  </div>
-                  <div className="text-xs">
-                    <span className="text-muted-foreground block">TA</span>
-                    <span className="font-semibold text-foreground">120/80 mmHg</span>
-                  </div>
-                  <div className="text-xs">
-                    <span className="text-muted-foreground block">Temp</span>
-                    <span className="font-semibold text-foreground">37.2°C</span>
-                  </div>
-                  <div className="text-xs">
-                    <span className="text-muted-foreground block">FR</span>
-                    <span className="font-semibold text-foreground">18/min</span>
-                  </div>
-                  <div className="text-xs">
-                    <span className="text-muted-foreground block">SpO2</span>
-                    <span className="font-semibold text-foreground">98%</span>
-                  </div>
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 pt-3 border-t border-border">
+                  {vitalSigns.map((vital, index) => {
+                    const inRange = isVitalInRange(vital.value, vital.targetMin, vital.targetMax);
+                    const valueColor = inRange ? "text-foreground" : "text-status-critical";
+                    return (
+                      <div key={index} className="flex flex-col items-center">
+                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
+                          {vital.label}
+                        </div>
+                        <div className={`text-2xl sm:text-3xl font-bold ${valueColor} leading-none`}>
+                          {vital.value}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground mb-2">{vital.unit}</div>
+                        <MetricRangeBar
+                          value={vital.value}
+                          min={vital.min}
+                          max={vital.max}
+                          targetMin={vital.targetMin}
+                          targetMax={vital.targetMax}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </CollapsibleContent>
             </Collapsible>
