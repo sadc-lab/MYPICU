@@ -62,6 +62,16 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
     return "text-red-700 dark:text-red-400";
   };
 
+  const getDotColors = (score?: number) => {
+    if (!score || score === 0)
+      return { border: "border-muted-foreground/60", fill: "bg-muted-foreground" };
+    if (score === 1)
+      return { border: "border-orange-500", fill: "bg-orange-500" };
+    if (score === 2)
+      return { border: "border-orange-600", fill: "bg-orange-600" };
+    return { border: "border-red-600", fill: "bg-red-600" };
+  };
+
   const isActivePage = (page: string) => currentPage === page;
 
   return (
@@ -280,8 +290,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                       <span className="font-semibold">{tab.label}</span>
                       <span
                         aria-hidden="true"
-                        className={`ml-0.5 h-2 w-2 rounded-full border border-primary transition-colors ${
-                          active ? "bg-primary" : "bg-transparent"
+                        className={`ml-0.5 h-2 w-2 rounded-full border transition-colors ${getDotColors(tab.score).border} ${
+                          active ? getDotColors(tab.score).fill : "bg-transparent"
                         }`}
                       />
                     </Badge>
