@@ -200,8 +200,7 @@ const Optistate = () => {
 
   const failingCount = failingModules.length;
 
-  const defaultOrgans =
-    failingModules.length > 0 ? failingModules.map((m) => m.organValue) : ['general'];
+
 
   const getStatusColor = (status: string) => {
     if (status === 'critical')
