@@ -8,7 +8,6 @@ import { usePatient } from '@/hooks/usePatients';
 import {
   ChevronRight,
   AlertTriangle,
-  Sparkles,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -16,7 +15,6 @@ import {
 } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { MetricRangeBar } from '@/components/MetricRangeBar';
-import { CopilotPromptGenerator } from '@/components/CopilotPromptGenerator';
 import {
   brainMonitoringTargets,
   heartMonitoringTargets,
