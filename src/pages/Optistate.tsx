@@ -27,6 +27,7 @@ import kidneyIcon from '@/assets/kidney-icon.svg';
 import intestineIcon from '@/assets/intestine-icon.svg';
 import { cn } from '@/lib/utils';
 import { PhysiopathChains } from '@/components/PhysiopathChains';
+import { RadialGauge, parseTargetRange } from '@/components/RadialGauge';
 
 type ModuleKey = 'optibrain' | 'optiheart' | 'optilungs' | 'optirenal' | 'optigastro';
 
@@ -419,83 +420,106 @@ const Optistate = () => {
                           </Button>
                         </div>
 
-                        <div>
-                          <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                            Indicateurs hors cible ({m.indicators.length}) · Interventions actives ({m.interventions.length})
-                          </div>
-                          <div className="rounded-md border overflow-hidden">
-                            <div className="grid grid-cols-[1.2fr_1fr_1fr] gap-2 px-3 py-2 bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-b">
-                              <div>Élément</div>
-                              <div>Valeur</div>
-                              <div>Cible</div>
-                            </div>
-
-                            {/* Sub-header: Indicators */}
-                            <div className="px-3 py-1.5 bg-muted/20 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-b">
-                              Indicateurs hors cible
+                        <div className="space-y-5">
+                          {/* Gauges grid — problematic indicators */}
+                          <div>
+                            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                              Indicateurs hors cible ({m.indicators.length})
                             </div>
                             {m.indicators.length === 0 ? (
-                              <div className="px-3 py-2 text-xs text-muted-foreground italic">
+                              <p className="text-xs text-muted-foreground italic">
                                 Aucun indicateur hors cible enregistré.
-                              </div>
+                              </p>
                             ) : (
-                              m.indicators.map((ind, i) => {
-                                const c = getStatusColor(ind.status);
-                                return (
-                                  <div
-                                    key={`ind-${i}`}
-                                    className={cn(
-                                      'grid grid-cols-[1.2fr_1fr_1fr] gap-2 px-3 py-2 text-xs items-center border-b last:border-b-0',
-                                      i % 2 === 1 ? 'bg-muted/10' : 'bg-background'
-                                    )}
-                                  >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <span
-                                        className={cn('h-1.5 w-1.5 rounded-full shrink-0', c.dot)}
-                                      />
-                                      <span className="font-medium text-foreground truncate">
-                                        {ind.label}
-                                      </span>
-                                    </div>
-                                    <div className={cn('font-semibold', c.text)}>
-                                      {ind.value}
-                                      {ind.unit ? (
-                                        <span className="text-muted-foreground font-normal ml-1">
-                                          {ind.unit}
-                                        </span>
-                                      ) : null}
-                                    </div>
-                                    <div className="text-muted-foreground">{ind.target}</div>
-                                  </div>
-                                );
-                              })
-                            )}
+                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {m.indicators.map((ind, i) => {
+                                  const numericValue =
+                                    typeof ind.value === 'number'
+                                      ? ind.value
+                                      : parseFloat(String(ind.value).replace(/[^\d.\-]/g, ''));
+                                  const range =
+                                    Number.isFinite(numericValue) && ind.target
+                                      ? parseTargetRange(ind.target, numericValue)
+                                      : null;
 
-                            {/* Sub-header: Interventions */}
-                            <div className="px-3 py-1.5 bg-muted/20 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-y">
-                              Interventions actives
+                                  // Fallback: textual / non-numeric indicator → compact card.
+                                  if (!range || !Number.isFinite(numericValue)) {
+                                    const c = getStatusColor(ind.status);
+                                    return (
+                                      <div
+                                        key={i}
+                                        className="rounded-md border bg-card p-3 flex flex-col items-center text-center"
+                                      >
+                                        <div
+                                          className={cn(
+                                            'text-base font-bold',
+                                            c.text,
+                                          )}
+                                        >
+                                          {ind.value}
+                                          {ind.unit && (
+                                            <span className="text-[10px] font-normal text-muted-foreground ml-1">
+                                              {ind.unit}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="text-xs font-medium text-foreground mt-1">
+                                          {ind.label}
+                                        </div>
+                                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                                          Cible : {ind.target}
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+
+                                  return (
+                                    <div
+                                      key={i}
+                                      className="rounded-md border bg-card p-3"
+                                    >
+                                      <RadialGauge
+                                        value={numericValue}
+                                        unit={ind.unit}
+                                        label={ind.label}
+                                        targetMin={range.targetMin}
+                                        targetMax={range.targetMax}
+                                        status={
+                                          ind.status === 'critical' ||
+                                          ind.status === 'warning'
+                                            ? ind.status
+                                            : 'normal'
+                                        }
+                                        targetCaption={ind.target}
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Interventions actives — bloc unique sous les jauges */}
+                          <div>
+                            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                              Interventions actives ({m.interventions.length})
                             </div>
                             {m.interventions.length === 0 ? (
-                              <div className="px-3 py-2 text-xs text-muted-foreground italic">
+                              <p className="text-xs text-muted-foreground italic">
                                 Aucune intervention en cours.
-                              </div>
+                              </p>
                             ) : (
-                              m.interventions.map((it, i) => (
-                                <div
-                                  key={`itv-${i}`}
-                                  className={cn(
-                                    'grid grid-cols-[1.2fr_1fr_1fr] gap-2 px-3 py-2 text-xs items-center border-b last:border-b-0',
-                                    i % 2 === 1 ? 'bg-muted/10' : 'bg-background'
-                                  )}
-                                >
-                                  <div className="flex items-center gap-2 min-w-0 col-span-3">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
-                                    <span className="font-medium text-foreground leading-snug">
-                                      {it}
-                                    </span>
+                              <div className="rounded-md border bg-muted/20 px-3 py-2.5 space-y-1.5">
+                                {m.interventions.map((it, i) => (
+                                  <div
+                                    key={i}
+                                    className="flex items-start gap-2 text-xs text-foreground"
+                                  >
+                                    <span className="h-1.5 w-1.5 rounded-full bg-primary/60 mt-1.5 shrink-0" />
+                                    <span className="leading-snug">{it}</span>
                                   </div>
-                                </div>
-                              ))
+                                ))}
+                              </div>
                             )}
                           </div>
                         </div>
