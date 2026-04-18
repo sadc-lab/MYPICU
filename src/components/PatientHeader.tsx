@@ -256,21 +256,26 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                       navigate(`${tab.path}?${params.toString()}`);
                     }}
                     aria-current={active ? "page" : undefined}
-                    style={
-                      active
-                        ? {
-                            boxShadow:
-                              "inset 0 3px 5px hsl(var(--foreground) / 0.18), inset 0 -1px 0 hsl(var(--background) / 0.4)",
-                          }
-                        : undefined
-                    }
-                    className={`relative flex items-center justify-center p-1.5 sm:p-2 rounded-lg transition-all duration-150 ${
-                      active
-                        ? "bg-muted translate-y-[1px]"
-                        : "bg-transparent hover:bg-muted/60 shadow-[0_1px_0_hsl(var(--border))] active:translate-y-[1px] active:shadow-none"
-                    }`}
+                    className="relative flex items-center justify-center p-1 bg-transparent border-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
                   >
-                    <Badge variant="outline" className={`${getOrganBadgeClass(tab.score)} text-xs`}>
+                    <Badge
+                      variant="outline"
+                      style={
+                        active
+                          ? {
+                              boxShadow:
+                                "inset 0 3px 6px hsl(var(--foreground) / 0.32), inset 0 -1px 0 hsl(var(--background) / 0.5)",
+                              transform: "translateY(1px)",
+                            }
+                          : {
+                              boxShadow:
+                                "0 1px 2px hsl(var(--foreground) / 0.15), inset 0 1px 0 hsl(var(--background) / 0.6)",
+                            }
+                      }
+                      className={`${getOrganBadgeClass(tab.score)} text-xs transition-all duration-150 ${
+                        active ? "" : "hover:-translate-y-[1px]"
+                      }`}
+                    >
                       {tab.icon}
                       <span className="ml-1 font-semibold">{tab.label}</span>
                     </Badge>
