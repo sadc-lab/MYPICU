@@ -264,22 +264,24 @@ async function renderPDF(args: RenderArgs): Promise<string> {
   y += 2;
 
   // Scores
-  const scoreEntries: Array<[string, string]> = [
-    ["PELOD-2", ctx.pelodScore],
-    ["GCS", ctx.gcs],
-    ["Score cérébral", ctx.brainScore],
-    ["Score cardiaque", ctx.heartScore],
-    ["Score pulmonaire", ctx.lungsScore],
-    ["Score rénal", ctx.kidneyScore],
-  ]
+  const scoreEntries: Array<[string, string]> = (
+    [
+      ["PELOD-2", ctx.pelodScore],
+      ["GCS", ctx.gcs],
+      ["Score cérébral", ctx.brainScore],
+      ["Score cardiaque", ctx.heartScore],
+      ["Score pulmonaire", ctx.lungsScore],
+      ["Score rénal", ctx.kidneyScore],
+    ] as Array<[string, number | null | undefined]>
+  )
     .filter(([, v]) => v != null)
-    .map(([k, v]) => [k as string, String(v)]);
+    .map(([k, v]) => [k, String(v)] as [string, string]);
 
   if (scoreEntries.length) {
     autoTable(doc, {
       startY: y,
       head: [["Score", "Valeur"]],
-      body: scoreEntries.map(([k, v]) => [k as string, String(v)]),
+      body: scoreEntries,
       theme: "grid",
       styles: { fontSize: 9, cellPadding: 1.5 },
       headStyles: { fillColor: [37, 99, 235] },
