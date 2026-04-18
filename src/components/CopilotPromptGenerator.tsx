@@ -349,7 +349,7 @@ export const CopilotPromptGenerator = ({
                       aria-pressed={active}
                       title={p.full}
                       className={cn(
-                        "group flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all",
+                        "group relative flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all",
                         active
                           ? "bg-primary/5 border-primary shadow-sm"
                           : "bg-background border-border hover:border-primary/40 hover:bg-accent/40"
@@ -372,7 +372,7 @@ export const CopilotPromptGenerator = ({
                         {p.short}
                       </span>
                       {active && (
-                        <span className="absolute -mt-12 ml-12 h-4 w-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                        <span className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
                           <Check className="h-2.5 w-2.5" />
                         </span>
                       )}
