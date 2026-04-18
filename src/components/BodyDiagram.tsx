@@ -166,8 +166,8 @@ export const BodyDiagram = ({ problematicOrgans, patientId, organIndicators = {}
                       key={idx}
                       className={`flex gap-3 p-3 rounded-lg ${
                         rec.priority === 'critical' 
-                          ? 'bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500' 
-                          : 'bg-orange-100 dark:bg-orange-900/20 border-l-4 border-orange-500'
+                          ? 'bg-red-100 dark:bg-red-900/20' 
+                          : 'bg-orange-100 dark:bg-orange-950/20'
                       }`}
                     >
                       <div className="flex-shrink-0 mt-0.5">
