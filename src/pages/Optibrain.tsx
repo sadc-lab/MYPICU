@@ -1305,20 +1305,21 @@ const Optibrain = () => {
                       className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold border-4 shrink-0 ${
                         monitoringAdherence === null
                           ? "border-muted-foreground/30 text-muted-foreground bg-muted"
-                          : monitoringAdherence >= 90
+                          : nonAdherentCount === 0
                             ? "border-muted-foreground text-muted-foreground bg-muted"
-                            : monitoringAdherence >= 80
+                            : nonAdherentCount <= 2
                               ? "border-status-warning text-status-warning bg-status-warning/10"
                               : "border-status-critical text-status-critical bg-status-critical/10"
                       }`}
+                      title={monitoringAdherence !== null ? `${monitoringAdherence}% d'adhérence` : undefined}
                     >
-                      {monitoringAdherence !== null ? `${monitoringAdherence}%` : "--"}
+                      {monitoringAdherence !== null ? nonAdherentCount : "--"}
                     </div>
                     <div className="min-w-0">
                       <h3 className="text-xs sm:text-sm font-semibold text-foreground">Monitorage et interventions en place</h3>
                       <p className="text-xs text-muted-foreground mt-1">
                         {patientFileData
-                          ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}`
+                          ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}${monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}`
                           : "Pas de données disponibles"}
                       </p>
                     </div>
@@ -1403,19 +1404,20 @@ const Optibrain = () => {
                       className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold border-4 shrink-0 ${
                         clinicalAdherence === null
                           ? "border-muted-foreground/30 text-muted-foreground bg-muted"
-                          : clinicalAdherence >= 90
+                          : outOfRangeCount === 0
                             ? "border-muted-foreground text-muted-foreground bg-muted"
-                            : clinicalAdherence >= 80
+                            : outOfRangeCount <= 2
                               ? "border-status-warning text-status-warning bg-status-warning/10"
                               : "border-status-critical text-status-critical bg-status-critical/10"
                       }`}
+                      title={clinicalAdherence !== null ? `${clinicalAdherence}% d'adhérence` : undefined}
                     >
-                      {clinicalAdherence !== null ? `${clinicalAdherence}%` : "--"}
+                      {clinicalAdherence !== null ? outOfRangeCount : "--"}
                     </div>
                     <div className="min-w-0">
                        <h3 className="text-xs sm:text-sm font-semibold text-foreground">Adhérence aux cibles recommandées</h3>
                        <p className="text-xs text-muted-foreground mt-1">
-                        {patientFileData ? `${outOfRangeCount} Indicateurs à surveiller` : "Pas de données disponibles"}
+                        {patientFileData ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? "s" : ""} à surveiller${clinicalAdherence !== null ? ` · ${clinicalAdherence}% d'adhérence` : ""}` : "Pas de données disponibles"}
                       </p>
                     </div>
                   </div>
