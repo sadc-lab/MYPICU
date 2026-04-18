@@ -1,17 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import {
   Sparkles,
   Copy,
@@ -21,13 +20,17 @@ import {
   Loader2,
   FileDown,
 } from "lucide-react";
+import { HeartIcon } from "@/components/icons/HeartIcon";
+import brainIcon from "@/assets/brain-icon.svg";
+import lungsIcon from "@/assets/lungs-icon.svg";
+import kidneyIcon from "@/assets/kidney-icon.svg";
+import intestineIcon from "@/assets/intestine-icon.svg";
+import stateIcon from "@/assets/stats-icon.svg";
 import {
   PROMPT_TEMPLATES,
-  CATEGORY_LABELS,
   COPILOT_URL,
   buildDeidentifiedContext,
   type DeidentifiedContext,
-  type PromptCategory,
 } from "@/services/copilotPrompt.service";
 import {
   exportMultiDashboardPDF,
@@ -43,6 +46,108 @@ interface CopilotPromptGeneratorProps {
   className?: string;
 }
 
+// Organ pastille definitions matching the rest of the app
+const ORGAN_PASTILLES: Array<{
+  value: string;
+  short: string;
+  full: string;
+  render: (active: boolean) => JSX.Element;
+}> = [
+  {
+    value: "cerveau",
+    short: "OptiBrain",
+    full: "OptiBrain (neurologique)",
+    render: (active) => (
+      <img
+        src={brainIcon}
+        alt=""
+        className={cn(
+          "h-6 w-6 transition-opacity",
+          active ? "opacity-100" : "opacity-50"
+        )}
+      />
+    ),
+  },
+  {
+    value: "coeur",
+    short: "OptiHeart",
+    full: "OptiHeart (cardiovasculaire)",
+    render: (active) => (
+      <HeartIcon
+        className={cn(
+          "h-6 w-6 transition-colors",
+          active ? "text-destructive" : "text-muted-foreground"
+        )}
+      />
+    ),
+  },
+  {
+    value: "poumons",
+    short: "OptiLungs",
+    full: "OptiLungs (respiratoire)",
+    render: (active) => (
+      <img
+        src={lungsIcon}
+        alt=""
+        className={cn(
+          "h-6 w-6 transition-opacity",
+          active ? "opacity-100" : "opacity-50"
+        )}
+      />
+    ),
+  },
+  {
+    value: "renal",
+    short: "OptiRenal",
+    full: "OptiRenal (rénal)",
+    render: (active) => (
+      <img
+        src={kidneyIcon}
+        alt=""
+        className={cn(
+          "h-6 w-6 transition-opacity",
+          active ? "opacity-100" : "opacity-50"
+        )}
+      />
+    ),
+  },
+  {
+    value: "gastro",
+    short: "OptiGastro",
+    full: "OptiGastro (gastro-intestinal)",
+    render: (active) => (
+      <img
+        src={intestineIcon}
+        alt=""
+        className={cn(
+          "h-6 w-6 transition-opacity",
+          active ? "opacity-100" : "opacity-50"
+        )}
+      />
+    ),
+  },
+  {
+    value: "general",
+    short: "OptiState",
+    full: "OptiState (global)",
+    render: (active) => (
+      <img
+        src={stateIcon}
+        alt=""
+        className={cn(
+          "h-6 w-6 transition-opacity",
+          active ? "opacity-100" : "opacity-50"
+        )}
+      />
+    ),
+  },
+];
+
+// Ensure we only show pastilles for organs that exist in ORGAN_OPTIONS
+const visiblePastilles = ORGAN_PASTILLES.filter((p) =>
+  ORGAN_OPTIONS.some((o) => o.value === p.value)
+);
+
 export const CopilotPromptGenerator = ({
   patientId,
   organ,
@@ -52,17 +157,11 @@ export const CopilotPromptGenerator = ({
   const [open, setOpen] = useState(false);
   const [context, setContext] = useState<DeidentifiedContext | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<PromptCategory | "all">("all");
   const [selectedOrgans, setSelectedOrgans] = useState<string[]>(organ ? [organ] : []);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
-
-  const filteredTemplates = useMemo(() => {
-    if (activeCategory === "all") return PROMPT_TEMPLATES;
-    return PROMPT_TEMPLATES.filter((t) => t.category === activeCategory);
-  }, [activeCategory]);
 
   useEffect(() => {
     if (!patientId) return;
@@ -81,11 +180,7 @@ export const CopilotPromptGenerator = ({
 
   // Build live preview prompt
   useEffect(() => {
-    if (!context) {
-      setGeneratedPrompt("");
-      return;
-    }
-    if (!selectedTemplateIds.length) {
+    if (!context || !selectedTemplateIds.length) {
       setGeneratedPrompt("");
       return;
     }
@@ -229,75 +324,80 @@ export const CopilotPromptGenerator = ({
         </div>
       ) : (
         <ScrollArea className="flex-1 min-h-0">
-          <div className="p-3 space-y-4">
-            {/* Step 1: Organs */}
+          <div className="p-4 space-y-5">
+            {/* Step 1: Organ pastilles */}
             <section>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold">
-                  1. Modules à inclure dans le PDF
+                  1. Modules à inclure
                 </h3>
                 <span className="text-xs text-muted-foreground">
-                  {selectedOrgans.length}/{ORGAN_OPTIONS.length} sélectionnés
+                  {selectedOrgans.length}/{visiblePastilles.length}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {ORGAN_OPTIONS.map((o) => {
-                  const checked = selectedOrgans.includes(o.value);
+              <p className="text-xs text-muted-foreground mb-3">
+                Cliquez sur une pastille pour l'activer ou la désactiver.
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {visiblePastilles.map((p) => {
+                  const active = selectedOrgans.includes(p.value);
                   return (
-                    <label
-                      key={o.value}
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => toggleOrgan(p.value)}
+                      aria-pressed={active}
+                      title={p.full}
                       className={cn(
-                        "flex items-center gap-2 px-2.5 py-1.5 rounded-md border cursor-pointer text-xs transition-colors",
-                        checked
-                          ? "bg-primary/10 border-primary"
-                          : "bg-background hover:bg-accent border-border"
+                        "group flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all",
+                        active
+                          ? "bg-primary/5 border-primary shadow-sm"
+                          : "bg-background border-border hover:border-primary/40 hover:bg-accent/40"
                       )}
                     >
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={() => toggleOrgan(o.value)}
-                      />
-                      <span className="flex-1">{o.label}</span>
-                    </label>
+                      <div
+                        className={cn(
+                          "flex items-center justify-center h-10 w-10 rounded-full transition-colors",
+                          active ? "bg-primary/10" : "bg-muted/60"
+                        )}
+                      >
+                        {p.render(active)}
+                      </div>
+                      <span
+                        className={cn(
+                          "text-[11px] font-medium leading-tight text-center",
+                          active ? "text-foreground" : "text-muted-foreground"
+                        )}
+                      >
+                        {p.short}
+                      </span>
+                      {active && (
+                        <span className="absolute -mt-12 ml-12 h-4 w-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                          <Check className="h-2.5 w-2.5" />
+                        </span>
+                      )}
+                    </button>
                   );
                 })}
               </div>
             </section>
 
-            {/* Step 2: Prompts */}
+            {/* Step 2: Prompts (no tabs, full list) */}
             <section>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold">
                   2. Prompts cliniques à inclure
                 </h3>
                 <span className="text-xs text-muted-foreground">
-                  {selectedTemplateIds.length} sélectionné{selectedTemplateIds.length > 1 ? "s" : ""}
+                  {selectedTemplateIds.length} sélectionné
+                  {selectedTemplateIds.length > 1 ? "s" : ""}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mb-2">
                 Optionnel — laissez vide pour un prompt d'analyse générique.
               </p>
-              <div className="flex gap-1.5 flex-wrap mb-2">
-                <Badge
-                  variant={activeCategory === "all" ? "default" : "outline"}
-                  className="cursor-pointer text-xs"
-                  onClick={() => setActiveCategory("all")}
-                >
-                  Tous
-                </Badge>
-                {(Object.keys(CATEGORY_LABELS) as PromptCategory[]).map((cat) => (
-                  <Badge
-                    key={cat}
-                    variant={activeCategory === cat ? "default" : "outline"}
-                    className="cursor-pointer text-xs"
-                    onClick={() => setActiveCategory(cat)}
-                  >
-                    {CATEGORY_LABELS[cat]}
-                  </Badge>
-                ))}
-              </div>
               <div className="space-y-1.5">
-                {filteredTemplates.map((t) => {
+                {PROMPT_TEMPLATES.map((t) => {
                   const checked = selectedTemplateIds.includes(t.id);
                   return (
                     <label
@@ -315,7 +415,9 @@ export const CopilotPromptGenerator = ({
                         className="mt-0.5"
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-foreground">{t.label}</div>
+                        <div className="text-sm font-medium text-foreground">
+                          {t.label}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {t.description}
                         </div>
@@ -343,7 +445,11 @@ export const CopilotPromptGenerator = ({
                   onClick={handleCopyPrompt}
                   className="w-full mt-2"
                 >
-                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
                   {copied ? "Prompt copié" : "Copier le prompt seul"}
                 </Button>
               </section>
@@ -364,7 +470,7 @@ export const CopilotPromptGenerator = ({
 
       {/* Action bar */}
       {patientId && context && (
-        <div className="p-2 border-t flex gap-2 shrink-0 bg-background">
+        <div className="p-3 border-t flex gap-2 shrink-0 bg-background">
           <Button
             variant="outline"
             onClick={() => handleGeneratePDF(false)}
@@ -416,21 +522,24 @@ export const CopilotPromptGenerator = ({
         <Sparkles className="h-6 w-6" />
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl p-0 gap-0 h-[88vh] flex flex-col overflow-hidden">
-          <DialogHeader className="px-4 py-3 border-b shrink-0">
-            <DialogTitle className="flex items-center gap-2">
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-md md:max-w-lg p-0 flex flex-col gap-0"
+        >
+          <SheetHeader className="px-4 py-3 border-b shrink-0 space-y-1 text-left">
+            <SheetTitle className="flex items-center gap-2 text-base">
               <Sparkles className="h-4 w-4 text-primary" />
-              Export Copilot — Modules &amp; prompts
-            </DialogTitle>
-            <DialogDescription className="text-xs">
+              Export Copilot
+            </SheetTitle>
+            <SheetDescription className="text-xs">
               Sélectionnez les modules et les questions cliniques à combiner dans un seul
               PDF dé-identifié.
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
           <div className="flex-1 min-h-0 overflow-hidden">{body}</div>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </>
   );
 };
