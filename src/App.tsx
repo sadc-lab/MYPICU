@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useSearchParams, useLocation } from "reac
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { CopilotPromptGenerator } from "@/components/CopilotPromptGenerator";
+import { usePatient } from "@/hooks/usePatients";
 import Dashboard from "./pages/Dashboard";
 import Optistate from "./pages/Optistate";
 import Optibrain from "./pages/Optibrain";
@@ -34,17 +35,44 @@ const ORGAN_MAP: Record<string, string> = {
   "/optistate": "general",
 };
 
+const ORGAN_BY_SCORE_KEY: Array<{ key: keyof Pick<any, 'brainScore'>; organ: string }> = [
+  { key: 'brainScore' as any, organ: 'cerveau' },
+  { key: 'heartScore' as any, organ: 'coeur' },
+  { key: 'lungsScore' as any, organ: 'poumons' },
+  { key: 'kidneyScore' as any, organ: 'renal' },
+];
+
 const CopilotPromptWrapper = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || undefined;
   const organ = ORGAN_MAP[location.pathname];
+  const { data: patient } = usePatient(patientId || null);
 
   // Only show on protected clinical pages
   const showOn = ["/", "/optistate", "/optibrain", "/optiheart", "/optilungs", "/optirenal", "/optigastro"].includes(location.pathname);
 
   if (!showOn) return null;
-  return <CopilotPromptGenerator patientId={patientId} organ={organ} />;
+
+  // Auto-preselect organs with score >= 1 (critical/warning systems)
+  const criticalOrgans = patient
+    ? ORGAN_BY_SCORE_KEY
+        .filter(({ key }) => ((patient as any)[key] || 0) >= 1)
+        .sort((a, b) => ((patient as any)[b.key] || 0) - ((patient as any)[a.key] || 0))
+        .map(({ organ }) => organ)
+    : [];
+
+  // Fallback: current page organ if no critical ones detected
+  const defaultOrgans =
+    criticalOrgans.length > 0 ? criticalOrgans : organ ? [organ] : undefined;
+
+  return (
+    <CopilotPromptGenerator
+      patientId={patientId}
+      organ={organ}
+      defaultOrgans={defaultOrgans}
+    />
+  );
 };
 
 const App = () => (

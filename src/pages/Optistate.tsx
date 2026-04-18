@@ -8,7 +8,6 @@ import { usePatient } from '@/hooks/usePatients';
 import {
   ChevronRight,
   AlertTriangle,
-  Sparkles,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -16,7 +15,6 @@ import {
 } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { MetricRangeBar } from '@/components/MetricRangeBar';
-import { CopilotPromptGenerator } from '@/components/CopilotPromptGenerator';
 import {
   brainMonitoringTargets,
   heartMonitoringTargets,
@@ -202,8 +200,7 @@ const Optistate = () => {
 
   const failingCount = failingModules.length;
 
-  const defaultOrgans =
-    failingModules.length > 0 ? failingModules.map((m) => m.organValue) : ['general'];
+
 
   const getStatusColor = (status: string) => {
     if (status === 'critical')
@@ -473,30 +470,6 @@ const Optistate = () => {
           </CardContent>
         </Card>
 
-        {/* SECTION 3: Copilot export pre-filled */}
-        <Card className="shadow-sm overflow-hidden">
-          <CardHeader className="border-b bg-primary/5">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <div>
-                <CardTitle className="text-base font-semibold">Export Copilot adapté</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Systèmes en alerte pré-sélectionnés. Ajustez et générez votre PDF.
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <CopilotPromptGenerator
-              patientId={patientId}
-              inline
-              hideHeader
-              heightClassName="h-[680px]"
-              defaultOrgans={defaultOrgans}
-              className="border-0 rounded-none shadow-none"
-            />
-          </CardContent>
-        </Card>
       </main>
     </div>
   );

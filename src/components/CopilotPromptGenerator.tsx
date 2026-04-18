@@ -185,10 +185,13 @@ export const CopilotPromptGenerator = ({
       .finally(() => setLoading(false));
   }, [patientId, organ, open, inline]);
 
+  // Re-apply default organ selection when patient changes (auto-track critical systems)
   useEffect(() => {
-    if (organ && !selectedOrgans.length) setSelectedOrgans([organ]);
+    const next =
+      defaultOrgans && defaultOrgans.length ? defaultOrgans : organ ? [organ] : [];
+    if (next.length) setSelectedOrgans(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organ]);
+  }, [patientId, defaultOrgans?.join(",")]);
 
   // Build live preview prompt
   useEffect(() => {
