@@ -63,7 +63,7 @@ import { UnifiedBrainChart } from "@/components/UnifiedBrainChart";
 import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
-import { CopilotPromptGenerator } from "@/components/CopilotPromptGenerator";
+
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
@@ -1655,7 +1655,7 @@ const Optibrain = () => {
           </CardContent>
         </Card>
 
-        <CopilotPromptGenerator patientId={patientId} organ="cerveau" inline className="mt-4" />
+        
       </main>
     </div>
   );
