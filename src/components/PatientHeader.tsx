@@ -40,10 +40,14 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   if (isLoading) return <div className="bg-card border-b border-border mb-4 sm:mb-6 p-4 text-center text-muted-foreground">Chargement...</div>;
   if (!patient) return null;
 
-  // All tabs share a uniform pale grey background. Only the icon + label
-  // pick up the severity color (orange/red) when score >= 1.
-  const getOrganBadgeClass = () =>
-    "bg-muted text-foreground border border-border";
+  // Uniform pale grey background. Border picks up severity color when score >= 1.
+  const getOrganBadgeClass = (score?: number) => {
+    const base = "bg-muted text-foreground border";
+    if (!score || score === 0) return `${base} border-border`;
+    if (score === 1) return `${base} border-orange-500`;
+    if (score === 2) return `${base} border-orange-600`;
+    return `${base} border-red-600`;
+  };
 
   const getColorFilter = (score?: number) => {
     if (!score || score === 0)
@@ -70,8 +74,13 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
     return { border: "border-red-600", fill: "bg-red-600" };
   };
 
-  // Active state keeps a neutral primary border so all tabs visually share the same cage.
-  const getActiveBorderClass = () => "border-2 border-primary";
+  // Active tab uses a thicker border in the same severity color (or primary if normal).
+  const getActiveBorderClass = (score?: number) => {
+    if (!score || score === 0) return "border-2 border-primary";
+    if (score === 1) return "border-2 border-orange-500";
+    if (score === 2) return "border-2 border-orange-600";
+    return "border-2 border-red-600";
+  };
 
   const isActivePage = (page: string) => currentPage === page;
 
@@ -263,9 +272,9 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   >
                     <Badge
                       variant="outline"
-                      className={`${getOrganBadgeClass()} text-xs transition-all duration-150 gap-1 ${
+                      className={`${getOrganBadgeClass(tab.score)} text-xs transition-all duration-150 gap-1 ${
                         active
-                          ? getActiveBorderClass()
+                          ? getActiveBorderClass(tab.score)
                           : "hover:-translate-y-[1px]"
                       }`}
                     >
