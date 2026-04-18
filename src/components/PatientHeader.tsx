@@ -256,27 +256,24 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                       navigate(`${tab.path}?${params.toString()}`);
                     }}
                     aria-current={active ? "page" : undefined}
-                    className={`relative flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
+                    style={
                       active
-                        ? "bg-primary/10 ring-2 ring-primary shadow-sm scale-105"
-                        : "ring-1 ring-transparent hover:bg-muted hover:ring-border"
+                        ? {
+                            boxShadow:
+                              "inset 0 3px 5px hsl(var(--foreground) / 0.18), inset 0 -1px 0 hsl(var(--background) / 0.4)",
+                          }
+                        : undefined
+                    }
+                    className={`relative flex items-center justify-center p-1.5 sm:p-2 rounded-lg transition-all duration-150 ${
+                      active
+                        ? "bg-muted translate-y-[1px]"
+                        : "bg-transparent hover:bg-muted/60 shadow-[0_1px_0_hsl(var(--border))] active:translate-y-[1px] active:shadow-none"
                     }`}
                   >
-                    <Badge
-                      variant="outline"
-                      className={`${getOrganBadgeClass(tab.score)} text-xs ${
-                        active ? "border-transparent" : ""
-                      }`}
-                    >
+                    <Badge variant="outline" className={`${getOrganBadgeClass(tab.score)} text-xs`}>
                       {tab.icon}
                       <span className="ml-1 font-semibold">{tab.label}</span>
                     </Badge>
-                    <span
-                      className={`h-0.5 w-full rounded-full transition-colors ${
-                        active ? "bg-primary" : "bg-transparent"
-                      }`}
-                      aria-hidden="true"
-                    />
                   </button>
                 );
               })}
