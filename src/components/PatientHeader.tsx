@@ -40,13 +40,28 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   if (isLoading) return <div className="bg-card border-b border-border mb-4 sm:mb-6 p-4 text-center text-muted-foreground">Chargement...</div>;
   if (!patient) return null;
 
-  // Uniform pale grey background. Border picks up severity color when score >= 1.
-  const getOrganBadgeClass = (score?: number) => {
-    const base = "bg-muted text-foreground border";
-    if (!score || score === 0) return `${base} border-border`;
-    if (score === 1) return `${base} border-orange-500`;
-    if (score === 2) return `${base} border-orange-600`;
-    return `${base} border-red-600`;
+  // Inactive tabs: pale grey bg + colored border if problematic.
+  // Active tab: tinted bg matching severity (low opacity for readability).
+  const getOrganBadgeClass = (score: number | undefined, active: boolean) => {
+    const base = "border";
+    if (!score || score === 0) {
+      return active
+        ? `${base} bg-primary/10 text-foreground border-border`
+        : `${base} bg-muted text-foreground border-border`;
+    }
+    if (score === 1) {
+      return active
+        ? `${base} bg-orange-500/15 text-foreground border-orange-500`
+        : `${base} bg-muted text-foreground border-orange-500`;
+    }
+    if (score === 2) {
+      return active
+        ? `${base} bg-orange-600/15 text-foreground border-orange-600`
+        : `${base} bg-muted text-foreground border-orange-600`;
+    }
+    return active
+      ? `${base} bg-red-600/15 text-foreground border-red-600`
+      : `${base} bg-muted text-foreground border-red-600`;
   };
 
   const getColorFilter = (score?: number) => {
@@ -74,7 +89,6 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
     return { border: "border-red-600", fill: "bg-red-600" };
   };
 
-  // Active tab uses a thicker border in the same severity color (or primary if normal).
   const getActiveBorderClass = (score?: number) => {
     if (!score || score === 0) return "border-2 border-primary";
     if (score === 1) return "border-2 border-orange-500";
@@ -272,7 +286,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   >
                     <Badge
                       variant="outline"
-                      className={`${getOrganBadgeClass(tab.score)} text-xs transition-all duration-150 gap-1 ${
+                      className={`${getOrganBadgeClass(tab.score, active)} text-xs transition-all duration-150 gap-1 ${
                         active
                           ? getActiveBorderClass(tab.score)
                           : "hover:-translate-y-[1px]"
