@@ -419,95 +419,87 @@ const Optistate = () => {
                           </Button>
                         </div>
 
-                        <div className="space-y-4">
-                          {/* Indicators table — full width */}
-                          <div>
-                            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                              Indicateurs hors cible ({m.indicators.length})
+                        <div>
+                          <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                            Indicateurs hors cible ({m.indicators.length}) · Interventions actives ({m.interventions.length})
+                          </div>
+                          <div className="rounded-md border overflow-hidden">
+                            <div className="grid grid-cols-[1.2fr_1fr_1fr_auto] gap-2 px-3 py-2 bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-b">
+                              <div>Élément</div>
+                              <div>Valeur</div>
+                              <div>Cible</div>
+                              <div className="text-right">Tendance</div>
+                            </div>
+
+                            {/* Sub-header: Indicators */}
+                            <div className="px-3 py-1.5 bg-muted/20 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-b">
+                              Indicateurs hors cible
                             </div>
                             {m.indicators.length === 0 ? (
-                              <p className="text-xs text-muted-foreground italic">
+                              <div className="px-3 py-2 text-xs text-muted-foreground italic">
                                 Aucun indicateur hors cible enregistré.
-                              </p>
-                            ) : (
-                              <div className="rounded-md border overflow-hidden">
-                                <div className="grid grid-cols-[1.2fr_1fr_1fr_auto] gap-2 px-3 py-2 bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-b">
-                                  <div>Indicateur</div>
-                                  <div>Valeur</div>
-                                  <div>Cible</div>
-                                  <div className="text-right">Tendance</div>
-                                </div>
-                                {m.indicators.map((ind, i) => {
-                                  const c = getStatusColor(ind.status);
-                                  return (
-                                    <div
-                                      key={i}
-                                      className={cn(
-                                        'grid grid-cols-[1.2fr_1fr_1fr_auto] gap-2 px-3 py-2 text-xs items-center',
-                                        i % 2 === 1 ? 'bg-muted/20' : 'bg-background'
-                                      )}
-                                    >
-                                      <div className="flex items-center gap-2 min-w-0">
-                                        <span
-                                          className={cn('h-1.5 w-1.5 rounded-full shrink-0', c.dot)}
-                                        />
-                                        <span className="font-medium text-foreground truncate">
-                                          {ind.label}
-                                        </span>
-                                      </div>
-                                      <div className={cn('font-semibold', c.text)}>
-                                        {ind.value}
-                                        {ind.unit ? (
-                                          <span className="text-muted-foreground font-normal ml-1">
-                                            {ind.unit}
-                                          </span>
-                                        ) : null}
-                                      </div>
-                                      <div className="text-muted-foreground">{ind.target}</div>
-                                      <div
-                                        className={cn(
-                                          'flex items-center justify-end',
-                                          c.text
-                                        )}
-                                      >
-                                        <TrendIcon trend={ind.trend} />
-                                      </div>
-                                    </div>
-                                  );
-                                })}
                               </div>
-                            )}
-                          </div>
-
-                          {/* Interventions actives */}
-                          <div>
-                            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                              Interventions actives ({m.interventions.length})
-                            </div>
-                            {m.interventions.length === 0 ? (
-                              <p className="text-xs text-muted-foreground italic">
-                                Aucune intervention en cours.
-                              </p>
                             ) : (
-                              <div className="rounded-md border overflow-hidden">
-                                <div className="px-3 py-2 bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-b">
-                                  Intervention
-                                </div>
-                                {m.interventions.map((it, i) => (
+                              m.indicators.map((ind, i) => {
+                                const c = getStatusColor(ind.status);
+                                return (
                                   <div
-                                    key={i}
+                                    key={`ind-${i}`}
                                     className={cn(
-                                      'flex items-center gap-2 px-3 py-2 text-xs',
-                                      i % 2 === 1 ? 'bg-muted/20' : 'bg-background'
+                                      'grid grid-cols-[1.2fr_1fr_1fr_auto] gap-2 px-3 py-2 text-xs items-center border-b last:border-b-0',
+                                      i % 2 === 1 ? 'bg-muted/10' : 'bg-background'
                                     )}
                                   >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <span
+                                        className={cn('h-1.5 w-1.5 rounded-full shrink-0', c.dot)}
+                                      />
+                                      <span className="font-medium text-foreground truncate">
+                                        {ind.label}
+                                      </span>
+                                    </div>
+                                    <div className={cn('font-semibold', c.text)}>
+                                      {ind.value}
+                                      {ind.unit ? (
+                                        <span className="text-muted-foreground font-normal ml-1">
+                                          {ind.unit}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                    <div className="text-muted-foreground">{ind.target}</div>
+                                    <div className={cn('flex items-center justify-end', c.text)}>
+                                      <TrendIcon trend={ind.trend} />
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+
+                            {/* Sub-header: Interventions */}
+                            <div className="px-3 py-1.5 bg-muted/20 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-y">
+                              Interventions actives
+                            </div>
+                            {m.interventions.length === 0 ? (
+                              <div className="px-3 py-2 text-xs text-muted-foreground italic">
+                                Aucune intervention en cours.
+                              </div>
+                            ) : (
+                              m.interventions.map((it, i) => (
+                                <div
+                                  key={`itv-${i}`}
+                                  className={cn(
+                                    'grid grid-cols-[1.2fr_1fr_1fr_auto] gap-2 px-3 py-2 text-xs items-center border-b last:border-b-0',
+                                    i % 2 === 1 ? 'bg-muted/10' : 'bg-background'
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0 col-span-4">
                                     <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
                                     <span className="font-medium text-foreground leading-snug">
                                       {it}
                                     </span>
                                   </div>
-                                ))}
-                              </div>
+                                </div>
+                              ))
                             )}
                           </div>
                         </div>
