@@ -176,10 +176,6 @@ export const PhysiopathChains = ({
         <TooltipProvider delayDuration={200}>
           <div className="space-y-4">
             {activeChains.map(({ chain, matched }) => {
-              const accentBar =
-                chain.severity === 'critical'
-                  ? 'bg-status-critical'
-                  : 'bg-status-warning';
               const accentBadge =
                 chain.severity === 'critical'
                   ? 'bg-status-critical/10 text-status-critical border-status-critical/30'
@@ -190,8 +186,7 @@ export const PhysiopathChains = ({
                   key={chain.id}
                   className="relative rounded-lg border bg-card overflow-hidden"
                 >
-                  <div className={cn('absolute left-0 top-0 bottom-0 w-1', accentBar)} />
-                  <div className="pl-5 pr-4 py-3.5">
+                  <div className="px-4 py-3.5">
                     <div className="flex items-start justify-between gap-3 flex-wrap mb-2.5">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
