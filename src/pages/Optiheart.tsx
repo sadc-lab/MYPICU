@@ -10,7 +10,7 @@ import { usePatient } from '@/hooks/usePatients';
 import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus } from 'lucide-react';
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 import { MetricRangeBar } from '@/components/MetricRangeBar';
-import { CdssRecommendations } from '@/components/CdssRecommendations';
+import { CopilotPromptGenerator } from '@/components/CopilotPromptGenerator';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -557,7 +557,7 @@ const Optiheart = () => {
           </CardContent>
         </Card>
 
-        <CdssRecommendations patientId={patientId} organ="coeur" className="mt-4" />
+        <CopilotPromptGenerator patientId={patientId} organ="coeur" inline className="mt-4" />
       </main>
     </div>
   );

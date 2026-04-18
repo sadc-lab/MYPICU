@@ -4,7 +4,7 @@ import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePatient } from '@/hooks/usePatients';
 import { Construction } from 'lucide-react';
-import { CdssRecommendations } from '@/components/CdssRecommendations';
+import { CopilotPromptGenerator } from '@/components/CopilotPromptGenerator';
 
 const Optigastro = () => {
   const [searchParams] = useSearchParams();
@@ -29,7 +29,7 @@ const Optigastro = () => {
             </div>
           </CardContent>
         </Card>
-        <CdssRecommendations patientId={patientId} organ="gastro" className="mt-4" />
+        <CopilotPromptGenerator patientId={patientId} organ="gastro" inline className="mt-4" />
       </main>
     </div>
   );

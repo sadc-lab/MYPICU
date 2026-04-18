@@ -108,14 +108,14 @@ export async function buildDeidentifiedContext(
       const fileData = await loadPatientFileData(patientId);
       if (fileData) {
         for (const key of Object.keys(VITAL_LABELS)) {
-          ctx.vitals[key] = getLatestValue(fileData, key);
+          const latest = getLatestValue(fileData, key);
+          ctx.vitals[key] = latest ? latest.value : null;
         }
-        const meds = (fileData as PatientFileData).medications;
-        if (meds) {
-          const opioides = meds.opioides?.map((m: any) => m.drugname) || [];
-          const antiep = meds.antiEpileptiques?.map((m: any) => m.drugname) || [];
-          ctx.medications = [...new Set([...opioides, ...antiep])];
-        }
+        const opioidesArr = (fileData.Variable_opioides as Array<{ drugname: string }> | undefined) || [];
+        const antiepArr = (fileData.Variable_anti_epileptique as Array<{ drugname: string }> | undefined) || [];
+        const opioides = opioidesArr.map((m) => m.drugname).filter(Boolean);
+        const antiep = antiepArr.map((m) => m.drugname).filter(Boolean);
+        ctx.medications = [...new Set([...opioides, ...antiep])];
       }
     } catch {
       // ignore — still useful without
