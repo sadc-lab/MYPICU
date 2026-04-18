@@ -158,129 +158,128 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               <div className="text-2xl sm:text-3xl font-bold text-foreground">{patient.pelodScore}</div>
             </div>
 
-            <div className="flex gap-1 flex-wrap">
-              <button
-                onClick={() => {
-                  const timeRange = searchParams.get("timeRange");
-                  const params = new URLSearchParams();
-                  params.set("patient", patientId);
-                  if (timeRange) params.set("timeRange", timeRange);
-                  navigate(`/optistate?${params.toString()}`);
-                }}
-                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage("optistate") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                <Badge variant="outline" className={`${getOrganBadgeClass(patient.pelodScore)} text-xs`}>
-                  <img
-                    src={stateIcon}
-                    alt="state"
-                    className="h-6 w-6 sm:h-7 sm:w-7"
-                    style={{ filter: getColorFilter(patient.pelodScore) }}
-                  />
-                  <span className="ml-1 font-semibold">State</span>
-                </Badge>
-              </button>
-
-              <button
-                onClick={() => {
-                  const timeRange = searchParams.get("timeRange");
-                  const params = new URLSearchParams();
-                  params.set("patient", patientId);
-                  if (timeRange) params.set("timeRange", timeRange);
-                  navigate(`/optibrain?${params.toString()}`);
-                }}
-                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage("optibrain") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                <Badge variant="outline" className={`${getOrganBadgeClass(patient.brainScore)} text-xs`}>
-                  <img
-                    src={brainIcon}
-                    alt="brain"
-                    className="h-6 w-6 sm:h-7 sm:w-7"
-                    style={{ filter: getColorFilter(patient.brainScore) }}
-                  />
-                  <span className="ml-1 font-semibold">{patient.brainScore || 0}</span>
-                </Badge>
-              </button>
-
-              <button
-                onClick={() => {
-                  const timeRange = searchParams.get("timeRange");
-                  const params = new URLSearchParams();
-                  params.set("patient", patientId);
-                  if (timeRange) params.set("timeRange", timeRange);
-                  navigate(`/optiheart?${params.toString()}`);
-                }}
-                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage("optiheart") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                <Badge variant="outline" className={`${getOrganBadgeClass(patient.heartScore)} text-xs`}>
-                  <HeartIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${getTextColor(patient.heartScore)}`} />
-                  <span className="ml-1 font-semibold">{patient.heartScore || 0}</span>
-                </Badge>
-              </button>
-
-              <button
-                onClick={() => {
-                  const timeRange = searchParams.get("timeRange");
-                  const params = new URLSearchParams();
-                  params.set("patient", patientId);
-                  if (timeRange) params.set("timeRange", timeRange);
-                  navigate(`/optilungs?${params.toString()}`);
-                }}
-                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage("optilungs") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                <Badge variant="outline" className={`${getOrganBadgeClass(patient.lungsScore)} text-xs`}>
-                  <img
-                    src={lungsIcon}
-                    alt="lungs"
-                    className="h-6 w-6 sm:h-7 sm:w-7"
-                    style={{ filter: getColorFilter(patient.lungsScore) }}
-                  />
-                  <span className="ml-1 font-semibold">{patient.lungsScore || 0}</span>
-                </Badge>
-              </button>
-
-              <button
-                onClick={() => {
-                  const timeRange = searchParams.get("timeRange");
-                  const params = new URLSearchParams();
-                  params.set("patient", patientId);
-                  if (timeRange) params.set("timeRange", timeRange);
-                  navigate(`/optirenal?${params.toString()}`);
-                }}
-                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage("optirenal") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                <Badge variant="outline" className={`${getOrganBadgeClass(0)} text-xs`}>
-                  <img src={kidneyIcon} alt="kidney" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(0) }} />
-                  <span className="ml-1 font-semibold">{patient.kidneyScore || 0}</span>
-                </Badge>
-              </button>
-
-              <button
-                onClick={() => {
-                  const timeRange = searchParams.get("timeRange");
-                  const params = new URLSearchParams();
-                  params.set("patient", patientId);
-                  if (timeRange) params.set("timeRange", timeRange);
-                  navigate(`/optigastro?${params.toString()}`);
-                }}
-                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
-                  isActivePage("optigastro") ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                <Badge variant="outline" className={`${getOrganBadgeClass(0)} text-xs`}>
-                  <img src={intestineIcon} alt="gastro" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getColorFilter(0) }} />
-                  <span className="ml-1 font-semibold">GI</span>
-                </Badge>
-              </button>
+            <div className="flex gap-1 sm:gap-1.5 flex-wrap">
+              {[
+                {
+                  page: "optistate" as const,
+                  path: "/optistate",
+                  label: "State",
+                  score: patient.pelodScore,
+                  showScore: false,
+                  icon: (
+                    <img
+                      src={stateIcon}
+                      alt="state"
+                      className="h-6 w-6 sm:h-7 sm:w-7"
+                      style={{ filter: getColorFilter(patient.pelodScore) }}
+                    />
+                  ),
+                },
+                {
+                  page: "optibrain" as const,
+                  path: "/optibrain",
+                  label: String(patient.brainScore || 0),
+                  score: patient.brainScore,
+                  showScore: true,
+                  icon: (
+                    <img
+                      src={brainIcon}
+                      alt="brain"
+                      className="h-6 w-6 sm:h-7 sm:w-7"
+                      style={{ filter: getColorFilter(patient.brainScore) }}
+                    />
+                  ),
+                },
+                {
+                  page: "optiheart" as const,
+                  path: "/optiheart",
+                  label: String(patient.heartScore || 0),
+                  score: patient.heartScore,
+                  showScore: true,
+                  icon: <HeartIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${getTextColor(patient.heartScore)}`} />,
+                },
+                {
+                  page: "optilungs" as const,
+                  path: "/optilungs",
+                  label: String(patient.lungsScore || 0),
+                  score: patient.lungsScore,
+                  showScore: true,
+                  icon: (
+                    <img
+                      src={lungsIcon}
+                      alt="lungs"
+                      className="h-6 w-6 sm:h-7 sm:w-7"
+                      style={{ filter: getColorFilter(patient.lungsScore) }}
+                    />
+                  ),
+                },
+                {
+                  page: "optirenal" as const,
+                  path: "/optirenal",
+                  label: String(patient.kidneyScore || 0),
+                  score: 0,
+                  showScore: true,
+                  icon: (
+                    <img
+                      src={kidneyIcon}
+                      alt="kidney"
+                      className="h-6 w-6 sm:h-7 sm:w-7"
+                      style={{ filter: getColorFilter(0) }}
+                    />
+                  ),
+                },
+                {
+                  page: "optigastro" as const,
+                  path: "/optigastro",
+                  label: "GI",
+                  score: 0,
+                  showScore: true,
+                  icon: (
+                    <img
+                      src={intestineIcon}
+                      alt="gastro"
+                      className="h-6 w-6 sm:h-7 sm:w-7"
+                      style={{ filter: getColorFilter(0) }}
+                    />
+                  ),
+                },
+              ].map((tab) => {
+                const active = isActivePage(tab.page);
+                return (
+                  <button
+                    key={tab.page}
+                    onClick={() => {
+                      const timeRange = searchParams.get("timeRange");
+                      const params = new URLSearchParams();
+                      params.set("patient", patientId);
+                      if (timeRange) params.set("timeRange", timeRange);
+                      navigate(`${tab.path}?${params.toString()}`);
+                    }}
+                    aria-current={active ? "page" : undefined}
+                    className={`relative flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
+                      active
+                        ? "bg-primary/10 ring-2 ring-primary shadow-sm scale-105"
+                        : "ring-1 ring-transparent hover:bg-muted hover:ring-border"
+                    }`}
+                  >
+                    <Badge
+                      variant="outline"
+                      className={`${getOrganBadgeClass(tab.score)} text-xs ${
+                        active ? "border-transparent" : ""
+                      }`}
+                    >
+                      {tab.icon}
+                      <span className="ml-1 font-semibold">{tab.label}</span>
+                    </Badge>
+                    <span
+                      className={`h-0.5 w-full rounded-full transition-colors ${
+                        active ? "bg-primary" : "bg-transparent"
+                      }`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
