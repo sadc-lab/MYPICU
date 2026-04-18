@@ -44,6 +44,10 @@ interface CopilotPromptGeneratorProps {
   organ?: string;
   inline?: boolean;
   className?: string;
+  defaultOrgans?: string[];
+  defaultTemplateIds?: string[];
+  hideHeader?: boolean;
+  heightClassName?: string;
 }
 
 // Organ pastille definitions matching the rest of the app
@@ -153,12 +157,20 @@ export const CopilotPromptGenerator = ({
   organ,
   inline = false,
   className,
+  defaultOrgans,
+  defaultTemplateIds,
+  hideHeader = false,
+  heightClassName = "h-[600px]",
 }: CopilotPromptGeneratorProps) => {
   const [open, setOpen] = useState(false);
   const [context, setContext] = useState<DeidentifiedContext | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedOrgans, setSelectedOrgans] = useState<string[]>(organ ? [organ] : []);
-  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+  const [selectedOrgans, setSelectedOrgans] = useState<string[]>(
+    defaultOrgans && defaultOrgans.length ? defaultOrgans : organ ? [organ] : []
+  );
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>(
+    defaultTemplateIds ?? []
+  );
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState("");
@@ -500,13 +512,15 @@ export const CopilotPromptGenerator = ({
   if (inline) {
     return (
       <Card className={cn("flex flex-col overflow-hidden", className)}>
-        <div className="flex items-center justify-between px-3 py-2 border-b bg-primary/5 shrink-0">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Assistant Copilot</span>
+        {!hideHeader && (
+          <div className="flex items-center justify-between px-3 py-2 border-b bg-primary/5 shrink-0">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Assistant Copilot</span>
+            </div>
           </div>
-        </div>
-        <div className="h-[600px] flex flex-col">{body}</div>
+        )}
+        <div className={cn(heightClassName, "flex flex-col")}>{body}</div>
       </Card>
     );
   }
