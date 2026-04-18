@@ -48,40 +48,99 @@ interface CopilotPromptGeneratorProps {
   defaultTemplateIds?: string[];
   hideHeader?: boolean;
   heightClassName?: string;
+  /** Map of organ value -> severity score (>=1 problematic). Used to color cage/icon. */
+  organSeverities?: Record<string, number>;
 }
 
-// Organ pastille definitions matching the rest of the app
+// Severity helpers — score 1 = warning (orange), score >= 2 = critical (red).
+type Severity = "critical" | "warning" | null;
+const getSeverity = (score?: number): Severity => {
+  if (!score || score < 1) return null;
+  if (score >= 2) return "critical";
+  return "warning";
+};
+
+// Filter to tint a black/dark SVG icon to a target color.
+// status-critical (red) and status-warning (orange) approximations.
+const SVG_TINT: Record<NonNullable<Severity>, string> = {
+  critical:
+    "invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)",
+  warning:
+    "invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)",
+};
+
+// Cage (rounded background) classes per state.
+const CAGE_CLASSES = (severity: Severity, active: boolean) => {
+  if (severity === "critical") {
+    return "bg-status-critical/15 ring-1 ring-status-critical/40";
+  }
+  if (severity === "warning") {
+    return "bg-status-warning/15 ring-1 ring-status-warning/40";
+  }
+  return active ? "bg-primary/10" : "bg-muted/60";
+};
+
+// Border classes for the outer pastille button.
+const BORDER_CLASSES = (severity: Severity, active: boolean) => {
+  if (severity === "critical") {
+    return active
+      ? "bg-status-critical/5 border-status-critical shadow-sm"
+      : "bg-status-critical/5 border-status-critical/60 hover:border-status-critical";
+  }
+  if (severity === "warning") {
+    return active
+      ? "bg-status-warning/5 border-status-warning shadow-sm"
+      : "bg-status-warning/5 border-status-warning/60 hover:border-status-warning";
+  }
+  return active
+    ? "bg-primary/5 border-primary shadow-sm"
+    : "bg-background border-border hover:border-primary/40 hover:bg-accent/40";
+};
+
+// Heart icon color per severity / active.
+const heartColor = (severity: Severity, active: boolean) => {
+  if (severity === "critical") return "text-status-critical";
+  if (severity === "warning") return "text-status-warning";
+  return active ? "text-destructive" : "text-muted-foreground";
+};
+
+// Render an SVG image with optional severity tint.
+const renderSvgIcon = (
+  src: string,
+  active: boolean,
+  severity: Severity,
+) => (
+  <img
+    src={src}
+    alt=""
+    className={cn(
+      "h-6 w-6 transition-opacity",
+      active || severity ? "opacity-100" : "opacity-50",
+    )}
+    style={severity ? { filter: SVG_TINT[severity] } : undefined}
+  />
+);
+
+// Organ pastille definitions matching the rest of the app.
 const ORGAN_PASTILLES: Array<{
   value: string;
   short: string;
   full: string;
-  render: (active: boolean) => JSX.Element;
+  render: (active: boolean, severity: Severity) => JSX.Element;
 }> = [
   {
     value: "cerveau",
     short: "OptiBrain",
     full: "OptiBrain (neurologique)",
-    render: (active) => (
-      <img
-        src={brainIcon}
-        alt=""
-        className={cn(
-          "h-6 w-6 transition-opacity",
-          active ? "opacity-100" : "opacity-50"
-        )}
-      />
-    ),
+    render: (active, severity) => renderSvgIcon(brainIcon, active, severity),
   },
   {
     value: "coeur",
     short: "OptiHeart",
     full: "OptiHeart (cardiovasculaire)",
-    render: (active) => (
+    render: (active, severity) => (
       <HeartIcon
-        className={cn(
-          "h-6 w-6 transition-colors",
-          active ? "text-destructive" : "text-muted-foreground"
-        )}
+        className={cn("h-6 w-6 transition-colors", heartColor(severity, active))}
       />
     ),
   },
@@ -89,61 +148,25 @@ const ORGAN_PASTILLES: Array<{
     value: "poumons",
     short: "OptiLungs",
     full: "OptiLungs (respiratoire)",
-    render: (active) => (
-      <img
-        src={lungsIcon}
-        alt=""
-        className={cn(
-          "h-6 w-6 transition-opacity",
-          active ? "opacity-100" : "opacity-50"
-        )}
-      />
-    ),
+    render: (active, severity) => renderSvgIcon(lungsIcon, active, severity),
   },
   {
     value: "renal",
     short: "OptiRenal",
     full: "OptiRenal (rénal)",
-    render: (active) => (
-      <img
-        src={kidneyIcon}
-        alt=""
-        className={cn(
-          "h-6 w-6 transition-opacity",
-          active ? "opacity-100" : "opacity-50"
-        )}
-      />
-    ),
+    render: (active, severity) => renderSvgIcon(kidneyIcon, active, severity),
   },
   {
     value: "gastro",
     short: "OptiGastro",
     full: "OptiGastro (gastro-intestinal)",
-    render: (active) => (
-      <img
-        src={intestineIcon}
-        alt=""
-        className={cn(
-          "h-6 w-6 transition-opacity",
-          active ? "opacity-100" : "opacity-50"
-        )}
-      />
-    ),
+    render: (active, severity) => renderSvgIcon(intestineIcon, active, severity),
   },
   {
     value: "general",
     short: "OptiState",
     full: "OptiState (global)",
-    render: (active) => (
-      <img
-        src={stateIcon}
-        alt=""
-        className={cn(
-          "h-6 w-6 transition-opacity",
-          active ? "opacity-100" : "opacity-50"
-        )}
-      />
-    ),
+    render: (active, severity) => renderSvgIcon(stateIcon, active, severity),
   },
 ];
 
@@ -161,6 +184,7 @@ export const CopilotPromptGenerator = ({
   defaultTemplateIds,
   hideHeader = false,
   heightClassName = "h-[600px]",
+  organSeverities = {},
 }: CopilotPromptGeneratorProps) => {
   const [open, setOpen] = useState(false);
   const [context, setContext] = useState<DeidentifiedContext | null>(null);
@@ -356,38 +380,58 @@ export const CopilotPromptGenerator = ({
               <div className="grid grid-cols-3 gap-2">
                 {visiblePastilles.map((p) => {
                   const active = selectedOrgans.includes(p.value);
+                  const severity = getSeverity(organSeverities[p.value]);
+                  const checkColor =
+                    severity === "critical"
+                      ? "bg-status-critical text-white"
+                      : severity === "warning"
+                      ? "bg-status-warning text-white"
+                      : "bg-primary text-primary-foreground";
                   return (
                     <button
                       key={p.value}
                       type="button"
                       onClick={() => toggleOrgan(p.value)}
                       aria-pressed={active}
-                      title={p.full}
+                      title={
+                        severity
+                          ? `${p.full} — ${severity === "critical" ? "Critique" : "À surveiller"}`
+                          : p.full
+                      }
                       className={cn(
                         "group relative flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all",
-                        active
-                          ? "bg-primary/5 border-primary shadow-sm"
-                          : "bg-background border-border hover:border-primary/40 hover:bg-accent/40"
+                        BORDER_CLASSES(severity, active),
                       )}
                     >
                       <div
                         className={cn(
                           "flex items-center justify-center h-10 w-10 rounded-full transition-colors",
-                          active ? "bg-primary/10" : "bg-muted/60"
+                          CAGE_CLASSES(severity, active),
                         )}
                       >
-                        {p.render(active)}
+                        {p.render(active, severity)}
                       </div>
                       <span
                         className={cn(
                           "text-[11px] font-medium leading-tight text-center",
-                          active ? "text-foreground" : "text-muted-foreground"
+                          severity === "critical"
+                            ? "text-status-critical font-semibold"
+                            : severity === "warning"
+                            ? "text-status-warning font-semibold"
+                            : active
+                            ? "text-foreground"
+                            : "text-muted-foreground",
                         )}
                       >
                         {p.short}
                       </span>
                       {active && (
-                        <span className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+                        <span
+                          className={cn(
+                            "absolute top-1.5 right-1.5 h-4 w-4 rounded-full flex items-center justify-center shadow-sm",
+                            checkColor,
+                          )}
+                        >
                           <Check className="h-2.5 w-2.5" />
                         </span>
                       )}

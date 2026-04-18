@@ -62,6 +62,15 @@ const CopilotPromptWrapper = () => {
         .map(({ organ }) => organ)
     : [];
 
+  // Build severity map (organ -> score) so the generator can color cage/icon
+  const organSeverities: Record<string, number> = patient
+    ? ORGAN_BY_SCORE_KEY.reduce((acc, { key, organ }) => {
+        const score = (patient as any)[key] || 0;
+        if (score >= 1) acc[organ] = score;
+        return acc;
+      }, {} as Record<string, number>)
+    : {};
+
   // Fallback: current page organ if no critical ones detected
   const defaultOrgans =
     criticalOrgans.length > 0 ? criticalOrgans : organ ? [organ] : undefined;
@@ -71,6 +80,7 @@ const CopilotPromptWrapper = () => {
       patientId={patientId}
       organ={organ}
       defaultOrgans={defaultOrgans}
+      organSeverities={organSeverities}
     />
   );
 };
