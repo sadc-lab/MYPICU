@@ -6,11 +6,22 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";
 import { usePatient } from "@/hooks/usePatients";
+import { MetricRangeBar } from "@/components/MetricRangeBar";
 import brainIcon from "@/assets/brain-icon.svg";
 import lungsIcon from "@/assets/lungs-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
 import kidneyIcon from "@/assets/kidney-icon.svg";
 import intestineIcon from "@/assets/intestine-icon.svg";
+
+const vitalSigns = [
+  { label: "FC", value: 130, min: 60, targetMin: 80, targetMax: 120, max: 140, unit: "bpm" },
+  { label: "TAM", value: 70, min: 60, targetMin: 78, targetMax: 85, max: 100, unit: "mmHg" },
+  { label: "FR", value: 25, min: 15, targetMin: 20, targetMax: 30, max: 35, unit: "/min" },
+  { label: "T°", value: 37, min: 34, targetMin: 35, targetMax: 37, max: 39, unit: "°C" },
+  { label: "SPO2", value: 95, min: 80, targetMin: 90, targetMax: 100, max: 100, unit: "%" },
+];
+
+const isVitalInRange = (v: number, min: number, max: number) => v >= min && v <= max;
 
 const reminders = [
   "Objectif de Bilan Entrée/Sortie",
