@@ -380,38 +380,58 @@ export const CopilotPromptGenerator = ({
               <div className="grid grid-cols-3 gap-2">
                 {visiblePastilles.map((p) => {
                   const active = selectedOrgans.includes(p.value);
+                  const severity = getSeverity(organSeverities[p.value]);
+                  const checkColor =
+                    severity === "critical"
+                      ? "bg-status-critical text-white"
+                      : severity === "warning"
+                      ? "bg-status-warning text-white"
+                      : "bg-primary text-primary-foreground";
                   return (
                     <button
                       key={p.value}
                       type="button"
                       onClick={() => toggleOrgan(p.value)}
                       aria-pressed={active}
-                      title={p.full}
+                      title={
+                        severity
+                          ? `${p.full} — ${severity === "critical" ? "Critique" : "À surveiller"}`
+                          : p.full
+                      }
                       className={cn(
                         "group relative flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all",
-                        active
-                          ? "bg-primary/5 border-primary shadow-sm"
-                          : "bg-background border-border hover:border-primary/40 hover:bg-accent/40"
+                        BORDER_CLASSES(severity, active),
                       )}
                     >
                       <div
                         className={cn(
                           "flex items-center justify-center h-10 w-10 rounded-full transition-colors",
-                          active ? "bg-primary/10" : "bg-muted/60"
+                          CAGE_CLASSES(severity, active),
                         )}
                       >
-                        {p.render(active)}
+                        {p.render(active, severity)}
                       </div>
                       <span
                         className={cn(
                           "text-[11px] font-medium leading-tight text-center",
-                          active ? "text-foreground" : "text-muted-foreground"
+                          severity === "critical"
+                            ? "text-status-critical font-semibold"
+                            : severity === "warning"
+                            ? "text-status-warning font-semibold"
+                            : active
+                            ? "text-foreground"
+                            : "text-muted-foreground",
                         )}
                       >
                         {p.short}
                       </span>
                       {active && (
-                        <span className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+                        <span
+                          className={cn(
+                            "absolute top-1.5 right-1.5 h-4 w-4 rounded-full flex items-center justify-center shadow-sm",
+                            checkColor,
+                          )}
+                        >
                           <Check className="h-2.5 w-2.5" />
                         </span>
                       )}
