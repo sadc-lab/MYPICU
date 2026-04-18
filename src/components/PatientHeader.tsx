@@ -95,14 +95,6 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             Retour aux patients
           </Button>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Button asChild variant="outline" size="sm" className="gap-2 text-xs sm:text-sm">
-              <a href="https://www.uptodate.com/login" target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-3 sm:size-4" />
-                <span className="hidden sm:inline">UpToDate</span>
-              </a>
-            </Button>
-          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 mb-3 sm:mb-4">
