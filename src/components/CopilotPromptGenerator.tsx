@@ -512,13 +512,15 @@ export const CopilotPromptGenerator = ({
   if (inline) {
     return (
       <Card className={cn("flex flex-col overflow-hidden", className)}>
-        <div className="flex items-center justify-between px-3 py-2 border-b bg-primary/5 shrink-0">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Assistant Copilot</span>
+        {!hideHeader && (
+          <div className="flex items-center justify-between px-3 py-2 border-b bg-primary/5 shrink-0">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Assistant Copilot</span>
+            </div>
           </div>
-        </div>
-        <div className="h-[600px] flex flex-col">{body}</div>
+        )}
+        <div className={cn(heightClassName, "flex flex-col")}>{body}</div>
       </Card>
     );
   }
