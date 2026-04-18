@@ -482,24 +482,32 @@ const Optistate = () => {
                           {/* Interventions actives */}
                           <div>
                             <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                              Interventions actives
+                              Interventions actives ({m.interventions.length})
                             </div>
                             {m.interventions.length === 0 ? (
                               <p className="text-xs text-muted-foreground italic">
                                 Aucune intervention en cours.
                               </p>
                             ) : (
-                              <ul className="space-y-1.5">
+                              <div className="rounded-md border overflow-hidden">
+                                <div className="px-3 py-2 bg-muted/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-b">
+                                  Intervention
+                                </div>
                                 {m.interventions.map((it, i) => (
-                                  <li
+                                  <div
                                     key={i}
-                                    className="flex items-start gap-2 text-xs text-foreground"
+                                    className={cn(
+                                      'flex items-center gap-2 px-3 py-2 text-xs',
+                                      i % 2 === 1 ? 'bg-muted/20' : 'bg-background'
+                                    )}
                                   >
-                                    <span className="h-1.5 w-1.5 rounded-full bg-primary/60 mt-1.5 shrink-0" />
-                                    <span className="leading-snug">{it}</span>
-                                  </li>
+                                    <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
+                                    <span className="font-medium text-foreground leading-snug">
+                                      {it}
+                                    </span>
+                                  </div>
                                 ))}
-                              </ul>
+                              </div>
                             )}
                           </div>
                         </div>
