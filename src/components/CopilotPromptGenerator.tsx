@@ -48,6 +48,8 @@ interface CopilotPromptGeneratorProps {
   defaultTemplateIds?: string[];
   hideHeader?: boolean;
   heightClassName?: string;
+  /** Map of organ value -> severity score (>=1 problematic). Used to color cage/icon. */
+  organSeverities?: Record<string, number>;
 }
 
 // Organ pastille definitions matching the rest of the app
