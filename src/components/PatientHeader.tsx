@@ -270,20 +270,10 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   >
                     <Badge
                       variant="outline"
-                      style={
-                        active
-                          ? {
-                              boxShadow:
-                                "inset 0 3px 6px hsl(var(--foreground) / 0.32), inset 0 -1px 0 hsl(var(--background) / 0.5)",
-                              transform: "translateY(1px)",
-                            }
-                          : {
-                              boxShadow:
-                                "0 1px 2px hsl(var(--foreground) / 0.15), inset 0 1px 0 hsl(var(--background) / 0.6)",
-                            }
-                      }
                       className={`${getOrganBadgeClass(tab.score)} text-xs transition-all duration-150 gap-1 ${
-                        active ? "" : "hover:-translate-y-[1px]"
+                        active
+                          ? "border-2 border-foreground/70 dark:border-foreground/80"
+                          : "hover:-translate-y-[1px]"
                       }`}
                     >
                       {tab.icon}
