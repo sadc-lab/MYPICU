@@ -10,7 +10,7 @@ import { usePatient } from '@/hooks/usePatients';
 import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
-import { CopilotPromptGenerator } from '@/components/CopilotPromptGenerator';
+
 import { MetricRangeBar } from '@/components/MetricRangeBar';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
@@ -903,7 +903,7 @@ const Optilungs = () => {
           </Card>
         </div>
 
-        <CopilotPromptGenerator patientId={patientId} organ="poumons" inline className="mt-4" />
+        
       </main>
     </div>
   );

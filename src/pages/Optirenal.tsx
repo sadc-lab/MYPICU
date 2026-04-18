@@ -4,7 +4,7 @@ import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePatient } from '@/hooks/usePatients';
 import { Construction } from 'lucide-react';
-import { CopilotPromptGenerator } from '@/components/CopilotPromptGenerator';
+
 
 const Optirenal = () => {
   const [searchParams] = useSearchParams();
@@ -29,7 +29,7 @@ const Optirenal = () => {
             </div>
           </CardContent>
         </Card>
-        <CopilotPromptGenerator patientId={patientId} organ="renal" inline className="mt-4" />
+        
       </main>
     </div>
   );
