@@ -201,6 +201,40 @@ const Optistate = () => {
 
   const failingCount = failingModules.length;
 
+  // Aggregate all failing indicators across modules + abnormal vital signs
+  // for physiopath chain matching.
+  const allFailingIndicators = [
+    ...allModules.flatMap((m) =>
+      m.indicators.map((ind) => ({
+        label: ind.label,
+        module: m.key,
+        status: ind.status,
+        trend: ind.trend,
+        value: ind.value,
+        unit: ind.unit,
+      })),
+    ),
+    // Abnormal vitals are mapped to the most relevant module so chains can match.
+    ...vitalSigns
+      .filter((v) => !isInRange(v.value, v.targetMin, v.targetMax))
+      .map((v) => {
+        const moduleByVital: Record<string, ModuleKey> = {
+          FC: 'optiheart',
+          TAM: 'optiheart',
+          FR: 'optilungs',
+          SPO2: 'optilungs',
+          'T°': 'optiheart',
+        };
+        return {
+          label: v.label === 'SPO2' ? 'SpO2' : v.label,
+          module: moduleByVital[v.label] ?? 'optiheart',
+          status: 'critical',
+          value: v.value,
+          unit: v.unit,
+        };
+      }),
+  ];
+
 
 
   const getStatusColor = (status: string) => {
