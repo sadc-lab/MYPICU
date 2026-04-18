@@ -34,7 +34,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
   const { data: patient, isLoading } = usePatient(patientId);
-  const [showVitals, setShowVitals] = useState(false);
+  // Vital signs are expanded by default on Optistate, collapsed elsewhere
+  const [showVitals, setShowVitals] = useState(currentPage === "optistate");
   const [showReminders, setShowReminders] = useState(false);
 
   if (isLoading) return <div className="bg-card border-b border-border mb-4 sm:mb-6 p-4 text-center text-muted-foreground">Chargement...</div>;
