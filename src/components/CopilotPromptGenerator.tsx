@@ -81,17 +81,8 @@ const CAGE_CLASSES = (severity: Severity, active: boolean) => {
 };
 
 // Border classes for the outer pastille button.
-const BORDER_CLASSES = (severity: Severity, active: boolean) => {
-  if (severity === "critical") {
-    return active
-      ? "bg-status-critical/5 border-status-critical shadow-sm"
-      : "bg-status-critical/5 border-status-critical/60 hover:border-status-critical";
-  }
-  if (severity === "warning") {
-    return active
-      ? "bg-status-warning/5 border-status-warning shadow-sm"
-      : "bg-status-warning/5 border-status-warning/60 hover:border-status-warning";
-  }
+// Borders stay neutral — severity is conveyed via icon + cage only.
+const BORDER_CLASSES = (_severity: Severity, active: boolean) => {
   return active
     ? "bg-primary/5 border-primary shadow-sm"
     : "bg-background border-border hover:border-primary/40 hover:bg-accent/40";
