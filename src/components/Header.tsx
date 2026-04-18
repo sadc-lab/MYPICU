@@ -32,6 +32,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import mypicuLogo from '@/assets/mypicu-logo.png';
 
 interface HeaderProps {
   selectedPed?: 'A' | 'B' | 'C';
@@ -262,8 +263,13 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
               </SheetContent>
             </Sheet>
             
-            <Link to="/" className="flex items-center">
-              <span className="text-lg sm:text-2xl font-bold text-primary">MYPICU</span>
+            <Link to="/" className="flex items-center gap-2">
+              <img
+                src={mypicuLogo}
+                alt="MYPICU logo"
+                className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
+              />
+              <span className="text-lg sm:text-2xl font-bold text-primary tracking-tight">MYPICU</span>
             </Link>
             
             <div ref={searchRef} className="relative hidden sm:block" data-guide="search">
