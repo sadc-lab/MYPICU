@@ -75,6 +75,10 @@ const Optibrain = () => {
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
+  // Track whether the auto-selection of problematic indicators has already
+  // run, so the user can later deselect them without us re-adding them.
+  const clinicalAutoSelectedRef = useRef(false);
+  const brainAutoSelectedRef = useRef(false);
   const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
   // Objectives and interventions are now handled by ObjectivesInterventionsCard component
   const [picDialogTimeRange, setPicDialogTimeRange] = useState<TimeWindowValue>("24h");
