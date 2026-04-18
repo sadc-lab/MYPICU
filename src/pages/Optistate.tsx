@@ -27,7 +27,7 @@ import kidneyIcon from '@/assets/kidney-icon.svg';
 import intestineIcon from '@/assets/intestine-icon.svg';
 import { cn } from '@/lib/utils';
 import { PhysiopathChains } from '@/components/PhysiopathChains';
-import { RadialGauge, parseTargetRange } from '@/components/RadialGauge';
+import { MultiIndicatorChart } from '@/components/MultiIndicatorChart';
 
 type ModuleKey = 'optibrain' | 'optiheart' | 'optilungs' | 'optirenal' | 'optigastro';
 
