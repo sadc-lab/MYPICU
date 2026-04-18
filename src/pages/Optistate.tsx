@@ -378,10 +378,7 @@ const Optistate = () => {
                       key={m.key}
                       className="relative rounded-lg border bg-card overflow-hidden"
                     >
-                      {/* Severity bar */}
-                      <div className={cn('absolute left-0 top-0 bottom-0 w-1', accent.bar)} />
-
-                      <div className="pl-5 pr-4 py-4">
+                      <div className="px-4 py-4">
                         {/* Module header */}
                         <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
                           <div className="flex items-center gap-3">
