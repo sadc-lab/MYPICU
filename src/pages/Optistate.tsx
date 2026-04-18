@@ -27,7 +27,7 @@ import kidneyIcon from '@/assets/kidney-icon.svg';
 import intestineIcon from '@/assets/intestine-icon.svg';
 import { cn } from '@/lib/utils';
 import { PhysiopathChains } from '@/components/PhysiopathChains';
-import { RadialGauge, parseTargetRange } from '@/components/RadialGauge';
+import { MultiIndicatorChart } from '@/components/MultiIndicatorChart';
 
 type ModuleKey = 'optibrain' | 'optiheart' | 'optilungs' | 'optirenal' | 'optigastro';
 
@@ -421,7 +421,7 @@ const Optistate = () => {
                         </div>
 
                         <div className="space-y-5">
-                          {/* Gauges grid — problematic indicators */}
+                          {/* Multi-indicator chart — all problematic indicators on one chart */}
                           <div>
                             <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-3">
                               Indicateurs hors cible ({m.indicators.length})
@@ -431,71 +431,7 @@ const Optistate = () => {
                                 Aucun indicateur hors cible enregistré.
                               </p>
                             ) : (
-                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {m.indicators.map((ind, i) => {
-                                  const numericValue =
-                                    typeof ind.value === 'number'
-                                      ? ind.value
-                                      : parseFloat(String(ind.value).replace(/[^\d.\-]/g, ''));
-                                  const range =
-                                    Number.isFinite(numericValue) && ind.target
-                                      ? parseTargetRange(ind.target, numericValue)
-                                      : null;
-
-                                  // Fallback: textual / non-numeric indicator → compact card.
-                                  if (!range || !Number.isFinite(numericValue)) {
-                                    const c = getStatusColor(ind.status);
-                                    return (
-                                      <div
-                                        key={i}
-                                        className="rounded-md border bg-card p-3 flex flex-col items-center text-center"
-                                      >
-                                        <div
-                                          className={cn(
-                                            'text-base font-bold',
-                                            c.text,
-                                          )}
-                                        >
-                                          {ind.value}
-                                          {ind.unit && (
-                                            <span className="text-[10px] font-normal text-muted-foreground ml-1">
-                                              {ind.unit}
-                                            </span>
-                                          )}
-                                        </div>
-                                        <div className="text-xs font-medium text-foreground mt-1">
-                                          {ind.label}
-                                        </div>
-                                        <div className="text-[10px] text-muted-foreground mt-0.5">
-                                          Cible : {ind.target}
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-
-                                  return (
-                                    <div
-                                      key={i}
-                                      className="rounded-md border bg-card p-3"
-                                    >
-                                      <RadialGauge
-                                        value={numericValue}
-                                        unit={ind.unit}
-                                        label={ind.label}
-                                        targetMin={range.targetMin}
-                                        targetMax={range.targetMax}
-                                        status={
-                                          ind.status === 'critical' ||
-                                          ind.status === 'warning'
-                                            ? ind.status
-                                            : 'normal'
-                                        }
-                                        targetCaption={ind.target}
-                                      />
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                              <MultiIndicatorChart indicators={m.indicators} />
                             )}
                           </div>
 
