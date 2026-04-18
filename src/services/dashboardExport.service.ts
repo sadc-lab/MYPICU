@@ -390,3 +390,296 @@ export const ORGAN_OPTIONS = [
   { value: "gastro", label: "OptiGastro (gastro-intestinal)" },
   { value: "general", label: "OptiState (global)" },
 ];
+
+// ---------------- Multi-module export ----------------
+
+export interface MultiDashboardExportOptions {
+  patientId: string;
+  organs: string[];
+  hoursBack?: number;
+  promptTemplateIds?: string[];
+}
+
+interface OrganSection {
+  organ: string;
+  stats: SeriesStats[];
+  rawRows: Array<[string, string, string]>;
+}
+
+export async function exportMultiDashboardPDF(
+  opts: MultiDashboardExportOptions
+): Promise<{ filename: string; promptText: string } | null> {
+  const { patientId, organs, hoursBack = 24, promptTemplateIds = [] } = opts;
+  if (!organs.length) return null;
+
+  const ctx = await buildDeidentifiedContext(patientId, organs[0]);
+  if (!ctx) return null;
+
+  const sections: OrganSection[] = [];
+  let fileData: Awaited<ReturnType<typeof loadPatientFileData>> | null = null;
+  if (hasPatientFileData(patientId)) {
+    try {
+      fileData = await loadPatientFileData(patientId);
+    } catch {
+      fileData = null;
+    }
+  }
+
+  for (const organ of organs) {
+    const variables = ORGAN_VARIABLES[organ] || ORGAN_VARIABLES.general;
+    const stats: SeriesStats[] = [];
+    const rawRows: Array<[string, string, string]> = [];
+    if (fileData) {
+      for (const v of variables) {
+        const series = getTimeSeriesForRange(fileData, v.key, hoursBack);
+        stats.push(computeStats(series, v.label, v.unit));
+        const sorted = [...series]
+          .sort((a, b) => new Date(b.charttime).getTime() - new Date(a.charttime).getTime())
+          .slice(0, 200);
+        for (const p of sorted) {
+          rawRows.push([
+            new Date(p.charttime).toLocaleString("fr-CA", {
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              month: "2-digit",
+            }),
+            v.label,
+            `${p.valeur.toFixed(1)} ${v.unit}`,
+          ]);
+        }
+      }
+    } else {
+      for (const v of variables) stats.push(computeStats([], v.label, v.unit));
+    }
+    rawRows.sort((a, b) => (a[0] < b[0] ? 1 : -1));
+    sections.push({ organ, stats, rawRows });
+  }
+
+  const selectedTemplates = promptTemplateIds
+    .map((id) => PROMPT_TEMPLATES.find((t) => t.id === id))
+    .filter((t): t is PromptTemplate => Boolean(t));
+
+  let promptText: string;
+  if (selectedTemplates.length) {
+    const parts = selectedTemplates.map((t, i) => {
+      const tplCtx = { ...ctx, organ: organs[0] };
+      return `### Question ${i + 1} — ${t.label}\n\n${t.build(tplCtx)}`;
+    });
+    promptText = parts.join("\n\n---\n\n");
+  } else {
+    const allStats = sections.flatMap((s) => s.stats);
+    promptText = buildDefaultDashboardPrompt(ctx, allStats, hoursBack);
+  }
+
+  const filename = await renderMultiPDF({
+    organs,
+    ctx,
+    sections,
+    hoursBack,
+    promptText,
+    selectedTemplates,
+  });
+
+  return { filename, promptText };
+}
+
+interface RenderMultiArgs {
+  organs: string[];
+  ctx: DeidentifiedContext;
+  sections: OrganSection[];
+  hoursBack: number;
+  promptText: string;
+  selectedTemplates: PromptTemplate[];
+}
+
+async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
+  const { organs, ctx, sections, hoursBack, promptText, selectedTemplates } = args;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 14;
+
+  // Cover page
+  doc.setFillColor(37, 99, 235);
+  doc.rect(0, 0, pageWidth, 22, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("Dashboard MyPICU — Export multi-modules", margin, 10);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(
+    `Export clinique dé-identifié — ${new Date().toLocaleString("fr-CA")}`,
+    margin,
+    16
+  );
+
+  let y = 30;
+  doc.setTextColor(0, 0, 0);
+  doc.setFillColor(239, 246, 255);
+  doc.rect(margin, y, pageWidth - 2 * margin, 10, "F");
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "italic");
+  doc.text(
+    "Document dé-identifié (sans nom ni ID patient). Vérifiez avant partage avec un assistant IA.",
+    margin + 2,
+    y + 6
+  );
+  y += 14;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Contexte patient", margin, y);
+  y += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  const ctxLines = [
+    `Âge: ${ctx.age}    Poids: ${ctx.weight}`,
+    `Diagnostic: ${ctx.diagnosis}`,
+    ctx.exam ? `Examen: ${ctx.exam}` : "",
+  ].filter(Boolean);
+  for (const line of ctxLines) {
+    doc.text(line, margin, y);
+    y += 4.5;
+  }
+  y += 2;
+
+  const scoreEntries: Array<[string, string]> = (
+    [
+      ["PELOD-2", ctx.pelodScore],
+      ["GCS", ctx.gcs],
+      ["Score cérébral", ctx.brainScore],
+      ["Score cardiaque", ctx.heartScore],
+      ["Score pulmonaire", ctx.lungsScore],
+      ["Score rénal", ctx.kidneyScore],
+    ] as Array<[string, number | null | undefined]>
+  )
+    .filter(([, v]) => v != null)
+    .map(([k, v]) => [k, String(v)] as [string, string]);
+
+  if (scoreEntries.length) {
+    autoTable(doc, {
+      startY: y,
+      head: [["Score", "Valeur"]],
+      body: scoreEntries,
+      theme: "grid",
+      styles: { fontSize: 9, cellPadding: 1.5 },
+      headStyles: { fillColor: [37, 99, 235] },
+      margin: { left: margin, right: margin },
+      tableWidth: 80,
+    });
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
+  }
+
+  if (ctx.medications.length) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Médicaments actifs", margin, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const medText = doc.splitTextToSize(ctx.medications.join(", "), pageWidth - 2 * margin);
+    doc.text(medText, margin, y);
+    y += medText.length * 4.5 + 4;
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Modules inclus dans cet export", margin, y);
+  y += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  for (const o of organs) {
+    doc.text(`• ${ORGAN_TITLES[o] || o}`, margin + 2, y);
+    y += 4.5;
+  }
+
+  // One section per organ
+  for (const section of sections) {
+    doc.addPage();
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(37, 99, 235);
+    doc.text(ORGAN_TITLES[section.organ] || section.organ, margin, margin + 2);
+    doc.setTextColor(0, 0, 0);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text(`Synthèse des paramètres (${hoursBack}h)`, margin, margin + 10);
+
+    autoTable(doc, {
+      startY: margin + 13,
+      head: [["Paramètre", "Dernier", "Moyenne", "Min", "Max", "N"]],
+      body: section.stats.map((s) =>
+        s.count
+          ? [
+              `${s.label} (${s.unit})`,
+              String(s.last),
+              String(s.mean),
+              String(s.min),
+              String(s.max),
+              String(s.count),
+            ]
+          : [`${s.label} (${s.unit})`, "—", "—", "—", "—", "0"]
+      ),
+      theme: "striped",
+      styles: { fontSize: 9, cellPadding: 1.5 },
+      headStyles: { fillColor: [37, 99, 235] },
+      margin: { left: margin, right: margin },
+    });
+
+    if (section.rawRows.length) {
+      const finalY =
+        (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text(`Données brutes (max 200 pts/paramètre)`, margin, finalY);
+      autoTable(doc, {
+        startY: finalY + 2,
+        head: [["Heure", "Paramètre", "Valeur"]],
+        body: section.rawRows.slice(0, 600),
+        theme: "grid",
+        styles: { fontSize: 7, cellPadding: 1 },
+        headStyles: { fillColor: [37, 99, 235] },
+        margin: { left: margin, right: margin },
+      });
+    }
+  }
+
+  // Prompt page
+  doc.addPage();
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(37, 99, 235);
+  doc.text(
+    selectedTemplates.length > 1
+      ? `${selectedTemplates.length} prompts suggérés pour Copilot`
+      : "Prompt suggéré pour Copilot",
+    margin,
+    margin
+  );
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  const promptLines = doc.splitTextToSize(promptText, pageWidth - 2 * margin);
+  doc.text(promptLines, margin, margin + 8);
+
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+    doc.text(
+      `MyPICU — Dashboard dé-identifié — Page ${i}/${pageCount}`,
+      pageWidth / 2,
+      doc.internal.pageSize.getHeight() - 6,
+      { align: "center" }
+    );
+  }
+
+  const suffix = organs.length > 1 ? "multi" : organs[0];
+  const filename = `dashboard_${suffix}_${new Date().toISOString().slice(0, 10)}.pdf`;
+  doc.save(filename);
+  return filename;
+}
