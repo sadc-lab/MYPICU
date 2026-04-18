@@ -263,14 +263,14 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                   >
                     <Badge
                       variant="outline"
-                      className={`${getOrganBadgeClass(tab.score)} text-xs transition-all duration-150 gap-1 ${
+                      className={`${getOrganBadgeClass()} text-xs transition-all duration-150 gap-1 ${
                         active
-                          ? getActiveBorderClass(tab.score)
+                          ? getActiveBorderClass()
                           : "hover:-translate-y-[1px]"
                       }`}
                     >
                       {tab.icon}
-                      <span className="font-semibold">{tab.label}</span>
+                      <span className={`font-semibold ${getTextColor(tab.score)}`}>{tab.label}</span>
                       <span
                         aria-hidden="true"
                         className={`ml-0.5 h-2 w-2 rounded-full border transition-colors ${getDotColors(tab.score).border} ${
