@@ -290,8 +290,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                       <span className="font-semibold">{tab.label}</span>
                       <span
                         aria-hidden="true"
-                        className={`ml-0.5 h-2 w-2 rounded-full border border-primary transition-colors ${
-                          active ? "bg-primary" : "bg-transparent"
+                        className={`ml-0.5 h-2 w-2 rounded-full border transition-colors ${getDotColors(tab.score).border} ${
+                          active ? getDotColors(tab.score).fill : "bg-transparent"
                         }`}
                       />
                     </Badge>
