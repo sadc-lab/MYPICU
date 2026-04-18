@@ -2,24 +2,26 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { usePatient } from '@/hooks/usePatients';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, AlertTriangle, Sparkles } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
-import { getProblematicIndicators } from '@/utils/organMetrics';
-import { MiniMetricChart } from '@/components/MiniMetricChart';
 import { MetricRangeBar } from '@/components/MetricRangeBar';
+import { CopilotPromptGenerator } from '@/components/CopilotPromptGenerator';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
-import { useTimeRange } from '@/hooks/useTimeRange';
-import { TimeWindowSelector } from '@/components/ui/TimeWindowSelector';
+import kidneyIcon from '@/assets/kidney-icon.svg';
+import intestineIcon from '@/assets/intestine-icon.svg';
+import { cn } from '@/lib/utils';
+
+type ModuleKey = 'optibrain' | 'optiheart' | 'optilungs' | 'optirenal' | 'optigastro';
 
 const Optistate = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const patientId = searchParams.get('patient') || '#25';
   const { data: patient, isLoading } = usePatient(patientId);
-  const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
 
   if (!patient || isLoading) {
     return (
@@ -33,139 +35,128 @@ const Optistate = () => {
   }
 
   const vitalSigns = [
-    { 
-      label: 'FC', 
-      fullLabel: 'Heart Rate',
-      value: 130, 
-      min: 60,
-      targetMin: 80,
-      targetMax: 120,
-      max: 140,
-      unit: 'bpm'
+    { label: 'FC', value: 130, min: 60, targetMin: 80, targetMax: 120, max: 140, unit: 'bpm' },
+    { label: 'TAM', value: 70, min: 60, targetMin: 78, targetMax: 85, max: 100, unit: 'mmHg' },
+    { label: 'FR', value: 25, min: 15, targetMin: 20, targetMax: 30, max: 35, unit: '/min' },
+    { label: 'T°', value: 37, min: 34, targetMin: 35, targetMax: 37, max: 39, unit: '°C' },
+    { label: 'SPO2', value: 95, min: 80, targetMin: 90, targetMax: 100, max: 100, unit: '%' },
+  ];
+
+  const isInRange = (value: number, targetMin: number, targetMax: number) =>
+    value >= targetMin && value <= targetMax;
+
+  // Modules overview — colour coded and sorted by severity
+  const modules: Array<{
+    key: ModuleKey;
+    organValue: string; // value used by CopilotPromptGenerator pastilles
+    label: string;
+    score: number;
+    icon: JSX.Element;
+  }> = [
+    {
+      key: 'optibrain',
+      organValue: 'cerveau',
+      label: 'OptiBrain',
+      score: patient.brainScore || 0,
+      icon: <img src={brainIcon} alt="" className="h-7 w-7" />,
     },
-    { 
-      label: 'TAM', 
-      fullLabel: 'Blood Pressure',
-      value: 70, 
-      min: 60,
-      targetMin: 78,
-      targetMax: 85,
-      max: 100,
-      unit: 'mmHg'
+    {
+      key: 'optiheart',
+      organValue: 'coeur',
+      label: 'OptiHeart',
+      score: patient.heartScore || 0,
+      icon: <HeartIcon className="h-7 w-7" />,
     },
-    { 
-      label: 'FR', 
-      fullLabel: 'Resp. Rate',
-      value: 25, 
-      min: 15,
-      targetMin: 20,
-      targetMax: 30,
-      max: 35,
-      unit: '/min'
+    {
+      key: 'optilungs',
+      organValue: 'poumons',
+      label: 'OptiLungs',
+      score: patient.lungsScore || 0,
+      icon: <img src={lungsIcon} alt="" className="h-7 w-7" />,
     },
-    { 
-      label: 'T°', 
-      fullLabel: 'Temperature',
-      value: 37, 
-      min: 34,
-      targetMin: 35,
-      targetMax: 37,
-      max: 39,
-      unit: '°C'
+    {
+      key: 'optirenal',
+      organValue: 'renal',
+      label: 'OptiRenal',
+      score: patient.kidneyScore || 0,
+      icon: <img src={kidneyIcon} alt="" className="h-7 w-7" />,
     },
-    { 
-      label: 'SPO2', 
-      fullLabel: 'SpO2',
-      value: 95, 
-      min: 80,
-      targetMin: 90,
-      targetMax: 100,
-      max: 100,
-      unit: '%'
+    {
+      key: 'optigastro',
+      organValue: 'gastro',
+      label: 'OptiGastro',
+      score: 0,
+      icon: <img src={intestineIcon} alt="" className="h-7 w-7" />,
     },
   ];
 
-  const isInRange = (value: number, targetMin: number, targetMax: number) => {
-    return value >= targetMin && value <= targetMax;
-  };
-
-  // Get problematic indicators dynamically from organ metrics
-  const dynamicIndicators = getProblematicIndicators();
-  
-  // Group indicators by organ
-  const groupedIndicators = dynamicIndicators.reduce((acc, indicator) => {
-    if (!acc[indicator.organ]) {
-      acc[indicator.organ] = [];
+  const getStatusStyle = (score: number) => {
+    if (score >= 3) {
+      return {
+        label: 'Critique',
+        cardCls: 'border-status-critical/40 bg-status-critical/5',
+        dotCls: 'bg-status-critical',
+        badgeCls: 'bg-status-critical/15 text-status-critical border-status-critical/30',
+        iconWrap: 'bg-status-critical/10',
+        iconColor: 'text-status-critical',
+        iconFilter:
+          'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)',
+      };
     }
-    acc[indicator.organ].push(indicator);
-    return acc;
-  }, {} as Record<string, typeof dynamicIndicators>);
-
-  // Convert to the format expected by the UI
-  const problematicIndicators = Object.entries(groupedIndicators).map(([organ, indicators]) => {
-    const getOrganIconSrc = () => {
-      switch (organ) {
-        case 'brain': return brainIcon;
-        case 'heart': return null; // Will use HeartIcon component
-        case 'lungs': return lungsIcon;
-        default: return null;
-      }
-    };
-
-    const getColorFilter = (status: string) => {
-      if (status === 'critical') {
-        return 'invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)'; // red
-      }
-      return 'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)'; // orange
-    };
-
-    const getHeartColor = (status: string) => {
-      if (status === 'critical') {
-         return 'text-status-critical';
-       }
-       return 'text-status-warning';
-    };
-
+    if (score === 2) {
+      return {
+        label: 'Surveillance',
+        cardCls: 'border-status-warning/40 bg-status-warning/5',
+        dotCls: 'bg-status-warning',
+        badgeCls: 'bg-status-warning/15 text-status-warning border-status-warning/30',
+        iconWrap: 'bg-status-warning/10',
+        iconColor: 'text-status-warning',
+        iconFilter:
+          'invert(52%) sepia(94%) saturate(635%) hue-rotate(339deg) brightness(101%) contrast(101%)',
+      };
+    }
+    if (score === 1) {
+      return {
+        label: 'À surveiller',
+        cardCls: 'border-orange-300/40 bg-orange-50/40 dark:bg-orange-950/20',
+        dotCls: 'bg-orange-400',
+        badgeCls: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-950 dark:text-orange-300',
+        iconWrap: 'bg-orange-100/60 dark:bg-orange-950/40',
+        iconColor: 'text-orange-500',
+        iconFilter:
+          'invert(59%) sepia(77%) saturate(457%) hue-rotate(346deg) brightness(101%) contrast(101%)',
+      };
+    }
     return {
-      module: organ,
-      iconSrc: getOrganIconSrc(),
-      colorFilter: getColorFilter,
-      heartColor: getHeartColor,
-      indicators: indicators.map(ind => ({
-        label: `${ind.label}: ${ind.current}`,
-        target: ind.target,
-        trend: ind.trend,
-        trendIcon: ind.trend,
-         trendColor: ind.status === 'critical' 
-          ? 'bg-status-critical/10 text-status-critical' 
-          : 'bg-status-warning/10 text-status-warning',
-        status: ind.status === 'critical' ? 'red' : 'orange'
-      }))
+      label: 'Normal',
+      cardCls: 'border-border bg-card',
+      dotCls: 'bg-muted-foreground/40',
+      badgeCls: 'bg-muted text-muted-foreground border-border',
+      iconWrap: 'bg-muted',
+      iconColor: 'text-muted-foreground',
+      iconFilter:
+        'invert(64%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(92%) contrast(88%)',
     };
-  });
-
-  const handleIndicatorClick = (organ: string, metricLabel: string) => {
-    const organPageMap: Record<string, string> = {
-      'brain': 'optibrain',
-      'heart': 'optiheart',
-      'lungs': 'optilungs'
-    };
-    
-    const page = organPageMap[organ];
-    if (page) {
-      // Extract just the metric name (before the colon if present)
-      const metricName = metricLabel.split(':')[0].trim();
-      navigate(`/${page}?patient=${encodeURIComponent(patientId)}&metric=${encodeURIComponent(metricName)}`);
-    }
   };
+
+  const sortedModules = [...modules].sort((a, b) => b.score - a.score);
+  const failingModules = sortedModules.filter((m) => m.score >= 1);
+  const failingCount = failingModules.length;
+
+  // Pre-fill Copilot export with failing organs (or all if none failing)
+  const defaultOrgans =
+    failingModules.length > 0
+      ? failingModules.map((m) => m.organValue)
+      : ['general'];
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <PatientHeader currentPage="optistate" />
-      
-      <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <Card className="shadow-sm mb-6">
+
+      <main className="container mx-auto px-6 pb-8 max-w-[1600px] space-y-6">
+        {/* SECTION 1: Vital signs */}
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-semibold">Signes Vitaux</CardTitle>
           </CardHeader>
@@ -173,17 +164,16 @@ const Optistate = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
               {vitalSigns.map((vital, index) => {
                 const inRange = isInRange(vital.value, vital.targetMin, vital.targetMax);
-                const valueColor = inRange ? 'text-muted-foreground' : 'text-status-critical';
-                
+                const valueColor = inRange ? 'text-foreground' : 'text-status-critical';
                 return (
                   <div key={index} className="flex flex-col items-center">
                     <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
                       {vital.label}
                     </div>
-                    <div className={`text-4xl font-bold ${valueColor} mb-3`}>
+                    <div className={`text-4xl font-bold ${valueColor} mb-1`}>
                       {vital.value}
                     </div>
-                    
+                    <div className="text-[11px] text-muted-foreground mb-3">{vital.unit}</div>
                     <MetricRangeBar
                       value={vital.value}
                       min={vital.min}
@@ -198,93 +188,108 @@ const Optistate = () => {
           </CardContent>
         </Card>
 
+        {/* SECTION 2: Modules overview */}
         <Card className="shadow-sm">
           <CardHeader className="border-b">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold">
-                Indicateurs Problématiques
-              </CardTitle>
-              {/* Time Range Selector */}
-              <TimeWindowSelector
-                value={timeRange}
-                onChange={(value) => setTimeRange(value as any)}
-                includeStay={true}
-              />
+              <CardTitle className="text-lg font-semibold">Vue d'ensemble des modules</CardTitle>
+              <Badge
+                variant="outline"
+                className={cn(
+                  'gap-1.5',
+                  failingCount > 0
+                    ? 'bg-status-critical/10 text-status-critical border-status-critical/30'
+                    : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {failingCount > 0 && <AlertTriangle className="h-3.5 w-3.5" />}
+                {failingCount} module{failingCount > 1 ? 's' : ''} défaillant{failingCount > 1 ? 's' : ''}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            {/* Table View */}
-            <div>
-              
-                {/* Table header */}
-                <div className="grid grid-cols-[80px_200px_150px_1fr_50px] gap-4 mb-3 text-xs font-medium text-muted-foreground pb-2 border-b">
-                  <div>Module</div>
-                  <div>Indicateurs problématiques</div>
-                  <div>Cible clinique</div>
-                  <div>Analyse de l'indicateur</div>
-                  <div></div>
-                </div>
-
-                {/* Table rows */}
-                <div className="space-y-4">
-                  {problematicIndicators.map((item, itemIndex) => (
-                    <div key={itemIndex}>
-                      {item.indicators.map((indicator, indicatorIndex) => (
-                        <div 
-                          key={indicatorIndex}
-                          className="grid grid-cols-[80px_200px_150px_1fr_50px] gap-4 items-center py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => handleIndicatorClick(item.module, indicator.label)}
-                        >
-                          {/* Module icon - always show */}
-                          <div>
-                            <div className={`w-10 h-10 rounded-lg ${
-                              indicator.status === 'red' ? 'bg-status-critical/10' : 'bg-status-warning/10'
-                            } flex items-center justify-center`}>
-                              {item.module === 'heart' ? (
-                                <HeartIcon className={`h-6 w-6 ${item.heartColor(indicator.status)}`} />
-                              ) : (
-                                <img 
-                                  src={item.iconSrc} 
-                                  alt={item.module} 
-                                  className="h-6 w-6"
-                                  style={{ filter: item.colorFilter(indicator.status) }}
-                                />
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Problematic indicator */}
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${
-                              indicator.status === 'red' ? 'bg-status-critical' : 'bg-status-warning'
-                            }`}></div>
-                            <span className="text-sm font-medium text-foreground">{indicator.label}</span>
-                          </div>
-
-                          {/* Clinical target */}
-                          <div className="text-sm text-muted-foreground">{indicator.target}</div>
-
-                          {/* Indicator Analysis - chart */}
-                          <div className="h-24 bg-background border rounded overflow-hidden">
-                            <MiniMetricChart 
-                              metricLabel={indicator.label.split(':')[0].trim()} 
-                              organ={item.module}
-                              timeRange={timeRange}
-                            />
-                          </div>
-
-                          {/* Arrow button */}
-                          <div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {sortedModules.map((m) => {
+                const style = getStatusStyle(m.score);
+                const failing = m.score >= 1;
+                const isHeart = m.key === 'optiheart';
+                return (
+                  <button
+                    key={m.key}
+                    onClick={() => navigate(`/${m.key}?patient=${encodeURIComponent(patientId)}`)}
+                    className={cn(
+                      'group relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 text-left transition-all hover:shadow-md hover:-translate-y-0.5',
+                      style.cardCls
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'absolute top-2 right-2 h-2.5 w-2.5 rounded-full',
+                        style.dotCls
+                      )}
+                    />
+                    <div
+                      className={cn(
+                        'flex items-center justify-center h-12 w-12 rounded-full',
+                        style.iconWrap
+                      )}
+                    >
+                      {isHeart ? (
+                        <HeartIcon className={cn('h-7 w-7', style.iconColor)} />
+                      ) : (
+                        <img
+                          src={(m.icon as any).props.src}
+                          alt=""
+                          className="h-7 w-7"
+                          style={{ filter: style.iconFilter }}
+                        />
+                      )}
                     </div>
-                  ))}
+                    <div className="text-sm font-semibold text-foreground">{m.label}</div>
+                    <Badge variant="outline" className={cn('text-[10px] px-2 py-0', style.badgeCls)}>
+                      {style.label}
+                    </Badge>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Voir détail
+                      <ChevronRight className="h-3 w-3" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {failingCount === 0 && (
+              <p className="mt-4 text-sm text-muted-foreground text-center">
+                Aucun module défaillant détecté pour ce patient.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* SECTION 3: Copilot export pre-filled */}
+        <Card className="shadow-sm overflow-hidden">
+          <CardHeader className="border-b bg-primary/5">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <div>
+                  <CardTitle className="text-base font-semibold">Export Copilot adapté</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Modules défaillants pré-sélectionnés. Ajustez et générez votre PDF.
+                  </p>
                 </div>
               </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <CopilotPromptGenerator
+              patientId={patientId}
+              inline
+              hideHeader
+              heightClassName="h-[680px]"
+              defaultOrgans={defaultOrgans}
+              className="border-0 rounded-none shadow-none"
+            />
           </CardContent>
         </Card>
       </main>
