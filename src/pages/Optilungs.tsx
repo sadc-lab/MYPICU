@@ -12,6 +12,7 @@ import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger }
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 
 import { MetricRangeBar } from '@/components/MetricRangeBar';
+import { VitalSignsPanel } from '@/components/VitalSignsPanel';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 

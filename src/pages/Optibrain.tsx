@@ -63,6 +63,7 @@ import { UnifiedBrainChart } from "@/components/UnifiedBrainChart";
 import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
+import { VitalSignsPanel } from "@/components/VitalSignsPanel";
 
 
 const Optibrain = () => {
