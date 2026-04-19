@@ -6,22 +6,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";
 import { usePatient } from "@/hooks/usePatients";
-import { MetricRangeBar } from "@/components/MetricRangeBar";
 import brainIcon from "@/assets/brain-icon.svg";
 import lungsIcon from "@/assets/lungs-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
 import kidneyIcon from "@/assets/kidney-icon.svg";
 import intestineIcon from "@/assets/intestine-icon.svg";
-
-const vitalSigns = [
-  { label: "FC", value: 130, min: 60, targetMin: 80, targetMax: 120, max: 140, unit: "bpm" },
-  { label: "TAM", value: 70, min: 60, targetMin: 78, targetMax: 85, max: 100, unit: "mmHg" },
-  { label: "FR", value: 25, min: 15, targetMin: 20, targetMax: 30, max: 35, unit: "/min" },
-  { label: "T°", value: 37, min: 34, targetMin: 35, targetMax: 37, max: 39, unit: "°C" },
-  { label: "SPO2", value: 95, min: 80, targetMin: 90, targetMax: 100, max: 100, unit: "%" },
-];
-
-const isVitalInRange = (v: number, min: number, max: number) => v >= min && v <= max;
 
 const reminders = [
   "Objectif de Bilan Entrée/Sortie",
@@ -45,8 +34,6 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
   const { data: patient, isLoading } = usePatient(patientId);
-  // Vital signs are expanded by default on Optistate, collapsed elsewhere
-  const [showVitals, setShowVitals] = useState(currentPage === "optistate");
   const [showReminders, setShowReminders] = useState(false);
 
   if (isLoading) return <div className="bg-card border-b border-border mb-4 sm:mb-6 p-4 text-center text-muted-foreground">Chargement...</div>;
@@ -140,40 +127,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               <strong>Diagnostic:</strong> {patient.diagnosis}
             </p>
 
-            <Collapsible open={showVitals} onOpenChange={setShowVitals} className="mt-3">
-              <CollapsibleTrigger className="flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors">
-                <span className="font-medium">Signes vitaux</span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${showVitals ? "rotate-180" : ""}`} />
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 pt-3 border-t border-border">
-                  {vitalSigns.map((vital, index) => {
-                    const inRange = isVitalInRange(vital.value, vital.targetMin, vital.targetMax);
-                    const valueColor = inRange ? "text-foreground" : "text-status-critical";
-                    return (
-                      <div key={index} className="flex flex-col items-center">
-                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
-                          {vital.label}
-                        </div>
-                        <div className={`text-2xl sm:text-3xl font-bold ${valueColor} leading-none`}>
-                          {vital.value}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground mb-2">{vital.unit}</div>
-                        <MetricRangeBar
-                          value={vital.value}
-                          min={vital.min}
-                          max={vital.max}
-                          targetMin={vital.targetMin}
-                          targetMax={vital.targetMax}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-
-            <Collapsible open={showReminders} onOpenChange={setShowReminders} className="mt-2">
+            <Collapsible open={showReminders} onOpenChange={setShowReminders} className="mt-3">
               <CollapsibleTrigger className="flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors">
                 <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="font-medium">Rappels des objectifs quotidien({reminders.length})</span>
