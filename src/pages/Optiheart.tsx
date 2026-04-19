@@ -247,6 +247,9 @@ const Optiheart = () => {
       <PatientHeader currentPage="optiheart" />
       
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
+        <div className="mb-6">
+          <VitalSignsPanel />
+        </div>
         <Card className="shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="text-base font-semibold">Métriques Cardiaques</CardTitle>
