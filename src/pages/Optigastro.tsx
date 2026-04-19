@@ -17,6 +17,9 @@ const Optigastro = () => {
       <PatientHeader currentPage="optigastro" />
 
       <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px]">
+        <div className="mb-6">
+          <VitalSignsPanel />
+        </div>
         <Card className="bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-semibold text-foreground">Optimisation gastro-intestinale</CardTitle>

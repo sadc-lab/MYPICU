@@ -1028,6 +1028,9 @@ const Optibrain = () => {
       <PatientHeader currentPage="optibrain" />
 
       <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px]">
+        <div className="mb-6">
+          <VitalSignsPanel />
+        </div>
 
         <Card className="bg-card shadow-sm mb-6">
           <CardHeader>

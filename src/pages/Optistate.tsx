@@ -28,6 +28,7 @@ import intestineIcon from '@/assets/intestine-icon.svg';
 import { cn } from '@/lib/utils';
 import { PhysiopathChains } from '@/components/PhysiopathChains';
 import { MultiIndicatorChart } from '@/components/MultiIndicatorChart';
+import { VitalSignsPanel } from '@/components/VitalSignsPanel';
 
 type ModuleKey = 'optibrain' | 'optiheart' | 'optilungs' | 'optirenal' | 'optigastro';
 
@@ -295,7 +296,8 @@ const Optistate = () => {
       <PatientHeader currentPage="optistate" />
 
       <main className="container mx-auto px-6 pb-8 max-w-[1600px] space-y-6">
-        {/* Vital signs are now in the PatientHeader (auto-expanded on Optistate) */}
+        {/* Vital signs presented as module-style metric cards (expanded on Optistate) */}
+        <VitalSignsPanel defaultOpen />
 
         {/* SECTION 1.5: Cross-system physiopath chains */}
         <PhysiopathChains
