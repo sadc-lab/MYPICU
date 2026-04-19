@@ -12,6 +12,7 @@ import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger }
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 
 import { MetricRangeBar } from '@/components/MetricRangeBar';
+import { VitalSignsPanel } from '@/components/VitalSignsPanel';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 
@@ -332,6 +333,9 @@ const Optilungs = () => {
       <PatientHeader currentPage="optilungs" />
 
       <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
+        <div className="mb-6">
+          <VitalSignsPanel />
+        </div>
         <Card className="shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="text-base font-semibold">Métriques Pulmonaires</CardTitle>

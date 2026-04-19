@@ -63,6 +63,7 @@ import { UnifiedBrainChart } from "@/components/UnifiedBrainChart";
 import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
+import { VitalSignsPanel } from "@/components/VitalSignsPanel";
 
 
 const Optibrain = () => {
@@ -1028,6 +1029,9 @@ const Optibrain = () => {
       <PatientHeader currentPage="optibrain" />
 
       <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px]">
+        <div className="mb-6">
+          <VitalSignsPanel />
+        </div>
 
         <Card className="bg-card shadow-sm mb-6">
           <CardHeader>

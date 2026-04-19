@@ -4,6 +4,7 @@ import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePatient } from '@/hooks/usePatients';
 import { Construction } from 'lucide-react';
+import { VitalSignsPanel } from '@/components/VitalSignsPanel';
 
 
 const Optigastro = () => {
@@ -17,6 +18,9 @@ const Optigastro = () => {
       <PatientHeader currentPage="optigastro" />
 
       <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px]">
+        <div className="mb-6">
+          <VitalSignsPanel />
+        </div>
         <Card className="bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-semibold text-foreground">Optimisation gastro-intestinale</CardTitle>
