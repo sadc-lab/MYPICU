@@ -38,6 +38,10 @@ const Optiheart = () => {
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
+  const [heartGroupsOpen, setHeartGroupsOpen] = useState<Record<string, boolean>>({
+    "Hémodynamique": true,
+    "Perfusion tissulaire": false,
+  });
   const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
   // File data and editing states remain for other functionality
 
