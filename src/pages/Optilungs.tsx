@@ -18,6 +18,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
+import { kpiCircleClass } from '@/utils/kpiCircleStyle';
 import { useTimeRange } from '@/hooks/useTimeRange';
 import { TimeWindowSelector, TimeWindowValue } from '@/components/ui/TimeWindowSelector';
 import {
