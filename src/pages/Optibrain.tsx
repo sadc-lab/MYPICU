@@ -1216,42 +1216,88 @@ const Optibrain = () => {
                           { key: 'htic_ischemia', label: 'HTIC+Isch.', pct: neurologicalStateConfig.history.hticWithIschemia, colorClass: 'bg-status-critical' },
                         ].filter(s => s.pct > 0);
                         const dominant = segments.slice().sort((a,b) => b.pct - a.pct)[0];
+                        const totalMinutes = Math.round(hoursForAdherence * 60);
+                        const formatDur = (mins: number) =>
+                          mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? (mins % 60).toString().padStart(2, '0') : ''}` : `${mins} min`;
                         return (
-                          <div className="px-1">
-                            <div className="flex h-1.5 rounded-full overflow-hidden">
-                              {segments.map(s => (
-                                <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
-                              ))}
-                            </div>
-                            {dominant && (
-                              <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
-                                {dominant.label} {dominant.pct}%
-                              </div>
-                            )}
-                          </div>
+                          <TooltipProvider delayDuration={150}>
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <div className="px-1 cursor-help">
+                                  <div className="flex h-1.5 rounded-full overflow-hidden">
+                                    {segments.map(s => (
+                                      <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
+                                    ))}
+                                  </div>
+                                  {dominant && (
+                                    <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
+                                      {dominant.label} {dominant.pct}%
+                                    </div>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom" className="p-2.5 max-w-[260px]">
+                                <div className="text-xs font-semibold text-foreground mb-2">Répartition État Neuro</div>
+                                <div className="flex flex-col gap-1.5">
+                                  {segments.map(s => {
+                                    const mins = Math.round(totalMinutes * s.pct / 100);
+                                    return (
+                                      <div key={s.key} className="flex items-center gap-2 text-xs">
+                                        <span className={`w-2 h-2 rounded-full ${s.colorClass} shrink-0`} />
+                                        <span className="font-medium tabular-nums w-9">{s.pct}%</span>
+                                        <span className="flex-1">{s.label}</span>
+                                        <span className="text-muted-foreground tabular-nums">{formatDur(mins)}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </TooltipContent>
+                            </UITooltip>
+                          </TooltipProvider>
                         );
                       })()}
 
                       {/* Distribution bar below PIC — épurée */}
                       {metric.label === "PIC" && neurologicalStateConfig.hasData && (() => {
-                        const picSegments = [
-                          { key: 'below20', label: '< 20', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, colorClass: 'bg-status-normal' },
-                          { key: 'range20_25', label: '20–25', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, colorClass: 'bg-status-warning' },
-                          { key: 'range25_30', label: '25–30', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, colorClass: 'bg-status-critical/80' },
-                          { key: 'above30', label: '> 30', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, colorClass: 'bg-status-critical' },
+                        const picSegmentsFull = [
+                          { key: 'below20', label: '< 20 mmHg', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.minutes || 0, colorClass: 'bg-status-normal' },
+                          { key: 'range20_25', label: '20–25 mmHg', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.minutes || 0, colorClass: 'bg-status-warning' },
+                          { key: 'range25_30', label: '25–30 mmHg', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical/80' },
+                          { key: 'above30', label: '> 30 mmHg', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical' },
                         ].filter(s => s.pct > 0);
-                        const aboveTarget = picSegments.filter(s => s.key !== 'below20').reduce((acc, s) => acc + s.pct, 0);
+                        const aboveTarget = picSegmentsFull.filter(s => s.key !== 'below20').reduce((acc, s) => acc + s.pct, 0);
+                        const formatDur = (mins: number) =>
+                          mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? (mins % 60).toString().padStart(2, '0') : ''}` : `${mins} min`;
                         return (
-                          <div className="px-1">
-                            <div className="flex h-1.5 rounded-full overflow-hidden">
-                              {picSegments.map(s => (
-                                <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
-                              ))}
-                            </div>
-                            <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
-                              {aboveTarget > 0 ? `${aboveTarget}% > 20 mmHg` : '100% dans la cible'}
-                            </div>
-                          </div>
+                          <TooltipProvider delayDuration={150}>
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <div className="px-1 cursor-help">
+                                  <div className="flex h-1.5 rounded-full overflow-hidden">
+                                    {picSegmentsFull.map(s => (
+                                      <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
+                                    ))}
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
+                                    {aboveTarget > 0 ? `${aboveTarget}% > 20 mmHg` : '100% dans la cible'}
+                                  </div>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom" className="p-2.5 max-w-[260px]">
+                                <div className="text-xs font-semibold text-foreground mb-2">Répartition PIC</div>
+                                <div className="flex flex-col gap-1.5">
+                                  {picSegmentsFull.map(s => (
+                                    <div key={s.key} className="flex items-center gap-2 text-xs">
+                                      <span className={`w-2 h-2 rounded-full ${s.colorClass} shrink-0`} />
+                                      <span className="font-medium tabular-nums w-9">{s.pct}%</span>
+                                      <span className="flex-1">{s.label}</span>
+                                      <span className="text-muted-foreground tabular-nums">{formatDur(s.minutes)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </TooltipContent>
+                            </UITooltip>
+                          </TooltipProvider>
                         );
                       })()}
                     </div>
