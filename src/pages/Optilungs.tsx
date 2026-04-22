@@ -43,6 +43,11 @@ const Optilungs = () => {
   const [selectedLungOptIndicators, setSelectedLungOptIndicators] = useState<string[]>([]);
   const [optChartTimeRange, setOptChartTimeRange] = useState<string>("24h");
   const chartRef = useRef<HTMLDivElement>(null);
+  const [pulmonaryGroupsOpen, setPulmonaryGroupsOpen] = useState<Record<string, boolean>>({
+    Oxygénation: true,
+    Scores: false,
+    Ventilation: false,
+  });
 
   // Patient file data state
   const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
