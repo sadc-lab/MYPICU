@@ -1043,7 +1043,7 @@ const Optibrain = () => {
             {(() => {
               const groups: Array<{ title: string; metricLabels: string[] }> = [
                 { title: "Pression intracrânienne", metricLabels: ["PIC", "PPC"] },
-                { title: "État neurologique", metricLabels: ["GCS", "PaCO2"] },
+                { title: "État neurologique", metricLabels: ["Glasgow (GCS)", "PaCO2"] },
               ];
               return groups.map((group) => {
                 const groupMetrics = brainMetrics.filter(m => group.metricLabels.includes(m.label));
