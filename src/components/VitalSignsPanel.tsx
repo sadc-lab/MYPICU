@@ -5,6 +5,7 @@ import { ChevronDown, Activity, AlertTriangle, CheckCircle2 } from "lucide-react
 import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { kpiCircleClass } from "@/utils/kpiCircleStyle";
 
 const vitalSigns = [
   { label: "FC", value: 130, min: 60, targetMin: 80, targetMax: 120, max: 140, unit: "bpm" },
@@ -34,12 +35,7 @@ export const VitalSignsPanel = ({ defaultOpen = false }: VitalSignsPanelProps) =
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
             <div className="flex items-center gap-2">
               <div
-                className={cn(
-                  "h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold tabular-nums shrink-0",
-                  abnormalCount > 0
-                    ? "bg-status-critical text-white"
-                    : "bg-status-normal/10 text-status-normal",
-                )}
+                className={kpiCircleClass(abnormalCount)}
                 aria-label={`${abnormalCount} paramètre(s) hors cible`}
               >
                 {abnormalCount}

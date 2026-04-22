@@ -26,6 +26,7 @@ import lungsIcon from '@/assets/lungs-icon.svg';
 import kidneyIcon from '@/assets/kidney-icon.svg';
 import intestineIcon from '@/assets/intestine-icon.svg';
 import { cn } from '@/lib/utils';
+import { kpiCircleClass } from '@/utils/kpiCircleStyle';
 import { PhysiopathChains } from '@/components/PhysiopathChains';
 import { MultiIndicatorChart } from '@/components/MultiIndicatorChart';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
@@ -358,12 +359,9 @@ const Optistate = () => {
                         <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
                           <div className="flex items-center gap-3">
                             <div
-                              className={cn(
-                                'h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold tabular-nums shrink-0',
-                                m.indicators.length > 0
-                                  ? 'bg-status-critical text-white'
-                                  : 'bg-status-normal/10 text-status-normal',
-                              )}
+                              className={kpiCircleClass(m.indicators.length, {
+                                hasCritical: m.score >= 3,
+                              })}
                               aria-label={`${m.indicators.length} indicateur(s) à surveiller`}
                             >
                               {m.indicators.length}
