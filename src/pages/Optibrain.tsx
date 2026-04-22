@@ -1110,13 +1110,13 @@ const Optibrain = () => {
         </DataLoadingOverlay>
 
         <Card className="bg-card shadow-sm mb-6">
-          <CardHeader>
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-primary text-primary bg-primary/10 shrink-0">
+          <CardHeader className="py-3 px-4 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 border-primary text-primary bg-primary/10 shrink-0">
                 <img
                   src={brainIcon}
                   alt="brain"
-                  className="h-6 w-6 sm:h-8 sm:w-8"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
                   style={{
                     filter: "invert(39%) sepia(95%) saturate(1095%) hue-rotate(196deg) brightness(97%) contrast(94%)",
                   }}
