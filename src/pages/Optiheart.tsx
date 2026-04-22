@@ -264,8 +264,15 @@ const Optiheart = () => {
                     >
                       <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
                         <div className="flex items-center gap-2">
-                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Activity className="h-4 w-4 text-primary" />
+                          <div
+                            className={`h-8 w-8 rounded-lg flex items-center justify-center text-sm font-bold tabular-nums ${
+                              abnormal > 0
+                                ? 'bg-status-critical/10 text-status-critical'
+                                : 'bg-status-normal/10 text-status-normal'
+                            }`}
+                            aria-label={`${abnormal} paramètre(s) hors cible`}
+                          >
+                            {abnormal}
                           </div>
                           <div className="text-left">
                             <div className="text-base font-semibold text-foreground">{group.title}</div>
