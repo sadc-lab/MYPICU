@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Activity } from "lucide-react";
+import { ChevronDown, Activity, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const vitalSigns = [
   { label: "FC", value: 130, min: 60, targetMin: 80, targetMax: 120, max: 140, unit: "bpm" },
@@ -43,11 +45,34 @@ export const VitalSignsPanel = ({ defaultOpen = false }: VitalSignsPanelProps) =
                 </div>
               </div>
             </div>
-            <ChevronDown
-              className={`h-4 w-4 text-muted-foreground transition-transform ${
-                open ? "rotate-180" : ""
-              }`}
-            />
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "gap-1.5",
+                  abnormalCount > 0
+                    ? "bg-status-critical/10 text-status-critical border-status-critical/30"
+                    : "bg-status-normal/10 text-status-normal border-status-normal/30",
+                )}
+              >
+                {abnormalCount > 0 ? (
+                  <>
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    {abnormalCount} hors cible
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Dans les cibles
+                  </>
+                )}
+              </Badge>
+              <ChevronDown
+                className={`h-4 w-4 text-muted-foreground transition-transform ${
+                  open ? "rotate-180" : ""
+                }`}
+              />
+            </div>
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
