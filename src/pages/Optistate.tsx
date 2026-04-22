@@ -359,7 +359,7 @@ const Optistate = () => {
                           <div className="flex items-center gap-3">
                             <div
                               className={cn(
-                                'h-10 w-10 rounded-full flex items-center justify-center text-base font-bold tabular-nums shrink-0',
+                                'h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold tabular-nums shrink-0',
                                 m.indicators.length > 0
                                   ? 'bg-status-critical text-white'
                                   : 'bg-status-normal/10 text-status-normal',
