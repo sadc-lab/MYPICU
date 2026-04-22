@@ -1037,37 +1037,74 @@ const Optibrain = () => {
           <VitalSignsPanel />
         </div>
 
-        <Card className="bg-card shadow-sm mb-6">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold text-foreground">Métriques cérébrales</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cérébrales..." variant="skeleton">
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
-              {brainMetrics.map((metric, index) => {
-                const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
+        <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cérébrales..." variant="skeleton">
+          <div className="space-y-4 mb-6">
+            {(() => {
+              const groups: Array<{ title: string; metricLabels: string[] }> = [
+                { title: "Pression intracrânienne", metricLabels: ["PIC", "PPC"] },
+                { title: "État neurologique", metricLabels: ["GCS", "PaCO2"] },
+              ];
+              return groups.map((group) => {
+                const groupMetrics = brainMetrics.filter(m => group.metricLabels.includes(m.label));
+                if (groupMetrics.length === 0) return null;
+                const abnormal = groupMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax)).length;
+                const isOpen = brainGroupsOpen[group.title] ?? false;
                 return (
-                  <div key={index} className="flex flex-col items-center">
-                    <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
-                    </div>
-
-                    <MetricRangeBar
-                      value={metric.value}
-                      min={metric.min}
-                      max={metric.max}
-                      targetMin={metric.targetMin}
-                      targetMax={metric.targetMax}
-                    />
-                  </div>
+                  <Card key={group.title} className="bg-card shadow-sm">
+                    <CardHeader
+                      className="cursor-pointer hover:bg-muted/50 transition-colors py-3"
+                      onClick={() => setBrainGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <CardTitle className="text-sm font-semibold">{group.title}</CardTitle>
+                          <span className="text-xs text-muted-foreground">
+                            {groupMetrics.length} indicateur{groupMetrics.length > 1 ? "s" : ""}
+                          </span>
+                          {abnormal > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              {abnormal} hors cible
+                            </Badge>
+                          )}
+                        </div>
+                        {isOpen ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    {isOpen && (
+                      <CardContent className="pt-0">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 pt-4">
+                          {groupMetrics.map((metric, index) => {
+                            const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
+                            const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
+                            return (
+                              <div key={index} className="flex flex-col items-center">
+                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
+                                </div>
+                                <MetricRangeBar
+                                  value={metric.value}
+                                  min={metric.min}
+                                  max={metric.max}
+                                  targetMin={metric.targetMin}
+                                  targetMax={metric.targetMax}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
                 );
-              })}
-            </div>
-            </DataLoadingOverlay>
-          </CardContent>
-        </Card>
+              });
+            })()}
+          </div>
+        </DataLoadingOverlay>
 
         <Card className="bg-card shadow-sm mb-6">
           <CardHeader
