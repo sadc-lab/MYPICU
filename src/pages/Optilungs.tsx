@@ -388,11 +388,7 @@ const Optilungs = () => {
                     <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
                       <div className="flex items-center gap-2">
                         <div
-                          className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold tabular-nums shrink-0 ${
-                            abnormal > 0
-                              ? 'bg-status-critical text-white'
-                              : 'bg-status-normal/10 text-status-normal'
-                          }`}
+                          className={kpiCircleClass(abnormal)}
                           aria-label={`${abnormal} paramètre(s) hors cible`}
                         >
                           {abnormal}
