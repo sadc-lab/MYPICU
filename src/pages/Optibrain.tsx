@@ -1176,13 +1176,13 @@ const Optibrain = () => {
                     <div key={index} className="flex flex-col gap-2">
                       {/* Metric card */}
                       <div
-                        className={`flex flex-col items-center cursor-pointer p-3 sm:p-4 rounded-xl transition-all border-2 ${statusBg} ${
+                        className={`flex flex-col items-center cursor-pointer p-2 sm:p-2.5 rounded-lg transition-all border ${statusBg} ${
                           isSelected
                             ? metric.status === "critical"
-                              ? "border-status-critical shadow-md ring-1 ring-status-critical/20"
+                              ? "border-status-critical shadow-sm ring-1 ring-status-critical/20"
                               : metric.status === "warning"
-                                ? "border-status-warning shadow-md ring-1 ring-status-warning/20"
-                                : "border-primary shadow-md ring-1 ring-primary/20"
+                                ? "border-status-warning shadow-sm ring-1 ring-status-warning/20"
+                                : "border-primary shadow-sm ring-1 ring-primary/20"
                             : "border-transparent hover:border-border hover:shadow-sm"
                         }`}
                         onClick={(e) => {
@@ -1196,11 +1196,11 @@ const Optibrain = () => {
                           }
                         }}
                       >
-                        <div className="text-[10px] sm:text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider text-center">
+                        <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-center">
                           {metric.label}
                         </div>
-                        <div className="flex items-baseline gap-1 mb-1">
-                          <div className={`text-2xl sm:text-4xl font-bold ${statusColor} tabular-nums`}>{metric.displayValue}</div>
+                        <div className="flex items-baseline gap-1">
+                          <div className={`text-lg sm:text-2xl font-bold ${statusColor} tabular-nums leading-none`}>{metric.displayValue}</div>
                           {metric.unit && (
                             <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
                           )}
