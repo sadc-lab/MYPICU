@@ -1201,9 +1201,9 @@ const Optibrain = () => {
                           {metric.label}
                         </div>
                         <div className="flex items-baseline gap-1 mb-1">
-                          <div className={`text-xl sm:text-3xl font-bold ${statusColor} tabular-nums`}>{metric.displayValue}</div>
+                          <div className={`text-2xl sm:text-4xl font-bold ${statusColor} tabular-nums`}>{metric.displayValue}</div>
                           {metric.unit && (
-                            <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">{metric.unit}</span>
+                            <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
                           )}
                         </div>
                         {/* Description for Autorégulation */}
