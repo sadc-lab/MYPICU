@@ -137,18 +137,7 @@ const Optiheart = () => {
 
   const heartMetrics = importedHeartMetrics;
 
-  const heartOptimisationMetrics = [
-    {
-      label: 'État Cardiaque',
-      value: 'Choc cardiogénique',
-      displayValue: 'Choc cardiogénique',
-      unit: '',
-      status: 'critical',
-      hasDetails: true,
-      dialogKey: 'cardiac',
-      trend: 'stable'
-    }
-  ];
+
 
   const clinicalIndicators = [
     { label: 'MAP', value: 72, unit: 'mmHg', target: '> 65 mmHg', status: 'normal', trend: 'up', change: 3 },
