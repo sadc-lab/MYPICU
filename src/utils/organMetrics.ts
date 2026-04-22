@@ -26,7 +26,7 @@ export const brainMetrics = [
     organ: 'brain'
   },
   {
-    label: 'GCS',
+    label: 'Glasgow (GCS)',
     value: 3,
     unit: '',
     min: 3,
