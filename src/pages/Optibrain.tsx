@@ -75,6 +75,10 @@ const Optibrain = () => {
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
+  const [brainGroupsOpen, setBrainGroupsOpen] = useState<Record<string, boolean>>({
+    "Pression intracrânienne": true,
+    "État neurologique": false,
+  });
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
   // Track whether the auto-selection of problematic indicators has already
   // run, so the user can later deselect them without us re-adding them.
