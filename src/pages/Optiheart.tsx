@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePatient } from '@/hooks/usePatients';
-import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus, AlertTriangle } from 'lucide-react';
+import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus, AlertTriangle, Heart, Droplets } from 'lucide-react';
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 import { MetricRangeBar } from '@/components/MetricRangeBar';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
