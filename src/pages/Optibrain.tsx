@@ -1109,35 +1109,37 @@ const Optibrain = () => {
           </div>
         </DataLoadingOverlay>
 
-        <Card className="bg-card shadow-sm mb-6">
-          <CardHeader className="py-3 px-4 sm:px-6">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="h-9 w-9 rounded-full flex items-center justify-center border-2 border-primary text-primary bg-primary/10 shrink-0">
-                <img
-                  src={brainIcon}
-                  alt="brain"
-                  className="h-4 w-4"
-                  style={{
-                    filter: "invert(39%) sepia(95%) saturate(1095%) hue-rotate(196deg) brightness(97%) contrast(94%)",
-                  }}
-                />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation cérébrale actuelle</h3>
-                <p className="text-xs text-muted-foreground mt-1 truncate">
-                  {realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)} mmHg` : "PIC --"}
-                  {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
-                    ? ` • ${isNirsBased ? "PAM" : "PPC"} optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`
-                    : realBrainValues.ppc !== null
-                      ? ` • PPC ${Math.round(realBrainValues.ppc)} mmHg`
-                      : ""}
-                  {optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-                    ? ` (zone ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)})`
-                    : ""}
-                </p>
-              </div>
-            </div>
-          </CardHeader>
+        {(() => {
+          const brainProblemCount = brainOptimisationMetrics.filter(
+            (m) => m.status === "critical" || m.status === "warning"
+          ).length;
+          const brainHasCritical = brainOptimisationMetrics.some((m) => m.status === "critical");
+          return (
+            <Card className="bg-card shadow-sm mb-6">
+              <CardHeader className="py-3 px-4 sm:px-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <KpiCircle
+                    count={brainProblemCount}
+                    hasCritical={brainHasCritical}
+                    groupLabel="Optimisation cérébrale"
+                    itemLabel="indicateur"
+                  />
+                  <div className="min-w-0">
+                    <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation cérébrale actuelle</h3>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                      {realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)} mmHg` : "PIC --"}
+                      {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
+                        ? ` • ${isNirsBased ? "PAM" : "PPC"} optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`
+                        : realBrainValues.ppc !== null
+                          ? ` • PPC ${Math.round(realBrainValues.ppc)} mmHg`
+                          : ""}
+                      {optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
+                        ? ` (zone ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)})`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
           {true && (
             <CardContent className="pt-0 space-y-5">
               {/* Alert if no autoregulation data available yet */}
