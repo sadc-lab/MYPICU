@@ -1190,8 +1190,12 @@ const Optibrain = () => {
                       {/* Metric card */}
                       <div
                         className={`flex flex-col items-center cursor-pointer p-3 sm:p-4 rounded-xl transition-all border-2 ${statusBg} ${
-                          isSelected 
-                            ? "border-primary shadow-md ring-1 ring-primary/20" 
+                          isSelected
+                            ? metric.status === "critical"
+                              ? "border-status-critical shadow-md ring-1 ring-status-critical/20"
+                              : metric.status === "warning"
+                                ? "border-status-warning shadow-md ring-1 ring-status-warning/20"
+                                : "border-primary shadow-md ring-1 ring-primary/20"
                             : "border-transparent hover:border-border hover:shadow-sm"
                         }`}
                         onClick={(e) => {
@@ -1214,82 +1218,52 @@ const Optibrain = () => {
                             <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
                           )}
                         </div>
-                        {/* Description for Autorégulation */}
-                        {metric.description && (
-                          <div className="text-[10px] sm:text-xs text-muted-foreground text-center leading-tight mb-0.5">
-                            {metric.description}
-                          </div>
-                        )}
-                        {/* Dernière valeur critique */}
-                        {metric.criticalLabel && (
-                          <div className={`text-[10px] sm:text-xs font-semibold ${metric.criticalColor} text-center leading-tight mt-0.5`}>
-                            {metric.criticalLabel}
-                          </div>
-                        )}
                       </div>
 
-                      {/* Distribution bar below État Neuro */}
+                      {/* Distribution bar below État Neuro — épurée */}
                       {metric.label === "État Neuro" && neurologicalStateConfig.hasData && (() => {
                         const segments = [
-                          { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, colorClass: 'bg-status-normal', dotClass: 'bg-status-normal' },
-                          { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, colorClass: 'bg-status-warning', dotClass: 'bg-status-warning' },
-                          { key: 'hyperemia', label: 'Hypérémie', pct: neurologicalStateConfig.history.hyperemia, colorClass: 'bg-amber-400', dotClass: 'bg-amber-400' },
-                          { key: 'htic', label: 'HTIC', pct: neurologicalStateConfig.history.htic, colorClass: 'bg-status-warning', dotClass: 'bg-status-warning' },
-                          { key: 'htic_ischemia', label: 'HTIC+Isch.', pct: neurologicalStateConfig.history.hticWithIschemia, colorClass: 'bg-status-critical', dotClass: 'bg-status-critical' },
+                          { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, colorClass: 'bg-status-normal' },
+                          { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, colorClass: 'bg-status-warning' },
+                          { key: 'hyperemia', label: 'Hypérémie', pct: neurologicalStateConfig.history.hyperemia, colorClass: 'bg-amber-400' },
+                          { key: 'htic', label: 'HTIC', pct: neurologicalStateConfig.history.htic, colorClass: 'bg-status-warning' },
+                          { key: 'htic_ischemia', label: 'HTIC+Isch.', pct: neurologicalStateConfig.history.hticWithIschemia, colorClass: 'bg-status-critical' },
                         ].filter(s => s.pct > 0);
-                        const totalMinutes = Math.round(hoursForAdherence * 60);
+                        const dominant = segments.slice().sort((a,b) => b.pct - a.pct)[0];
                         return (
-                          <div className="rounded-lg bg-muted/40 p-2.5 border border-border/50">
-                            <div className="flex h-3 rounded-full overflow-hidden mb-2 shadow-inner">
+                          <div className="px-1">
+                            <div className="flex h-1.5 rounded-full overflow-hidden">
                               {segments.map(s => (
-                                <div key={s.key} className={`${s.colorClass} transition-all`} style={{ width: `${s.pct}%` }} />
+                                <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
                               ))}
                             </div>
-                            <div className="flex flex-col gap-1">
-                              {segments.map(s => {
-                                const mins = Math.round(totalMinutes * s.pct / 100);
-                                const durLabel = mins >= 60 ? `${Math.floor(mins/60)}h${mins%60 > 0 ? (mins%60).toString().padStart(2,'0') : ''}` : `${mins} min`;
-                                return (
-                                  <div key={s.key} className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-muted-foreground leading-tight">
-                                    <span className={`w-2 h-2 rounded-full ${s.dotClass} inline-block shrink-0`} />
-                                    <span className="font-medium">{s.pct}%</span>
-                                    <span className="truncate">{s.label}</span>
-                                    <span className="text-muted-foreground/50 ml-auto tabular-nums">{durLabel}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                            {dominant && (
+                              <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
+                                {dominant.label} {dominant.pct}%
+                              </div>
+                            )}
                           </div>
                         );
                       })()}
 
-                      {/* Distribution bar below PIC */}
+                      {/* Distribution bar below PIC — épurée */}
                       {metric.label === "PIC" && neurologicalStateConfig.hasData && (() => {
                         const picSegments = [
-                          { key: 'below20', label: '< 20', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.minutes || 0, colorClass: 'bg-status-normal', dotClass: 'bg-status-normal' },
-                          { key: 'range20_25', label: '20–25', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.minutes || 0, colorClass: 'bg-status-warning', dotClass: 'bg-status-warning' },
-                          { key: 'range25_30', label: '25–30', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical/80', dotClass: 'bg-status-critical/80' },
-                          { key: 'above30', label: '> 30', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical', dotClass: 'bg-status-critical' },
+                          { key: 'below20', label: '< 20', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, colorClass: 'bg-status-normal' },
+                          { key: 'range20_25', label: '20–25', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, colorClass: 'bg-status-warning' },
+                          { key: 'range25_30', label: '25–30', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, colorClass: 'bg-status-critical/80' },
+                          { key: 'above30', label: '> 30', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, colorClass: 'bg-status-critical' },
                         ].filter(s => s.pct > 0);
+                        const aboveTarget = picSegments.filter(s => s.key !== 'below20').reduce((acc, s) => acc + s.pct, 0);
                         return (
-                          <div className="rounded-lg bg-muted/40 p-2.5 border border-border/50">
-                            <div className="flex h-3 rounded-full overflow-hidden mb-2 shadow-inner">
+                          <div className="px-1">
+                            <div className="flex h-1.5 rounded-full overflow-hidden">
                               {picSegments.map(s => (
-                                <div key={s.key} className={`${s.colorClass} transition-all`} style={{ width: `${s.pct}%` }} />
+                                <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
                               ))}
                             </div>
-                            <div className="flex flex-col gap-1">
-                              {picSegments.map(s => {
-                                const durLabel = s.minutes >= 60 ? `${Math.floor(s.minutes/60)}h${s.minutes%60 > 0 ? (s.minutes%60).toString().padStart(2,'0') : ''}` : `${s.minutes} min`;
-                                return (
-                                  <div key={s.key} className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-muted-foreground leading-tight">
-                                    <span className={`w-2 h-2 rounded-full ${s.dotClass} inline-block shrink-0`} />
-                                    <span className="font-medium">{s.pct}%</span>
-                                    <span className="truncate">{s.label} mmHg</span>
-                                    <span className="text-muted-foreground/50 ml-auto tabular-nums">{durLabel}</span>
-                                  </div>
-                                );
-                              })}
+                            <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
+                              {aboveTarget > 0 ? `${aboveTarget}% > 20 mmHg` : '100% dans la cible'}
                             </div>
                           </div>
                         );
