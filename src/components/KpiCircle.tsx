@@ -1,11 +1,10 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { AlertTriangle } from "lucide-react";
 import { kpiCircleClass, getKpiSeverity } from "@/utils/kpiCircleStyle";
 
 interface KpiCircleProps {
   /** Nombre d'éléments problématiques à afficher dans le cercle. */
   count: number;
-  /** Forcer la sévérité critique (rouge + badge alerte) même si count < 3. */
+  /** Forcer la sévérité critique (rouge) même si count < 3. */
   hasCritical?: boolean;
   /**
    * Libellé du groupe de KPI (ex: "Signes vitaux", "Hémodynamique", "OptiBrain").
@@ -21,8 +20,7 @@ interface KpiCircleProps {
 
 /**
  * Cercle compteur unifié pour tous les groupes de KPI.
- * Tooltip explicatif au survol + badge AlertTriangle pour les états critiques
- * (sans animation clignotante).
+ * Tooltip explicatif au survol.
  */
 export const KpiCircle = ({
   count,
@@ -46,22 +44,12 @@ export const KpiCircle = ({
   return (
     <Tooltip delayDuration={200}>
       <TooltipTrigger asChild>
-        <div className="relative inline-flex shrink-0">
-          <div
-            className={kpiCircleClass(count, { hasCritical })}
-            aria-label={tooltipTitle}
-            role="status"
-          >
-            {count}
-          </div>
-          {severity === 'critical' && (
-            <span
-              className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-status-critical text-white ring-2 ring-background"
-              aria-hidden="true"
-            >
-              <AlertTriangle className="h-2.5 w-2.5" strokeWidth={2.5} />
-            </span>
-          )}
+        <div
+          className={kpiCircleClass(count, { hasCritical })}
+          aria-label={tooltipTitle}
+          role="status"
+        >
+          {count}
         </div>
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-xs">
