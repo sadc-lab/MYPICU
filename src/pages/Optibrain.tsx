@@ -575,7 +575,7 @@ const Optibrain = () => {
         };
       }
       // Use patient-specific GCS value
-      if (metric.label === "GCS" && patient?.gcs !== undefined) {
+      if (metric.label === "Glasgow (GCS)" && patient?.gcs !== undefined) {
         return {
           ...metric,
           value: patient.gcs,
