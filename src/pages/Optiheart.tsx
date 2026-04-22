@@ -16,7 +16,7 @@ import { VitalSignsPanel } from '@/components/VitalSignsPanel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { heartMetrics as importedHeartMetrics } from '@/utils/organMetrics';
-import { kpiCircleClass } from '@/utils/kpiCircleStyle';
+import { KpiCircle } from '@/components/KpiCircle';
 import { useTimeRange } from '@/hooks/useTimeRange';
 import { TimeWindowSelector } from '@/components/ui/TimeWindowSelector';
 import { getStatusHexColor } from '@/utils/colorUtils';
@@ -265,12 +265,7 @@ const Optiheart = () => {
                     >
                       <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
                         <div className="flex items-center gap-2">
-                          <div
-                            className={kpiCircleClass(abnormal)}
-                            aria-label={`${abnormal} paramètre(s) hors cible`}
-                          >
-                            {abnormal}
-                          </div>
+                          <KpiCircle count={abnormal} groupLabel={group.title} />
                           <div className="text-left">
                             <div className="text-base font-semibold text-foreground">{group.title}</div>
                             <div className="text-xs text-muted-foreground">
