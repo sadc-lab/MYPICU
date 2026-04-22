@@ -1396,21 +1396,13 @@ const Optibrain = () => {
                 onClick={() => setChecklistExpanded(!checklistExpanded)}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-4">
-                    <div
-                      className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold tabular-nums shrink-0 border-2 transition-all duration-300 ${
-                        monitoringAdherence === null
-                          ? "border-muted-foreground/30 text-muted-foreground bg-muted"
-                          : nonAdherentCount === 0
-                            ? "border-status-normal/60 text-status-normal bg-status-normal/10"
-                            : nonAdherentCount <= 2
-                              ? "border-status-warning text-status-warning bg-status-warning/10"
-                              : "border-status-critical text-status-critical bg-status-critical/10"
-                      }`}
-                      title={monitoringAdherence !== null ? `${monitoringAdherence}% d'adhérence` : undefined}
-                    >
-                      {monitoringAdherence !== null ? nonAdherentCount : "--"}
-                    </div>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <KpiCircle
+                      count={monitoringAdherence !== null ? nonAdherentCount : 0}
+                      hasCritical={monitoringAdherence !== null && nonAdherentCount >= 3}
+                      groupLabel="Monitorage et interventions"
+                      itemLabel="indicateur"
+                    />
                     <div className="min-w-0">
                       <h3 className="text-xs sm:text-sm font-semibold text-foreground">Monitorage et interventions en place</h3>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -1495,21 +1487,13 @@ const Optibrain = () => {
                 onClick={() => setClinicalExpanded(!clinicalExpanded)}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-4">
-                    <div
-                      className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold tabular-nums shrink-0 border-2 transition-all duration-300 ${
-                        clinicalAdherence === null
-                          ? "border-muted-foreground/30 text-muted-foreground bg-muted"
-                          : outOfRangeCount === 0
-                            ? "border-status-normal/60 text-status-normal bg-status-normal/10"
-                            : outOfRangeCount <= 2
-                              ? "border-status-warning text-status-warning bg-status-warning/10"
-                              : "border-status-critical text-status-critical bg-status-critical/10"
-                      }`}
-                      title={clinicalAdherence !== null ? `${clinicalAdherence}% d'adhérence` : undefined}
-                    >
-                      {clinicalAdherence !== null ? outOfRangeCount : "--"}
-                    </div>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <KpiCircle
+                      count={clinicalAdherence !== null ? outOfRangeCount : 0}
+                      hasCritical={clinicalAdherence !== null && outOfRangeCount >= 3}
+                      groupLabel="Adhérence aux cibles"
+                      itemLabel="indicateur"
+                    />
                     <div className="min-w-0">
                        <h3 className="text-xs sm:text-sm font-semibold text-foreground">Adhérence aux cibles recommandées</h3>
                        <p className="text-xs text-muted-foreground mt-1">
