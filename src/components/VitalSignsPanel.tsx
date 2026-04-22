@@ -5,7 +5,7 @@ import { ChevronDown, Activity, AlertTriangle, CheckCircle2 } from "lucide-react
 import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { kpiCircleClass } from "@/utils/kpiCircleStyle";
+import { KpiCircle } from "@/components/KpiCircle";
 
 const vitalSigns = [
   { label: "FC", value: 130, min: 60, targetMin: 80, targetMax: 120, max: 140, unit: "bpm" },
@@ -34,12 +34,7 @@ export const VitalSignsPanel = ({ defaultOpen = false }: VitalSignsPanelProps) =
         <CollapsibleTrigger className="w-full">
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
             <div className="flex items-center gap-2">
-              <div
-                className={kpiCircleClass(abnormalCount)}
-                aria-label={`${abnormalCount} paramètre(s) hors cible`}
-              >
-                {abnormalCount}
-              </div>
+              <KpiCircle count={abnormalCount} groupLabel="Signes vitaux" />
               <div className="text-left">
                 <div className="text-base font-semibold text-foreground">Signes vitaux</div>
                 <div className="text-xs text-muted-foreground">
