@@ -453,62 +453,64 @@ export function UnifiedBrainChart({
       };
       
       return (
-        <div className="bg-card border border-border rounded-lg p-3 shadow-lg min-w-[180px]">
-          <p className="text-xs text-muted-foreground mb-2 border-b border-border pb-2">
+        <div className="bg-card border border-border rounded-lg p-2.5 shadow-lg min-w-[180px]">
+          <p className="text-[11px] text-muted-foreground mb-1.5 border-b border-border pb-1.5">
             {format(new Date(data.timestamp), "dd/MM HH:mm", { locale: fr })}
           </p>
-          
-          {/* Neurological State */}
-          {data.neuroState && (
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-muted-foreground">État :</span>
-              <span className={`text-sm font-medium ${stateColors[data.neuroState as NeuroState]}`}>
-                {stateLabels[data.neuroState as NeuroState]}
-              </span>
-            </div>
-          )}
-          
-          {/* PIC */}
-          {data.pic !== null && (
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-muted-foreground">PIC :</span>
-              <span className="text-sm font-medium text-status-warning">
-                {Math.round(data.pic)} mmHg
-              </span>
-            </div>
-          )}
-          
-          {/* PAM Optimale */}
-          {optimalPAM !== null && optimalPAM !== undefined && (
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-muted-foreground">PAM Opt :</span>
-              <span className="text-sm font-medium text-status-normal">
-                {Math.round(optimalPAM)} mmHg
-              </span>
-            </div>
-          )}
-          
-          {/* NIRS Reliability */}
-          {nirsReliability !== null && nirsReliability !== undefined && (
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-muted-foreground">Fiabilité NIRS :</span>
-              <span className={`text-sm font-medium ${nirsReliability >= 70 ? 'text-status-normal' : nirsReliability >= 50 ? 'text-status-warning' : 'text-status-critical'}`}>
-                {Math.round(nirsReliability)}%
-              </span>
-            </div>
-          )}
-          
-          {/* Autoregulation Score (PRx or COx) */}
-          {autoregulationScore !== null && autoregulationScore !== undefined && (
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-muted-foreground">
-                {isNirsBased ? "COx :" : "PRx :"}
-              </span>
-              <span className={`text-sm font-medium ${autoregulationScore < 0.3 ? 'text-status-normal' : autoregulationScore < 0.5 ? 'text-status-warning' : 'text-status-critical'}`}>
-                {autoregulationScore.toFixed(2)}
-              </span>
-            </div>
-          )}
+
+          <div className="space-y-1">
+            {/* Neurological State */}
+            {data.neuroState && (
+              <div className="flex justify-between items-center gap-3 text-[11px]">
+                <span className="text-muted-foreground">État :</span>
+                <span className={`font-medium ${stateColors[data.neuroState as NeuroState]}`}>
+                  {stateLabels[data.neuroState as NeuroState]}
+                </span>
+              </div>
+            )}
+
+            {/* PIC */}
+            {data.pic !== null && (
+              <div className="flex justify-between items-center gap-3 text-[11px]">
+                <span className="text-muted-foreground">PIC :</span>
+                <span className="font-medium text-status-warning">
+                  {Math.round(data.pic)} mmHg
+                </span>
+              </div>
+            )}
+
+            {/* PAM Optimale */}
+            {optimalPAM !== null && optimalPAM !== undefined && (
+              <div className="flex justify-between items-center gap-3 text-[11px]">
+                <span className="text-muted-foreground">PAM Opt :</span>
+                <span className="font-medium text-status-normal">
+                  {Math.round(optimalPAM)} mmHg
+                </span>
+              </div>
+            )}
+
+            {/* NIRS Reliability */}
+            {nirsReliability !== null && nirsReliability !== undefined && (
+              <div className="flex justify-between items-center gap-3 text-[11px]">
+                <span className="text-muted-foreground">Fiabilité NIRS :</span>
+                <span className={`font-medium ${nirsReliability >= 70 ? 'text-status-normal' : nirsReliability >= 50 ? 'text-status-warning' : 'text-status-critical'}`}>
+                  {Math.round(nirsReliability)}%
+                </span>
+              </div>
+            )}
+
+            {/* Autoregulation Score (PRx or COx) */}
+            {autoregulationScore !== null && autoregulationScore !== undefined && (
+              <div className="flex justify-between items-center gap-3 text-[11px]">
+                <span className="text-muted-foreground">
+                  {isNirsBased ? "COx :" : "PRx :"}
+                </span>
+                <span className={`font-medium ${autoregulationScore < 0.3 ? 'text-status-normal' : autoregulationScore < 0.5 ? 'text-status-warning' : 'text-status-critical'}`}>
+                  {autoregulationScore.toFixed(2)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       );
     }
@@ -547,7 +549,7 @@ export function UnifiedBrainChart({
       {/* Main Unified Chart */}
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }}>
+          <ComposedChart data={chartData} margin={{ top: 10, right: 16, left: 4, bottom: 8 }}>
             <defs>
               <linearGradient id="optimalZoneGradientUnified" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="hsl(var(--status-normal))" stopOpacity={0.2} />
@@ -597,7 +599,7 @@ export function UnifiedBrainChart({
               axisLine={{ stroke: "hsl(var(--border))" }}
               tickFormatter={(value) => `${value}`}
               width={40}
-              label={{ value: "mmHg", angle: -90, position: "insideLeft", fontSize: 11 }}
+              label={{ value: "mmHg", angle: -90, position: "insideLeft", fontSize: 10 }}
             />
 
             <Tooltip content={<CustomTooltip />} />
@@ -666,8 +668,8 @@ export function UnifiedBrainChart({
       </div>
 
       {/* Footer with current values */}
-      <div className="border-t border-border pt-4">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+      <div className="border-t border-border pt-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
           {showPIC && (
             <>
               <div>
