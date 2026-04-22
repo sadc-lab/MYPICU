@@ -1392,7 +1392,7 @@ const Optibrain = () => {
             {/* Monitoring Targets - Moved to top */}
             <Card className="border-2 border-border">
               <CardHeader
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                className="py-3 px-4 sm:px-6 cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => setChecklistExpanded(!checklistExpanded)}
               >
                 <div className="flex items-center justify-between">
@@ -1483,7 +1483,7 @@ const Optibrain = () => {
 
             <Card className="border-2 border-border">
               <CardHeader
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                className="py-3 px-4 sm:px-6 cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => setClinicalExpanded(!clinicalExpanded)}
               >
                 <div className="flex items-center justify-between">
