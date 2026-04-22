@@ -1115,45 +1115,35 @@ const Optibrain = () => {
         </DataLoadingOverlay>
 
         <Card className="bg-card shadow-sm mb-6">
-          <CardHeader
-            className="cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setOptimisationExpanded(!optimisationExpanded)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-primary text-primary bg-primary/10 shrink-0">
-                  <img
-                    src={brainIcon}
-                    alt="brain"
-                    className="h-6 w-6 sm:h-8 sm:w-8"
-                    style={{
-                      filter: "invert(39%) sepia(95%) saturate(1095%) hue-rotate(196deg) brightness(97%) contrast(94%)",
-                    }}
-                  />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation cérébrale actuelle</h3>
-                  <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)} mmHg` : "PIC --"}
-                    {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
-                      ? ` • ${isNirsBased ? "PAM" : "PPC"} optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`
-                      : realBrainValues.ppc !== null 
-                        ? ` • PPC ${Math.round(realBrainValues.ppc)} mmHg`
-                        : ""}
-                    {optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-                      ? ` (zone ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)})`
-                      : ""}
-                  </p>
-                </div>
+          <CardHeader>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-primary text-primary bg-primary/10 shrink-0">
+                <img
+                  src={brainIcon}
+                  alt="brain"
+                  className="h-6 w-6 sm:h-8 sm:w-8"
+                  style={{
+                    filter: "invert(39%) sepia(95%) saturate(1095%) hue-rotate(196deg) brightness(97%) contrast(94%)",
+                  }}
+                />
               </div>
-              {optimisationExpanded ? (
-              <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-              )}
+              <div className="min-w-0">
+                <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation cérébrale actuelle</h3>
+                <p className="text-xs text-muted-foreground mt-1 truncate">
+                  {realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)} mmHg` : "PIC --"}
+                  {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
+                    ? ` • ${isNirsBased ? "PAM" : "PPC"} optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`
+                    : realBrainValues.ppc !== null
+                      ? ` • PPC ${Math.round(realBrainValues.ppc)} mmHg`
+                      : ""}
+                  {optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
+                    ? ` (zone ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)})`
+                    : ""}
+                </p>
+              </div>
             </div>
           </CardHeader>
-          {optimisationExpanded && (
+          {true && (
             <CardContent className="pt-0 space-y-5">
               {/* Alert if no autoregulation data available yet */}
               {!optimalPPCResult.hasData && (
