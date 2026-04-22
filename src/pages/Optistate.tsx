@@ -357,8 +357,16 @@ const Optistate = () => {
                         {/* Module header */}
                         <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-lg bg-muted/50 flex items-center justify-center">
-                              {m.iconNode}
+                            <div
+                              className={cn(
+                                'h-10 w-10 rounded-lg flex items-center justify-center text-base font-bold tabular-nums shrink-0',
+                                m.indicators.length > 0
+                                  ? 'bg-status-critical text-white'
+                                  : 'bg-status-normal/10 text-status-normal',
+                              )}
+                              aria-label={`${m.indicators.length} indicateur(s) à surveiller`}
+                            >
+                              {m.indicators.length}
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
