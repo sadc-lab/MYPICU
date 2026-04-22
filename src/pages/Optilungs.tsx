@@ -405,7 +405,7 @@ const Optilungs = () => {
                   </CardHeader>
                   {isOpen && (
                     <CardContent className="pt-0">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 pt-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-8 pt-4">
                         {group.metrics.map((metric, index) => {
                           const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
                           const valueColor = inRange ? 'text-muted-foreground' : 'text-status-critical';
@@ -416,11 +416,11 @@ const Optilungs = () => {
                                 {metric.label}
                               </div>
                               <div className="flex items-baseline gap-1 mb-3">
-                                <span className={`text-3xl font-bold ${valueColor}`}>
+                                <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>
                                   {metric.value}
-                                </span>
+                                </div>
                                 {metric.unit && (
-                                  <span className="text-xs text-muted-foreground">{metric.unit}</span>
+                                  <div className="text-[10px] text-muted-foreground">{metric.unit}</div>
                                 )}
                               </div>
                               <MetricRangeBar
