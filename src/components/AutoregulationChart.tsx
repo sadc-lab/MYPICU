@@ -296,7 +296,7 @@ export function AutoregulationChart({
     <div className="space-y-4">
 
       {/* Main Time Series Chart */}
-      <div className="h-72 w-full">
+      <div className="h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={timeSeriesData} margin={{ top: 10, right: 16, left: 4, bottom: 8 }}>
             <defs>
