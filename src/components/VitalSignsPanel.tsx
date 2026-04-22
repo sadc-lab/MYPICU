@@ -37,7 +37,7 @@ export const VitalSignsPanel = ({ defaultOpen = false }: VitalSignsPanelProps) =
                 className={cn(
                   "h-8 w-8 rounded-lg flex items-center justify-center text-sm font-bold tabular-nums",
                   abnormalCount > 0
-                    ? "bg-status-critical/10 text-status-critical"
+                    ? "bg-status-critical text-white"
                     : "bg-status-normal/10 text-status-normal",
                 )}
                 aria-label={`${abnormalCount} paramètre(s) hors cible`}
@@ -53,34 +53,11 @@ export const VitalSignsPanel = ({ defaultOpen = false }: VitalSignsPanelProps) =
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "gap-1.5",
-                  abnormalCount > 0
-                    ? "bg-status-critical/10 text-status-critical border-status-critical/30"
-                    : "bg-status-normal/10 text-status-normal border-status-normal/30",
-                )}
-              >
-                {abnormalCount > 0 ? (
-                  <>
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    {abnormalCount} hors cible
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Dans les cibles
-                  </>
-                )}
-              </Badge>
-              <ChevronDown
-                className={`h-4 w-4 text-muted-foreground transition-transform ${
-                  open ? "rotate-180" : ""
-                }`}
-              />
-            </div>
+            <ChevronDown
+              className={`h-4 w-4 text-muted-foreground transition-transform ${
+                open ? "rotate-180" : ""
+              }`}
+            />
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
