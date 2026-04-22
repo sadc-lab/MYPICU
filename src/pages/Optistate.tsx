@@ -26,6 +26,7 @@ import lungsIcon from '@/assets/lungs-icon.svg';
 import kidneyIcon from '@/assets/kidney-icon.svg';
 import intestineIcon from '@/assets/intestine-icon.svg';
 import { cn } from '@/lib/utils';
+import { kpiCircleClass } from '@/utils/kpiCircleStyle';
 import { PhysiopathChains } from '@/components/PhysiopathChains';
 import { MultiIndicatorChart } from '@/components/MultiIndicatorChart';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
