@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Activity } from "lucide-react";
+import { ChevronDown, Activity, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const vitalSigns = [
   { label: "FC", value: 130, min: 60, targetMin: 80, targetMax: 120, max: 140, unit: "bpm" },
