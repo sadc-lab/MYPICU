@@ -276,9 +276,31 @@ const Optiheart = () => {
                             </div>
                           </div>
                         </div>
-                        <ChevronDown
-                          className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
-                        />
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={`gap-1.5 ${
+                              abnormal > 0
+                                ? 'bg-status-critical/10 text-status-critical border-status-critical/30'
+                                : 'bg-status-normal/10 text-status-normal border-status-normal/30'
+                            }`}
+                          >
+                            {abnormal > 0 ? (
+                              <>
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                                {abnormal} hors cible
+                              </>
+                            ) : (
+                              <>
+                                <Check className="h-3.5 w-3.5" />
+                                Dans les cibles
+                              </>
+                            )}
+                          </Badge>
+                          <ChevronDown
+                            className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+                          />
+                        </div>
                       </div>
                     </button>
                     {isOpen && (
