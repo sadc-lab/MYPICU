@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePatient } from '@/hooks/usePatients';
-import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus, AlertTriangle, Heart, Droplets } from 'lucide-react';
+import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus, AlertTriangle, Heart, Droplets, Activity } from 'lucide-react';
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 import { MetricRangeBar } from '@/components/MetricRangeBar';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
@@ -265,11 +265,7 @@ const Optiheart = () => {
                       <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
                         <div className="flex items-center gap-2">
                           <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                            {group.title === "Hémodynamique" ? (
-                              <Heart className="h-4 w-4 text-primary" />
-                            ) : (
-                              <Droplets className="h-4 w-4 text-primary" />
-                            )}
+                            <Activity className="h-4 w-4 text-primary" />
                           </div>
                           <div className="text-left">
                             <div className="text-base font-semibold text-foreground">{group.title}</div>
