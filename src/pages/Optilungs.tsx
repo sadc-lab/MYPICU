@@ -434,16 +434,6 @@ const Optilungs = () => {
                           );
                         })}
                       </div>
-                                value={metric.value}
-                                min={metric.min}
-                                max={metric.max}
-                                targetMin={metric.targetMin}
-                                targetMax={metric.targetMax}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
                     </CardContent>
                   )}
                 </Card>
