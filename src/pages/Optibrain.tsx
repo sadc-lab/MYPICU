@@ -1369,7 +1369,9 @@ const Optibrain = () => {
               )}
             </CardContent>
           )}
-        </Card>
+            </Card>
+          );
+        })()}
 
 
         <Card className="bg-card shadow-sm mb-6">
