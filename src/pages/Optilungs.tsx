@@ -502,10 +502,10 @@ const Optilungs = () => {
                       <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
                         {metric.label}
                       </div>
-                      <div className="flex items-center gap-1 mb-1">
-                        {metric.icon && <Gauge className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />}
-                        <div className={`text-lg sm:text-2xl font-bold ${statusColor}`}>{metric.displayValue}</div>
-                        {metric.unit && <span className="text-xs text-muted-foreground">{metric.unit}</span>}
+                      <div className="flex items-baseline gap-1 mb-1">
+                        {metric.icon && <Gauge className="h-5 w-5 sm:h-6 sm:w-6 text-primary self-center" />}
+                        <div className={`text-2xl sm:text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
+                        {metric.unit && <span className="text-[10px] text-muted-foreground">{metric.unit}</span>}
                       </div>
                       {metric.criticalLabel && (
                         <div className={`text-[10px] sm:text-xs font-medium ${metric.criticalColor} text-center leading-tight`}>

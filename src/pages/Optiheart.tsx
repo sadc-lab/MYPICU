@@ -347,8 +347,8 @@ const Optiheart = () => {
                     <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
                       {metric.label}
                     </div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className={`text-4xl font-bold ${statusColor}`}>
+                    <div className="flex items-baseline gap-1 mb-2">
+                      <div className={`text-2xl sm:text-4xl font-bold ${statusColor}`}>
                         {metric.displayValue}
                       </div>
                     </div>
