@@ -35,7 +35,7 @@ export const VitalSignsPanel = ({ defaultOpen = false }: VitalSignsPanelProps) =
             <div className="flex items-center gap-2">
               <div
                 className={cn(
-                  "h-8 w-8 rounded-lg flex items-center justify-center text-sm font-bold tabular-nums",
+                  "h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold tabular-nums",
                   abnormalCount > 0
                     ? "bg-status-critical text-white"
                     : "bg-status-normal/10 text-status-normal",

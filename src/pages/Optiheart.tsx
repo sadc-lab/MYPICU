@@ -265,7 +265,7 @@ const Optiheart = () => {
                       <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
                         <div className="flex items-center gap-2">
                           <div
-                            className={`h-8 w-8 rounded-lg flex items-center justify-center text-sm font-bold tabular-nums ${
+                            className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold tabular-nums ${
                               abnormal > 0
                                 ? 'bg-status-critical text-white'
                                 : 'bg-status-normal/10 text-status-normal'
