@@ -379,37 +379,38 @@ const Optilungs = () => {
               const abnormal = group.metrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax)).length;
               const isOpen = pulmonaryGroupsOpen[group.title] ?? false;
               return (
-                <Card key={group.title} className="shadow-sm">
-                  <CardHeader
-                    className="cursor-pointer hover:bg-muted/50 transition-colors py-3"
+                <Card key={group.title} className="bg-card shadow-sm">
+                  <button
+                    type="button"
                     onClick={() => setPulmonaryGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
+                    className="w-full"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <CardTitle className="text-sm font-semibold">{group.title}</CardTitle>
-                        <span className="text-xs text-muted-foreground">
-                          {group.metrics.length} indicateur{group.metrics.length > 1 ? 's' : ''}
-                        </span>
-                        {abnormal > 0 && (
-                          <Badge
-                            variant="outline"
-                            className="gap-1.5 bg-status-critical/10 text-status-critical border-status-critical/30 text-xs"
-                          >
-                            <AlertTriangle className="h-3.5 w-3.5" />
-                            {abnormal} hors cible
-                          </Badge>
-                        )}
+                    <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          {group.title === 'Oxygénation' ? (
+                            <Wind className="h-4 w-4 text-primary" />
+                          ) : (
+                            <Gauge className="h-4 w-4 text-primary" />
+                          )}
+                        </div>
+                        <div className="text-left">
+                          <div className="text-base font-semibold text-foreground">{group.title}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {abnormal === 0
+                              ? 'Tous les paramètres dans les cibles'
+                              : `${abnormal} paramètre${abnormal > 1 ? 's' : ''} hors cible`}
+                          </div>
+                        </div>
                       </div>
-                      {isOpen ? (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-                      )}
+                      <ChevronDown
+                        className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      />
                     </div>
-                  </CardHeader>
+                  </button>
                   {isOpen && (
-                    <CardContent className="pt-0">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-8 pt-4">
+                    <CardContent className="pt-4 border-t">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-8">
                         {group.metrics.map((metric, index) => {
                           const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
                           const valueColor = inRange ? 'text-muted-foreground' : 'text-status-critical';
