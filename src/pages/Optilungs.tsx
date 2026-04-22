@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePatient } from '@/hooks/usePatients';
-import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { Wind, Gauge, Edit2, Check, X, Plus, Trash2, Info, ChevronDown, ChevronUp, AlertCircle, AlertTriangle } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 
@@ -391,7 +391,11 @@ const Optilungs = () => {
                           {group.metrics.length} indicateur{group.metrics.length > 1 ? 's' : ''}
                         </span>
                         {abnormal > 0 && (
-                          <Badge variant="destructive" className="text-xs">
+                          <Badge
+                            variant="outline"
+                            className="gap-1.5 bg-status-critical/10 text-status-critical border-status-critical/30 text-xs"
+                          >
+                            <AlertTriangle className="h-3.5 w-3.5" />
                             {abnormal} hors cible
                           </Badge>
                         )}

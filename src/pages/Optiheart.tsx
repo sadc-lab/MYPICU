@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePatient } from '@/hooks/usePatients';
-import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus } from 'lucide-react';
+import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus, AlertTriangle } from 'lucide-react';
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 import { MetricRangeBar } from '@/components/MetricRangeBar';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
@@ -279,7 +279,11 @@ const Optiheart = () => {
                             {groupMetrics.length} indicateur{groupMetrics.length > 1 ? "s" : ""}
                           </span>
                           {abnormal > 0 && (
-                            <Badge variant="destructive" className="text-xs">
+                            <Badge
+                              variant="outline"
+                              className="gap-1.5 bg-status-critical/10 text-status-critical border-status-critical/30 text-xs"
+                            >
+                              <AlertTriangle className="h-3.5 w-3.5" />
                               {abnormal} hors cible
                             </Badge>
                           )}
