@@ -388,11 +388,7 @@ const Optilungs = () => {
                     <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
                       <div className="flex items-center gap-2">
                         <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                          {group.title === 'Oxygénation' ? (
-                            <Wind className="h-4 w-4 text-primary" />
-                          ) : (
-                            <Gauge className="h-4 w-4 text-primary" />
-                          )}
+                          <Activity className="h-4 w-4 text-primary" />
                         </div>
                         <div className="text-left">
                           <div className="text-base font-semibold text-foreground">{group.title}</div>
