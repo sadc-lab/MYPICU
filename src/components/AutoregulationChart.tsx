@@ -266,20 +266,26 @@ export function AutoregulationChart({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-          <p className="text-xs text-muted-foreground mb-1">
+        <div className="bg-card border border-border rounded-lg p-2.5 shadow-lg min-w-[180px]">
+          <p className="text-[11px] text-muted-foreground mb-1.5 border-b border-border pb-1.5">
             {format(new Date(data.timestamp), "dd/MM HH:mm", { locale: fr })}
           </p>
-          {data.ppc !== null && (
-            <p className="font-medium text-status-critical">
-              {isNirsBased ? "NIRS" : "PPC"}: {Math.round(data.ppc)} {isNirsBased ? "%" : "mmHg"}
-            </p>
-          )}
-          {data.pam !== null && (
-            <p className="text-sm text-muted-foreground">
-              PAM: {Math.round(data.pam)} mmHg
-            </p>
-          )}
+          <div className="space-y-1">
+            {data.ppc !== null && (
+              <div className="flex justify-between items-center gap-3 text-[11px]">
+                <span className="text-muted-foreground">{isNirsBased ? "NIRS" : "PPC"} :</span>
+                <span className="font-medium text-status-critical">
+                  {Math.round(data.ppc)} {isNirsBased ? "%" : "mmHg"}
+                </span>
+              </div>
+            )}
+            {data.pam !== null && (
+              <div className="flex justify-between items-center gap-3 text-[11px]">
+                <span className="text-muted-foreground">PAM :</span>
+                <span className="font-medium text-foreground">{Math.round(data.pam)} mmHg</span>
+              </div>
+            )}
+          </div>
         </div>
       );
     }
@@ -292,7 +298,7 @@ export function AutoregulationChart({
       {/* Main Time Series Chart */}
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={timeSeriesData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }}>
+          <ComposedChart data={timeSeriesData} margin={{ top: 10, right: 16, left: 4, bottom: 8 }}>
             <defs>
               <linearGradient id="optimalZoneGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="hsl(var(--status-normal))" stopOpacity={0.2} />
@@ -468,7 +474,7 @@ export function AutoregulationChart({
       </div>
 
       {/* Legend - at the bottom */}
-      <div className="flex items-center justify-center gap-6 text-xs pt-2">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] pt-2">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-0.5 bg-status-critical" />
           <span>{displayIsNirsBased ? "NIRS" : "PPC"}</span>
