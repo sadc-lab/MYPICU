@@ -334,40 +334,6 @@ const Optiheart = () => {
           </div>
         </DataLoadingOverlay>
 
-        <Card className="shadow-sm mb-6">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">Heart Optimisation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-8">
-              {heartOptimisationMetrics.map((metric, index) => {
-                const statusColor = metric.status === 'critical' ? 'text-destructive' : metric.status === 'warning' ? 'text-status-warning' : 'text-muted-foreground';
-                return (
-                  <div 
-                    key={index} 
-                    className="flex flex-col items-center cursor-pointer hover:bg-muted/50 p-4 rounded-lg transition-colors"
-                    onClick={() => metric.hasDetails && setOpenDialog(metric.dialogKey || null)}
-                  >
-                    <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-                      {metric.label}
-                    </div>
-                    <div className="flex items-baseline gap-1 mb-2">
-                      <div className={`text-2xl sm:text-4xl font-bold ${statusColor}`}>
-                        {metric.displayValue}
-                      </div>
-                    </div>
-                    {metric.hasDetails && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
-                        <Info className="h-3 w-3" />
-                        <span>Voir détails</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Cardiac State Dialog */}
         <Dialog open={openDialog === 'cardiac'} onOpenChange={(open) => !open && setOpenDialog(null)}>
