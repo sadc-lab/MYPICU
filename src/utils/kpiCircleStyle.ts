@@ -4,11 +4,12 @@
  *  Optibrain Adhérence & Monitorage, Optimisation cérébrale).
  *
  * Style : fond à faible opacité + bordure pleine + texte coloré (lisible et discret).
+ * Pas d'animation pulse ; les états critiques utilisent une icône d'alerte séparée.
  *
  * Severity tiers:
  *  - 0           → normal (gris/vert pâle)
  *  - 1–2         → surveillance (orange)
- *  - 3+ ou critical → critique (rouge, pulse léger)
+ *  - 3+ ou critical → critique (rouge, badge d'alerte AlertTriangle externe)
  */
 export type KpiSeverity = 'normal' | 'warning' | 'critical';
 
@@ -30,14 +31,11 @@ const severityClasses: Record<KpiSeverity, string> = {
   warning:
     'bg-status-warning/10 text-status-warning border-status-warning',
   critical:
-    'bg-status-critical/10 text-status-critical border-status-critical animate-[pulse_2.5s_ease-in-out_infinite]',
+    'bg-status-critical/10 text-status-critical border-status-critical',
 };
 
 /**
  * Returns the full className for a KPI circle.
- * @param count - number to display
- * @param options.hasCritical - force critical severity
- * @param options.size - 'sm' (h-9 w-9, text-sm) used everywhere by default
  */
 export const kpiCircleClass = (
   count: number,
