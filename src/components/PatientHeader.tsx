@@ -11,7 +11,7 @@ import lungsIcon from "@/assets/lungs-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
 import kidneyIcon from "@/assets/kidney-icon.svg";
 import intestineIcon from "@/assets/intestine-icon.svg";
-import { ExportImageButton } from "@/components/ExportImageButton";
+
 
 const reminders = [
   "Objectif de Bilan Entrée/Sortie",
