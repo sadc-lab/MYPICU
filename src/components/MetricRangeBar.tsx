@@ -121,10 +121,12 @@ export const MetricRangeBar = ({
                     transform: 'translateX(-50%)',
                   }}
                 >
-                  <span className={`${valueSizeClass} font-semibold tabular-nums leading-none ${valueColor}`}>
-                    {value}
-                    {unit ? <span className={`ml-0.5 ${unitSizeClass} font-normal opacity-70`}>{unit}</span> : null}
-                  </span>
+                  {!hideValueLabel && (
+                    <span className={`${valueSizeClass} font-semibold tabular-nums leading-none ${valueColor}`}>
+                      {value}
+                      {unit ? <span className={`ml-0.5 ${unitSizeClass} font-normal opacity-70`}>{unit}</span> : null}
+                    </span>
+                  )}
                   <div
                     className={`w-0 h-0 ${triangleSizeClass} border-l-transparent border-r-transparent ${triangleColor} mt-0.5`}
                   />
