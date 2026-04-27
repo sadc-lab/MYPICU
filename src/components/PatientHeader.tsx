@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronDown, Bell } from "lucide-react";
+import { ChevronLeft, ChevronDown, Bell, Home } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";
@@ -102,16 +102,27 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
     <div className="bg-card border-b border-border mb-4 sm:mb-6">
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="text-muted-foreground hover:text-foreground text-sm self-start"
-            size="sm"
-            data-export-hide
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Retour aux patients
-          </Button>
+          <div className="flex items-center gap-1 self-start" data-export-hide>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/")}
+              className="text-muted-foreground hover:text-foreground text-sm"
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Retour aux patients
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/")}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              title="Accueil"
+              aria-label="Accueil"
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+          </div>
 
           <ExportImageButton
             filenamePrefix={`mypicu_${currentPage}`}
