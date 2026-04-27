@@ -1089,7 +1089,19 @@ const Optibrain = () => {
                             const trendSign = (metric.change ?? 0) > 0 ? "+" : "";
                             return (
                               <div key={index} className="flex flex-col items-center">
-                                <div className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wide text-center">{metric.label}</div>
+                                <div className="flex items-baseline gap-2 mb-3">
+                                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                    {metric.label}
+                                  </span>
+                                  <span className={`text-2xl sm:text-3xl font-bold tabular-nums leading-none ${inRange ? "text-foreground" : "text-status-critical"}`}>
+                                    {metric.value}
+                                    {metric.unit ? (
+                                      <span className="ml-0.5 text-xs font-normal text-muted-foreground">
+                                        {metric.unit}
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                </div>
                                 <MetricRangeBar
                                   value={metric.value}
                                   min={metric.min}
@@ -1098,7 +1110,7 @@ const Optibrain = () => {
                                   targetMax={metric.targetMax}
                                   unit={metric.unit}
                                   showValuePointer
-                                  valueSize="xl"
+                                  hideValueLabel
                                   tooltipContent={
                                     <div className="space-y-1.5 text-xs">
                                       <div className="font-semibold text-sm">
