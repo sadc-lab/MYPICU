@@ -1560,9 +1560,6 @@ const Optibrain = () => {
                       );
                     })}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-4 text-center">
-                    Cliquez sur un indicateur pour l'afficher dans le graphique
-                  </p>
                 </CardContent>
               )}
             </Card>
