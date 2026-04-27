@@ -1239,7 +1239,7 @@ const Optibrain = () => {
                                   </div>
                                   {dominant && (
                                     <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
-                                      {dominant.label} {dominant.pct}%
+                                      {dominant.label} {formatDur(Math.round((dominant.pct / 100) * totalMinutes))} ({dominant.pct}%)
                                     </div>
                                   )}
                                 </div>
