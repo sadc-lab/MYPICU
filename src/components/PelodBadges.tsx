@@ -47,7 +47,7 @@ export const PelodBadges = ({ patients, unitAverage }: PelodBadgesProps) => {
                 type="button"
                 onClick={() => navigate(`/optistate?patient=${encodeURIComponent(patient.id)}`)}
                 title={`Ouvrir le dossier de ${patient.name} (chambre ${room})`}
-                className="relative flex flex-col items-center gap-1 p-0.5 bg-transparent border-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md group"
+                className="bg-transparent border-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md group p-0.5"
               >
                 <Badge
                   variant="outline"
@@ -61,7 +61,6 @@ export const PelodBadges = ({ patients, unitAverage }: PelodBadgesProps) => {
                     className={`h-2 w-2 rounded-full ${severity.dot}`}
                   />
                 </Badge>
-                <div className="text-xs font-medium text-foreground">{room}</div>
               </button>
             );
           })}
