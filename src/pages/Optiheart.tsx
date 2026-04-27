@@ -490,7 +490,7 @@ const Optiheart = () => {
                               </p>
                               <span className={`text-xs font-medium ${
                                 target.status === 'critical' ? 'text-destructive' : 
-                                target.status === 'warning' ? 'text-status-warning' : 'text-muted-foreground'
+                                target.status === 'warning' ? 'text-status-warning' : 'text-status-normal'
                               }`}>
                                 {target.adherencePercentage}%
                               </span>
