@@ -45,8 +45,7 @@ const Optilungs = () => {
   const [optChartTimeRange, setOptChartTimeRange] = useState<string>("24h");
   const chartRef = useRef<HTMLDivElement>(null);
   const [pulmonaryGroupsOpen, setPulmonaryGroupsOpen] = useState<Record<string, boolean>>({
-    Oxygénation: true,
-    Scores: false,
+    'Oxygénation et scores': true,
     Ventilation: false,
   });
 
