@@ -1304,14 +1304,6 @@ const Optibrain = () => {
                 })}
               </div>
 
-              {/* Hint to interact */}
-              {selectedBrainIndicators.length === 0 && (
-                <p className="text-[10px] sm:text-xs text-muted-foreground/70 text-center italic flex items-center justify-center gap-1.5">
-                  <ChevronDown className="h-3 w-3" />
-                  Cliquez sur un indicateur pour afficher le graphique
-                </p>
-              )}
-
               {/* Embedded Charts */}
               {selectedBrainIndicators.length > 0 && (
                 <div className="border-t border-border pt-4 space-y-4">
