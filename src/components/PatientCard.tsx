@@ -6,18 +6,25 @@ import { useNavigate } from 'react-router-dom';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { useTourNavigation } from '@/hooks/useTourNavigation';
-import { getScoreTextColor, getScoreBgColor, getScoreColorFilter } from '@/utils/colorUtils';
+import { getScoreTextColor, getScoreColorFilter } from '@/utils/colorUtils';
 
 interface PatientCardProps {
   patient: Patient;
 }
 
+const getOrganBadgeBorder = (score?: number) => {
+  if (!score || score === 0) return 'border-border';
+  if (score === 1) return 'border-orange-500';
+  if (score === 2) return 'border-orange-600';
+  return 'border-red-600';
+};
+
 const OrganBadge = ({ organ, score, patientId }: { organ: 'brain' | 'heart' | 'lungs' | 'kidney'; score?: number; patientId?: string }) => {
   const navigate = useNavigate();
-  const color = getScoreTextColor(score);
-  const bgColor = getScoreBgColor(score);
+  const textColor = getScoreTextColor(score);
+  const borderColor = getOrganBadgeBorder(score);
 
-  const routeMap: Record<string, string> = { brain: 'optibrain', heart: 'optiheart', lungs: 'optilungs', kidney: 'optistate' };
+  const routeMap: Record<string, string> = { brain: 'optibrain', heart: 'optiheart', lungs: 'optilungs', kidney: 'optirenal' };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -25,18 +32,28 @@ const OrganBadge = ({ organ, score, patientId }: { organ: 'brain' | 'heart' | 'l
   };
 
   return (
-    <div className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor} cursor-pointer hover:opacity-80 transition-opacity`} onClick={handleClick}>
-      {organ === 'brain' ? (
-        <img src={brainIcon} alt="brain" className="h-5 w-5" style={{ filter: getScoreColorFilter(score) }} />
-      ) : organ === 'lungs' ? (
-        <img src={lungsIcon} alt="lungs" className="h-5 w-5" style={{ filter: getScoreColorFilter(score) }} />
-      ) : organ === 'heart' ? (
-        <HeartIcon className={`h-5 w-5 ${color}`} />
-      ) : (
-        <Droplets className={`h-5 w-5 ${color}`} />
-      )}
-      <span className={`text-xs font-semibold ${color}`}>{score || 0}</span>
-    </div>
+    <button
+      type="button"
+      onClick={handleClick}
+      className="relative flex items-center justify-center p-0.5 bg-transparent border-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 rounded-md"
+    >
+      <Badge
+        variant="outline"
+        className={`bg-muted text-foreground border ${borderColor} text-xs gap-1 transition-all duration-150 hover:-translate-y-[1px]`}
+      >
+        {organ === 'brain' ? (
+          <img src={brainIcon} alt="brain" className="h-5 w-5" style={{ filter: getScoreColorFilter(score) }} />
+        ) : organ === 'lungs' ? (
+          <img src={lungsIcon} alt="lungs" className="h-5 w-5" style={{ filter: getScoreColorFilter(score) }} />
+        ) : organ === 'heart' ? (
+          <HeartIcon className={`h-5 w-5 ${textColor}`} />
+        ) : (
+          <Droplets className={`h-5 w-5 ${textColor}`} />
+        )}
+        <span className={`font-semibold ${textColor}`}>{score ?? 0}</span>
+        <span aria-hidden="true" className={`ml-0.5 h-2 w-2 rounded-full border ${borderColor} bg-transparent`} />
+      </Badge>
+    </button>
   );
 };
 
