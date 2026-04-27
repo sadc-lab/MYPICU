@@ -1,6 +1,6 @@
 import { Header } from '@/components/Header';
 import { PatientTable } from '@/components/PatientTable';
-import { PelodBadges } from '@/components/PelodBadges';
+
 import { TourOrganizer } from '@/components/TourOrganizer';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,18 +47,14 @@ const Dashboard = () => {
       </div>
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-[1600px]">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div className="flex flex-wrap gap-2 sm:gap-3">
-            <Button variant="outline" className="h-10 bg-muted text-sm sm:text-base">
-              Accès TVL
-            </Button>
-            
-            <Button variant="outline" className="h-10 bg-muted border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)} data-guide="organize-tour">
-              Organiser tournée <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-
-          <PelodBadges patients={displayedPatients} unitAverage={averagePelod} />
+        <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
+          <Button variant="outline" className="h-10 bg-muted text-sm sm:text-base">
+            Accès TVL
+          </Button>
+          
+          <Button variant="outline" className="h-10 bg-muted border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)} data-guide="organize-tour">
+            Organiser tournée <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
 
         <div className="space-y-6">
