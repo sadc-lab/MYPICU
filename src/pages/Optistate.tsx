@@ -282,11 +282,6 @@ const Optistate = () => {
     };
   };
 
-  const TrendIcon = ({ trend }: { trend?: string }) => {
-    if (trend === 'up') return <TrendingUp className="h-3.5 w-3.5" />;
-    if (trend === 'down') return <TrendingDown className="h-3.5 w-3.5" />;
-    return <Minus className="h-3.5 w-3.5" />;
-  };
 
   return (
     <div className="min-h-screen bg-background">
