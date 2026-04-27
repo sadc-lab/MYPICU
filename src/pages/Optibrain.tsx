@@ -1077,94 +1077,52 @@ const Optibrain = () => {
                     </button>
                     {isOpen && (
                       <CardContent className="pt-4 border-t">
-                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8 sm:gap-x-8 pt-2">
                           {groupMetrics.map((metric, index) => {
                             const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                            const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
+                            const deviation = metric.value < metric.targetMin
+                              ? metric.targetMin - metric.value
+                              : metric.value > metric.targetMax
+                                ? metric.value - metric.targetMax
+                                : 0;
+                            const trendLabel = metric.trend === "up" ? "en hausse" : metric.trend === "down" ? "en baisse" : "stable";
+                            const trendSign = (metric.change ?? 0) > 0 ? "+" : "";
                             return (
                               <div key={index} className="flex flex-col items-center">
-                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
-                                <div className="flex items-center gap-2 mb-3">
-                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
-                                </div>
+                                <div className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wide text-center">{metric.label}</div>
                                 <MetricRangeBar
                                   value={metric.value}
                                   min={metric.min}
                                   max={metric.max}
                                   targetMin={metric.targetMin}
                                   targetMax={metric.targetMax}
+                                  unit={metric.unit}
+                                  showValuePointer
+                                  tooltipContent={
+                                    <div className="space-y-1.5 text-xs">
+                                      <div className="font-semibold text-sm">
+                                        {metric.label} : {metric.value}{metric.unit ? ` ${metric.unit}` : ""}
+                                      </div>
+                                      <div className="text-muted-foreground">
+                                        Cible : {metric.targetMin}–{metric.targetMax}{metric.unit ? ` ${metric.unit}` : ""}
+                                      </div>
+                                      <div className={inRange ? "text-status-normal" : "text-status-critical"}>
+                                        {inRange
+                                          ? "Dans la cible"
+                                          : `Hors cible (écart ${deviation.toFixed(1)}${metric.unit ? ` ${metric.unit}` : ""})`}
+                                      </div>
+                                      {metric.change !== undefined && metric.change !== 0 && (
+                                        <div className="text-muted-foreground">
+                                          Tendance : {trendLabel} ({trendSign}{metric.change}{metric.unit ? ` ${metric.unit}` : ""})
+                                        </div>
+                                      )}
+                                    </div>
+                                  }
                                 />
                               </div>
                             );
                           })}
                         </div>
-
-                        {/* Résumé : valeurs principales + métrique la plus critique */}
-                        {(() => {
-                          const outOfRange = groupMetrics
-                            .map((m) => {
-                              const range = m.targetMax - m.targetMin || 1;
-                              const deviation =
-                                m.value < m.targetMin
-                                  ? (m.targetMin - m.value) / range
-                                  : m.value > m.targetMax
-                                    ? (m.value - m.targetMax) / range
-                                    : 0;
-                              return { metric: m, deviation };
-                            })
-                            .filter((x) => x.deviation > 0)
-                            .sort((a, b) => b.deviation - a.deviation);
-                          const worst = outOfRange[0]?.metric;
-                          return (
-                            <div className="mt-5 pt-4 border-t border-border/60">
-                              <div className="flex items-center justify-between gap-3 flex-wrap">
-                                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                                  {groupMetrics.map((m) => {
-                                    const inRange = isInRange(m.value, m.targetMin, m.targetMax);
-                                    return (
-                                      <div key={m.label} className="flex items-baseline gap-1.5">
-                                        <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                                          {m.label}
-                                        </span>
-                                        <span
-                                          className={`text-sm font-semibold tabular-nums ${
-                                            inRange ? "text-foreground" : "text-status-critical"
-                                          }`}
-                                        >
-                                          {m.value}
-                                          {m.unit ? (
-                                            <span className="ml-0.5 text-[10px] text-muted-foreground font-normal">
-                                              {m.unit}
-                                            </span>
-                                          ) : null}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                                {worst ? (
-                                  <div className="flex items-center gap-1.5 text-xs">
-                                    <AlertCircle className="h-3.5 w-3.5 text-status-critical shrink-0" />
-                                    <span className="text-muted-foreground">Plus critique :</span>
-                                    <span className="font-semibold text-status-critical">
-                                      {worst.label} {worst.value}
-                                      {worst.unit ?? ""}
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                      (cible {worst.targetMin}–{worst.targetMax}
-                                      {worst.unit ? ` ${worst.unit}` : ""})
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1.5 text-xs text-status-normal">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-status-normal" />
-                                    Tous les paramètres dans les cibles
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })()}
                       </CardContent>
                     )}
                   </Card>
