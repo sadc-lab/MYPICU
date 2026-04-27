@@ -1174,16 +1174,16 @@ const Optibrain = () => {
                           ? "warning"
                           : "normal")
                     : metric.status;
-                  const statusColor = metric.status === "critical" 
+                  const statusColor = effectiveStatus === "critical" 
                     ? "text-status-critical" 
-                    : metric.status === "warning" 
+                    : effectiveStatus === "warning" 
                       ? "text-status-warning" 
                       : "text-foreground";
                   
                   // Subtle status background for the card
-                  const statusBg = metric.status === "critical" 
+                  const statusBg = effectiveStatus === "critical" 
                     ? "bg-status-critical/5" 
-                    : metric.status === "warning" 
+                    : effectiveStatus === "warning" 
                       ? "bg-status-warning/5" 
                       : "bg-muted/30";
                   
@@ -1193,9 +1193,9 @@ const Optibrain = () => {
                       <div
                         className={`flex flex-col items-center cursor-pointer p-2 sm:p-2.5 rounded-lg transition-all border ${statusBg} ${
                           isSelected
-                            ? metric.status === "critical"
+                            ? effectiveStatus === "critical"
                               ? "border-status-critical shadow-sm ring-1 ring-status-critical/20"
-                              : metric.status === "warning"
+                              : effectiveStatus === "warning"
                                 ? "border-status-warning shadow-sm ring-1 ring-status-warning/20"
                                 : "border-primary shadow-sm ring-1 ring-primary/20"
                             : "border-transparent hover:border-border hover:shadow-sm"
@@ -1203,16 +1203,19 @@ const Optibrain = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (metric.hasDetails) {
-                            setSelectedBrainIndicators((prev) =>
-                              prev.includes(metric.label)
-                                ? prev.filter((label) => label !== metric.label)
-                                : [...prev, metric.label]
-                            );
+                            setSelectedBrainIndicators((prev) => {
+                              const allSelected = combinedLabels.every((l) => prev.includes(l));
+                              if (allSelected) {
+                                return prev.filter((label) => !combinedLabels.includes(label));
+                              }
+                              const merged = new Set([...prev, ...combinedLabels]);
+                              return Array.from(merged);
+                            });
                           }
                         }}
                       >
                         <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-center">
-                          {metric.label}
+                          {isCombined ? "PIC & État Neuro" : metric.label}
                         </div>
                         <div className="flex items-baseline gap-1">
                           <div className={`text-lg sm:text-2xl font-bold ${statusColor} tabular-nums leading-none`}>{metric.displayValue}</div>
@@ -1220,6 +1223,17 @@ const Optibrain = () => {
                             <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
                           )}
                         </div>
+                        {isCombined && neuroMetric && (
+                          <div className={`text-[11px] font-medium mt-1 ${
+                            neuroMetric.status === "critical"
+                              ? "text-status-critical"
+                              : neuroMetric.status === "warning"
+                                ? "text-status-warning"
+                                : "text-muted-foreground"
+                          }`}>
+                            {neuroMetric.displayValue}
+                          </div>
+                        )}
                       </div>
 
                       {/* Distribution bar below État Neuro — épurée */}
