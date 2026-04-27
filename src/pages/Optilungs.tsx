@@ -510,10 +510,6 @@ const Optilungs = () => {
                   );
                 })}
               </div>
-              <p className="text-xs text-muted-foreground text-center">
-                Cliquez sur un indicateur pour l'afficher dans le graphique
-              </p>
-
               {/* Embedded Chart - shown when indicators are selected */}
               {selectedLungOptIndicators.length > 0 && (
                 <div className="border-t border-border pt-4 space-y-4">
