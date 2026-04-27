@@ -645,6 +645,77 @@ const Optibrain = () => {
     };
   }, [patientFileData, hoursForAdherence]);
 
+  // Calculate time spent in each PIC range from real data
+  const picRangeData = useMemo(() => {
+    const getHoursForPicDialog = (range: string): number => {
+      switch (range) {
+        case "24h":
+          return 24;
+        case "stay":
+          return 96;
+        default:
+          return 24;
+      }
+    };
+    const hoursBack = getHoursForPicDialog(picDialogTimeRange);
+
+    if (!patientFileData) {
+      return {
+        ranges: [
+          { label: "25 - 30 mmHg", minutes: 0, percentage: 0, color: "orange", status: "warning" },
+          { label: "20 - 25 mmHg", minutes: 0, percentage: 0, color: "orange", status: "warning" },
+          { label: "> 30 mmHg", minutes: 0, percentage: 0, color: "red", status: "critical" },
+          { label: "< 20 mmHg", minutes: 0, percentage: 0, color: "gray", status: "normal" },
+        ],
+        currentPic: null,
+        averagePic: null,
+        totalMinutes: 0,
+      };
+    }
+
+    const picTimeSeries = getTimeSeriesForRange(patientFileData, "Variable_PIC", hoursBack, 1);
+
+    if (picTimeSeries.length === 0) {
+      return {
+        ranges: [
+          { label: "25 - 30 mmHg", minutes: 0, percentage: 0, color: "orange", status: "warning" },
+          { label: "20 - 25 mmHg", minutes: 0, percentage: 0, color: "orange", status: "warning" },
+          { label: "> 30 mmHg", minutes: 0, percentage: 0, color: "red", status: "critical" },
+          { label: "< 20 mmHg", minutes: 0, percentage: 0, color: "gray", status: "normal" },
+        ],
+        currentPic: realBrainValues.pic,
+        averagePic: null,
+        totalMinutes: 0,
+      };
+    }
+
+    const MIN_VALID_PIC = 5;
+    const validData = picTimeSeries.filter((d) => d.valeur >= MIN_VALID_PIC);
+
+    const counts = { below20: 0, range20_25: 0, range25_30: 0, above30: 0 };
+    validData.forEach((d) => {
+      if (d.valeur < 20) counts.below20++;
+      else if (d.valeur >= 20 && d.valeur < 25) counts.range20_25++;
+      else if (d.valeur >= 25 && d.valeur <= 30) counts.range25_30++;
+      else if (d.valeur > 30) counts.above30++;
+    });
+
+    const total = validData.length;
+    const averagePic = total > 0 ? calculateAverage(validData) : null;
+
+    return {
+      ranges: [
+        { label: "25 - 30 mmHg", minutes: counts.range25_30, percentage: total > 0 ? Math.round((counts.range25_30 / total) * 100) : 0, color: "orange", status: "warning" },
+        { label: "20 - 25 mmHg", minutes: counts.range20_25, percentage: total > 0 ? Math.round((counts.range20_25 / total) * 100) : 0, color: "orange", status: "warning" },
+        { label: "> 30 mmHg", minutes: counts.above30, percentage: total > 0 ? Math.round((counts.above30 / total) * 100) : 0, color: "red", status: "critical" },
+        { label: "< 20 mmHg", minutes: counts.below20, percentage: total > 0 ? Math.round((counts.below20 / total) * 100) : 0, color: "gray", status: "normal" },
+      ],
+      currentPic: realBrainValues.pic,
+      averagePic,
+      totalMinutes: total,
+    };
+  }, [patientFileData, realBrainValues.pic, picDialogTimeRange]);
+
   const brainOptimisationMetrics = [
     {
       label: "État Neuro",
