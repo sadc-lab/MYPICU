@@ -844,8 +844,8 @@ const Optibrain = () => {
     if (problematic.length === 0) return;
     clinicalAutoSelectedRef.current = true;
     setSelectedIndicators((prev) => {
-      const merged = new Set([...prev, ...problematic]);
-      return Array.from(merged);
+      const merged = Array.from(new Set([...prev, ...problematic]));
+      return merged.slice(0, 3);
     });
   }, [patientFileData, clinicalIndicators]);
 
