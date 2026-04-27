@@ -272,17 +272,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
               <span className="text-lg sm:text-2xl font-bold text-primary tracking-tight">MYPICU</span>
             </Link>
             
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="hidden sm:inline-flex h-9 w-9"
-              title="Retour à l'accueil"
-            >
-              <Link to="/" aria-label="Accueil">
-                <Home className="h-4 w-4" />
-              </Link>
-            </Button>
+
 
             <div ref={searchRef} className="relative hidden sm:block" data-guide="search">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
