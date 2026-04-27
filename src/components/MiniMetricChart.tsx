@@ -99,16 +99,10 @@ export const MiniMetricChart = ({ metricLabel, organ, timeRange = '24h' }: MiniM
     for (let i = dataPoints - 1; i >= 0; i--) {
       const time = new Date(now.getTime() - i * intervalMinutes * 60 * 1000);
       const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
-      
+
       const baseValue = metricData.value;
-      let variation = (Math.random() - 0.5) * (baseValue * 0.15);
-      
-      if (metricData.trend === 'up') {
-        variation += (dataPoints - i) * 0.05;
-      } else if (metricData.trend === 'down') {
-        variation -= (dataPoints - i) * 0.05;
-      }
-      
+      const variation = (Math.random() - 0.5) * (baseValue * 0.15);
+
       data.push({
         time: timeStr,
         value: Math.max(metricData.min, Math.min(metricData.max, baseValue + variation))
