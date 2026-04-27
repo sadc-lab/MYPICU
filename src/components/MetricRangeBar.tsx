@@ -49,12 +49,9 @@ export const MetricRangeBar = ({
   const triangleSizeClass = valueSize === 'xl' || valueSize === 'lg'
     ? 'border-l-[7px] border-r-[7px] border-t-[8px]'
     : 'border-l-[5px] border-r-[5px] border-t-[6px]';
-  const pointerPaddingClass = {
-    sm: 'pt-7',
-    md: 'pt-8',
-    lg: 'pt-10',
-    xl: 'pt-12',
-  }[valueSize];
+  const pointerPaddingClass = hideValueLabel
+    ? 'pt-2.5'
+    : { sm: 'pt-7', md: 'pt-8', lg: 'pt-10', xl: 'pt-12' }[valueSize];
 
   const targetLeftPct = ((targetMin - min) / range) * 100;
   const targetWidthPct = ((targetMax - targetMin) / range) * 100;
