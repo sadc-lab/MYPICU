@@ -729,23 +729,30 @@ const Optibrain = () => {
       };
       const hticIschPct = neurologicalStateConfig.history.hticWithIschemia;
       const hticPct = neurologicalStateConfig.history.htic;
-      const criticalLabel = hticIschPct > 0
-        ? `${formatDuration(Math.round((hticIschPct / 100) * totalMinutes))} HTIC+Ischémie (${hticIschPct}%)`
+
+      // Top label = état problématique ; bottom (grand rouge) = durée + %
+      const problemState = hticIschPct > 0
+        ? { name: "HTIC + Ischémie", pct: hticIschPct }
         : hticPct > 0
-          ? `${formatDuration(Math.round((hticPct / 100) * totalMinutes))} HTIC (${hticPct}%)`
+          ? { name: "HTIC", pct: hticPct }
           : null;
+
+      const topLabel = problemState ? problemState.name : neurologicalStateConfig.currentState;
+      const bigValue = problemState
+        ? `${formatDuration(Math.round((problemState.pct / 100) * totalMinutes))} (${problemState.pct}%)`
+        : neurologicalStateConfig.currentState;
+
       return {
         label: "État actuel",
-        value: neurologicalStateConfig.currentState,
-        displayValue: neurologicalStateConfig.currentState,
+        value: bigValue,
+        displayValue: bigValue,
         unit: "",
         status: neurologicalStateConfig.currentState === "Contrôlé" ? "normal" : "critical",
         hasDetails: true,
         dialogKey: "neuro",
         trend: "stable",
-        criticalLabel,
+        topLabel,
         criticalColor: hticIschPct > 0 ? "text-status-critical" : "text-status-warning",
-        // Internal key to identify this metric (label is now dynamic-friendly)
         metricKey: "neuro",
       };
     })(),
@@ -772,20 +779,25 @@ const Optibrain = () => {
       };
       const durationLabel = formatDuration(minutesAbove20);
 
+      // Top = valeur PIC actuelle ; bottom (grand rouge) = durée > 20 mmHg
+      const topLabel = picValue !== null
+        ? `PIC ${Math.round(picValue * 10) / 10} mmHg`
+        : "PIC --";
+      const bigValue = above20 > 0
+        ? `${durationLabel} > 20 mmHg`
+        : "Dans la cible";
+
       return {
         label: "PIC",
-        value: picValue !== null ? `${Math.round(picValue * 10) / 10} mmHg` : "--",
-        displayValue: picValue !== null ? `${Math.round(picValue * 10) / 10}` : "--",
-        unit: picValue !== null ? "mmHg" : "",
+        value: bigValue,
+        displayValue: bigValue,
+        unit: "",
         status: intensityStatus,
         hasDetails: true,
         dialogKey: "pic",
         trend: "down",
         change: -3,
-        // Sous la valeur actuelle : temps passé > 20 mmHg
-        criticalLabel: above20 > 0
-          ? `${durationLabel} > 20 mmHg`
-          : null,
+        topLabel,
         criticalColor: intensityStatus === "critical" ? "text-status-critical" : "text-status-warning",
         metricKey: "pic",
       };
@@ -1203,20 +1215,23 @@ const Optibrain = () => {
                           }
                         }}
                       >
-                        <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-center">
-                          {metric.label}
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                          <div className={`text-lg sm:text-2xl font-bold ${statusColor} tabular-nums leading-none`}>{metric.displayValue}</div>
+                        {(metric as any).topLabel ? (
+                          <div className="text-[11px] sm:text-xs font-semibold text-foreground mb-1.5 text-center leading-tight">
+                            {(metric as any).topLabel}
+                          </div>
+                        ) : (
+                          <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-center">
+                            {metric.label}
+                          </div>
+                        )}
+                        <div className="flex items-baseline gap-1 justify-center">
+                          <div className={`text-base sm:text-xl font-bold ${statusColor} tabular-nums leading-tight text-center`}>
+                            {metric.displayValue}
+                          </div>
                           {metric.unit && (
                             <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
                           )}
                         </div>
-                        {metric.criticalLabel && (
-                          <div className={`text-[10px] font-medium mt-1 text-center ${metric.criticalColor || "text-muted-foreground"}`}>
-                            {metric.criticalLabel}
-                          </div>
-                        )}
                       </div>
 
                       {/* Distribution bar below État actuel — épurée */}
