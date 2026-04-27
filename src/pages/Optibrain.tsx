@@ -1242,11 +1242,6 @@ const Optibrain = () => {
                                       <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
                                     ))}
                                   </div>
-                                  {dominant && (
-                                    <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
-                                      {dominant.label} {formatDur(Math.round((dominant.pct / 100) * totalMinutes))} ({dominant.pct}%)
-                                    </div>
-                                  )}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent side="bottom" className="p-2.5 max-w-[260px]">
