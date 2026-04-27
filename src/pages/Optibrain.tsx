@@ -1098,6 +1098,73 @@ const Optibrain = () => {
                             );
                           })}
                         </div>
+
+                        {/* Résumé : valeurs principales + métrique la plus critique */}
+                        {(() => {
+                          const outOfRange = groupMetrics
+                            .map((m) => {
+                              const range = m.targetMax - m.targetMin || 1;
+                              const deviation =
+                                m.value < m.targetMin
+                                  ? (m.targetMin - m.value) / range
+                                  : m.value > m.targetMax
+                                    ? (m.value - m.targetMax) / range
+                                    : 0;
+                              return { metric: m, deviation };
+                            })
+                            .filter((x) => x.deviation > 0)
+                            .sort((a, b) => b.deviation - a.deviation);
+                          const worst = outOfRange[0]?.metric;
+                          return (
+                            <div className="mt-5 pt-4 border-t border-border/60">
+                              <div className="flex items-center justify-between gap-3 flex-wrap">
+                                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                                  {groupMetrics.map((m) => {
+                                    const inRange = isInRange(m.value, m.targetMin, m.targetMax);
+                                    return (
+                                      <div key={m.label} className="flex items-baseline gap-1.5">
+                                        <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                                          {m.label}
+                                        </span>
+                                        <span
+                                          className={`text-sm font-semibold tabular-nums ${
+                                            inRange ? "text-foreground" : "text-status-critical"
+                                          }`}
+                                        >
+                                          {m.value}
+                                          {m.unit ? (
+                                            <span className="ml-0.5 text-[10px] text-muted-foreground font-normal">
+                                              {m.unit}
+                                            </span>
+                                          ) : null}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                {worst ? (
+                                  <div className="flex items-center gap-1.5 text-xs">
+                                    <AlertCircle className="h-3.5 w-3.5 text-status-critical shrink-0" />
+                                    <span className="text-muted-foreground">Plus critique :</span>
+                                    <span className="font-semibold text-status-critical">
+                                      {worst.label} {worst.value}
+                                      {worst.unit ?? ""}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      (cible {worst.targetMin}–{worst.targetMax}
+                                      {worst.unit ? ` ${worst.unit}` : ""})
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 text-xs text-status-normal">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-status-normal" />
+                                    Tous les paramètres dans les cibles
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </CardContent>
                     )}
                   </Card>
