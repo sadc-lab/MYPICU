@@ -15,6 +15,8 @@ interface MetricRangeBarProps {
   tooltipContent?: ReactNode;
   /** Taille de la valeur affichée au-dessus du triangle. */
   valueSize?: 'sm' | 'md' | 'lg' | 'xl';
+  /** Masque le texte de la valeur au-dessus du triangle (n'affiche que la flèche). */
+  hideValueLabel?: boolean;
 }
 
 export const MetricRangeBar = ({
@@ -28,6 +30,7 @@ export const MetricRangeBar = ({
   showValuePointer = false,
   tooltipContent,
   valueSize = 'sm',
+  hideValueLabel = false,
 }: MetricRangeBarProps) => {
   const range = max - min;
   const inRange = value >= targetMin && value <= targetMax;
@@ -46,12 +49,9 @@ export const MetricRangeBar = ({
   const triangleSizeClass = valueSize === 'xl' || valueSize === 'lg'
     ? 'border-l-[7px] border-r-[7px] border-t-[8px]'
     : 'border-l-[5px] border-r-[5px] border-t-[6px]';
-  const pointerPaddingClass = {
-    sm: 'pt-7',
-    md: 'pt-8',
-    lg: 'pt-10',
-    xl: 'pt-12',
-  }[valueSize];
+  const pointerPaddingClass = hideValueLabel
+    ? 'pt-2.5'
+    : { sm: 'pt-7', md: 'pt-8', lg: 'pt-10', xl: 'pt-12' }[valueSize];
 
   const targetLeftPct = ((targetMin - min) / range) * 100;
   const targetWidthPct = ((targetMax - targetMin) / range) * 100;
@@ -121,10 +121,12 @@ export const MetricRangeBar = ({
                     transform: 'translateX(-50%)',
                   }}
                 >
-                  <span className={`${valueSizeClass} font-semibold tabular-nums leading-none ${valueColor}`}>
-                    {value}
-                    {unit ? <span className={`ml-0.5 ${unitSizeClass} font-normal opacity-70`}>{unit}</span> : null}
-                  </span>
+                  {!hideValueLabel && (
+                    <span className={`${valueSizeClass} font-semibold tabular-nums leading-none ${valueColor}`}>
+                      {value}
+                      {unit ? <span className={`ml-0.5 ${unitSizeClass} font-normal opacity-70`}>{unit}</span> : null}
+                    </span>
+                  )}
                   <div
                     className={`w-0 h-0 ${triangleSizeClass} border-l-transparent border-r-transparent ${triangleColor} mt-0.5`}
                   />
@@ -143,10 +145,12 @@ export const MetricRangeBar = ({
                 transform: 'translateX(-50%)',
               }}
             >
-              <span className={`${valueSizeClass} font-semibold tabular-nums leading-none ${valueColor}`}>
-                {value}
-                {unit ? <span className={`ml-0.5 ${unitSizeClass} font-normal opacity-70`}>{unit}</span> : null}
-              </span>
+              {!hideValueLabel && (
+                <span className={`${valueSizeClass} font-semibold tabular-nums leading-none ${valueColor}`}>
+                  {value}
+                  {unit ? <span className={`ml-0.5 ${unitSizeClass} font-normal opacity-70`}>{unit}</span> : null}
+                </span>
+              )}
               <div
                 className={`w-0 h-0 ${triangleSizeClass} border-l-transparent border-r-transparent ${triangleColor} mt-0.5`}
               />
