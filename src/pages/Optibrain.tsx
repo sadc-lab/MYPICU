@@ -1081,14 +1081,28 @@ const Optibrain = () => {
                   if (abs >= 10) return (Math.round(v * 10) / 10).toString();
                   return (Math.round(v * 100) / 100).toString();
                 };
-                const summary = abnormal === 0
+                // Tri par "écart relatif à la cible" → les plus critiques en premier
+                const offTargetSorted = [...offTarget].sort((a, b) => {
+                  const deviation = (m: typeof a) => {
+                    if (m.value > m.targetMax) return (m.value - m.targetMax) / Math.max(Math.abs(m.targetMax), 1);
+                    if (m.value < m.targetMin) return (m.targetMin - m.value) / Math.max(Math.abs(m.targetMin), 1);
+                    return 0;
+                  };
+                  return deviation(b) - deviation(a);
+                });
+                const renderItem = (m: typeof offTarget[number]) => {
+                  const arrow = m.value > m.targetMax ? "↑" : m.value < m.targetMin ? "↓" : "";
+                  return `${m.label} ${arrow}${formatVal(m.value)}`;
+                };
+                const COMPACT_LIMIT = 2;
+                const compactItems = offTargetSorted.slice(0, COMPACT_LIMIT).map(renderItem);
+                const remaining = offTargetSorted.length - compactItems.length;
+                const compactSummary = abnormal === 0
                   ? "Tous les paramètres dans les cibles"
-                  : offTarget
-                      .map(m => {
-                        const arrow = m.value > m.targetMax ? "↑" : m.value < m.targetMin ? "↓" : "";
-                        return `${m.label} ${arrow}${formatVal(m.value)}`;
-                      })
-                      .join(" · ");
+                  : compactItems.join(" · ") + (remaining > 0 ? ` · +${remaining}` : "");
+                const fullSummary = abnormal === 0
+                  ? "Tous les paramètres dans les cibles"
+                  : offTargetSorted.map(renderItem).join(" · ");
 
                 return (
                   <Card key={group.title} className="bg-card shadow-sm">
@@ -1102,12 +1116,38 @@ const Optibrain = () => {
                           <KpiCircle count={abnormal} groupLabel={group.title} />
                           <div className="text-left min-w-0 flex-1">
                             <div className="text-base font-semibold text-foreground">{group.title}</div>
-                            <div
-                              className={`text-xs mt-0.5 truncate ${abnormal === 0 ? "text-muted-foreground" : "text-status-critical font-medium"}`}
-                              title={summary}
-                            >
-                              {summary}
-                            </div>
+                            <TooltipProvider delayDuration={150}>
+                              <UITooltip>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className={`text-xs mt-0.5 truncate cursor-help ${abnormal === 0 ? "text-muted-foreground" : "text-status-critical font-medium"}`}
+                                  >
+                                    {compactSummary}
+                                  </div>
+                                </TooltipTrigger>
+                                {abnormal > 0 && (
+                                  <TooltipContent side="bottom" align="start" className="p-2.5 max-w-[320px]">
+                                    <div className="text-xs font-semibold text-foreground mb-1.5">
+                                      {abnormal} paramètre{abnormal > 1 ? "s" : ""} hors cible
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      {offTargetSorted.map(m => {
+                                        const arrow = m.value > m.targetMax ? "↑" : "↓";
+                                        const target = `cible ${formatVal(m.targetMin)}–${formatVal(m.targetMax)}`;
+                                        return (
+                                          <div key={m.label} className="flex items-center justify-between gap-3 text-xs">
+                                            <span className="font-medium">{m.label}</span>
+                                            <span className="text-status-critical tabular-nums">
+                                              {arrow}{formatVal(m.value)} <span className="text-muted-foreground font-normal">({target})</span>
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </TooltipContent>
+                                )}
+                              </UITooltip>
+                            </TooltipProvider>
                           </div>
                         </div>
                         <ChevronDown
