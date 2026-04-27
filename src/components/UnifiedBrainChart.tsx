@@ -670,17 +670,6 @@ export function UnifiedBrainChart({
       {/* Footer with current values */}
       <div className="border-t border-border pt-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
-          {showPIC && (
-            <>
-              <div>
-                <span className="text-muted-foreground">PIC actuelle :</span>{" "}
-                <span className="font-semibold text-foreground">
-                  {currentPIC !== null && currentPIC !== undefined ? `${Math.round(currentPIC)} mmHg` : "--"}
-                </span>
-              </div>
-              {showPAM && <span className="text-border">|</span>}
-            </>
-          )}
           {showPAM && (
             <>
               <div>
