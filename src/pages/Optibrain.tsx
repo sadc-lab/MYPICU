@@ -8,6 +8,7 @@ import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePatient } from '@/hooks/usePatients';
+import { toast } from "sonner";
 
 import {
   Info,
@@ -843,8 +844,8 @@ const Optibrain = () => {
     if (problematic.length === 0) return;
     clinicalAutoSelectedRef.current = true;
     setSelectedIndicators((prev) => {
-      const merged = new Set([...prev, ...problematic]);
-      return Array.from(merged);
+      const merged = Array.from(new Set([...prev, ...problematic]));
+      return merged.slice(0, 3);
     });
   }, [patientFileData, clinicalIndicators]);
 
@@ -1636,11 +1637,18 @@ const Optibrain = () => {
                           }`}
                           style={isSelected ? { borderColor: chartColor || undefined } : undefined}
                           onClick={() => {
-                            setSelectedIndicators((prev) =>
-                              prev.includes(indicator.label)
-                                ? prev.filter((label) => label !== indicator.label)
-                                : [...prev, indicator.label],
-                            );
+                            setSelectedIndicators((prev) => {
+                              if (prev.includes(indicator.label)) {
+                                return prev.filter((label) => label !== indicator.label);
+                              }
+                              if (prev.length >= 3) {
+                                toast.warning("Maximum 3 indicateurs", {
+                                  description: "Désélectionnez un indicateur pour en ajouter un nouveau.",
+                                });
+                                return prev;
+                              }
+                              return [...prev, indicator.label];
+                            });
                             // Scroll vers le graphique
                             setTimeout(() => {
                               chartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
