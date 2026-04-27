@@ -1055,30 +1055,15 @@ const Optibrain = () => {
                     </button>
                     {isOpen && (
                       <CardContent className="pt-4 border-t">
-                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8 sm:gap-x-8 pt-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
                           {groupMetrics.map((metric, index) => {
                             const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                            const deviation = metric.value < metric.targetMin
-                              ? metric.targetMin - metric.value
-                              : metric.value > metric.targetMax
-                                ? metric.value - metric.targetMax
-                                : 0;
-                            const trendLabel = metric.trend === "up" ? "en hausse" : metric.trend === "down" ? "en baisse" : "stable";
-                            const trendSign = (metric.change ?? 0) > 0 ? "+" : "";
+                            const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
                             return (
                               <div key={index} className="flex flex-col items-center">
-                                <div className="flex items-baseline gap-2 mb-3">
-                                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                    {metric.label}
-                                  </span>
-                                  <span className={`text-2xl sm:text-3xl font-bold tabular-nums leading-none ${inRange ? "text-foreground" : "text-status-critical"}`}>
-                                    {metric.value}
-                                    {metric.unit ? (
-                                      <span className="ml-0.5 text-xs font-normal text-muted-foreground">
-                                        {metric.unit}
-                                      </span>
-                                    ) : null}
-                                  </span>
+                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
                                 </div>
                                 <MetricRangeBar
                                   value={metric.value}
@@ -1086,29 +1071,6 @@ const Optibrain = () => {
                                   max={metric.max}
                                   targetMin={metric.targetMin}
                                   targetMax={metric.targetMax}
-                                  unit={metric.unit}
-                                  showValuePointer
-                                  hideValueLabel
-                                  tooltipContent={
-                                    <div className="space-y-1.5 text-xs">
-                                      <div className="font-semibold text-sm">
-                                        {metric.label} : {metric.value}{metric.unit ? ` ${metric.unit}` : ""}
-                                      </div>
-                                      <div className="text-muted-foreground">
-                                        Cible : {metric.targetMin}–{metric.targetMax}{metric.unit ? ` ${metric.unit}` : ""}
-                                      </div>
-                                      <div className={inRange ? "text-status-normal" : "text-status-critical"}>
-                                        {inRange
-                                          ? "Dans la cible"
-                                          : `Hors cible (écart ${deviation.toFixed(1)}${metric.unit ? ` ${metric.unit}` : ""})`}
-                                      </div>
-                                      {metric.change !== undefined && metric.change !== 0 && (
-                                        <div className="text-muted-foreground">
-                                          Tendance : {trendLabel} ({trendSign}{metric.change}{metric.unit ? ` ${metric.unit}` : ""})
-                                        </div>
-                                      )}
-                                    </div>
-                                  }
                                 />
                               </div>
                             );
