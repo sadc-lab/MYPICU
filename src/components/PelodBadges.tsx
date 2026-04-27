@@ -38,7 +38,7 @@ const PelodBadge = ({
       onClick={onClick}
       title={title}
       aria-label={ariaLabel}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-md border bg-muted px-2.5 py-1 text-xs transition-all duration-150 outline-none ${severity.border} ${
+      className={`inline-flex items-center justify-center gap-1 rounded-md border bg-muted px-2.5 py-0.5 text-xs transition-all duration-150 outline-none ${severity.border} ${
         onClick
           ? 'cursor-pointer hover:-translate-y-[1px] hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1'
           : ''
