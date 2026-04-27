@@ -1215,20 +1215,23 @@ const Optibrain = () => {
                           }
                         }}
                       >
-                        <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-center">
-                          {metric.label}
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                          <div className={`text-lg sm:text-2xl font-bold ${statusColor} tabular-nums leading-none`}>{metric.displayValue}</div>
+                        {(metric as any).topLabel ? (
+                          <div className="text-[11px] sm:text-xs font-semibold text-foreground mb-1.5 text-center leading-tight">
+                            {(metric as any).topLabel}
+                          </div>
+                        ) : (
+                          <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-center">
+                            {metric.label}
+                          </div>
+                        )}
+                        <div className="flex items-baseline gap-1 justify-center">
+                          <div className={`text-base sm:text-xl font-bold ${statusColor} tabular-nums leading-tight text-center`}>
+                            {metric.displayValue}
+                          </div>
                           {metric.unit && (
                             <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
                           )}
                         </div>
-                        {metric.criticalLabel && (
-                          <div className={`text-[10px] font-medium mt-1 text-center ${metric.criticalColor || "text-muted-foreground"}`}>
-                            {metric.criticalLabel}
-                          </div>
-                        )}
                       </div>
 
                       {/* Distribution bar below État actuel — épurée */}
