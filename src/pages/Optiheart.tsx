@@ -514,7 +514,7 @@ const Optiheart = () => {
                 <div className="h-[300px] border-2 border-border rounded-lg p-4">
                   {selectedIndicators.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
-                      <p className="text-muted-foreground">Select clinical indicators below to display their trends</p>
+                      <p className="text-muted-foreground">Sélectionnez des indicateurs ci-dessous pour afficher leur évolution</p>
                     </div>
                   ) : (
                     <div className="h-full flex flex-col">

@@ -59,7 +59,7 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
           </h3>
           <p className="mb-2">Surveillance cardiovasculaire avancée :</p>
           <ul className="list-disc list-inside text-sm space-y-1">
-            <li><strong>Débit cardiaque</strong> - Mesure et tendances</li>
+            <li><strong>Débit cardiaque</strong> - Mesure et évolution</li>
             <li><strong>Pression artérielle</strong> - MAP, systolique, diastolique</li>
             <li><strong>Bilan hydrique</strong> - Entrées/sorties</li>
             <li><strong>Échocardiographie</strong> - Résultats et analyses</li>
