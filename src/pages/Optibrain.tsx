@@ -735,7 +735,7 @@ const Optibrain = () => {
           ? `${formatDuration(Math.round((hticPct / 100) * totalMinutes))} HTIC (${hticPct}%)`
           : null;
       return {
-        label: "État Neuro",
+        label: "État actuel",
         value: neurologicalStateConfig.currentState,
         displayValue: neurologicalStateConfig.currentState,
         unit: "",
@@ -745,6 +745,8 @@ const Optibrain = () => {
         trend: "stable",
         criticalLabel,
         criticalColor: hticIschPct > 0 ? "text-status-critical" : "text-status-warning",
+        // Internal key to identify this metric (label is now dynamic-friendly)
+        metricKey: "neuro",
       };
     })(),
     (() => {
@@ -769,25 +771,23 @@ const Optibrain = () => {
         return m > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${h}h`;
       };
       const durationLabel = formatDuration(minutesAbove20);
-      const windowLabel = hoursForAdherence >= 24
-        ? `${Math.round(hoursForAdherence / 24)}j`
-        : `${hoursForAdherence}h`;
 
       return {
         label: "PIC",
-        value: `${durationLabel} > 20 mmHg`,
-        displayValue: durationLabel,
-        unit: `> 20 mmHg / ${windowLabel}`,
+        value: picValue !== null ? `${Math.round(picValue * 10) / 10} mmHg` : "--",
+        displayValue: picValue !== null ? `${Math.round(picValue * 10) / 10}` : "--",
+        unit: picValue !== null ? "mmHg" : "",
         status: intensityStatus,
         hasDetails: true,
         dialogKey: "pic",
         trend: "down",
         change: -3,
-        // Détail secondaire : pourcentage + valeur actuelle
-        criticalLabel: picValue !== null
-          ? `${Math.round(above20)}% · actuelle ${Math.round(picValue * 10) / 10} mmHg`
-          : `${Math.round(above20)}% du temps`,
+        // Sous la valeur actuelle : temps passé > 20 mmHg
+        criticalLabel: above20 > 0
+          ? `${durationLabel} > 20 mmHg`
+          : null,
         criticalColor: intensityStatus === "critical" ? "text-status-critical" : "text-status-warning",
+        metricKey: "pic",
       };
     })(),
     {
@@ -1212,10 +1212,15 @@ const Optibrain = () => {
                             <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
                           )}
                         </div>
+                        {metric.criticalLabel && (
+                          <div className={`text-[10px] font-medium mt-1 text-center ${metric.criticalColor || "text-muted-foreground"}`}>
+                            {metric.criticalLabel}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Distribution bar below État Neuro — épurée */}
-                      {metric.label === "État Neuro" && neurologicalStateConfig.hasData && (() => {
+                      {/* Distribution bar below État actuel — épurée */}
+                      {metric.label === "État actuel" && neurologicalStateConfig.hasData && (() => {
                         const segments = [
                           { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, colorClass: 'bg-status-normal' },
                           { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, colorClass: 'bg-status-warning' },
@@ -1237,11 +1242,6 @@ const Optibrain = () => {
                                       <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
                                     ))}
                                   </div>
-                                  {dominant && (
-                                    <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
-                                      {dominant.label} {formatDur(Math.round((dominant.pct / 100) * totalMinutes))} ({dominant.pct}%)
-                                    </div>
-                                  )}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent side="bottom" className="p-2.5 max-w-[260px]">
@@ -1285,11 +1285,6 @@ const Optibrain = () => {
                                     {picSegmentsFull.map(s => (
                                       <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
                                     ))}
-                                  </div>
-                                  <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
-                                    {aboveTarget > 0
-                                      ? `${formatDur(Math.round((aboveTarget / 100) * hoursForAdherence * 60))} > 20 mmHg (${aboveTarget}%)`
-                                      : 'Toujours dans la cible'}
                                   </div>
                                 </div>
                               </TooltipTrigger>
