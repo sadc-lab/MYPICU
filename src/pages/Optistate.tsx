@@ -254,10 +254,10 @@ const Optistate = () => {
         dot: 'bg-status-warning',
       };
     return {
-      text: 'text-muted-foreground',
-      bg: 'bg-muted',
-      border: 'border-border',
-      dot: 'bg-muted-foreground/40',
+      text: 'text-status-normal',
+      bg: 'bg-status-normal/10',
+      border: 'border-status-normal/30',
+      dot: 'bg-status-normal',
     };
   };
 
