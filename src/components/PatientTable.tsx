@@ -28,22 +28,32 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
     return 'text-destructive';
   };
 
-  const getOrganIconWithScore = (organ: 'brain' | 'heart' | 'lungs' | 'kidney', score?: number, patientId?: string) => {
-    const color = getScoreTextColor(score);
-    const bgColor = getScoreBgColor(score);
-    
-    let IconComponent;
-    switch (organ) {
-      case 'heart':
-        IconComponent = HeartIcon;
-        break;
-      case 'kidney':
-        IconComponent = Droplets;
-        break;
-    }
+  // Bordure / pastille colorée selon le score (aligné sur PatientHeader)
+  const getOrganBadgeBorder = (score?: number) => {
+    if (!score || score === 0) return 'border-border';
+    if (score === 1) return 'border-orange-500';
+    if (score === 2) return 'border-orange-600';
+    return 'border-red-600';
+  };
 
-    const getOrganRoute = (organ: 'brain' | 'heart' | 'lungs' | 'kidney') => {
-      switch (organ) {
+  const getOrganDotFill = (score?: number) => {
+    if (!score || score === 0) return 'bg-muted-foreground';
+    if (score === 1) return 'bg-orange-500';
+    if (score === 2) return 'bg-orange-600';
+    return 'bg-red-600';
+  };
+
+  const getOrganIconWithScore = (
+    organ: 'brain' | 'heart' | 'lungs' | 'kidney',
+    score?: number,
+    patientId?: string,
+  ) => {
+    const textColor = getScoreTextColor(score);
+    const borderColor = getOrganBadgeBorder(score);
+    const dotFill = getOrganDotFill(score);
+
+    const getOrganRoute = (o: 'brain' | 'heart' | 'lungs' | 'kidney') => {
+      switch (o) {
         case 'brain':
           return 'optibrain';
         case 'heart':
@@ -51,45 +61,58 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
         case 'lungs':
           return 'optilungs';
         case 'kidney':
-          return 'optistate'; // Default to state for kidney
+          return 'optirenal';
         default:
           return 'optistate';
       }
     };
 
     const handleClick = (e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent row click
+      e.stopPropagation();
       if (patientId) {
         navigate(`/${getOrganRoute(organ)}?patient=${encodeURIComponent(patientId)}`);
       }
     };
 
-    const organNames: Record<string, string> = {
-      brain: 'du cerveau',
-      heart: 'du cœur',
-      lungs: 'des poumons',
-      kidney: 'des reins'
+    const organLabels: Record<string, string> = {
+      brain: 'cerveau',
+      heart: 'cœur',
+      lungs: 'poumons',
+      kidney: 'reins',
     };
 
+    const iconNode =
+      organ === 'brain' ? (
+        <img src={brainIcon} alt="brain" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getScoreColorFilter(score) }} />
+      ) : organ === 'lungs' ? (
+        <img src={lungsIcon} alt="lungs" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getScoreColorFilter(score) }} />
+      ) : organ === 'heart' ? (
+        <HeartIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${textColor}`} />
+      ) : organ === 'kidney' ? (
+        <img src={kidneyIcon} alt="kidney" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getScoreColorFilter(score) }} />
+      ) : (
+        <Droplets className={`h-6 w-6 sm:h-7 sm:w-7 ${textColor}`} />
+      );
+
     return (
-      <div 
-        className={`flex items-center gap-1 px-2 py-1 rounded ${bgColor} cursor-pointer hover:opacity-80 transition-opacity`}
+      <button
+        type="button"
         onClick={handleClick}
-        title={`Voir détails ${organNames[organ] || organ}`}
+        title={`Voir le module ${organLabels[organ] ?? organ}`}
+        className="relative flex items-center justify-center p-0.5 bg-transparent border-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 rounded-md"
       >
-        {organ === 'brain' ? (
-          <img src={brainIcon} alt="brain" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getScoreColorFilter(score) }} />
-        ) : organ === 'lungs' ? (
-          <img src={lungsIcon} alt="lungs" className="h-6 w-6 sm:h-7 sm:w-7" style={{ filter: getScoreColorFilter(score) }} />
-        ) : organ === 'heart' ? (
-          <HeartIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${color}`} />
-        ) : (
-          <IconComponent className={`h-6 w-6 sm:h-7 sm:w-7 ${color}`} />
-        )}
-        <span className={`text-xs sm:text-sm font-semibold ${color}`}>
-          {score || 0}
-        </span>
-      </div>
+        <Badge
+          variant="outline"
+          className={`bg-muted text-foreground border ${borderColor} text-xs gap-1 transition-all duration-150 hover:-translate-y-[1px]`}
+        >
+          {iconNode}
+          <span className={`font-semibold ${textColor}`}>{score ?? 0}</span>
+          <span
+            aria-hidden="true"
+            className={`ml-0.5 h-2 w-2 rounded-full border ${borderColor} bg-transparent`}
+          />
+        </Badge>
+      </button>
     );
   };
 
