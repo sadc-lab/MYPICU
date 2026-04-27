@@ -7,8 +7,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
+import kidneyIcon from '@/assets/kidney-icon.svg';
 import { useTourNavigation } from '@/hooks/useTourNavigation';
-import { getScoreTextColor, getScoreBgColor, getScoreColorFilter } from '@/utils/colorUtils';
+import { getScoreTextColor, getScoreColorFilter } from '@/utils/colorUtils';
 import { PatientCard } from '@/components/PatientCard';
 interface PatientTableProps {
   patients: Patient[];
