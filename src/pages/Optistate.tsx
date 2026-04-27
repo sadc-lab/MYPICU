@@ -8,9 +8,6 @@ import { usePatient } from '@/hooks/usePatients';
 import {
   ChevronRight,
   AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   CheckCircle2,
   Eye,
 } from 'lucide-react';
