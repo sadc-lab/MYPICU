@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
 import { Patient } from '@/utils/patientData';
 import { getPelodBorderColor } from '@/utils/colorUtils';
 
