@@ -1098,6 +1098,7 @@ const Optibrain = () => {
                                   targetMax={metric.targetMax}
                                   unit={metric.unit}
                                   showValuePointer
+                                  valueSize="xl"
                                   tooltipContent={
                                     <div className="space-y-1.5 text-xs">
                                       <div className="font-semibold text-sm">

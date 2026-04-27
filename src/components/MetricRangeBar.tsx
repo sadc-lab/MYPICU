@@ -13,6 +13,8 @@ interface MetricRangeBarProps {
   showValuePointer?: boolean;
   /** Contenu personnalisé du tooltip au survol du point/triangle. */
   tooltipContent?: ReactNode;
+  /** Taille de la valeur affichée au-dessus du triangle. */
+  valueSize?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export const MetricRangeBar = ({
@@ -25,9 +27,31 @@ export const MetricRangeBar = ({
   unit,
   showValuePointer = false,
   tooltipContent,
+  valueSize = 'sm',
 }: MetricRangeBarProps) => {
   const range = max - min;
   const inRange = value >= targetMin && value <= targetMax;
+  const valueSizeClass = {
+    sm: 'text-[11px]',
+    md: 'text-sm',
+    lg: 'text-lg',
+    xl: 'text-2xl sm:text-3xl',
+  }[valueSize];
+  const unitSizeClass = {
+    sm: 'text-[9px]',
+    md: 'text-[10px]',
+    lg: 'text-xs',
+    xl: 'text-xs',
+  }[valueSize];
+  const triangleSizeClass = valueSize === 'xl' || valueSize === 'lg'
+    ? 'border-l-[7px] border-r-[7px] border-t-[8px]'
+    : 'border-l-[5px] border-r-[5px] border-t-[6px]';
+  const pointerPaddingClass = {
+    sm: 'pt-7',
+    md: 'pt-8',
+    lg: 'pt-10',
+    xl: 'pt-12',
+  }[valueSize];
 
   const targetLeftPct = ((targetMin - min) / range) * 100;
   const targetWidthPct = ((targetMax - targetMin) / range) * 100;
@@ -50,7 +74,7 @@ export const MetricRangeBar = ({
 
   return (
     <div className="w-full" style={{ maxWidth }}>
-      <div className={`relative ${showValuePointer ? 'pt-7' : ''}`}>
+      <div className={`relative ${showValuePointer ? pointerPaddingClass : ''}`}>
         <div className="relative h-3 bg-muted rounded-full">
           {/* Target zone */}
           <div
@@ -97,12 +121,12 @@ export const MetricRangeBar = ({
                     transform: 'translateX(-50%)',
                   }}
                 >
-                  <span className={`text-[11px] font-semibold tabular-nums leading-none ${valueColor}`}>
+                  <span className={`${valueSizeClass} font-semibold tabular-nums leading-none ${valueColor}`}>
                     {value}
-                    {unit ? <span className="ml-0.5 text-[9px] font-normal opacity-70">{unit}</span> : null}
+                    {unit ? <span className={`ml-0.5 ${unitSizeClass} font-normal opacity-70`}>{unit}</span> : null}
                   </span>
                   <div
-                    className={`w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent ${triangleColor} mt-0.5`}
+                    className={`w-0 h-0 ${triangleSizeClass} border-l-transparent border-r-transparent ${triangleColor} mt-0.5`}
                   />
                 </div>
               </TooltipTrigger>
@@ -119,12 +143,12 @@ export const MetricRangeBar = ({
                 transform: 'translateX(-50%)',
               }}
             >
-              <span className={`text-[11px] font-semibold tabular-nums leading-none ${valueColor}`}>
+              <span className={`${valueSizeClass} font-semibold tabular-nums leading-none ${valueColor}`}>
                 {value}
-                {unit ? <span className="ml-0.5 text-[9px] font-normal opacity-70">{unit}</span> : null}
+                {unit ? <span className={`ml-0.5 ${unitSizeClass} font-normal opacity-70`}>{unit}</span> : null}
               </span>
               <div
-                className={`w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent ${triangleColor} mt-0.5`}
+                className={`w-0 h-0 ${triangleSizeClass} border-l-transparent border-r-transparent ${triangleColor} mt-0.5`}
               />
             </div>
           )
