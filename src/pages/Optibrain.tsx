@@ -717,23 +717,36 @@ const Optibrain = () => {
   }, [patientFileData, realBrainValues.pic, picDialogTimeRange]);
 
   const brainOptimisationMetrics = [
-    {
-      label: "État Neuro",
-      value: neurologicalStateConfig.currentState,
-      displayValue: neurologicalStateConfig.currentState,
-      unit: "",
-      status: neurologicalStateConfig.currentState === "Contrôlé" ? "normal" : "critical",
-      hasDetails: true,
-      dialogKey: "neuro",
-      trend: "stable",
-      // Dernière valeur critique: le % HTIC le plus élevé
-      criticalLabel: neurologicalStateConfig.history.hticWithIschemia > 0 
-        ? `${neurologicalStateConfig.history.hticWithIschemia}% HTIC+Ischémie`
-        : neurologicalStateConfig.history.htic > 0 
-          ? `${neurologicalStateConfig.history.htic}% HTIC`
-          : null,
-      criticalColor: neurologicalStateConfig.history.hticWithIschemia > 0 ? "text-status-critical" : "text-status-warning",
-    },
+    (() => {
+      // Conversion % → durée pour le sous-titre HTIC / HTIC+Ischémie
+      const totalMinutes = Math.round(hoursForAdherence * 60);
+      const formatDuration = (mins: number): string => {
+        if (mins <= 0) return "0 min";
+        if (mins < 60) return `${mins} min`;
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return m > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${h}h`;
+      };
+      const hticIschPct = neurologicalStateConfig.history.hticWithIschemia;
+      const hticPct = neurologicalStateConfig.history.htic;
+      const criticalLabel = hticIschPct > 0
+        ? `${formatDuration(Math.round((hticIschPct / 100) * totalMinutes))} HTIC+Ischémie (${hticIschPct}%)`
+        : hticPct > 0
+          ? `${formatDuration(Math.round((hticPct / 100) * totalMinutes))} HTIC (${hticPct}%)`
+          : null;
+      return {
+        label: "État Neuro",
+        value: neurologicalStateConfig.currentState,
+        displayValue: neurologicalStateConfig.currentState,
+        unit: "",
+        status: neurologicalStateConfig.currentState === "Contrôlé" ? "normal" : "critical",
+        hasDetails: true,
+        dialogKey: "neuro",
+        trend: "stable",
+        criticalLabel,
+        criticalColor: hticIschPct > 0 ? "text-status-critical" : "text-status-warning",
+      };
+    })(),
     (() => {
       // Indicateur d'intensité de PIC = % du temps passé au-dessus de la cible (> 20 mmHg) sur la fenêtre
       const above20 = picRangeData.ranges
@@ -744,18 +757,36 @@ const Optibrain = () => {
         .reduce((acc, r) => acc + (r.percentage || 0), 0);
       const intensityStatus: "normal" | "warning" | "critical" =
         above25 >= 5 || above20 >= 25 ? "critical" : above20 >= 5 ? "warning" : "normal";
+
+      // Conversion en durée concrète (sur la fenêtre observée)
+      const totalMinutes = Math.round(hoursForAdherence * 60);
+      const minutesAbove20 = Math.round((above20 / 100) * totalMinutes);
+      const formatDuration = (mins: number): string => {
+        if (mins <= 0) return "0 min";
+        if (mins < 60) return `${mins} min`;
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return m > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${h}h`;
+      };
+      const durationLabel = formatDuration(minutesAbove20);
+      const windowLabel = hoursForAdherence >= 24
+        ? `${Math.round(hoursForAdherence / 24)}j`
+        : `${hoursForAdherence}h`;
+
       return {
         label: "PIC",
-        value: `${Math.round(above20)}% > 20 mmHg`,
-        displayValue: `${Math.round(above20)}%`,
-        unit: "> 20 mmHg",
+        value: `${durationLabel} > 20 mmHg`,
+        displayValue: durationLabel,
+        unit: `> 20 mmHg / ${windowLabel}`,
         status: intensityStatus,
         hasDetails: true,
         dialogKey: "pic",
         trend: "down",
         change: -3,
-        // Détail secondaire : valeur PIC actuelle
-        criticalLabel: picValue !== null ? `Actuelle : ${Math.round(picValue * 10) / 10} mmHg` : null,
+        // Détail secondaire : pourcentage + valeur actuelle
+        criticalLabel: picValue !== null
+          ? `${Math.round(above20)}% · actuelle ${Math.round(picValue * 10) / 10} mmHg`
+          : `${Math.round(above20)}% du temps`,
         criticalColor: intensityStatus === "critical" ? "text-status-critical" : "text-status-warning",
       };
     })(),
@@ -1208,7 +1239,7 @@ const Optibrain = () => {
                                   </div>
                                   {dominant && (
                                     <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
-                                      {dominant.label} {dominant.pct}%
+                                      {dominant.label} {formatDur(Math.round((dominant.pct / 100) * totalMinutes))} ({dominant.pct}%)
                                     </div>
                                   )}
                                 </div>
@@ -1256,7 +1287,9 @@ const Optibrain = () => {
                                     ))}
                                   </div>
                                   <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
-                                    {aboveTarget > 0 ? `${aboveTarget}% > 20 mmHg` : '100% dans la cible'}
+                                    {aboveTarget > 0
+                                      ? `${formatDur(Math.round((aboveTarget / 100) * hoursForAdherence * 60))} > 20 mmHg (${aboveTarget}%)`
+                                      : 'Toujours dans la cible'}
                                   </div>
                                 </div>
                               </TooltipTrigger>
