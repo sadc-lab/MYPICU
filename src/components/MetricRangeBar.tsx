@@ -13,6 +13,8 @@ interface MetricRangeBarProps {
   showValuePointer?: boolean;
   /** Contenu personnalisé du tooltip au survol du point/triangle. */
   tooltipContent?: ReactNode;
+  /** Taille de la valeur affichée au-dessus du triangle. */
+  valueSize?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export const MetricRangeBar = ({
@@ -25,9 +27,31 @@ export const MetricRangeBar = ({
   unit,
   showValuePointer = false,
   tooltipContent,
+  valueSize = 'sm',
 }: MetricRangeBarProps) => {
   const range = max - min;
   const inRange = value >= targetMin && value <= targetMax;
+  const valueSizeClass = {
+    sm: 'text-[11px]',
+    md: 'text-sm',
+    lg: 'text-lg',
+    xl: 'text-2xl sm:text-3xl',
+  }[valueSize];
+  const unitSizeClass = {
+    sm: 'text-[9px]',
+    md: 'text-[10px]',
+    lg: 'text-xs',
+    xl: 'text-xs',
+  }[valueSize];
+  const triangleSizeClass = valueSize === 'xl' || valueSize === 'lg'
+    ? 'border-l-[7px] border-r-[7px] border-t-[8px]'
+    : 'border-l-[5px] border-r-[5px] border-t-[6px]';
+  const pointerPaddingClass = {
+    sm: 'pt-7',
+    md: 'pt-8',
+    lg: 'pt-10',
+    xl: 'pt-12',
+  }[valueSize];
 
   const targetLeftPct = ((targetMin - min) / range) * 100;
   const targetWidthPct = ((targetMax - targetMin) / range) * 100;
