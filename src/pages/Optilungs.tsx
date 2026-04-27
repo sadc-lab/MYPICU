@@ -719,9 +719,9 @@ const Optilungs = () => {
                       const isSelected = selectedIndicators.includes(indicator.label);
                       const adherenceDotColor =
                         indicator.adherencePercentage === null
-                          ? "bg-muted-foreground/30"
+                          ? "bg-status-inactive/40"
                           : (indicator.adherencePercentage ?? 0) >= 90
-                            ? "bg-muted-foreground"
+                            ? "bg-status-normal"
                             : (indicator.adherencePercentage ?? 0) >= 80
                               ? "bg-status-warning"
                               : "bg-status-critical";
