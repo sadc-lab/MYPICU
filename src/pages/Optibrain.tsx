@@ -1070,8 +1070,26 @@ const Optibrain = () => {
               return groups.map((group) => {
                 const groupMetrics = brainMetrics.filter(m => group.metricLabels.includes(m.label));
                 if (groupMetrics.length === 0) return null;
-                const abnormal = groupMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax)).length;
+                const offTarget = groupMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax));
+                const abnormal = offTarget.length;
                 const isOpen = brainGroupsOpen[group.title] ?? false;
+
+                // Synthèse contextualisée : liste les paramètres hors cible avec direction
+                const formatVal = (v: number) => {
+                  const abs = Math.abs(v);
+                  if (abs >= 100) return Math.round(v).toString();
+                  if (abs >= 10) return (Math.round(v * 10) / 10).toString();
+                  return (Math.round(v * 100) / 100).toString();
+                };
+                const summary = abnormal === 0
+                  ? "Tous les paramètres dans les cibles"
+                  : offTarget
+                      .map(m => {
+                        const arrow = m.value > m.targetMax ? "↑" : m.value < m.targetMin ? "↓" : "";
+                        return `${m.label} ${arrow}${formatVal(m.value)}`;
+                      })
+                      .join(" · ");
+
                 return (
                   <Card key={group.title} className="bg-card shadow-sm">
                     <button
@@ -1079,20 +1097,21 @@ const Optibrain = () => {
                       onClick={() => setBrainGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
                       className="w-full"
                     >
-                      <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors gap-3">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                           <KpiCircle count={abnormal} groupLabel={group.title} />
-                          <div className="text-left">
+                          <div className="text-left min-w-0 flex-1">
                             <div className="text-base font-semibold text-foreground">{group.title}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {abnormal === 0
-                                ? "Tous les paramètres dans les cibles"
-                                : `${abnormal} paramètre${abnormal > 1 ? "s" : ""} hors cible`}
+                            <div
+                              className={`text-xs mt-0.5 truncate ${abnormal === 0 ? "text-muted-foreground" : "text-status-critical font-medium"}`}
+                              title={summary}
+                            >
+                              {summary}
                             </div>
                           </div>
                         </div>
                         <ChevronDown
-                          className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+                          className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isOpen ? "rotate-180" : ""}`}
                         />
                       </div>
                     </button>
