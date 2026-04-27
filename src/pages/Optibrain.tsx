@@ -1617,12 +1617,12 @@ const Optibrain = () => {
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
                       const chartColor = isSelected ? getIndicatorColor(indicator.label) : null;
-                      // Pastille de couleur d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
+                      // Pastille de couleur d'adhérence: vert doux (≥90%), orange (80-89%), rouge (<80%), gris (sans données)
                       const adherenceDotColor =
                         indicator.adherencePercentage === null
-                          ? "bg-muted-foreground/30"
+                          ? "bg-status-inactive/40"
                           : indicator.adherencePercentage >= 90
-                            ? "bg-muted-foreground"
+                            ? "bg-status-normal"
                             : indicator.adherencePercentage >= 80
                               ? "bg-status-warning"
                               : "bg-status-critical";

@@ -413,7 +413,7 @@ const Optiheart = () => {
                   <div className="grid grid-cols-3 gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
-                       const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-status-warning' : 'bg-muted-foreground';
+                       const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-status-warning' : 'bg-status-normal';
                       return (
                         <div 
                           key={index}
@@ -454,7 +454,7 @@ const Optiheart = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                      monitoringAdherence >= 90 ? 'border-muted-foreground text-muted-foreground bg-muted/50' : 
+                      monitoringAdherence >= 90 ? 'border-status-normal text-status-normal bg-status-normal/10' : 
                        monitoringAdherence >= 80 ? 'border-status-warning text-status-warning bg-status-warning/10' : 
                        'border-destructive text-destructive bg-destructive/10'
                     }`}>
@@ -476,7 +476,7 @@ const Optiheart = () => {
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
-                      const statusColor = target.status === 'critical' ? 'bg-destructive' : target.status === 'warning' ? 'bg-status-warning' : 'bg-muted-foreground';
+                      const statusColor = target.status === 'critical' ? 'bg-destructive' : target.status === 'warning' ? 'bg-status-warning' : 'bg-status-normal';
                       return (
                         <div 
                           key={index}
@@ -490,7 +490,7 @@ const Optiheart = () => {
                               </p>
                               <span className={`text-xs font-medium ${
                                 target.status === 'critical' ? 'text-destructive' : 
-                                target.status === 'warning' ? 'text-status-warning' : 'text-muted-foreground'
+                                target.status === 'warning' ? 'text-status-warning' : 'text-status-normal'
                               }`}>
                                 {target.adherencePercentage}%
                               </span>
@@ -522,7 +522,7 @@ const Optiheart = () => {
                         {selectedIndicators.map(label => {
                           const indicator = clinicalIndicators.find(i => i.label === label);
                           if (!indicator) return null;
-                           const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-status-warning' : 'bg-muted-foreground';
+                           const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-status-warning' : 'bg-status-normal';
                            return (
                              <Badge key={label} className={`${statusColor} text-status-critical-fg`}>
                               {label}: {indicator.value}{indicator.unit}
