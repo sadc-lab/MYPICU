@@ -280,5 +280,6 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
