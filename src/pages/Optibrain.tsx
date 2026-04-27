@@ -1332,19 +1332,10 @@ const Optibrain = () => {
               {/* Embedded Charts */}
               {selectedBrainIndicators.length > 0 && (
                 <div className="border-t border-border pt-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold text-foreground">
-                      {selectedBrainIndicators.includes("Autorégulation") 
-                        ? "Courbe d'autorégulation" 
-                        : "Évolution temporelle"}
-                    </div>
-                    <TimeWindowSelector
-                      value={picDialogTimeRange}
-                      onChange={setPicDialogTimeRange}
-                      includeStay={true}
-                      size="sm"
-                      variant="compact"
-                    />
+                  <div className="text-sm font-semibold text-foreground">
+                    {selectedBrainIndicators.includes("Autorégulation") 
+                      ? "Courbe d'autorégulation" 
+                      : "Évolution temporelle"}
                   </div>
                   
                   {/* Show AutoregulationChart when Autorégulation is selected */}
