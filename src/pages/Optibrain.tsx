@@ -1324,93 +1324,6 @@ const Optibrain = () => {
                           )}
                         </div>
                       </div>
-
-                      {/* Distribution bar below État actuel — épurée */}
-                      {metric.label === "État actuel" && neurologicalStateConfig.hasData && (() => {
-                        const segments = [
-                          { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, colorClass: 'bg-status-normal' },
-                          { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, colorClass: 'bg-status-warning' },
-                          { key: 'hyperemia', label: 'Hypérémie', pct: neurologicalStateConfig.history.hyperemia, colorClass: 'bg-amber-400' },
-                          { key: 'htic', label: 'HTIC', pct: neurologicalStateConfig.history.htic, colorClass: 'bg-status-warning' },
-                          { key: 'htic_ischemia', label: 'HTIC+Isch.', pct: neurologicalStateConfig.history.hticWithIschemia, colorClass: 'bg-status-critical' },
-                        ].filter(s => s.pct > 0);
-                        const dominant = segments.slice().sort((a,b) => b.pct - a.pct)[0];
-                        const totalMinutes = Math.round(hoursForAdherence * 60);
-                        const formatDur = (mins: number) =>
-                          mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? (mins % 60).toString().padStart(2, '0') : ''}` : `${mins} min`;
-                        return (
-                          <TooltipProvider delayDuration={150}>
-                            <UITooltip>
-                              <TooltipTrigger asChild>
-                                <div className="px-1 cursor-help">
-                                  <div className="flex h-1.5 rounded-full overflow-hidden">
-                                    {segments.map(s => (
-                                      <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
-                                    ))}
-                                  </div>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="bottom" className="p-2.5 max-w-[260px]">
-                                <div className="text-xs font-semibold text-foreground mb-2">Répartition État Neuro</div>
-                                <div className="flex flex-col gap-1.5">
-                                  {segments.map(s => {
-                                    const mins = Math.round(totalMinutes * s.pct / 100);
-                                    return (
-                                      <div key={s.key} className="flex items-center gap-2 text-xs">
-                                        <span className={`w-2 h-2 rounded-full ${s.colorClass} shrink-0`} />
-                                        <span className="font-medium tabular-nums w-9">{s.pct}%</span>
-                                        <span className="flex-1">{s.label}</span>
-                                        <span className="text-muted-foreground tabular-nums">{formatDur(mins)}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </TooltipContent>
-                            </UITooltip>
-                          </TooltipProvider>
-                        );
-                      })()}
-
-                      {/* Distribution bar below PIC — épurée */}
-                      {metric.label === "PIC" && neurologicalStateConfig.hasData && (() => {
-                        const picSegmentsFull = [
-                          { key: 'below20', label: '< 20 mmHg', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.minutes || 0, colorClass: 'bg-status-normal' },
-                          { key: 'range20_25', label: '20–25 mmHg', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.minutes || 0, colorClass: 'bg-status-warning' },
-                          { key: 'range25_30', label: '25–30 mmHg', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical/80' },
-                          { key: 'above30', label: '> 30 mmHg', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical' },
-                        ].filter(s => s.pct > 0);
-                        const aboveTarget = picSegmentsFull.filter(s => s.key !== 'below20').reduce((acc, s) => acc + s.pct, 0);
-                        const formatDur = (mins: number) =>
-                          mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? (mins % 60).toString().padStart(2, '0') : ''}` : `${mins} min`;
-                        return (
-                          <TooltipProvider delayDuration={150}>
-                            <UITooltip>
-                              <TooltipTrigger asChild>
-                                <div className="px-1 cursor-help">
-                                  <div className="flex h-1.5 rounded-full overflow-hidden">
-                                    {picSegmentsFull.map(s => (
-                                      <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
-                                    ))}
-                                  </div>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="bottom" className="p-2.5 max-w-[260px]">
-                                <div className="text-xs font-semibold text-foreground mb-2">Répartition PIC</div>
-                                <div className="flex flex-col gap-1.5">
-                                  {picSegmentsFull.map(s => (
-                                    <div key={s.key} className="flex items-center gap-2 text-xs">
-                                      <span className={`w-2 h-2 rounded-full ${s.colorClass} shrink-0`} />
-                                      <span className="font-medium tabular-nums w-9">{s.pct}%</span>
-                                      <span className="flex-1">{s.label}</span>
-                                      <span className="text-muted-foreground tabular-nums">{formatDur(s.minutes)}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </TooltipContent>
-                            </UITooltip>
-                          </TooltipProvider>
-                        );
-                      })()}
                     </div>
                   );
                 })}
@@ -1467,6 +1380,67 @@ const Optibrain = () => {
                       selectedIndicators={selectedBrainIndicators.filter(i => i !== "Autorégulation")}
                     />
                   )}
+
+                  {/* Distribution bars under the chart, based on selected indicators */}
+                  {neurologicalStateConfig.hasData && (() => {
+                    const formatDur = (mins: number) =>
+                      mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? (mins % 60).toString().padStart(2, '0') : ''}` : `${mins} min`;
+                    const totalMinutes = Math.round(hoursForAdherence * 60);
+
+                    const neuroSegments = [
+                      { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, colorClass: 'bg-status-normal' },
+                      { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, colorClass: 'bg-status-warning' },
+                      { key: 'hyperemia', label: 'Hypérémie', pct: neurologicalStateConfig.history.hyperemia, colorClass: 'bg-amber-400' },
+                      { key: 'htic', label: 'HTIC', pct: neurologicalStateConfig.history.htic, colorClass: 'bg-status-warning' },
+                      { key: 'htic_ischemia', label: 'HTIC+Isch.', pct: neurologicalStateConfig.history.hticWithIschemia, colorClass: 'bg-status-critical' },
+                    ].filter(s => s.pct > 0);
+
+                    const picSegments = [
+                      { key: 'below20', label: '< 20 mmHg', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.minutes || 0, colorClass: 'bg-status-normal' },
+                      { key: 'range20_25', label: '20–25 mmHg', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.minutes || 0, colorClass: 'bg-status-warning' },
+                      { key: 'range25_30', label: '25–30 mmHg', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical/80' },
+                      { key: 'above30', label: '> 30 mmHg', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical' },
+                    ].filter(s => s.pct > 0);
+
+                    const showNeuro = selectedBrainIndicators.includes("État actuel");
+                    const showPic = selectedBrainIndicators.includes("PIC");
+
+                    if (!showNeuro && !showPic) return null;
+
+                    const renderBar = (title: string, segments: Array<{key: string; label: string; pct: number; minutes?: number; colorClass: string}>) => (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-foreground">{title}</span>
+                          <span className="text-[10px] text-muted-foreground">Répartition temporelle</span>
+                        </div>
+                        <div className="flex h-2 rounded-full overflow-hidden bg-muted">
+                          {segments.map(s => (
+                            <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} title={`${s.label} : ${s.pct}%`} />
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">
+                          {segments.map(s => {
+                            const mins = s.minutes ?? Math.round(totalMinutes * s.pct / 100);
+                            return (
+                              <div key={s.key} className="flex items-center gap-1.5 text-[11px]">
+                                <span className={`w-2 h-2 rounded-full ${s.colorClass} shrink-0`} />
+                                <span className="text-muted-foreground">{s.label}</span>
+                                <span className="font-medium tabular-nums text-foreground">{s.pct}%</span>
+                                <span className="text-muted-foreground tabular-nums">({formatDur(mins)})</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+
+                    return (
+                      <div className="space-y-3 pt-2 border-t border-border">
+                        {showNeuro && neuroSegments.length > 0 && renderBar("État neurologique", neuroSegments)}
+                        {showPic && picSegments.length > 0 && renderBar("PIC", picSegments)}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </CardContent>
