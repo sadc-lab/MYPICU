@@ -52,7 +52,7 @@ export const PelodBadges = ({ patients, unitAverage }: PelodBadgesProps) => {
               >
                 <Badge
                   variant="outline"
-                  className={`bg-background text-foreground border-2 ${severity.border} px-2 sm:px-3 py-1.5 sm:py-2 min-w-[40px] sm:min-w-[50px] gap-1.5 transition-all duration-150 group-hover:-translate-y-[1px] group-hover:shadow-md group-hover:ring-2 group-hover:ring-primary/30`}
+                  className={`!rounded-md bg-background text-foreground border-2 ${severity.border} px-2 sm:px-3 py-1.5 sm:py-2 min-w-[40px] sm:min-w-[50px] gap-1.5 transition-all duration-150 group-hover:-translate-y-[1px] group-hover:shadow-md group-hover:ring-2 group-hover:ring-primary/30`}
                 >
                   <span className={`font-bold text-base sm:text-lg tabular-nums leading-none ${severity.text}`}>
                     {patient.pelodScore}
