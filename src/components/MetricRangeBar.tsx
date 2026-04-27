@@ -74,7 +74,7 @@ export const MetricRangeBar = ({
 
   return (
     <div className="w-full" style={{ maxWidth }}>
-      <div className={`relative ${showValuePointer ? 'pt-7' : ''}`}>
+      <div className={`relative ${showValuePointer ? pointerPaddingClass : ''}`}>
         <div className="relative h-3 bg-muted rounded-full">
           {/* Target zone */}
           <div
