@@ -1286,11 +1286,6 @@ const Optibrain = () => {
                                       <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} />
                                     ))}
                                   </div>
-                                  <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
-                                    {aboveTarget > 0
-                                      ? `${formatDur(Math.round((aboveTarget / 100) * hoursForAdherence * 60))} > 20 mmHg (${aboveTarget}%)`
-                                      : 'Toujours dans la cible'}
-                                  </div>
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent side="bottom" className="p-2.5 max-w-[260px]">
