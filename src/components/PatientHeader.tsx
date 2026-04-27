@@ -99,6 +99,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const isActivePage = (page: string) => currentPage === page;
 
   return (
+    <>
+      <TourProgressBar currentPatientId={patientId} currentPage={currentPage} />
     <div className="bg-card border-b border-border mb-4 sm:mb-6">
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
