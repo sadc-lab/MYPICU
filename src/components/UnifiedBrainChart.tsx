@@ -717,15 +717,6 @@ export function UnifiedBrainChart({
       {/* Time Distribution Bar - only show when neuro states are visible */}
       {showNeuro && <TimeDistributionBar neuroZones={neuroZones} />}
 
-      {/* Interpretation - adapt based on what's shown */}
-      <div className="text-xs text-muted-foreground">
-        <p>
-          <span className="font-medium">Interprétation :</span>{" "}
-          {showPIC && <><span className="text-status-warning font-medium">Les points orange</span> montrent l'évolution de la PIC. </>}
-          {showPAM && <><span className="text-status-critical font-medium">La courbe rouge</span> montre l'évolution de la PAM. </>}
-          {showNeuro && <>Les zones colorées en arrière-plan indiquent l'état neurologique. Les lignes verticales marquent les changements d'état.</>}
-        </p>
-      </div>
     </div>
   );
 }

@@ -462,16 +462,6 @@ export function AutoregulationChart({
         </div>
       )}
 
-      {/* Interpretation guide */}
-      <div className="text-xs text-muted-foreground">
-        <p>
-          <span className="font-medium">Interprétation :</span> La{" "}
-          <span className="text-status-critical font-medium">ligne rouge</span> montre l'évolution 
-          de la {displayIsNirsBased ? "NIRS" : "PPC"}. Les{" "}
-          <span className="text-muted-foreground font-medium">lignes pointillées</span> représentent 
-          les limites d'autorégulation (LLA/ULA). La <span className="text-status-normal font-medium">zone verte</span> est la plage optimale.
-        </p>
-      </div>
 
       {/* Legend - at the bottom */}
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] pt-2">
