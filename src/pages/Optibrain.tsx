@@ -1287,7 +1287,9 @@ const Optibrain = () => {
                                     ))}
                                   </div>
                                   <div className="text-[10px] text-muted-foreground text-center mt-1.5 tabular-nums">
-                                    {aboveTarget > 0 ? `${aboveTarget}% > 20 mmHg` : '100% dans la cible'}
+                                    {aboveTarget > 0
+                                      ? `${formatDur(Math.round((aboveTarget / 100) * hoursForAdherence * 60))} > 20 mmHg (${aboveTarget}%)`
+                                      : 'Toujours dans la cible'}
                                   </div>
                                 </div>
                               </TooltipTrigger>
