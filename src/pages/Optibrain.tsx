@@ -1000,17 +1000,15 @@ const Optibrain = () => {
     );
   }, [realTimeSeriesData]);
 
-  // Palette de couleurs distinctes pour différencier les indicateurs sur le graphique
+  // Palette UX optimisée : couleurs distinctes, accessibles (WCAG), harmonieuses
+  // Évite le rouge pur (réservé aux alertes critiques) et le vert (réservé au statut normal)
   const CHART_COLORS = [
-    "#3b82f6", // blue-500
-    "#ef4444", // red-500
-    "#10b981", // emerald-500
-    "#f59e0b", // amber-500
-    "#8b5cf6", // violet-500
-    "#ec4899", // pink-500
-    "#06b6d4", // cyan-500
-    "#84cc16", // lime-500
-    "#f97316", // orange-500
+    "#2563eb", // blue-600 — primaire, très lisible
+    "#9333ea", // purple-600 — fort contraste avec le bleu
+    "#0891b2", // cyan-600 — frais, distinct
+    "#db2777", // pink-600 — accent chaud
+    "#7c3aed", // violet-600
+    "#0d9488", // teal-600
   ];
 
   // Attribuer une couleur unique à chaque indicateur sélectionné
@@ -1812,7 +1810,6 @@ const Optibrain = () => {
                                 dataKey={label}
                                 stroke={color}
                                 strokeWidth={isSparse ? 0 : 2.5}
-                                strokeDasharray={idx > 0 && !isSparse ? (idx % 2 === 1 ? "8 4" : undefined) : undefined}
                                 dot={
                                   isSparse
                                     ? {
