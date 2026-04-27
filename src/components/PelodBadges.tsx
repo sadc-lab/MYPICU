@@ -1,13 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { Patient } from '@/utils/patientData';
-import { getPelodBorderColor } from '@/utils/colorUtils';
 
 interface PelodBadgesProps {
   patients: Patient[];
   unitAverage: number;
 }
 
-/** Bordure et pastille couleur selon la sévérité PELOD (aligné sur PatientHeader). */
+/** Bordure, pastille et texte selon la sévérité PELOD (aligné sur PatientHeader). */
 const getPelodSeverity = (score: number) => {
   if (score >= 25) return { border: 'border-red-700', dot: 'bg-red-700', text: 'text-red-700 dark:text-red-400' };
   if (score >= 20) return { border: 'border-red-600', dot: 'bg-red-600', text: 'text-red-700 dark:text-red-400' };
@@ -16,20 +15,55 @@ const getPelodSeverity = (score: number) => {
   return { border: 'border-border', dot: 'bg-muted-foreground', text: 'text-foreground' };
 };
 
+/** Badge unifié au style « vignette organe » : fond muted, bordure colorée, chiffre + pastille. */
+const PelodBadge = ({
+  score,
+  severity,
+  suffix,
+  onClick,
+  title,
+  ariaLabel,
+}: {
+  score: number;
+  severity: ReturnType<typeof getPelodSeverity>;
+  suffix?: string;
+  onClick?: () => void;
+  title?: string;
+  ariaLabel?: string;
+}) => {
+  const Tag = onClick ? 'button' : 'div';
+  return (
+    <Tag
+      type={onClick ? 'button' : undefined}
+      onClick={onClick}
+      title={title}
+      aria-label={ariaLabel}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-md border bg-muted px-2.5 py-1 text-xs transition-all duration-150 outline-none ${severity.border} ${
+        onClick
+          ? 'cursor-pointer hover:-translate-y-[1px] hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1'
+          : ''
+      }`}
+    >
+      <span className={`font-semibold tabular-nums ${severity.text}`}>{score}</span>
+      {suffix && <span className="text-[10px] text-muted-foreground tabular-nums">{suffix}</span>}
+      <span
+        aria-hidden="true"
+        className={`ml-0.5 h-2 w-2 rounded-full border ${severity.border} bg-transparent`}
+      />
+    </Tag>
+  );
+};
+
 export const PelodBadges = ({ patients, unitAverage }: PelodBadgesProps) => {
   const navigate = useNavigate();
   const topPatients = [...patients].sort((a, b) => b.pelodScore - a.pelodScore).slice(0, 5);
+  const avgSeverity = getPelodSeverity(unitAverage);
 
   return (
     <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
       <div className="text-center">
         <div className="text-xs text-muted-foreground mb-2">Moyenne PELOD</div>
-        <div
-          className={`h-10 inline-flex items-center justify-center gap-1.5 border-2 ${getPelodBorderColor(unitAverage)} text-foreground bg-muted rounded-md px-3 min-w-[50px]`}
-        >
-          <span className="font-bold text-base sm:text-lg tabular-nums leading-none">{unitAverage}</span>
-          <span className="text-xs text-muted-foreground leading-none">/70</span>
-        </div>
+        <PelodBadge score={unitAverage} severity={avgSeverity} suffix="/70" />
       </div>
 
       <div className="text-center w-full sm:w-auto">
@@ -39,22 +73,14 @@ export const PelodBadges = ({ patients, unitAverage }: PelodBadgesProps) => {
             const severity = getPelodSeverity(patient.pelodScore);
             const room = `#${patient.picuId.replace(/\D/g, '').padStart(2, '0')}`;
             return (
-              <button
+              <PelodBadge
                 key={patient.id}
-                type="button"
+                score={patient.pelodScore}
+                severity={severity}
                 onClick={() => navigate(`/optistate?patient=${encodeURIComponent(patient.id)}`)}
                 title={`Ouvrir le dossier de ${patient.name} (chambre ${room})`}
-                aria-label={`Ouvrir le dossier de ${patient.name}, score PELOD ${patient.pelodScore}`}
-                className={`h-10 inline-flex items-center justify-center gap-1.5 cursor-pointer rounded-md border-2 ${severity.border} bg-muted text-foreground px-3 min-w-[50px] outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all duration-150 hover:-translate-y-[1px] hover:shadow-md hover:ring-2 hover:ring-primary/30`}
-              >
-                <span className={`font-bold text-base sm:text-lg tabular-nums leading-none ${severity.text}`}>
-                  {patient.pelodScore}
-                </span>
-                <span
-                  aria-hidden="true"
-                  className={`h-2 w-2 rounded-full ${severity.dot}`}
-                />
-              </button>
+                ariaLabel={`Ouvrir le dossier de ${patient.name}, score PELOD ${patient.pelodScore}`}
+              />
             );
           })}
         </div>
