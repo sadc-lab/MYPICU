@@ -747,7 +747,6 @@ const Optibrain = () => {
         status: neurologicalStateConfig.currentState === "Contrôlé" ? "normal" : "critical",
         hasDetails: true,
         dialogKey: "neuro",
-        trend: "stable",
         topLabel,
         criticalColor: hticIschPct > 0 ? "text-status-critical" : "text-status-warning",
         metricKey: "neuro",
@@ -792,8 +791,6 @@ const Optibrain = () => {
         status: intensityStatus,
         hasDetails: true,
         dialogKey: "pic",
-        trend: "down",
-        change: -3,
         topLabel,
         criticalColor: intensityStatus === "critical" ? "text-status-critical" : "text-status-warning",
         metricKey: "pic",
@@ -816,8 +813,6 @@ const Optibrain = () => {
       })(),
       hasDetails: true,
       dialogKey: "autoregulation",
-      trend: "stable",
-      change: 0,
       description: optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
         ? `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
         : isNirsBased ? "PAM optimale individuelle" : "PPC optimale individuelle",
