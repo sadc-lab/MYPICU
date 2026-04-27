@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronDown, Bell } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";
-import { TourProgressBar } from "@/components/TourProgressBar";
 import { usePatient } from "@/hooks/usePatients";
 import brainIcon from "@/assets/brain-icon.svg";
 import lungsIcon from "@/assets/lungs-icon.svg";
