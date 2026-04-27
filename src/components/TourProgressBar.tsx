@@ -13,7 +13,8 @@ interface TourProgressBarProps {
 
 /** Détermine si un patient nécessite une attention immédiate. */
 const isPatientCritical = (p: Patient): boolean => {
-  if (p.priority === "high") return true;
+  const priority = (p.priority ?? "").toString().toLowerCase();
+  if (priority === "high" || priority === "élevée" || priority === "elevee") return true;
   if ((p.pelodScore ?? 0) >= 20) return true;
   const scores = [p.brainScore, p.heartScore, p.lungsScore, p.kidneyScore];
   return scores.some((s) => (s ?? 0) >= 3);
