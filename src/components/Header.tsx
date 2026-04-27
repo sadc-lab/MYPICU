@@ -1,4 +1,4 @@
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle, Menu, X, Home, Upload } from 'lucide-react';
@@ -41,6 +41,7 @@ interface HeaderProps {
 
 export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,18 +94,13 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
     : null;
 
   const handleNavigateToPatient = (patientId: string) => {
-    const basePath = location.pathname.startsWith('/optibrain')
-      ? '/optibrain'
-      : location.pathname.startsWith('/optiheart')
-      ? '/optiheart'
-      : location.pathname.startsWith('/optilungs')
-      ? '/optilungs'
-      : '/optistate';
+    const ORGAN_ROUTES = ['/optibrain', '/optiheart', '/optilungs', '/optirenal', '/optigastro', '/optistate'] as const;
+    const basePath = ORGAN_ROUTES.find((r) => location.pathname.startsWith(r)) ?? '/optistate';
     const timeRange = searchParams.get('timeRange');
     const params = new URLSearchParams();
     params.set('patient', patientId);
     if (timeRange) params.set('timeRange', timeRange);
-    window.location.href = `${basePath}?${params.toString()}`;
+    navigate(`${basePath}?${params.toString()}`);
   };
 
   // Close dropdown when clicking outside
