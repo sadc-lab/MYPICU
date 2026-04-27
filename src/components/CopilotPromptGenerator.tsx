@@ -38,6 +38,7 @@ import {
 } from "@/services/dashboardExport.service";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { ExportImageButton } from "@/components/ExportImageButton";
 
 interface CopilotPromptGeneratorProps {
   patientId?: string;
@@ -520,28 +521,34 @@ export const CopilotPromptGenerator = ({
 
       {/* Action bar */}
       {patientId && context && (
-        <div className="p-3 border-t flex gap-2 shrink-0 bg-background">
-          <Button
-            variant="outline"
-            onClick={() => handleGeneratePDF(false)}
-            disabled={!canExport || exporting}
-            className="flex-1"
-          >
-            {exporting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileDown className="h-4 w-4" />
-            )}
-            Télécharger PDF
-          </Button>
-          <Button
-            onClick={() => handleGeneratePDF(true)}
-            disabled={!canExport || exporting}
-            className="flex-1"
-          >
-            <ExternalLink className="h-4 w-4" />
-            PDF + Copilot
-          </Button>
+        <div className="p-3 border-t flex flex-col gap-2 shrink-0 bg-background">
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleGeneratePDF(false)}
+              disabled={!canExport || exporting}
+              className="flex-1"
+            >
+              {exporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileDown className="h-4 w-4" />
+              )}
+              Télécharger PDF
+            </Button>
+            <Button
+              onClick={() => handleGeneratePDF(true)}
+              disabled={!canExport || exporting}
+              className="flex-1"
+            >
+              <ExternalLink className="h-4 w-4" />
+              PDF + Copilot
+            </Button>
+          </div>
+          <ExportImageButton
+            filenamePrefix={`mypicu_copilot_${organ ?? "patient"}`}
+            label="Exporter en image (dé-identifié)"
+          />
         </div>
       )}
     </div>
