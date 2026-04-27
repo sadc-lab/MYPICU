@@ -62,6 +62,9 @@ export default {
           normal: "hsl(var(--status-normal))",
           "normal-fg": "hsl(var(--status-normal-foreground))",
           "normal-bg": "hsl(var(--status-normal-bg))",
+          inactive: "hsl(var(--status-inactive))",
+          "inactive-fg": "hsl(var(--status-inactive-foreground))",
+          "inactive-bg": "hsl(var(--status-inactive-bg))",
         },
         score: {
           critical: "hsl(var(--score-critical))",
