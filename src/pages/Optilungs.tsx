@@ -802,7 +802,7 @@ const Optilungs = () => {
                   {selectedIndicators.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
                       <p className="text-muted-foreground text-xs sm:text-base text-center px-2">
-                        Sélectionnez des indicateurs ci-dessus pour afficher leurs tendances
+                        Sélectionnez des indicateurs ci-dessus pour afficher leur évolution
                       </p>
                     </div>
                   ) : (
