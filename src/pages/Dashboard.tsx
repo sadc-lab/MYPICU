@@ -49,11 +49,11 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-[1600px]">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex flex-wrap gap-2 sm:gap-3">
-            <Button variant="outline" className="bg-card text-sm sm:text-base">
+            <Button variant="outline" className="h-10 bg-muted text-sm sm:text-base">
               Accès TVL
             </Button>
             
-            <Button variant="outline" className="bg-card border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)} data-guide="organize-tour">
+            <Button variant="outline" className="h-10 bg-muted border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)} data-guide="organize-tour">
               Organiser tournée <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

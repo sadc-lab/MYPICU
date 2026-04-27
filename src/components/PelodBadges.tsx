@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
 import { Patient } from '@/utils/patientData';
 import { getPelodBorderColor } from '@/utils/colorUtils';
 
@@ -25,13 +24,11 @@ export const PelodBadges = ({ patients, unitAverage }: PelodBadgesProps) => {
     <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
       <div className="text-center">
         <div className="text-xs text-muted-foreground mb-2">Moyenne PELOD</div>
-        <div className="flex flex-col items-center gap-1">
-          <div
-            className={`border-2 ${getPelodBorderColor(unitAverage)} text-foreground bg-background rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 min-w-[40px] sm:min-w-[50px] font-bold text-base sm:text-lg text-center`}
-          >
-            {unitAverage}
-          </div>
-          <div className="text-xs text-muted-foreground">/70</div>
+        <div
+          className={`h-10 inline-flex items-center justify-center gap-1.5 border-2 ${getPelodBorderColor(unitAverage)} text-foreground bg-muted rounded-md px-3 min-w-[50px]`}
+        >
+          <span className="font-bold text-base sm:text-lg tabular-nums leading-none">{unitAverage}</span>
+          <span className="text-xs text-muted-foreground leading-none">/70</span>
         </div>
       </div>
 
@@ -48,20 +45,15 @@ export const PelodBadges = ({ patients, unitAverage }: PelodBadgesProps) => {
                 onClick={() => navigate(`/optistate?patient=${encodeURIComponent(patient.id)}`)}
                 title={`Ouvrir le dossier de ${patient.name} (chambre ${room})`}
                 aria-label={`Ouvrir le dossier de ${patient.name}, score PELOD ${patient.pelodScore}`}
-                className="cursor-pointer bg-transparent border-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md group p-0.5"
+                className={`h-10 inline-flex items-center justify-center gap-1.5 cursor-pointer rounded-md border-2 ${severity.border} bg-muted text-foreground px-3 min-w-[50px] outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all duration-150 hover:-translate-y-[1px] hover:shadow-md hover:ring-2 hover:ring-primary/30`}
               >
-                <Badge
-                  variant="outline"
-                  className={`!rounded-md bg-background text-foreground border-2 ${severity.border} px-2 sm:px-3 py-1.5 sm:py-2 min-w-[40px] sm:min-w-[50px] gap-1.5 transition-all duration-150 group-hover:-translate-y-[1px] group-hover:shadow-md group-hover:ring-2 group-hover:ring-primary/30`}
-                >
-                  <span className={`font-bold text-base sm:text-lg tabular-nums leading-none ${severity.text}`}>
-                    {patient.pelodScore}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className={`h-2 w-2 rounded-full ${severity.dot}`}
-                  />
-                </Badge>
+                <span className={`font-bold text-base sm:text-lg tabular-nums leading-none ${severity.text}`}>
+                  {patient.pelodScore}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 rounded-full ${severity.dot}`}
+                />
               </button>
             );
           })}
