@@ -145,9 +145,14 @@ All colors MUST be HSL.
     --status-warning: 25 95% 55%;
     --status-warning-foreground: 0 0% 100%;
     --status-warning-bg: 33 100% 20%;
-    --status-normal: 0 0% 60%;
+    /* Normal = gris légèrement teinté de vert (mode sombre) */
+    --status-normal: 145 22% 55%;
     --status-normal-foreground: 0 0% 100%;
-    --status-normal-bg: 0 0% 25%;
+    --status-normal-bg: 145 20% 18%;
+    /* Inactive = gris pur (mode sombre) */
+    --status-inactive: 0 0% 55%;
+    --status-inactive-foreground: 0 0% 100%;
+    --status-inactive-bg: 0 0% 25%;
     
     /* System status colors for organ scores - Score 3 (Critical/Red) */
     --score-critical: 0 72% 55%;
