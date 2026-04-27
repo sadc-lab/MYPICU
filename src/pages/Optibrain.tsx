@@ -735,7 +735,7 @@ const Optibrain = () => {
           ? `${formatDuration(Math.round((hticPct / 100) * totalMinutes))} HTIC (${hticPct}%)`
           : null;
       return {
-        label: "État Neuro",
+        label: "État actuel",
         value: neurologicalStateConfig.currentState,
         displayValue: neurologicalStateConfig.currentState,
         unit: "",
@@ -745,6 +745,8 @@ const Optibrain = () => {
         trend: "stable",
         criticalLabel,
         criticalColor: hticIschPct > 0 ? "text-status-critical" : "text-status-warning",
+        // Internal key to identify this metric (label is now dynamic-friendly)
+        metricKey: "neuro",
       };
     })(),
     (() => {
@@ -769,25 +771,23 @@ const Optibrain = () => {
         return m > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${h}h`;
       };
       const durationLabel = formatDuration(minutesAbove20);
-      const windowLabel = hoursForAdherence >= 24
-        ? `${Math.round(hoursForAdherence / 24)}j`
-        : `${hoursForAdherence}h`;
 
       return {
         label: "PIC",
-        value: `${durationLabel} > 20 mmHg`,
-        displayValue: durationLabel,
-        unit: `> 20 mmHg / ${windowLabel}`,
+        value: picValue !== null ? `${Math.round(picValue * 10) / 10} mmHg` : "--",
+        displayValue: picValue !== null ? `${Math.round(picValue * 10) / 10}` : "--",
+        unit: picValue !== null ? "mmHg" : "",
         status: intensityStatus,
         hasDetails: true,
         dialogKey: "pic",
         trend: "down",
         change: -3,
-        // Détail secondaire : pourcentage + valeur actuelle
-        criticalLabel: picValue !== null
-          ? `${Math.round(above20)}% · actuelle ${Math.round(picValue * 10) / 10} mmHg`
-          : `${Math.round(above20)}% du temps`,
+        // Sous la valeur actuelle : temps passé > 20 mmHg
+        criticalLabel: above20 > 0
+          ? `${durationLabel} > 20 mmHg`
+          : null,
         criticalColor: intensityStatus === "critical" ? "text-status-critical" : "text-status-warning",
+        metricKey: "pic",
       };
     })(),
     {
