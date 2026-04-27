@@ -80,8 +80,7 @@ const Optibrain = () => {
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [brainGroupsOpen, setBrainGroupsOpen] = useState<Record<string, boolean>>({
-    "Pression intracrânienne": true,
-    "État neurologique": false,
+    "Pression intracrânienne et état neurologique": true,
   });
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
   // Track whether the auto-selection of problematic indicators has already
@@ -1045,8 +1044,7 @@ const Optibrain = () => {
           <div className="space-y-4 mb-6">
             {(() => {
               const groups: Array<{ title: string; metricLabels: string[] }> = [
-                { title: "Pression intracrânienne", metricLabels: ["PIC", "PPC"] },
-                { title: "État neurologique", metricLabels: ["Glasgow (GCS)", "PaCO2"] },
+                { title: "Pression intracrânienne et état neurologique", metricLabels: ["PIC", "PPC", "Glasgow (GCS)", "PaCO2"] },
               ];
               return groups.map((group) => {
                 const groupMetrics = brainMetrics.filter(m => group.metricLabels.includes(m.label));
@@ -1156,34 +1154,19 @@ const Optibrain = () => {
               )}
               
               {/* Selectable Brain Metrics with distribution bars below each */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-3">
-                {brainOptimisationMetrics.filter((m) => m.label !== "État Neuro").map((metric, index) => {
-                  const isCombined = metric.label === "PIC";
-                  const combinedLabels = isCombined ? ["PIC", "État Neuro"] : [metric.label];
-                  const isSelected = isCombined
-                    ? combinedLabels.every((l) => selectedBrainIndicators.includes(l))
-                    : selectedBrainIndicators.includes(metric.label);
-                  const neuroMetric = isCombined
-                    ? brainOptimisationMetrics.find((m) => m.label === "État Neuro")
-                    : null;
-                  // For the combined card, escalate status if neuro is critical
-                  const effectiveStatus = isCombined && neuroMetric
-                    ? (metric.status === "critical" || neuroMetric.status === "critical"
-                        ? "critical"
-                        : metric.status === "warning" || neuroMetric.status === "warning"
-                          ? "warning"
-                          : "normal")
-                    : metric.status;
-                  const statusColor = effectiveStatus === "critical" 
+              <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-3">
+                {brainOptimisationMetrics.map((metric, index) => {
+                  const isSelected = selectedBrainIndicators.includes(metric.label);
+                  const statusColor = metric.status === "critical" 
                     ? "text-status-critical" 
-                    : effectiveStatus === "warning" 
+                    : metric.status === "warning" 
                       ? "text-status-warning" 
                       : "text-foreground";
                   
                   // Subtle status background for the card
-                  const statusBg = effectiveStatus === "critical" 
+                  const statusBg = metric.status === "critical" 
                     ? "bg-status-critical/5" 
-                    : effectiveStatus === "warning" 
+                    : metric.status === "warning" 
                       ? "bg-status-warning/5" 
                       : "bg-muted/30";
                   
@@ -1193,9 +1176,9 @@ const Optibrain = () => {
                       <div
                         className={`flex flex-col items-center cursor-pointer p-2 sm:p-2.5 rounded-lg transition-all border ${statusBg} ${
                           isSelected
-                            ? effectiveStatus === "critical"
+                            ? metric.status === "critical"
                               ? "border-status-critical shadow-sm ring-1 ring-status-critical/20"
-                              : effectiveStatus === "warning"
+                              : metric.status === "warning"
                                 ? "border-status-warning shadow-sm ring-1 ring-status-warning/20"
                                 : "border-primary shadow-sm ring-1 ring-primary/20"
                             : "border-transparent hover:border-border hover:shadow-sm"
@@ -1203,19 +1186,16 @@ const Optibrain = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (metric.hasDetails) {
-                            setSelectedBrainIndicators((prev) => {
-                              const allSelected = combinedLabels.every((l) => prev.includes(l));
-                              if (allSelected) {
-                                return prev.filter((label) => !combinedLabels.includes(label));
-                              }
-                              const merged = new Set([...prev, ...combinedLabels]);
-                              return Array.from(merged);
-                            });
+                            setSelectedBrainIndicators((prev) =>
+                              prev.includes(metric.label)
+                                ? prev.filter((label) => label !== metric.label)
+                                : [...prev, metric.label]
+                            );
                           }
                         }}
                       >
                         <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-center">
-                          {isCombined ? "PIC & État Neuro" : metric.label}
+                          {metric.label}
                         </div>
                         <div className="flex items-baseline gap-1">
                           <div className={`text-lg sm:text-2xl font-bold ${statusColor} tabular-nums leading-none`}>{metric.displayValue}</div>
@@ -1223,21 +1203,10 @@ const Optibrain = () => {
                             <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
                           )}
                         </div>
-                        {isCombined && neuroMetric && (
-                          <div className={`text-[11px] font-medium mt-1 ${
-                            neuroMetric.status === "critical"
-                              ? "text-status-critical"
-                              : neuroMetric.status === "warning"
-                                ? "text-status-warning"
-                                : "text-muted-foreground"
-                          }`}>
-                            {neuroMetric.displayValue}
-                          </div>
-                        )}
                       </div>
 
-                      {/* Distribution bar — État Neuro (affichée dans la carte combinée PIC) */}
-                      {isCombined && neurologicalStateConfig.hasData && (() => {
+                      {/* Distribution bar below État Neuro — épurée */}
+                      {metric.label === "État Neuro" && neurologicalStateConfig.hasData && (() => {
                         const segments = [
                           { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, colorClass: 'bg-status-normal' },
                           { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, colorClass: 'bg-status-warning' },
