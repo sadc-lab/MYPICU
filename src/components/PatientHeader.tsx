@@ -11,6 +11,7 @@ import lungsIcon from "@/assets/lungs-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
 import kidneyIcon from "@/assets/kidney-icon.svg";
 import intestineIcon from "@/assets/intestine-icon.svg";
+import { ExportImageButton } from "@/components/ExportImageButton";
 
 const reminders = [
   "Objectif de Bilan Entrée/Sortie",
@@ -106,17 +107,23 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             onClick={() => navigate("/")}
             className="text-muted-foreground hover:text-foreground text-sm self-start"
             size="sm"
+            data-export-hide
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Retour aux patients
           </Button>
 
+          <ExportImageButton
+            filenamePrefix={`mypicu_${currentPage}`}
+            label="Exporter en image"
+          />
         </div>
 
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 mb-3 sm:mb-4">
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
-              #{patient.picuId.replace(/\D/g, '').padStart(2, '0')} {patient.name}
+              <span>#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</span>{" "}
+              <span data-patient-name>{patient.name}</span>
             </h1>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
               <span>{patient.age}</span>
