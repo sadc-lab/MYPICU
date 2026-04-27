@@ -1156,9 +1156,24 @@ const Optibrain = () => {
               )}
               
               {/* Selectable Brain Metrics with distribution bars below each */}
-              <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-3">
-                {brainOptimisationMetrics.map((metric, index) => {
-                  const isSelected = selectedBrainIndicators.includes(metric.label);
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-3">
+                {brainOptimisationMetrics.filter((m) => m.label !== "État Neuro").map((metric, index) => {
+                  const isCombined = metric.label === "PIC";
+                  const combinedLabels = isCombined ? ["PIC", "État Neuro"] : [metric.label];
+                  const isSelected = isCombined
+                    ? combinedLabels.every((l) => selectedBrainIndicators.includes(l))
+                    : selectedBrainIndicators.includes(metric.label);
+                  const neuroMetric = isCombined
+                    ? brainOptimisationMetrics.find((m) => m.label === "État Neuro")
+                    : null;
+                  // For the combined card, escalate status if neuro is critical
+                  const effectiveStatus = isCombined && neuroMetric
+                    ? (metric.status === "critical" || neuroMetric.status === "critical"
+                        ? "critical"
+                        : metric.status === "warning" || neuroMetric.status === "warning"
+                          ? "warning"
+                          : "normal")
+                    : metric.status;
                   const statusColor = metric.status === "critical" 
                     ? "text-status-critical" 
                     : metric.status === "warning" 
