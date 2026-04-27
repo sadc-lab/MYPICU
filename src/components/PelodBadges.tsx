@@ -73,14 +73,16 @@ export const PelodBadges = ({ patients, unitAverage }: PelodBadgesProps) => {
             const severity = getPelodSeverity(patient.pelodScore);
             const room = `#${patient.picuId.replace(/\D/g, '').padStart(2, '0')}`;
             return (
-              <PelodBadge
-                key={patient.id}
-                score={patient.pelodScore}
-                severity={severity}
-                onClick={() => navigate(`/optistate?patient=${encodeURIComponent(patient.id)}`)}
-                title={`Ouvrir le dossier de ${patient.name} (chambre ${room})`}
-                ariaLabel={`Ouvrir le dossier de ${patient.name}, score PELOD ${patient.pelodScore}`}
-              />
+              <div key={patient.id} className="flex flex-col items-center gap-1">
+                <PelodBadge
+                  score={patient.pelodScore}
+                  severity={severity}
+                  onClick={() => navigate(`/optistate?patient=${encodeURIComponent(patient.id)}`)}
+                  title={`Ouvrir le dossier de ${patient.name} (chambre ${room})`}
+                  ariaLabel={`Ouvrir le dossier de ${patient.name}, score PELOD ${patient.pelodScore}`}
+                />
+                <span className="text-[10px] text-muted-foreground tabular-nums leading-none">{room}</span>
+              </div>
             );
           })}
         </div>
