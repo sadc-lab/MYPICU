@@ -1212,6 +1212,11 @@ const Optibrain = () => {
                             <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
                           )}
                         </div>
+                        {metric.criticalLabel && (
+                          <div className={`text-[10px] font-medium mt-1 text-center ${metric.criticalColor || "text-muted-foreground"}`}>
+                            {metric.criticalLabel}
+                          </div>
+                        )}
                       </div>
 
                       {/* Distribution bar below État Neuro — épurée */}
