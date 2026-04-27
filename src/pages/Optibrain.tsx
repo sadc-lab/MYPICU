@@ -663,22 +663,31 @@ const Optibrain = () => {
           : null,
       criticalColor: neurologicalStateConfig.history.hticWithIschemia > 0 ? "text-status-critical" : "text-status-warning",
     },
-    {
-      label: "PIC",
-      value: picValue !== null ? `${Math.round(picValue * 10) / 10} mmHg` : "-- mmHg",
-      displayValue: picValue !== null ? `${Math.round(picValue * 10) / 10}` : "--",
-      unit: "mmHg",
-      status: getPicStatus(picValue),
-      hasDetails: true,
-      dialogKey: "pic",
-      trend: "down",
-      change: -3,
-      // Dernière valeur problématique: PIC max dans les dernières 24h si >= 20
-      criticalLabel: realBrainValues.picMax !== null && realBrainValues.picMax >= 20 
-        ? `Max 24h: ${Math.round(realBrainValues.picMax)} mmHg` 
-        : null,
-      criticalColor: realBrainValues.picMax !== null && realBrainValues.picMax >= 25 ? "text-status-critical" : "text-status-warning",
-    },
+    (() => {
+      // Indicateur d'intensité de PIC = % du temps passé au-dessus de la cible (> 20 mmHg) sur la fenêtre
+      const above20 = picRangeData.ranges
+        .filter((r) => r.label !== "< 20 mmHg")
+        .reduce((acc, r) => acc + (r.percentage || 0), 0);
+      const above25 = picRangeData.ranges
+        .filter((r) => r.label === "25 - 30 mmHg" || r.label === "> 30 mmHg")
+        .reduce((acc, r) => acc + (r.percentage || 0), 0);
+      const intensityStatus: "normal" | "warning" | "critical" =
+        above25 >= 5 || above20 >= 25 ? "critical" : above20 >= 5 ? "warning" : "normal";
+      return {
+        label: "PIC",
+        value: `${Math.round(above20)}% > 20 mmHg`,
+        displayValue: `${Math.round(above20)}%`,
+        unit: "> 20 mmHg",
+        status: intensityStatus,
+        hasDetails: true,
+        dialogKey: "pic",
+        trend: "down",
+        change: -3,
+        // Détail secondaire : valeur PIC actuelle
+        criticalLabel: picValue !== null ? `Actuelle : ${Math.round(picValue * 10) / 10} mmHg` : null,
+        criticalColor: intensityStatus === "critical" ? "text-status-critical" : "text-status-warning",
+      };
+    })(),
     {
       label: "Autorégulation",
       value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
