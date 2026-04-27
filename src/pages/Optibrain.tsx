@@ -1202,19 +1202,60 @@ const Optibrain = () => {
                     groupLabel="Optimisation cérébrale"
                     itemLabel="indicateur"
                   />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation cérébrale actuelle</h3>
-                    <p className="text-xs text-muted-foreground mt-1 truncate">
-                      {realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)} mmHg` : "PIC --"}
-                      {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
-                        ? ` • ${isNirsBased ? "PAM" : "PPC"} optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`
+                    {(() => {
+                      const ppcLabel = isNirsBased ? "PAM" : "PPC";
+                      const picStr = realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)}` : "PIC --";
+                      const optStr = optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
+                        ? `${ppcLabel}opt ${Math.round(optimalPPCResult.optimalPPC)}`
                         : realBrainValues.ppc !== null
-                          ? ` • PPC ${Math.round(realBrainValues.ppc)} mmHg`
-                          : ""}
-                      {optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-                        ? ` (zone ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)})`
-                        : ""}
-                    </p>
+                          ? `PPC ${Math.round(realBrainValues.ppc)}`
+                          : null;
+                      // Compact = juste les 2 valeurs clés en mmHg (sans zone)
+                      const compact = [picStr, optStr].filter(Boolean).join(" • ");
+
+                      // Full = détail complet avec unités + zone d'autorégulation
+                      const fullParts: string[] = [];
+                      if (realBrainValues.pic !== null) fullParts.push(`PIC ${Math.round(realBrainValues.pic)} mmHg`);
+                      if (optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null) {
+                        fullParts.push(`${ppcLabel} optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`);
+                      } else if (realBrainValues.ppc !== null) {
+                        fullParts.push(`PPC ${Math.round(realBrainValues.ppc)} mmHg`);
+                      }
+                      if (realBrainValues.pam !== null && realBrainValues.pam !== undefined) {
+                        fullParts.push(`PAM ${Math.round(realBrainValues.pam)} mmHg`);
+                      }
+                      const zoneLine = optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
+                        ? `Zone d'autorégulation : ${Math.round(optimalPPCResult.lowerLimit)}–${Math.round(optimalPPCResult.upperLimit)} mmHg`
+                        : null;
+
+                      return (
+                        <TooltipProvider delayDuration={150}>
+                          <UITooltip>
+                            <TooltipTrigger asChild>
+                              <p className="text-xs text-muted-foreground mt-1 truncate cursor-help">
+                                {compact || "—"}
+                              </p>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" align="start" className="p-2.5 max-w-[320px]">
+                              <div className="text-xs font-semibold text-foreground mb-1.5">Optimisation cérébrale</div>
+                              <div className="flex flex-col gap-1 text-xs">
+                                {fullParts.map((p) => (
+                                  <div key={p} className="text-foreground tabular-nums">{p}</div>
+                                ))}
+                                {zoneLine && (
+                                  <div className="text-muted-foreground mt-1 pt-1 border-t border-border/50 tabular-nums">{zoneLine}</div>
+                                )}
+                                {!fullParts.length && (
+                                  <div className="text-muted-foreground">Aucune donnée disponible</div>
+                                )}
+                              </div>
+                            </TooltipContent>
+                          </UITooltip>
+                        </TooltipProvider>
+                      );
+                    })()}
                   </div>
                 </div>
               </CardHeader>
