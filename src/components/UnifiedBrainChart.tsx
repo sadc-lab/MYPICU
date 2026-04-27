@@ -703,8 +703,6 @@ export function UnifiedBrainChart({
         </div>
       </div>
 
-      {/* Time Distribution Bar - only show when neuro states are visible */}
-      {showNeuro && <TimeDistributionBar neuroZones={neuroZones} />}
 
     </div>
   );
