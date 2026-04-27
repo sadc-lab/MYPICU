@@ -30,6 +30,7 @@ export const MetricRangeBar = ({
   showValuePointer = false,
   tooltipContent,
   valueSize = 'sm',
+  hideValueLabel = false,
 }: MetricRangeBarProps) => {
   const range = max - min;
   const inRange = value >= targetMin && value <= targetMax;
