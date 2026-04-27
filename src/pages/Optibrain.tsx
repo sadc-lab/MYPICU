@@ -1219,8 +1219,8 @@ const Optibrain = () => {
                         )}
                       </div>
 
-                      {/* Distribution bar below État Neuro — épurée */}
-                      {metric.label === "État Neuro" && neurologicalStateConfig.hasData && (() => {
+                      {/* Distribution bar below État actuel — épurée */}
+                      {metric.label === "État actuel" && neurologicalStateConfig.hasData && (() => {
                         const segments = [
                           { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, colorClass: 'bg-status-normal' },
                           { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, colorClass: 'bg-status-warning' },
