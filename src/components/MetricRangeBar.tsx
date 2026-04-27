@@ -110,7 +110,24 @@ export const MetricRangeBar = ({
                 {tooltipContent}
               </TooltipContent>
             </Tooltip>
-          ) : pointer
+          ) : (
+            <div
+              className="absolute z-10 flex flex-col items-center"
+              style={{
+                left: `${valuePct}%`,
+                top: '0',
+                transform: 'translateX(-50%)',
+              }}
+            >
+              <span className={`text-[11px] font-semibold tabular-nums leading-none ${valueColor}`}>
+                {value}
+                {unit ? <span className="ml-0.5 text-[9px] font-normal opacity-70">{unit}</span> : null}
+              </span>
+              <div
+                className={`w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent ${triangleColor} mt-0.5`}
+              />
+            </div>
+          )
         )}
       </div>
       <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
