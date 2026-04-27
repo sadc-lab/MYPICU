@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronDown, Bell } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";
+import { TourProgressBar } from "@/components/TourProgressBar";
 import { usePatient } from "@/hooks/usePatients";
 import brainIcon from "@/assets/brain-icon.svg";
 import lungsIcon from "@/assets/lungs-icon.svg";
@@ -98,6 +99,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const isActivePage = (page: string) => currentPage === page;
 
   return (
+    <>
+      <TourProgressBar currentPatientId={patientId} currentPage={currentPage} />
     <div className="bg-card border-b border-border mb-4 sm:mb-6">
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
@@ -277,5 +280,6 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
