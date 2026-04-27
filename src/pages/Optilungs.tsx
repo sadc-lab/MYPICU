@@ -346,17 +346,12 @@ const Optilungs = () => {
           <div className="space-y-4 mb-6">
             {([
               {
-                title: 'Oxygénation',
+                title: 'Oxygénation et scores',
                 metrics: [
                   { label: 'SpO2', value: 94, unit: '%', min: 70, max: 100, targetMin: 92, targetMax: 100 },
                   { label: 'PaO2', value: 78, unit: 'mmHg', min: 40, max: 150, targetMin: 80, targetMax: 100 },
                   { label: 'FiO2', value: 45, unit: '%', min: 21, max: 100, targetMin: 21, targetMax: 40 },
                   { label: 'Pression moyenne', value: 14, unit: 'cmH2O', min: 5, max: 30, targetMin: 8, targetMax: 15 },
-                ],
-              },
-              {
-                title: 'Scores',
-                metrics: [
                   { label: 'OI', value: 9, unit: '', min: 0, max: 40, targetMin: 0, targetMax: 8 },
                   { label: 'OSI', value: 7.2, unit: '', min: 0, max: 30, targetMin: 0, targetMax: 5 },
                   { label: 'P/F ratio', value: 167, unit: '', min: 50, max: 500, targetMin: 300, targetMax: 500 },
