@@ -15,6 +15,8 @@ interface MetricRangeBarProps {
   tooltipContent?: ReactNode;
   /** Taille de la valeur affichée au-dessus du triangle. */
   valueSize?: 'sm' | 'md' | 'lg' | 'xl';
+  /** Masque le texte de la valeur au-dessus du triangle (n'affiche que la flèche). */
+  hideValueLabel?: boolean;
 }
 
 export const MetricRangeBar = ({
