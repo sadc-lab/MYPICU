@@ -46,7 +46,7 @@ const Optilungs = () => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [pulmonaryGroupsOpen, setPulmonaryGroupsOpen] = useState<Record<string, boolean>>({
     'Oxygénation et scores': true,
-    Ventilation: false,
+    Ventilation: true,
   });
 
   // Patient file data state
