@@ -744,18 +744,36 @@ const Optibrain = () => {
         .reduce((acc, r) => acc + (r.percentage || 0), 0);
       const intensityStatus: "normal" | "warning" | "critical" =
         above25 >= 5 || above20 >= 25 ? "critical" : above20 >= 5 ? "warning" : "normal";
+
+      // Conversion en durée concrète (sur la fenêtre observée)
+      const totalMinutes = Math.round(hoursForAdherence * 60);
+      const minutesAbove20 = Math.round((above20 / 100) * totalMinutes);
+      const formatDuration = (mins: number): string => {
+        if (mins <= 0) return "0 min";
+        if (mins < 60) return `${mins} min`;
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return m > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${h}h`;
+      };
+      const durationLabel = formatDuration(minutesAbove20);
+      const windowLabel = hoursForAdherence >= 24
+        ? `${Math.round(hoursForAdherence / 24)}j`
+        : `${hoursForAdherence}h`;
+
       return {
         label: "PIC",
-        value: `${Math.round(above20)}% > 20 mmHg`,
-        displayValue: `${Math.round(above20)}%`,
-        unit: "> 20 mmHg",
+        value: `${durationLabel} > 20 mmHg`,
+        displayValue: durationLabel,
+        unit: `> 20 mmHg / ${windowLabel}`,
         status: intensityStatus,
         hasDetails: true,
         dialogKey: "pic",
         trend: "down",
         change: -3,
-        // Détail secondaire : valeur PIC actuelle
-        criticalLabel: picValue !== null ? `Actuelle : ${Math.round(picValue * 10) / 10} mmHg` : null,
+        // Détail secondaire : pourcentage + valeur actuelle
+        criticalLabel: picValue !== null
+          ? `${Math.round(above20)}% · actuelle ${Math.round(picValue * 10) / 10} mmHg`
+          : `${Math.round(above20)}% du temps`,
         criticalColor: intensityStatus === "critical" ? "text-status-critical" : "text-status-warning",
       };
     })(),
