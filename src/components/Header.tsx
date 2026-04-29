@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, getPatientsForPed, Patient } from '@/utils/patientData';
 import { useTourNavigation, VisitStatus } from '@/hooks/useTourNavigation';
+import { usePatients } from '@/hooks/usePatients';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,11 +71,40 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
     isInTour,
   } = useTourNavigation();
 
-  // Use prop patients if provided (from Supabase), otherwise fall back to static data
-  const pedPatients = propPatients || getPatientsForPed(selectedPed);
+  // When propPatients are not provided (organ pages), load from Supabase and
+  // derive the active PED from the currently viewed patient's ward.
+  const { data: patientResponse } = usePatients(undefined);
+  const supabaseAllPatients = patientResponse?.patients || [];
+
+  const wardToPed = (ward?: string | null): 'A' | 'B' | 'C' => {
+    if (ward === 'pedB') return 'B';
+    if (ward === 'pedC') return 'C';
+    return 'A';
+  };
+
+  const currentPatientFromSupabase = currentPatientId
+    ? supabaseAllPatients.find((p) => p.id === currentPatientId)
+    : undefined;
+
+  const effectivePed: 'A' | 'B' | 'C' = propPatients
+    ? selectedPed
+    : currentPatientFromSupabase
+      ? wardToPed((currentPatientFromSupabase as any).ward)
+      : selectedPed;
+
+  const pedPatientsFromSupabase = supabaseAllPatients.filter((p) => {
+    const ped = wardToPed((p as any).ward);
+    return ped === effectivePed;
+  });
+
+  // Use prop patients if provided (Dashboard), otherwise use Supabase-filtered list
+  // for the active PED. Fall back to static data only if Supabase returned nothing.
+  const pedPatients = propPatients
+    ?? (pedPatientsFromSupabase.length > 0 ? pedPatientsFromSupabase : getPatientsForPed(effectivePed));
+
   const filteredTourPatients = (activeTour || []).filter((patient) => {
     const patientPed = patient.picuId.startsWith('D') ? 'A' : patient.picuId.startsWith('B') ? 'B' : 'C';
-    return patientPed === selectedPed;
+    return patientPed === effectivePed;
   });
   const displayedPatients = filteredTourPatients.length > 0 ? filteredTourPatients : pedPatients;
   const hasPatients = Boolean(displayedPatients?.length);
@@ -116,7 +146,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
   }, []);
 
   // Filter patients based on search
-  const allPatients = propPatients || getAllPatients();
+  const allPatients = propPatients || (supabaseAllPatients.length > 0 ? supabaseAllPatients : getAllPatients());
   const filteredPatients = searchQuery.trim() 
     ? allPatients.filter(patient => {
         const query = searchQuery.toLowerCase();
