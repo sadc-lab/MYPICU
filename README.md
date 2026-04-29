@@ -1,12 +1,12 @@
-# Welcome to MYPICU project
+# MYPICU
 
-This project integrates Supabase for backend functionality including authentication and data storage.
+Plateforme de monitoring clinique pour soins intensifs pédiatriques (PICU). Le projet utilise Supabase pour l'authentification, le stockage des données et la logique côté serveur.
 
-## 🐳 Docker Deployment
+## 🐳 Déploiement Docker
 
-For containerized deployment, see [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md)
+Voir [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md) pour les instructions complètes.
 
-**Quick Start with Docker:**
+**Démarrage rapide :**
 ```bash
 # Linux/Mac
 chmod +x docker-start.sh
@@ -16,66 +16,32 @@ chmod +x docker-start.sh
 docker-start.bat
 ```
 
-## Project Structure
+## Structure du projet
 
 ```
 src/
-├── types/          # TypeScript type definitions
-├── services/       # API and service layer
-├── hooks/          # React Query hooks and custom hooks
-├── components/     # React components
-├── pages/          # Page components
-└── utils/          # Utility functions
+├── types/          # Définitions TypeScript
+├── services/       # Couche API et services
+├── hooks/          # Hooks React Query et hooks personnalisés
+├── components/     # Composants React
+├── pages/          # Pages
+└── utils/          # Fonctions utilitaires
 ```
 
-## Project info
+## Développement local
 
-**URL**: ?
-
-## How can I edit this code?
-
-**Use your preferred IDE**
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Prérequis : Node.js & npm ([nvm](https://github.com/nvm-sh/nvm#installing-and-updating) recommandé).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
+## Stack technique
 
 - Vite
 - TypeScript
-- React
+- React 18
 - shadcn-ui
 - Tailwind CSS
-
-## How can I deploy this project?
+- Supabase (auth, base de données, edge functions)
