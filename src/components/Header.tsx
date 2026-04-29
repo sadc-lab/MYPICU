@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, getPatientsForPed, Patient } from '@/utils/patientData';
 import { useTourNavigation, VisitStatus } from '@/hooks/useTourNavigation';
+import { usePatients } from '@/hooks/usePatients';
 import {
   DropdownMenu,
   DropdownMenuContent,
