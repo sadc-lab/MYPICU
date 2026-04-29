@@ -146,7 +146,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
   }, []);
 
   // Filter patients based on search
-  const allPatients = propPatients || getAllPatients();
+  const allPatients = propPatients || (supabaseAllPatients.length > 0 ? supabaseAllPatients : getAllPatients());
   const filteredPatients = searchQuery.trim() 
     ? allPatients.filter(patient => {
         const query = searchQuery.toLowerCase();
