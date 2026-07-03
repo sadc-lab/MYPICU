@@ -23,6 +23,7 @@ import ManagerSignup from "./pages/auth/ManagerSignup";
 import WorkerSignup from "./pages/auth/WorkerSignup";
 import ImportPatientData from "./pages/admin/ImportPatientData";
 import NotFound from "./pages/NotFound";
+import AutoregStudy from "./pages/AutoregStudy";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/auth/worker-signup" element={<WorkerSignup />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
+            <Route path="/autoreg" element={<AutoregStudy />} />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/optistate" element={<ProtectedRoute><Optistate /></ProtectedRoute>} />
             <Route path="/optibrain" element={<ProtectedRoute><Optibrain /></ProtectedRoute>} />
