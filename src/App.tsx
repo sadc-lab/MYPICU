@@ -23,6 +23,7 @@ import ManagerSignup from "./pages/auth/ManagerSignup";
 import WorkerSignup from "./pages/auth/WorkerSignup";
 import ImportPatientData from "./pages/admin/ImportPatientData";
 import NotFound from "./pages/NotFound";
+import AutoregStudy from "./pages/AutoregStudy";
 
 const queryClient = new QueryClient();
 
