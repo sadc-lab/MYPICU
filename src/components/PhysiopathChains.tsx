@@ -1,6 +1,8 @@
-import { ArrowRight, Activity, Network } from 'lucide-react';
+import { ArrowRight, Activity, Network, Blocks, Link2, X } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -8,6 +10,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import brainIcon from '@/assets/brain-icon.svg';
+import lungsIcon from '@/assets/lungs-icon.svg';
+import kidneyIcon from '@/assets/kidney-icon.svg';
+import intestineIcon from '@/assets/intestine-icon.svg';
+import { HeartIcon } from '@/components/icons/HeartIcon';
 
 export type ModuleKey =
   | 'optibrain'
