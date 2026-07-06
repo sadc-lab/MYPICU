@@ -383,6 +383,58 @@ const AutoregStudy = () => {
           </CardContent>
         </Card>
 
+        <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { setAddError(null); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ajouter un patient</DialogTitle>
+              <DialogDescription>
+                Renseignez un pseudonyme et joignez le fichier CSV ou JSON du sujet. Les deux sont
+                requis pour créer le patient et lancer l'analyse.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="new-patient-label">Pseudonyme (optionnel)</Label>
+                <Input
+                  id="new-patient-label"
+                  placeholder="ex. Sujet A"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-patient-file">Fichier CSV ou JSON *</Label>
+                <Input
+                  id="new-patient-file"
+                  type="file"
+                  accept=".csv,.json,.txt"
+                  onChange={(e) => setNewFile(e.target.files?.[0] ?? null)}
+                />
+                {newFile && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    Sélectionné : <span className="font-medium text-foreground">{newFile.name}</span>
+                  </p>
+                )}
+              </div>
+              {addError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{addError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddOpen(false)} disabled={parsing}>
+                Annuler
+              </Button>
+              <Button onClick={submitNewPatient} disabled={parsing || !newFile}>
+                {parsing ? 'Analyse…' : 'Créer et analyser'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+
         {!result && !error && (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
