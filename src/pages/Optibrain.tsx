@@ -555,37 +555,6 @@ const Optibrain = () => {
 
   const showPatientNotFound = !patient && !patientLoading;
 
-  // Override brainMetrics with real data when available
-  const brainMetrics = useMemo(() => {
-    return importedBrainMetrics.map((metric) => {
-      if (metric.label === "PIC" && realBrainValues.pic !== null) {
-        return {
-          ...metric,
-          value: Math.round(realBrainValues.pic * 10) / 10,
-        };
-      }
-      if (metric.label === "PPC" && realBrainValues.ppc !== null) {
-        return {
-          ...metric,
-          value: Math.round(realBrainValues.ppc * 10) / 10,
-        };
-      }
-      if (metric.label === "PaCO2" && realBrainValues.paco2 !== null) {
-        return {
-          ...metric,
-          value: Math.round(realBrainValues.paco2 * 10) / 10,
-        };
-      }
-      // Use patient-specific GCS value
-      if (metric.label === "Glasgow (GCS)" && patient?.gcs !== undefined) {
-        return {
-          ...metric,
-          value: patient.gcs,
-        };
-      }
-      return metric;
-    });
-  }, [realBrainValues.pic, realBrainValues.ppc, realBrainValues.paco2, patient?.gcs]);
 
   // Get PIC status based on value (target < 20 mmHg)
   const getPicStatus = (value: number | null): string => {
