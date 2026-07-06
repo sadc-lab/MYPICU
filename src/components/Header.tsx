@@ -35,12 +35,15 @@ import {
 } from '@/components/ui/sheet';
 import mypicuLogo from '@/assets/mypicu-logo.png';
 
+import React from 'react';
+
 interface HeaderProps {
   selectedPed?: 'A' | 'B' | 'C';
   patients?: Patient[];
+  studyNav?: React.ReactNode;
 }
 
-export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProps) => {
+export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: HeaderProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -362,7 +365,9 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
           </div>
 
           <nav className="hidden md:flex gap-2 items-center" data-guide="patient-nav">
-            {hasPatients && (
+            {studyNav ? (
+              studyNav
+            ) : hasPatients && (
               <>
                 <Badge variant="default" className="bg-primary text-primary-foreground text-xs" data-guide="tour-info">
                   {isOnDisplayedPatient ? `${currentIndex + 1}/${displayedPatients.length}` : `${displayedPatients.length} patients`}
