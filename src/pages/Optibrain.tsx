@@ -753,7 +753,7 @@ const Optibrain = () => {
         : "Dans la cible";
 
       return {
-        label: "PIC",
+        label: "Niveau de PIC",
         value: bigValue,
         displayValue: bigValue,
         unit: "",
@@ -791,7 +791,7 @@ const Optibrain = () => {
       metricKey: "glasgow",
     },
     {
-      label: "PaCO2",
+      label: "Oxygénation",
       value: realBrainValues.paco2 !== null ? Math.round(realBrainValues.paco2) : "--",
       displayValue: realBrainValues.paco2 !== null ? Math.round(realBrainValues.paco2).toString() : "--",
       unit: "mmHg",
@@ -840,6 +840,15 @@ const Optibrain = () => {
             : "text-status-critical"
         : "text-muted-foreground",
     },
+  ];
+
+  const orderedBrainOptimisationMetrics = [
+    brainOptimisationMetrics[0],
+    brainOptimisationMetrics[5],
+    brainOptimisationMetrics[1],
+    brainOptimisationMetrics[3],
+    brainOptimisationMetrics[4],
+    brainOptimisationMetrics[2],
   ];
 
   // Auto-select all problematic clinical indicators by default (once data arrives)
@@ -1144,7 +1153,7 @@ const Optibrain = () => {
               
               {/* Selectable Brain Metrics */}
               <div className="grid grid-cols-3 gap-2 sm:gap-6 pt-4">
-                {brainOptimisationMetrics.map((metric) => {
+                {orderedBrainOptimisationMetrics.map((metric) => {
                   const topLabel = (metric as any).topLabel as string | undefined;
                   const criticalLabel =
                     (metric as any).criticalLabel ||
@@ -1237,7 +1246,7 @@ const Optibrain = () => {
                     ].filter(s => s.pct > 0);
 
                     const showNeuro = selectedBrainIndicators.includes("État neurologique");
-                    const showPic = selectedBrainIndicators.includes("PIC");
+                    const showPic = selectedBrainIndicators.includes("Niveau de PIC");
 
                     if (!showNeuro && !showPic) return null;
 
@@ -1271,7 +1280,7 @@ const Optibrain = () => {
                     return (
                       <div className="space-y-3 pt-2 border-t border-border">
                         {showNeuro && neuroSegments.length > 0 && renderBar("État neurologique", neuroSegments)}
-                        {showPic && picSegments.length > 0 && renderBar("PIC", picSegments)}
+                        {showPic && picSegments.length > 0 && renderBar("Niveau de PIC", picSegments)}
                       </div>
                     );
                   })()}
