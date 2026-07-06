@@ -218,14 +218,14 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                   {/* Mobile Search */}
                   <div className="p-4 border-b">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
                         type="text"
                         value={mobileSearchQuery}
                         onChange={(e) => setMobileSearchQuery(e.target.value)}
-                        placeholder="Rechercher patients..."
-                        className="pl-10 w-full"
+                        placeholder="Rechercher..."
+                        className="pr-10 w-full"
                       />
+                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
                   
