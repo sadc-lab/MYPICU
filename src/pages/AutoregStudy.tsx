@@ -7,6 +7,16 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
   Upload,
   FileText,
   Download,
@@ -44,7 +54,7 @@ import { toast } from 'sonner';
 
 const AutoregStudy = () => {
   const patientsController = useStudyPatients();
-  const { patients, active, addPatient, updatePatient } = patientsController;
+  const { patients, active, addPatient, updatePatient, removePatient } = patientsController;
 
   const [fileName, setFileName] = useState<string | null>(null);
   const [result, setResult] = useState<AutoregResult | null>(null);
@@ -53,9 +63,39 @@ const AutoregStudy = () => {
   const [parsing, setParsing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = async (file: File) => {
+  // Add-patient dialog state (label + required CSV)
+  const [addOpen, setAddOpen] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const submitNewPatient = async () => {
+    setAddError(null);
+    if (!newFile) {
+      setAddError('Veuillez sélectionner un fichier CSV ou JSON.');
+      return;
+    }
+    const created = addPatient(newLabel);
+    const finalLabel = newLabel.trim();
+    if (finalLabel) {
+      updatePatient(created.id, { label: finalLabel });
+    }
+    const target = { id: created.id, code: created.code, label: finalLabel || created.label };
+    const fileToProcess = newFile;
+    setAddOpen(false);
+    setNewLabel('');
+    setNewFile(null);
+    const ok = await handleFile(fileToProcess, target);
+    if (!ok) {
+      removePatient(created.id);
+    }
+  };
+
+
+  const handleFile = async (file: File, patientOverride?: { id: string; code: string; label: string }): Promise<boolean> => {
     setError(null);
     setParsing(true);
+    const target = patientOverride ?? active;
     try {
       if (file.size > 25 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 25 Mo).');
       const text = await file.text();
@@ -71,18 +111,18 @@ const AutoregStudy = () => {
       setResult(analysis);
       setRolling(rolled);
       setFileName(file.name);
-      if (active) updatePatient(active.id, { fileName: file.name });
+      if (target) updatePatient(target.id, { fileName: file.name });
       // Persist results in Supabase (linked to study patient id)
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user && active) {
+        if (user && target) {
           const { error: insertError } = await supabase
             .from('autoreg_study_results')
             .insert({
               user_id: user.id,
-              study_patient_id: active.id,
-              study_patient_code: active.code,
-              study_patient_label: active.label,
+              study_patient_id: target.id,
+              study_patient_code: target.code,
+              study_patient_label: target.label,
               file_name: file.name,
               optimal_ppc: analysis.optimalPPC,
               lower_limit: analysis.lowerLimit,
@@ -102,14 +142,17 @@ const AutoregStudy = () => {
         console.error('Persist autoreg result error:', persistErr);
         toast.error("Impossible d'enregistrer les résultats : " + (persistErr.message || 'erreur inconnue'));
       }
+      return true;
     } catch (e: any) {
       setError(e.message || 'Erreur lors du traitement du fichier.');
       setResult(null);
       setRolling([]);
+      return false;
     } finally {
       setParsing(false);
     }
   };
+
 
   const timeSeriesChartData = useMemo(() => {
     if (!result) return [];
@@ -296,8 +339,8 @@ const AutoregStudy = () => {
                 <UserPlus className="h-4 w-4" />
                 <AlertTitle>Aucun sujet</AlertTitle>
                 <AlertDescription>
-                  Créez d'abord un sujet via le bouton <strong>Sujet</strong> en haut à droite, ou cliquez
-                  ci-dessous pour en créer un automatiquement puis importer un fichier.
+                  Cliquez sur <strong>Ajouter un patient</strong> pour créer un sujet et importer
+                  son fichier CSV/JSON en une seule étape.
                 </AlertDescription>
               </Alert>
             )}
@@ -313,7 +356,7 @@ const AutoregStudy = () => {
                   e.currentTarget.value = '';
                 }}
               />
-              <Button onClick={() => addPatient('')} disabled={parsing}>
+              <Button onClick={() => { setAddError(null); setAddOpen(true); }} disabled={parsing}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Ajouter un patient
               </Button>
@@ -339,6 +382,58 @@ const AutoregStudy = () => {
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { setAddError(null); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ajouter un patient</DialogTitle>
+              <DialogDescription>
+                Renseignez un pseudonyme et joignez le fichier CSV ou JSON du sujet. Les deux sont
+                requis pour créer le patient et lancer l'analyse.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="new-patient-label">Pseudonyme (optionnel)</Label>
+                <Input
+                  id="new-patient-label"
+                  placeholder="ex. Sujet A"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-patient-file">Fichier CSV ou JSON *</Label>
+                <Input
+                  id="new-patient-file"
+                  type="file"
+                  accept=".csv,.json,.txt"
+                  onChange={(e) => setNewFile(e.target.files?.[0] ?? null)}
+                />
+                {newFile && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    Sélectionné : <span className="font-medium text-foreground">{newFile.name}</span>
+                  </p>
+                )}
+              </div>
+              {addError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{addError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddOpen(false)} disabled={parsing}>
+                Annuler
+              </Button>
+              <Button onClick={submitNewPatient} disabled={parsing || !newFile}>
+                {parsing ? 'Analyse…' : 'Créer et analyser'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {!result && !error && (
           <Card>
