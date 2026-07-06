@@ -505,7 +505,7 @@ const AutoregStudy = () => {
               </Card>
             )}
 
-            <Card className="mb-6">
+            <Card className="mb-6" id="pdf-chart-timeseries" data-pdf-title="Séries temporelles PIC / PAM / PPC">
               <CardHeader>
                 <CardTitle>Séries temporelles PIC / PAM / PPC</CardTitle>
                 <CardDescription>Données brutes après import.</CardDescription>
