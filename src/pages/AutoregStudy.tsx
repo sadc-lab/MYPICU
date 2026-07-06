@@ -91,9 +91,10 @@ const AutoregStudy = () => {
     }
   };
 
-  const handleFile = async (file: File) => {
+  const handleFile = async (file: File, patientOverride?: { id: string; code: string; label: string }): Promise<boolean> => {
     setError(null);
     setParsing(true);
+    const target = patientOverride ?? active;
     try {
       if (file.size > 25 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 25 Mo).');
       const text = await file.text();
@@ -109,18 +110,18 @@ const AutoregStudy = () => {
       setResult(analysis);
       setRolling(rolled);
       setFileName(file.name);
-      if (active) updatePatient(active.id, { fileName: file.name });
+      if (target) updatePatient(target.id, { fileName: file.name });
       // Persist results in Supabase (linked to study patient id)
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user && active) {
+        if (user && target) {
           const { error: insertError } = await supabase
             .from('autoreg_study_results')
             .insert({
               user_id: user.id,
-              study_patient_id: active.id,
-              study_patient_code: active.code,
-              study_patient_label: active.label,
+              study_patient_id: target.id,
+              study_patient_code: target.code,
+              study_patient_label: target.label,
               file_name: file.name,
               optimal_ppc: analysis.optimalPPC,
               lower_limit: analysis.lowerLimit,
@@ -140,14 +141,17 @@ const AutoregStudy = () => {
         console.error('Persist autoreg result error:', persistErr);
         toast.error("Impossible d'enregistrer les résultats : " + (persistErr.message || 'erreur inconnue'));
       }
+      return true;
     } catch (e: any) {
       setError(e.message || 'Erreur lors du traitement du fichier.');
       setResult(null);
       setRolling([]);
+      return false;
     } finally {
       setParsing(false);
     }
   };
+
 
   const timeSeriesChartData = useMemo(() => {
     if (!result) return [];
