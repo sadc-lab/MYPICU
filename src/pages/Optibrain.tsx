@@ -1325,37 +1325,27 @@ const Optibrain = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Monitoring Targets - Moved to top */}
-            <Card className="border-2 border-border">
-              <CardHeader
-                className="py-3 px-4 sm:px-6 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setChecklistExpanded(!checklistExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <KpiCircle
-                      count={monitoringAdherence !== null ? nonAdherentCount : 0}
-                      hasCritical={monitoringAdherence !== null && nonAdherentCount >= 3}
-                      groupLabel="Monitorage et interventions"
-                      itemLabel="indicateur"
-                    />
-                    <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">Monitorage et interventions en place</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {patientFileData
-                          ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}${monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}`
-                          : "Pas de données disponibles"}
-                      </p>
-                    </div>
-                  </div>
-                  {checklistExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                  )}
-                </div>
-              </CardHeader>
-              {checklistExpanded && (
-                <CardContent className="pt-0 px-3 sm:px-6">
+            <CollapsibleModuleCard
+              variant="nested"
+              expanded={checklistExpanded}
+              onToggle={() => setChecklistExpanded(!checklistExpanded)}
+              headerIcon={
+                <KpiCircle
+                  count={monitoringAdherence !== null ? nonAdherentCount : 0}
+                  hasCritical={monitoringAdherence !== null && nonAdherentCount >= 3}
+                  groupLabel="Monitorage et interventions"
+                  itemLabel="indicateur"
+                />
+              }
+              title="Monitorage et interventions en place"
+              subtitle={
+                patientFileData
+                  ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}${monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}`
+                  : "Pas de données disponibles"
+              }
+              contentClassName="pt-0 px-3 sm:px-6 pb-4"
+            >
+
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
                       // Couleur basée sur le pourcentage d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
