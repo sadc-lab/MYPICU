@@ -159,10 +159,6 @@ export const PhysiopathChains = ({
   failingIndicators,
   onModuleClick,
 }: PhysiopathChainsProps) => {
-export const PhysiopathChains = ({
-  failingIndicators,
-  onModuleClick,
-}: PhysiopathChainsProps) => {
   const [selected, setSelected] = useState<Set<ModuleKey>>(new Set());
 
   const toggleModule = (m: ModuleKey) => {
