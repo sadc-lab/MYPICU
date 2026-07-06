@@ -791,7 +791,7 @@ const Optibrain = () => {
       metricKey: "glasgow",
     },
     {
-      label: "PaCO2",
+      label: "Oxygénation",
       value: realBrainValues.paco2 !== null ? Math.round(realBrainValues.paco2) : "--",
       displayValue: realBrainValues.paco2 !== null ? Math.round(realBrainValues.paco2).toString() : "--",
       unit: "mmHg",
