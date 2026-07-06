@@ -130,35 +130,36 @@ const AutoregStudy = () => {
 
       {/* Landing hero */}
       <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/5 via-background to-background">
-        <div className="container mx-auto max-w-5xl px-4 py-14 sm:py-20 text-center">
-          <Badge variant="outline" className="mb-4">
+        <div className="container mx-auto max-w-5xl px-4 pt-10 sm:pt-16 pb-4 text-center">
+          <Badge variant="outline" className="mb-3">
             Étude clinique · Usage recherche uniquement
           </Badge>
-          <h1 className="text-3xl sm:text-5xl font-bold text-foreground tracking-tight mb-4">
+          <h1 className="text-3xl sm:text-5xl font-bold text-foreground tracking-tight mb-2">
             Validation clinique de l'autorégulation cérébrale
           </h1>
+        </div>
+        <div className="container mx-auto max-w-6xl px-4 pb-6">
+          <section id="methodology" className="grid md:grid-cols-3 gap-4">
+            <StepCard
+              n={1}
+              title="Créer un sujet"
+              desc="Ajoutez un pseudonyme via le bouton Sujet dans la barre du haut."
+            />
+            <StepCard
+              n={2}
+              title="Importer les données"
+              desc="CSV (Horodate, PIC, PAM, PPC) ou JSON Fisher. Détection automatique."
+            />
+            <StepCard
+              n={3}
+              title="Analyser et exporter"
+              desc="Visualisations interactives et export CSV des résultats calculés."
+            />
+          </section>
         </div>
       </section>
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Methodology */}
-        <section id="methodology" className="mb-8 grid md:grid-cols-3 gap-4">
-          <StepCard
-            n={1}
-            title="Créer un sujet"
-            desc="Ajoutez un pseudonyme via le bouton Sujet dans la barre du haut."
-          />
-          <StepCard
-            n={2}
-            title="Importer les données"
-            desc="CSV (Horodate, PIC, PAM, PPC) ou JSON Fisher. Détection automatique."
-          />
-          <StepCard
-            n={3}
-            title="Analyser et exporter"
-            desc="Visualisations interactives et export CSV des résultats calculés."
-          />
-        </section>
 
         {/* Import panel */}
         <Card className="mb-6">
