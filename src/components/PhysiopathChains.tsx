@@ -462,8 +462,11 @@ export const PhysiopathChains = ({
                 )}
               </div>
             </div>
-          )}
+          </div>
+            );
+          })()}
         </div>
+
 
         {/* ==== Existing auto-detected chains ==== */}
         <TooltipProvider delayDuration={200}>
