@@ -383,7 +383,8 @@ export const PhysiopathChains = ({
         </div>
 
         {/* ==== Existing auto-detected chains ==== */}
-
+        <TooltipProvider delayDuration={200}>
+          <div className="space-y-4">
             {activeChains.map(({ chain, matched }) => {
               const accentBadge =
                 chain.severity === 'critical'
