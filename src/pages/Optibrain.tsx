@@ -709,7 +709,7 @@ const Optibrain = () => {
         : neurologicalStateConfig.currentState;
 
       return {
-        label: "État actuel",
+        label: "État neurologique",
         value: bigValue,
         displayValue: bigValue,
         unit: "",
@@ -765,6 +765,46 @@ const Optibrain = () => {
         metricKey: "pic",
       };
     })(),
+    {
+      label: "PPC",
+      value: realBrainValues.ppc !== null ? Math.round(realBrainValues.ppc) : "--",
+      displayValue: realBrainValues.ppc !== null ? Math.round(realBrainValues.ppc).toString() : "--",
+      unit: "mmHg",
+      status: getPpcStatus(realBrainValues.ppc) as TileStatus,
+      hasDetails: false,
+      topLabel: realBrainValues.ppc !== null ? `PPC ${Math.round(realBrainValues.ppc)} mmHg` : "PPC --",
+      metricKey: "ppc",
+    },
+    {
+      label: "Glasgow (GCS)",
+      value: patient?.gcs ?? "--",
+      displayValue: patient?.gcs ?? "--",
+      unit: "",
+      status: (() => {
+        const gcs = patient?.gcs;
+        if (gcs === undefined || gcs === null) return "normal";
+        if (gcs >= 13) return "normal";
+        if (gcs >= 9) return "warning";
+        return "critical";
+      })() as TileStatus,
+      hasDetails: false,
+      metricKey: "glasgow",
+    },
+    {
+      label: "PaCO2",
+      value: realBrainValues.paco2 !== null ? Math.round(realBrainValues.paco2) : "--",
+      displayValue: realBrainValues.paco2 !== null ? Math.round(realBrainValues.paco2).toString() : "--",
+      unit: "mmHg",
+      status: (() => {
+        const v = realBrainValues.paco2;
+        if (v === null) return "normal";
+        if (v >= 35 && v <= 45) return "normal";
+        if ((v >= 30 && v < 35) || (v > 45 && v <= 50)) return "warning";
+        return "critical";
+      })() as TileStatus,
+      hasDetails: false,
+      metricKey: "paco2",
+    },
     {
       label: "Autorégulation",
       value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
