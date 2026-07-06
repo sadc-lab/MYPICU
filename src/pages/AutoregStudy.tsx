@@ -339,8 +339,8 @@ const AutoregStudy = () => {
                 <UserPlus className="h-4 w-4" />
                 <AlertTitle>Aucun sujet</AlertTitle>
                 <AlertDescription>
-                  Créez d'abord un sujet via le bouton <strong>Sujet</strong> en haut à droite, ou cliquez
-                  ci-dessous pour en créer un automatiquement puis importer un fichier.
+                  Cliquez sur <strong>Ajouter un patient</strong> pour créer un sujet et importer
+                  son fichier CSV/JSON en une seule étape.
                 </AlertDescription>
               </Alert>
             )}
