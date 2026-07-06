@@ -145,9 +145,9 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 <ChevronDown className={`h-4 w-4 transition-transform ${showReminders ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="mt-2 rounded-md border bg-muted/20 px-3 py-2.5 space-y-1.5">
+                <div className="mt-2 rounded-md border bg-muted/20 px-3 py-2.5 columns-2 sm:columns-3 gap-x-4">
                   {reminders.map((item, index) => (
-                    <div key={index} className="flex items-start gap-2 text-xs text-foreground">
+                    <div key={index} className="flex items-start gap-2 text-xs text-foreground break-inside-avoid mb-1.5">
                       <span className="h-1.5 w-1.5 rounded-full bg-primary/60 mt-1.5 shrink-0" />
                       <span className="leading-snug">{item}</span>
                     </div>
