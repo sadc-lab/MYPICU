@@ -381,8 +381,10 @@ const AutoregStudy = () => {
                       Exporter PDF
                     </Button>
                   </div>
-
+                </div>
+              </CardHeader>
               <CardContent>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <SummaryStat label="PPC optimale" value={result.optimalPPC} unit="mmHg" highlight />
                   <SummaryStat label="LLA" value={result.lowerLimit} unit="mmHg" />
