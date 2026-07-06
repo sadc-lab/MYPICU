@@ -66,6 +66,7 @@ import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowS
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { VitalSignsPanel } from "@/components/VitalSignsPanel";
+import { CollapsibleModuleCard, CountCircle } from "@/components/CollapsibleModuleCard";
 
 
 const Optibrain = () => {
@@ -1058,74 +1059,69 @@ const Optibrain = () => {
           ).length;
           const brainHasCritical = brainOptimisationMetrics.some((m) => m.status === "critical");
           return (
-            <Card className="bg-card shadow-sm mb-6">
-              <CardHeader className="py-3 px-4 sm:px-6">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <KpiCircle
-                    count={brainProblemCount}
-                    hasCritical={brainHasCritical}
-                    groupLabel="Optimisation cérébrale"
-                    itemLabel="indicateur"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation cérébrale actuelle</h3>
-                    {(() => {
-                      const ppcLabel = isNirsBased ? "PAM" : "PPC";
-                      const picStr = realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)}` : "PIC --";
-                      const optStr = optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
-                        ? `${ppcLabel}opt ${Math.round(optimalPPCResult.optimalPPC)}`
-                        : realBrainValues.ppc !== null
-                          ? `PPC ${Math.round(realBrainValues.ppc)}`
-                          : null;
-                      // Compact = juste les 2 valeurs clés en mmHg (sans zone)
-                      const compact = [picStr, optStr].filter(Boolean).join(" • ");
+            <CollapsibleModuleCard
+              expanded={optimisationExpanded}
+              onToggle={() => setOptimisationExpanded((p) => !p)}
+              headerIcon={
+                <KpiCircle
+                  count={brainProblemCount}
+                  hasCritical={brainHasCritical}
+                  groupLabel="Optimisation cérébrale"
+                  itemLabel="indicateur"
+                />
+              }
+              title="Optimisation cérébrale actuelle"
+              subtitle={(() => {
+                const ppcLabel = isNirsBased ? "PAM" : "PPC";
+                const picStr = realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)}` : "PIC --";
+                const optStr = optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
+                  ? `${ppcLabel}opt ${Math.round(optimalPPCResult.optimalPPC)}`
+                  : realBrainValues.ppc !== null
+                    ? `PPC ${Math.round(realBrainValues.ppc)}`
+                    : null;
+                const compact = [picStr, optStr].filter(Boolean).join(" • ");
 
-                      // Full = détail complet avec unités + zone d'autorégulation
-                      const fullParts: string[] = [];
-                      if (realBrainValues.pic !== null) fullParts.push(`PIC ${Math.round(realBrainValues.pic)} mmHg`);
-                      if (optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null) {
-                        fullParts.push(`${ppcLabel} optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`);
-                      } else if (realBrainValues.ppc !== null) {
-                        fullParts.push(`PPC ${Math.round(realBrainValues.ppc)} mmHg`);
-                      }
-                      if (realBrainValues.pam !== null && realBrainValues.pam !== undefined) {
-                        fullParts.push(`PAM ${Math.round(realBrainValues.pam)} mmHg`);
-                      }
-                      const zoneLine = optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-                        ? `Zone d'autorégulation : ${Math.round(optimalPPCResult.lowerLimit)}–${Math.round(optimalPPCResult.upperLimit)} mmHg`
-                        : null;
+                const fullParts: string[] = [];
+                if (realBrainValues.pic !== null) fullParts.push(`PIC ${Math.round(realBrainValues.pic)} mmHg`);
+                if (optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null) {
+                  fullParts.push(`${ppcLabel} optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`);
+                } else if (realBrainValues.ppc !== null) {
+                  fullParts.push(`PPC ${Math.round(realBrainValues.ppc)} mmHg`);
+                }
+                if (realBrainValues.pam !== null && realBrainValues.pam !== undefined) {
+                  fullParts.push(`PAM ${Math.round(realBrainValues.pam)} mmHg`);
+                }
+                const zoneLine = optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
+                  ? `Zone d'autorégulation : ${Math.round(optimalPPCResult.lowerLimit)}–${Math.round(optimalPPCResult.upperLimit)} mmHg`
+                  : null;
 
-                      return (
-                        <TooltipProvider delayDuration={150}>
-                          <UITooltip>
-                            <TooltipTrigger asChild>
-                              <p className="text-xs text-muted-foreground mt-1 truncate cursor-help">
-                                {compact || "—"}
-                              </p>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" align="start" className="p-2.5 max-w-[320px]">
-                              <div className="text-xs font-semibold text-foreground mb-1.5">Optimisation cérébrale</div>
-                              <div className="flex flex-col gap-1 text-xs">
-                                {fullParts.map((p) => (
-                                  <div key={p} className="text-foreground tabular-nums">{p}</div>
-                                ))}
-                                {zoneLine && (
-                                  <div className="text-muted-foreground mt-1 pt-1 border-t border-border/50 tabular-nums">{zoneLine}</div>
-                                )}
-                                {!fullParts.length && (
-                                  <div className="text-muted-foreground">Aucune donnée disponible</div>
-                                )}
-                              </div>
-                            </TooltipContent>
-                          </UITooltip>
-                        </TooltipProvider>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </CardHeader>
-          {true && (
-            <CardContent className="pt-0 space-y-5">
+                return (
+                  <TooltipProvider delayDuration={150}>
+                    <UITooltip>
+                      <TooltipTrigger asChild>
+                        <span className="truncate cursor-help">{compact || "—"}</span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" align="start" className="p-2.5 max-w-[320px]">
+                        <div className="text-xs font-semibold text-foreground mb-1.5">Optimisation cérébrale</div>
+                        <div className="flex flex-col gap-1 text-xs">
+                          {fullParts.map((p) => (
+                            <div key={p} className="text-foreground tabular-nums">{p}</div>
+                          ))}
+                          {zoneLine && (
+                            <div className="text-muted-foreground mt-1 pt-1 border-t border-border/50 tabular-nums">{zoneLine}</div>
+                          )}
+                          {!fullParts.length && (
+                            <div className="text-muted-foreground">Aucune donnée disponible</div>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </UITooltip>
+                  </TooltipProvider>
+                );
+              })()}
+              contentClassName="pt-0 px-4 sm:px-6 pb-4 space-y-5"
+            >
+
               {/* Alert if no autoregulation data available yet */}
               {!optimalPPCResult.hasData && (
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-status-warning/10 border border-status-warning/30 mt-4">
@@ -1308,11 +1304,10 @@ const Optibrain = () => {
                   })()}
                 </div>
               )}
-            </CardContent>
-          )}
-            </Card>
+            </CollapsibleModuleCard>
           );
         })()}
+
 
         <Card className="bg-card shadow-sm mb-6">
           <CardHeader className="px-4 sm:px-6">
@@ -1330,37 +1325,27 @@ const Optibrain = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Monitoring Targets - Moved to top */}
-            <Card className="border-2 border-border">
-              <CardHeader
-                className="py-3 px-4 sm:px-6 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setChecklistExpanded(!checklistExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <KpiCircle
-                      count={monitoringAdherence !== null ? nonAdherentCount : 0}
-                      hasCritical={monitoringAdherence !== null && nonAdherentCount >= 3}
-                      groupLabel="Monitorage et interventions"
-                      itemLabel="indicateur"
-                    />
-                    <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">Monitorage et interventions en place</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {patientFileData
-                          ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}${monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}`
-                          : "Pas de données disponibles"}
-                      </p>
-                    </div>
-                  </div>
-                  {checklistExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                  )}
-                </div>
-              </CardHeader>
-              {checklistExpanded && (
-                <CardContent className="pt-0 px-3 sm:px-6">
+            <CollapsibleModuleCard
+              variant="nested"
+              expanded={checklistExpanded}
+              onToggle={() => setChecklistExpanded(!checklistExpanded)}
+              headerIcon={
+                <KpiCircle
+                  count={monitoringAdherence !== null ? nonAdherentCount : 0}
+                  hasCritical={monitoringAdherence !== null && nonAdherentCount >= 3}
+                  groupLabel="Monitorage et interventions"
+                  itemLabel="indicateur"
+                />
+              }
+              title="Monitorage et interventions en place"
+              subtitle={
+                patientFileData
+                  ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}${monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}`
+                  : "Pas de données disponibles"
+              }
+              contentClassName="pt-0 px-3 sm:px-6 pb-4"
+            >
+
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
                       // Couleur basée sur le pourcentage d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
@@ -1417,39 +1402,30 @@ const Optibrain = () => {
                       );
                     })}
                   </div>
-                </CardContent>
-              )}
-            </Card>
+            </CollapsibleModuleCard>
 
-            <Card className="border-2 border-border">
-              <CardHeader
-                className="py-3 px-4 sm:px-6 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setClinicalExpanded(!clinicalExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <KpiCircle
-                      count={clinicalAdherence !== null ? outOfRangeCount : 0}
-                      hasCritical={clinicalAdherence !== null && outOfRangeCount >= 3}
-                      groupLabel="Adhérence aux cibles"
-                      itemLabel="indicateur"
-                    />
-                    <div className="min-w-0">
-                       <h3 className="text-xs sm:text-sm font-semibold text-foreground">Adhérence aux cibles recommandées</h3>
-                       <p className="text-xs text-muted-foreground mt-1">
-                        {patientFileData ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? "s" : ""} à surveiller${clinicalAdherence !== null ? ` · ${clinicalAdherence}% d'adhérence` : ""}` : "Pas de données disponibles"}
-                      </p>
-                    </div>
-                  </div>
-                  {clinicalExpanded ? (
-                     <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                   ) : (
-                     <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                  )}
-                </div>
-              </CardHeader>
-              {clinicalExpanded && (
-                <CardContent className="pt-0 px-3 sm:px-6">
+
+            <CollapsibleModuleCard
+              variant="nested"
+              expanded={clinicalExpanded}
+              onToggle={() => setClinicalExpanded(!clinicalExpanded)}
+              headerIcon={
+                <KpiCircle
+                  count={clinicalAdherence !== null ? outOfRangeCount : 0}
+                  hasCritical={clinicalAdherence !== null && outOfRangeCount >= 3}
+                  groupLabel="Adhérence aux cibles"
+                  itemLabel="indicateur"
+                />
+              }
+              title="Adhérence aux cibles recommandées"
+              subtitle={
+                patientFileData
+                  ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? "s" : ""} à surveiller${clinicalAdherence !== null ? ` · ${clinicalAdherence}% d'adhérence` : ""}`
+                  : "Pas de données disponibles"
+              }
+              contentClassName="pt-0 px-3 sm:px-6 pb-4"
+            >
+
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
@@ -1517,9 +1493,8 @@ const Optibrain = () => {
                       );
                     })}
                   </div>
-                </CardContent>
-              )}
-            </Card>
+            </CollapsibleModuleCard>
+
 
             {/* Monitoring Chart */}
             <Card ref={chartRef} className="border-2 border-border">
