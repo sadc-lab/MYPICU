@@ -271,24 +271,7 @@ const Optiheart = () => {
                 />
               }
               title="Indicateurs cliniques problématiques : surveiller DC, IC, et RVS"
-              subtitle={(() => {
-                const abnormal = clinicalIndicators.filter((i) => i.status !== 'normal');
-                if (abnormal.length > 0) {
-                  return (
-                    <span className="text-xs text-muted-foreground truncate">
-                      {abnormal.map((i, idx) => (
-                        <span key={i.label}>
-                          <span className={i.status === 'critical' ? 'text-status-critical font-semibold' : 'text-status-warning font-semibold'}>
-                            {i.label}
-                          </span>
-                          {idx < abnormal.length - 1 ? ' • ' : ''}
-                        </span>
-                      ))}
-                    </span>
-                  );
-                }
-                return 'Tous les indicateurs dans la cible';
-              })()}
+              subtitle={`${outOfRangeCount} indicateur${outOfRangeCount > 1 ? 's' : ''} hors cible sur ${totalIndicators}`}
               contentClassName="pt-0 px-4 sm:px-6 pb-4"
             >
               <div className="grid grid-cols-3 gap-4 pt-4">
