@@ -51,4 +51,6 @@ export interface PatientDbRow {
   ward: string;
   created_at: string;
   updated_at: string;
+  allergies: string | null;
+  intolerances: string | null;
 }
