@@ -16,7 +16,6 @@ import {
   Brain,
   LineChart,
   ShieldCheck,
-  ArrowRight,
   UserPlus,
 } from 'lucide-react';
 import {
