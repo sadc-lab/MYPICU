@@ -753,7 +753,7 @@ const Optibrain = () => {
         : "Dans la cible";
 
       return {
-        label: "PIC",
+        label: "Niveau de PIC",
         value: bigValue,
         displayValue: bigValue,
         unit: "",
