@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronDown, Bell, Home, AlertTriangle, UtensilsOff } from "lucide-react";
+import { ChevronLeft, ChevronDown, Bell, Home, AlertTriangle, Ban } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";

@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { Droplets, AlertTriangle, UtensilsOff } from 'lucide-react';
+import { Droplets, AlertTriangle, Ban } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { Patient } from '@/types/patient.types';
 import { useNavigate } from 'react-router-dom';
