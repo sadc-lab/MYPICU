@@ -337,162 +337,81 @@ const Optilungs = () => {
       <Header />
       <PatientHeader currentPage="optilungs" />
 
-      <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <div className="mb-6">
-          <VitalSignsPanel />
-        </div>
-        <Card className="bg-card shadow-sm mb-6">
-          <CardHeader
-            className="cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setOptimisationExpanded(prev => !prev)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-destructive text-destructive bg-destructive/10 shrink-0">
-                  <img src={lungsIcon} alt="lungs" className="h-6 w-6 sm:h-8 sm:w-8" style={{ filter: "invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)" }} />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation pulmonaire</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    <span className="font-semibold text-destructive">Hypoxémie sévère</span> • VAP Prediction : 75%
-                  </p>
-                </div>
-              </div>
-              {optimisationExpanded ? (
-                <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-              )}
-            </div>
-          </CardHeader>
-          {optimisationExpanded && (
-            <CardContent className="pt-0 space-y-4">
-              {/* Selectable Lung Metrics - Optibrain style */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6 pt-4">
-                {lungOptimisationMetrics.map((metric, index) => {
-                  const isSelected = selectedLungOptIndicators.includes(metric.label);
-                  const statusColor = metric.status === "critical" 
-                    ? "text-status-critical" 
-                    : metric.status === "warning" 
-                      ? "text-status-warning" 
-                      : "text-foreground";
+      <main className="container mx-auto px-6 pb-8 max-w-[1600px] space-y-6">
+        <VitalSignsPanel />
 
-                  return (
-                    <div
-                      key={index}
-                      className={`flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 ${
-                        isSelected
-                          ? "bg-card shadow-sm border-primary"
-                          : "border-transparent hover:bg-muted/50"
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!metric.selectable) {
-                          setOpenDialog('ventilateur');
-                          return;
-                        }
-                        setSelectedLungOptIndicators((prev) =>
-                          prev.includes(metric.label)
-                            ? prev.filter((l) => l !== metric.label)
-                            : [...prev, metric.label]
-                        );
-                      }}
-                    >
-                      <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
-                        {metric.label}
-                      </div>
-                      <div className="flex items-baseline gap-1 mb-1">
-                        {metric.icon && <Gauge className="h-5 w-5 sm:h-6 sm:w-6 text-primary self-center" />}
-                        <div className={`text-2xl sm:text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
-                        {metric.unit && <span className="text-[10px] text-muted-foreground">{metric.unit}</span>}
-                      </div>
-                      {metric.criticalLabel && (
-                        <div className={`text-[10px] sm:text-xs font-medium ${metric.criticalColor} text-center leading-tight`}>
-                          {metric.criticalLabel}
-                        </div>
-                      )}
-                    </div>
+        <CollapsibleModuleCard
+          expanded={optimisationExpanded}
+          onToggle={() => setOptimisationExpanded((prev) => !prev)}
+          headerIcon={
+            <StatusIconCircle status="critical">
+              <img
+                src={lungsIcon}
+                alt="lungs"
+                className="h-6 w-6 sm:h-8 sm:w-8"
+                style={{ filter: "invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)" }}
+              />
+            </StatusIconCircle>
+          }
+          title="Optimisation pulmonaire"
+          subtitle={
+            <>
+              <span className="font-semibold text-destructive">Hypoxémie sévère</span> • VAP Prediction : 75%
+            </>
+          }
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6 pt-4">
+            {lungOptimisationMetrics.map((metric) => (
+              <SelectableMetricTile
+                key={metric.label}
+                label={metric.label}
+                displayValue={metric.displayValue}
+                unit={metric.unit}
+                status={metric.status}
+                criticalLabel={metric.criticalLabel}
+                criticalColor={metric.criticalColor}
+                icon={metric.icon ? <Gauge className="h-5 w-5 sm:h-6 sm:w-6 text-primary self-center" /> : undefined}
+                isSelected={selectedLungOptIndicators.includes(metric.label)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!metric.selectable) {
+                    setOpenDialog('ventilateur');
+                    return;
+                  }
+                  setSelectedLungOptIndicators((prev) =>
+                    prev.includes(metric.label)
+                      ? prev.filter((l) => l !== metric.label)
+                      : [...prev, metric.label]
                   );
-                })}
+                }}
+              />
+            ))}
+          </div>
+          {selectedLungOptIndicators.length > 0 && (
+            <div className="border-t border-border pt-4 mt-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium text-foreground">Évolution temporelle</div>
+                <TimeWindowSelector
+                  value={optChartTimeRange as TimeWindowValue}
+                  onChange={(v) => setOptChartTimeRange(v)}
+                  includeStay={true}
+                  size="sm"
+                  variant="compact"
+                />
               </div>
-              {/* Embedded Chart - shown when indicators are selected */}
-              {selectedLungOptIndicators.length > 0 && (
-                <div className="border-t border-border pt-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-foreground">Évolution temporelle</div>
-                    <TimeWindowSelector
-                      value={optChartTimeRange as TimeWindowValue}
-                      onChange={(v) => setOptChartTimeRange(v)}
-                      includeStay={true}
-                      size="sm"
-                      variant="compact"
-                    />
-                  </div>
-                  <div className="h-[250px] sm:h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={lungOptChartData}>
-                        {selectedLungOptIndicators.map((label) => {
-                          const zone = optTargetZones[label];
-                          if (!zone) return null;
-                          const color = getOptIndicatorColor(label);
-                          return (
-                            <ReferenceArea
-                              key={`zone-${label}`}
-                              y1={zone.min}
-                              y2={zone.max}
-                              fill={color}
-                              fillOpacity={0.08}
-                              stroke={color}
-                              strokeOpacity={0.3}
-                              strokeDasharray="4 2"
-                            />
-                          );
-                        })}
-                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                         <XAxis dataKey="time" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickLine={false} />
-                         <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
-                         <Tooltip
-                            contentStyle={{
-                              backgroundColor: "hsl(var(--popover))",
-                              border: "1px solid hsl(var(--border))",
-                              borderRadius: "8px",
-                              fontSize: "12px",
-                              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                              padding: "12px",
-                              color: "hsl(var(--popover-foreground))",
-                            }}
-                          labelStyle={{ fontWeight: 600, marginBottom: 8 }}
-                        />
-                        <Legend
-                          wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
-                          iconType="plainline"
-                          formatter={(value: string) => (
-                            <span style={{ color: getOptIndicatorColor(value), fontWeight: 500 }}>{value}</span>
-                          )}
-                        />
-                        {selectedLungOptIndicators.map((label, idx) => {
-                          const color = getOptIndicatorColor(label);
-                          return (
-                            <Line
-                              key={label}
-                              type="monotone"
-                              dataKey={label}
-                              stroke={color}
-                              strokeWidth={2.5}
-                              dot={false}
-                              activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2, fill: color }}
-                              connectNulls={false}
-                            />
-                          );
-                        })}
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-            </CardContent>
+              <OptimisationChart
+                data={lungOptChartData}
+                series={selectedLungOptIndicators.map((label) => ({
+                  label,
+                  color: getOptIndicatorColor(label),
+                  targetZone: optTargetZones[label],
+                }))}
+              />
+            </div>
           )}
-        </Card>
+        </CollapsibleModuleCard>
+
+
 
         {/* Clinical Indicators Section - Optibrain style */}
         <Card className="bg-card shadow-sm mb-6">
