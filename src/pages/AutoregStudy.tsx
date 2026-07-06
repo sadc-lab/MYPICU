@@ -142,6 +142,89 @@ const AutoregStudy = () => {
     URL.revokeObjectURL(url);
   };
 
+  const downloadPDF = async () => {
+    if (!result) return;
+    try {
+      const [{ jsPDF }, autoTable, { toPng }] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable').then((m) => m.default),
+        import('html-to-image'),
+      ]);
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 40;
+      const now = new Date();
+
+      doc.setFontSize(16);
+      doc.text("Rapport d'autorégulation cérébrale", margin, 50);
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.text(
+        `Sujet : ${active?.code ?? '—'} · ${active?.label ?? ''}`,
+        margin,
+        70,
+      );
+      doc.text(`Fichier : ${fileName ?? '—'}`, margin, 84);
+      doc.text(`Généré le : ${now.toLocaleString('fr-CA')}`, margin, 98);
+      doc.setTextColor(0);
+
+      autoTable(doc, {
+        startY: 120,
+        head: [['Indicateur', 'Valeur']],
+        body: [
+          ['PPC optimale (mmHg)', result.optimalPPC?.toFixed(0) ?? '—'],
+          ['Limite basse LLA (mmHg)', result.lowerLimit?.toFixed(0) ?? '—'],
+          ['Limite haute ULA (mmHg)', result.upperLimit?.toFixed(0) ?? '—'],
+          ['PRx minimum', result.minPrx?.toFixed(2) ?? '—'],
+          ['Nombre d\'échantillons', String(result.sampleCount)],
+          ['Durée (h)', String(result.durationHours)],
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [30, 64, 175] },
+      });
+
+      // Capture each chart card as PNG and add to the PDF
+      const chartIds = ['pdf-chart-curve', 'pdf-chart-rolling', 'pdf-chart-timeseries'];
+      for (const id of chartIds) {
+        const node = document.getElementById(id);
+        if (!node) continue;
+        const png = await toPng(node, { backgroundColor: '#ffffff', pixelRatio: 2 });
+        const imgWidth = pageWidth - margin * 2;
+        const props = doc.getImageProperties(png);
+        const imgHeight = (props.height * imgWidth) / props.width;
+        doc.addPage();
+        doc.setFontSize(12);
+        doc.text(node.dataset.pdfTitle || 'Graphique', margin, 40);
+        doc.addImage(png, 'PNG', margin, 60, imgWidth, imgHeight);
+      }
+
+      // Curve table
+      doc.addPage();
+      doc.setFontSize(12);
+      doc.text('Courbe PRx vs PPC (bins de 5 mmHg)', margin, 40);
+      autoTable(doc, {
+        startY: 60,
+        head: [['PPC (mmHg)', 'PRx moyen', 'N échantillons', 'Autorégulation']],
+        body: result.curve.map((p) => [
+          p.ppc,
+          p.prx.toFixed(2),
+          p.count,
+          p.prx < 0.3 ? 'Préservée' : 'Altérée',
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [30, 64, 175] },
+        styles: { fontSize: 9 },
+      });
+
+      doc.save(`autoreg_${active?.code ?? 'sujet'}_${Date.now()}.pdf`);
+      toast.success('PDF généré');
+    } catch (err: any) {
+      console.error('PDF export error:', err);
+      toast.error("Échec de l'export PDF : " + (err.message || 'erreur inconnue'));
+    }
+  };
+
+
   const formatTime = (t: number) =>
     new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
 
@@ -288,13 +371,20 @@ const AutoregStudy = () => {
                       glissante PIC/PAM (fenêtre 30 échantillons)
                     </CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={downloadCSV}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Exporter CSV
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={downloadCSV}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Exporter CSV
+                    </Button>
+                    <Button variant="default" size="sm" onClick={downloadPDF}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Exporter PDF
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <SummaryStat label="PPC optimale" value={result.optimalPPC} unit="mmHg" highlight />
                   <SummaryStat label="LLA" value={result.lowerLimit} unit="mmHg" />
@@ -304,7 +394,7 @@ const AutoregStudy = () => {
               </CardContent>
             </Card>
 
-            <Card className="mb-6">
+            <Card className="mb-6" id="pdf-chart-curve" data-pdf-title="Courbe d'autorégulation · PRx vs PPC">
               <CardHeader>
                 <CardTitle>Courbe d'autorégulation · PRx vs PPC</CardTitle>
                 <CardDescription>
@@ -371,7 +461,7 @@ const AutoregStudy = () => {
             </Card>
 
             {rollingChartData.length > 0 && (
-              <Card className="mb-6">
+              <Card className="mb-6" id="pdf-chart-rolling" data-pdf-title="PPC optimale et limites dans le temps">
                 <CardHeader>
                   <CardTitle>PPC optimale et limites dans le temps</CardTitle>
                   <CardDescription>
@@ -415,7 +505,7 @@ const AutoregStudy = () => {
               </Card>
             )}
 
-            <Card className="mb-6">
+            <Card className="mb-6" id="pdf-chart-timeseries" data-pdf-title="Séries temporelles PIC / PAM / PPC">
               <CardHeader>
                 <CardTitle>Séries temporelles PIC / PAM / PPC</CardTitle>
                 <CardDescription>Données brutes après import.</CardDescription>
