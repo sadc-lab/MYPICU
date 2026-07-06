@@ -133,7 +133,15 @@ const AutoregStudy = () => {
 
   const downloadCSV = () => {
     if (!result) return;
-    const blob = new Blob([resultsToCSV(result)], { type: 'text/csv;charset=utf-8;' });
+    const csv = resultsToCSV(result, {
+      subjectId: active?.id,
+      subjectCode: active?.code,
+      subjectLabel: active?.label,
+      fileName: fileName ?? undefined,
+      studyDate: result.samples[0]?.time,
+      exportedAt: new Date(),
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -141,6 +149,7 @@ const AutoregStudy = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
+
 
   const downloadPDF = async () => {
     if (!result) return;
