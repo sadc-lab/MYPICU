@@ -303,8 +303,79 @@ export const PhysiopathChains = ({
             })}
           </div>
 
-          {selected.size >= 2 && (
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {selected.size >= 2 && (() => {
+            const problematic = failingIndicators.filter((f) => selected.has(f.module));
+            const byModule = new Map<ModuleKey, typeof problematic>();
+            problematic.forEach((f) => {
+              const arr = byModule.get(f.module) ?? [];
+              arr.push(f);
+              byModule.set(f.module, arr);
+            });
+            return (
+          <div className="mt-4 space-y-3">
+            {/* All problematic indicators across selected modules */}
+            <div className="rounded-md border bg-card p-3">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Activity className="h-3.5 w-3.5 text-status-critical" />
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Indicateurs problématiques ({problematic.length})
+                  </span>
+                </div>
+                <span className="text-[10px] text-muted-foreground">
+                  {selected.size} modules assemblés
+                </span>
+              </div>
+              {problematic.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">
+                  Aucun indicateur hors cible dans les modules sélectionnés.
+                </p>
+              ) : (
+                <div className="space-y-2.5">
+                  {Array.from(byModule.entries()).map(([mod, items]) => (
+                    <div key={mod}>
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <span className={cn('h-2 w-2 rounded-full', MODULE_DOT[mod])} />
+                        <button
+                          type="button"
+                          onClick={() => onModuleClick?.(mod)}
+                          className="text-[11px] font-semibold text-foreground hover:text-primary transition-colors"
+                        >
+                          {MODULE_LABEL[mod]}
+                        </button>
+                        <span className="text-[10px] text-muted-foreground">
+                          ({items.length})
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pl-3.5">
+                        {items.map((ind, i) => {
+                          const critical = ind.status === 'critical';
+                          return (
+                            <span
+                              key={`${ind.label}-${i}`}
+                              className={cn(
+                                'inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[11px]',
+                                critical
+                                  ? 'bg-status-critical/10 text-status-critical border-status-critical/30'
+                                  : 'bg-status-warning/10 text-status-warning border-status-warning/30',
+                              )}
+                            >
+                              <span className="font-medium">{ind.label}</span>
+                              <span className="tabular-nums opacity-80">
+                                {ind.value}
+                                {ind.unit ? ` ${ind.unit}` : ''}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
               {/* Shared indicators */}
               <div className="rounded-md border bg-card p-3">
                 <div className="flex items-center gap-1.5 mb-2">
