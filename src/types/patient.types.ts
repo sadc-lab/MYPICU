@@ -16,6 +16,8 @@ export interface Patient {
   kidneyScore?: number;
   ward?: 'pedA' | 'pedB';
   gcs?: number; // Glasgow Coma Scale (3-15)
+  allergies?: string;
+  intolerances?: string;
 }
 
 export interface PatientQueryParams {
@@ -49,4 +51,6 @@ export interface PatientDbRow {
   ward: string;
   created_at: string;
   updated_at: string;
+  allergies: string | null;
+  intolerances: string | null;
 }

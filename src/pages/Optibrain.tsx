@@ -1052,132 +1052,6 @@ const Optibrain = () => {
           <VitalSignsPanel />
         </div>
 
-        <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cérébrales..." variant="skeleton">
-          <div className="space-y-4 mb-6">
-            {(() => {
-              const groups: Array<{ title: string; metricLabels: string[] }> = [
-                { title: "Pression intracrânienne et état neurologique", metricLabels: ["PIC", "PPC", "Glasgow (GCS)", "PaCO2"] },
-              ];
-              return groups.map((group) => {
-                const groupMetrics = brainMetrics.filter(m => group.metricLabels.includes(m.label));
-                if (groupMetrics.length === 0) return null;
-                const offTarget = groupMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax));
-                const abnormal = offTarget.length;
-                const isOpen = brainGroupsOpen[group.title] ?? false;
-
-                // Synthèse contextualisée : liste les paramètres hors cible avec direction
-                const formatVal = (v: number) => {
-                  const abs = Math.abs(v);
-                  if (abs >= 100) return Math.round(v).toString();
-                  if (abs >= 10) return (Math.round(v * 10) / 10).toString();
-                  return (Math.round(v * 100) / 100).toString();
-                };
-                // Tri par "écart relatif à la cible" → les plus critiques en premier
-                const offTargetSorted = [...offTarget].sort((a, b) => {
-                  const deviation = (m: typeof a) => {
-                    if (m.value > m.targetMax) return (m.value - m.targetMax) / Math.max(Math.abs(m.targetMax), 1);
-                    if (m.value < m.targetMin) return (m.targetMin - m.value) / Math.max(Math.abs(m.targetMin), 1);
-                    return 0;
-                  };
-                  return deviation(b) - deviation(a);
-                });
-                const renderItem = (m: typeof offTarget[number]) => {
-                  const arrow = m.value > m.targetMax ? "↑" : m.value < m.targetMin ? "↓" : "";
-                  return `${m.label} ${arrow}${formatVal(m.value)}`;
-                };
-                const COMPACT_LIMIT = 2;
-                const compactItems = offTargetSorted.slice(0, COMPACT_LIMIT).map(renderItem);
-                const remaining = offTargetSorted.length - compactItems.length;
-                const compactSummary = abnormal === 0
-                  ? "Tous les paramètres dans les cibles"
-                  : compactItems.join(" · ") + (remaining > 0 ? ` · +${remaining}` : "");
-                const fullSummary = abnormal === 0
-                  ? "Tous les paramètres dans les cibles"
-                  : offTargetSorted.map(renderItem).join(" · ");
-
-                return (
-                  <Card key={group.title} className="bg-card shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() => setBrainGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
-                      className="w-full"
-                    >
-                      <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors gap-3">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <KpiCircle count={abnormal} groupLabel={group.title} />
-                          <div className="text-left min-w-0 flex-1">
-                            <div className="text-base font-semibold text-foreground">{group.title}</div>
-                            <TooltipProvider delayDuration={150}>
-                              <UITooltip>
-                                <TooltipTrigger asChild>
-                                  <div
-                                    className={`text-xs mt-0.5 truncate cursor-help ${abnormal === 0 ? "text-muted-foreground" : "text-status-critical font-medium"}`}
-                                  >
-                                    {compactSummary}
-                                  </div>
-                                </TooltipTrigger>
-                                {abnormal > 0 && (
-                                  <TooltipContent side="bottom" align="start" className="p-2.5 max-w-[320px]">
-                                    <div className="text-xs font-semibold text-foreground mb-1.5">
-                                      {abnormal} paramètre{abnormal > 1 ? "s" : ""} hors cible
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                      {offTargetSorted.map(m => {
-                                        const arrow = m.value > m.targetMax ? "↑" : "↓";
-                                        const target = `cible ${formatVal(m.targetMin)}–${formatVal(m.targetMax)}`;
-                                        return (
-                                          <div key={m.label} className="flex items-center justify-between gap-3 text-xs">
-                                            <span className="font-medium">{m.label}</span>
-                                            <span className="text-status-critical tabular-nums">
-                                              {arrow}{formatVal(m.value)} <span className="text-muted-foreground font-normal">({target})</span>
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </TooltipContent>
-                                )}
-                              </UITooltip>
-                            </TooltipProvider>
-                          </div>
-                        </div>
-                        <ChevronDown
-                          className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isOpen ? "rotate-180" : ""}`}
-                        />
-                      </div>
-                    </button>
-                    {isOpen && (
-                      <CardContent className="pt-4 border-t">
-                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
-                          {groupMetrics.map((metric, index) => {
-                            const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                            const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
-                            return (
-                              <div key={index} className="flex flex-col items-center">
-                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
-                                <div className="flex items-center gap-2 mb-3">
-                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
-                                </div>
-                                <MetricRangeBar
-                                  value={metric.value}
-                                  min={metric.min}
-                                  max={metric.max}
-                                  targetMin={metric.targetMin}
-                                  targetMax={metric.targetMax}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    )}
-                  </Card>
-                );
-              });
-            })()}
-          </div>
-        </DataLoadingOverlay>
-
         {(() => {
           const brainProblemCount = brainOptimisationMetrics.filter(
             (m) => m.status === "critical" || m.status === "warning"
@@ -1439,7 +1313,6 @@ const Optibrain = () => {
             </Card>
           );
         })()}
-
 
         <Card className="bg-card shadow-sm mb-6">
           <CardHeader className="px-4 sm:px-6">
@@ -1806,6 +1679,132 @@ const Optibrain = () => {
             </Card>
           </CardContent>
         </Card>
+
+        <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cérébrales..." variant="skeleton">
+          <div className="space-y-4 mb-6">
+            {(() => {
+              const groups: Array<{ title: string; metricLabels: string[] }> = [
+                { title: "Pression intracrânienne et état neurologique", metricLabels: ["PIC", "PPC", "Glasgow (GCS)", "PaCO2"] },
+              ];
+              return groups.map((group) => {
+                const groupMetrics = brainMetrics.filter(m => group.metricLabels.includes(m.label));
+                if (groupMetrics.length === 0) return null;
+                const offTarget = groupMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax));
+                const abnormal = offTarget.length;
+                const isOpen = brainGroupsOpen[group.title] ?? false;
+
+                // Synthèse contextualisée : liste les paramètres hors cible avec direction
+                const formatVal = (v: number) => {
+                  const abs = Math.abs(v);
+                  if (abs >= 100) return Math.round(v).toString();
+                  if (abs >= 10) return (Math.round(v * 10) / 10).toString();
+                  return (Math.round(v * 100) / 100).toString();
+                };
+                // Tri par "écart relatif à la cible" → les plus critiques en premier
+                const offTargetSorted = [...offTarget].sort((a, b) => {
+                  const deviation = (m: typeof a) => {
+                    if (m.value > m.targetMax) return (m.value - m.targetMax) / Math.max(Math.abs(m.targetMax), 1);
+                    if (m.value < m.targetMin) return (m.targetMin - m.value) / Math.max(Math.abs(m.targetMin), 1);
+                    return 0;
+                  };
+                  return deviation(b) - deviation(a);
+                });
+                const renderItem = (m: typeof offTarget[number]) => {
+                  const arrow = m.value > m.targetMax ? "↑" : m.value < m.targetMin ? "↓" : "";
+                  return `${m.label} ${arrow}${formatVal(m.value)}`;
+                };
+                const COMPACT_LIMIT = 2;
+                const compactItems = offTargetSorted.slice(0, COMPACT_LIMIT).map(renderItem);
+                const remaining = offTargetSorted.length - compactItems.length;
+                const compactSummary = abnormal === 0
+                  ? "Tous les paramètres dans les cibles"
+                  : compactItems.join(" · ") + (remaining > 0 ? ` · +${remaining}` : "");
+                const fullSummary = abnormal === 0
+                  ? "Tous les paramètres dans les cibles"
+                  : offTargetSorted.map(renderItem).join(" · ");
+
+                return (
+                  <Card key={group.title} className="bg-card shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setBrainGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
+                      className="w-full"
+                    >
+                      <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors gap-3">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <KpiCircle count={abnormal} groupLabel={group.title} />
+                          <div className="text-left min-w-0 flex-1">
+                            <div className="text-base font-semibold text-foreground">{group.title}</div>
+                            <TooltipProvider delayDuration={150}>
+                              <UITooltip>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className={`text-xs mt-0.5 truncate cursor-help ${abnormal === 0 ? "text-muted-foreground" : "text-status-critical font-medium"}`}
+                                  >
+                                    {compactSummary}
+                                  </div>
+                                </TooltipTrigger>
+                                {abnormal > 0 && (
+                                  <TooltipContent side="bottom" align="start" className="p-2.5 max-w-[320px]">
+                                    <div className="text-xs font-semibold text-foreground mb-1.5">
+                                      {abnormal} paramètre{abnormal > 1 ? "s" : ""} hors cible
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      {offTargetSorted.map(m => {
+                                        const arrow = m.value > m.targetMax ? "↑" : "↓";
+                                        const target = `cible ${formatVal(m.targetMin)}–${formatVal(m.targetMax)}`;
+                                        return (
+                                          <div key={m.label} className="flex items-center justify-between gap-3 text-xs">
+                                            <span className="font-medium">{m.label}</span>
+                                            <span className="text-status-critical tabular-nums">
+                                              {arrow}{formatVal(m.value)} <span className="text-muted-foreground font-normal">({target})</span>
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </TooltipContent>
+                                )}
+                              </UITooltip>
+                            </TooltipProvider>
+                          </div>
+                        </div>
+                        <ChevronDown
+                          className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isOpen ? "rotate-180" : ""}`}
+                        />
+                      </div>
+                    </button>
+                    {isOpen && (
+                      <CardContent className="pt-4 border-t">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
+                          {groupMetrics.map((metric, index) => {
+                            const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
+                            const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
+                            return (
+                              <div key={index} className="flex flex-col items-center">
+                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
+                                </div>
+                                <MetricRangeBar
+                                  value={metric.value}
+                                  min={metric.min}
+                                  max={metric.max}
+                                  targetMin={metric.targetMin}
+                                  targetMax={metric.targetMax}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              });
+            })()}
+          </div>
+        </DataLoadingOverlay>
 
         
       </main>

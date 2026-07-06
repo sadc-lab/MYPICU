@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronDown, Bell, Home } from "lucide-react";
+import { ChevronDown, ChevronLeft, Bell, Home, AlertTriangle, Ban } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";
@@ -101,30 +101,20 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   return (
     <div className="bg-card border-b border-border mb-4 sm:mb-6">
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center gap-1 mb-3 sm:mb-4" data-export-hide>
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="text-muted-foreground hover:text-foreground text-sm"
-            size="sm"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Retour aux patients
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/")}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            title="Accueil"
-            aria-label="Accueil"
-          >
-            <Home className="h-4 w-4" />
-          </Button>
-        </div>
-
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 mb-3 sm:mb-4">
           <div className="flex-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="text-muted-foreground hover:text-foreground -ml-2 mb-1 px-2 gap-0.5"
+              title="Accueil"
+              aria-label="Accueil"
+              data-export-hide
+            >
+              <ChevronLeft className="h-3 w-3" />
+              <Home className="h-4 w-4" />
+            </Button>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
               <span>#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</span>{" "}
               <span data-patient-name>{patient.name}</span>
@@ -137,6 +127,24 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             <p className="text-xs sm:text-sm text-foreground mt-2">
               <strong>Diagnostic:</strong> {patient.diagnosis}
             </p>
+            {(patient.allergies || patient.intolerances) && (
+              <div className="mt-2 space-y-1">
+                {patient.allergies && (
+                  <div className="flex items-center gap-1.5 text-xs text-destructive">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    <span className="font-medium">Allergies:</span>
+                    <span>{patient.allergies}</span>
+                  </div>
+                )}
+                {patient.intolerances && (
+                  <div className="flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400">
+                    <Ban className="h-3.5 w-3.5 shrink-0" />
+                    <span className="font-medium">Intolérances:</span>
+                    <span>{patient.intolerances}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <Collapsible open={showReminders} onOpenChange={setShowReminders} className="mt-3">
               <CollapsibleTrigger className="flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors">
@@ -145,9 +153,9 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 <ChevronDown className={`h-4 w-4 transition-transform ${showReminders ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="mt-2 rounded-md border bg-muted/20 px-3 py-2.5 space-y-1.5">
+                <div className="mt-2 rounded-md border bg-muted/20 px-3 py-2.5 columns-2 sm:columns-3 gap-x-4">
                   {reminders.map((item, index) => (
-                    <div key={index} className="flex items-start gap-2 text-xs text-foreground">
+                    <div key={index} className="flex items-start gap-2 text-xs text-foreground break-inside-avoid mb-1.5">
                       <span className="h-1.5 w-1.5 rounded-full bg-primary/60 mt-1.5 shrink-0" />
                       <span className="leading-snug">{item}</span>
                     </div>

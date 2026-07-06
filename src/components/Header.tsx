@@ -218,14 +218,14 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                   {/* Mobile Search */}
                   <div className="p-4 border-b">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
                         type="text"
                         value={mobileSearchQuery}
                         onChange={(e) => setMobileSearchQuery(e.target.value)}
-                        placeholder="Rechercher patients..."
-                        className="pl-10 w-full"
+                        placeholder="Rechercher..."
+                        className="pr-10 w-full"
                       />
+                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
                   
@@ -304,7 +304,6 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
 
 
             <div ref={searchRef} className="relative hidden sm:block" data-guide="search">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
               <Input 
                 type="text"
                 value={searchQuery}
@@ -313,9 +312,10 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                 }}
                 onFocus={() => setShowDropdown(true)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                placeholder="Rechercher patients..."
-                className="pl-10 w-[200px] bg-background"
+                placeholder="Rechercher..."
+                className="pr-10 w-[200px] bg-background"
               />
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
               
               {showDropdown && searchQuery && filteredPatients.length > 0 && (
                 <div className="absolute top-full mt-1 w-full bg-popover border rounded-lg shadow-lg z-50 max-h-[400px] overflow-y-auto">
