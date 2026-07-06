@@ -79,17 +79,6 @@ const AutoregStudy = () => {
     }
   };
 
-  const openFilePicker = () => {
-    if (!active) {
-      const created = addPatient('');
-      // brief delay to let state settle, then open
-      setTimeout(() => inputRef.current?.click(), 50);
-      void created;
-      return;
-    }
-    inputRef.current?.click();
-  };
-
   const timeSeriesChartData = useMemo(() => {
     if (!result) return [];
     const step = Math.max(1, Math.floor(result.samples.length / 800));
