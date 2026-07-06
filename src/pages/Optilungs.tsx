@@ -47,27 +47,9 @@ const Optilungs = () => {
   const [selectedLungOptIndicators, setSelectedLungOptIndicators] = useState<string[]>([]);
   const [optChartTimeRange, setOptChartTimeRange] = useState<string>("24h");
   const chartRef = useRef<HTMLDivElement>(null);
-  const [pulmonaryGroupsOpen, setPulmonaryGroupsOpen] = useState<Record<string, boolean>>({
-    'Oxygénation et scores': true,
-    Ventilation: true,
-  });
-
-  // Patient file data state
-  const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
-  const [fileDataLoading, setFileDataLoading] = useState(false);
-  const hasFileData = hasPatientFileData(patientId);
-
-  // Load patient file data
-  useEffect(() => {
-    if (hasFileData) {
-      setFileDataLoading(true);
-      loadPatientFileData(patientId)
-        .then((data) => setPatientFileData(data))
-        .finally(() => setFileDataLoading(false));
-    } else {
-      setPatientFileData(null);
-    }
-  }, [patientId, hasFileData]);
+  // Patient file data loading removed (blood gas / oxygenation data no longer used here)
+  const patientFileData: PatientFileData | null = null;
+  const fileDataLoading = false;
 
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRange = (range: string): number => {
