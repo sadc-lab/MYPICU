@@ -909,62 +909,6 @@ const Optilungs = () => {
           </DialogContent>
         </Dialog>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Analyse des Gaz du Sang</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
-                  <span className="text-sm text-muted-foreground">Ratio PaO2/FiO2</span>
-                  <span className="font-semibold text-foreground">238</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
-                  <span className="text-sm text-muted-foreground">Excès de Base</span>
-                  <span className="font-semibold text-foreground">-2 mEq/L</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
-                  <span className="text-sm text-muted-foreground">HCO3</span>
-                  <span className="font-semibold text-foreground">24 mEq/L</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
-                  <span className="text-sm text-muted-foreground">Lactate</span>
-                  <span className="font-semibold text-foreground">1.2 mmol/L</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Statut d'Oxygénation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Index d'Oxygénation</span>
-                    <Badge className="bg-muted text-muted-foreground">5.5</Badge>
-                  </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-muted-foreground" style={{ width: '65%' }}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Gradient Alvéolo-artériel</span>
-                    <Badge className="bg-status-warning/10 text-status-warning">35 mmHg</Badge>
-                  </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-status-warning" style={{ width: '45%' }}></div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         
       </main>
     </div>
