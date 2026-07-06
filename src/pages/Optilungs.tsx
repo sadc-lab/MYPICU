@@ -15,6 +15,9 @@ import { MetricRangeBar } from '@/components/MetricRangeBar';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
+import { CollapsibleModuleCard, StatusIconCircle, CountCircle } from '@/components/CollapsibleModuleCard';
+import { SelectableMetricTile } from '@/components/SelectableMetricTile';
+import { OptimisationChart } from '@/components/OptimisationChart';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
