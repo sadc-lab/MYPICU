@@ -76,20 +76,21 @@ const AutoregStudy = () => {
       return;
     }
     const created = addPatient(newLabel);
-    if (newLabel.trim()) {
-      updatePatient(created.id, { label: newLabel.trim() });
+    const finalLabel = newLabel.trim();
+    if (finalLabel) {
+      updatePatient(created.id, { label: finalLabel });
     }
-    setAddOpen(false);
+    const target = { id: created.id, code: created.code, label: finalLabel || created.label };
     const fileToProcess = newFile;
+    setAddOpen(false);
     setNewLabel('');
     setNewFile(null);
-    try {
-      await handleFile(fileToProcess);
-    } catch {
-      // handleFile already surfaces errors
+    const ok = await handleFile(fileToProcess, target);
+    if (!ok) {
       removePatient(created.id);
     }
   };
+
 
   const handleFile = async (file: File, patientOverride?: { id: string; code: string; label: string }): Promise<boolean> => {
     setError(null);
