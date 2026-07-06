@@ -227,8 +227,24 @@ const AutoregStudy = () => {
         {!result && !error && (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
-              <Activity className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p>Aucune donnée. Importez un fichier pour lancer l'analyse.</p>
+              <p className="mb-6">Aucune donnée. Importez un fichier pour lancer l'analyse.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
+                <FeatureCard
+                  icon={<Brain className="h-5 w-5" />}
+                  title="Indice PRx"
+                  desc="Corrélation glissante PIC/PAM sur fenêtre 30 échantillons."
+                />
+                <FeatureCard
+                  icon={<LineChart className="h-5 w-5" />}
+                  title="Courbe en U"
+                  desc="Détection automatique de la PPC optimale et des limites LLA/ULA."
+                />
+                <FeatureCard
+                  icon={<ShieldCheck className="h-5 w-5" />}
+                  title="Données locales"
+                  desc="Traitement 100% navigateur, aucune donnée transmise à un serveur."
+                />
+              </div>
             </CardContent>
           </Card>
         )}
