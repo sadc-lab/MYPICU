@@ -47,27 +47,9 @@ const Optilungs = () => {
   const [selectedLungOptIndicators, setSelectedLungOptIndicators] = useState<string[]>([]);
   const [optChartTimeRange, setOptChartTimeRange] = useState<string>("24h");
   const chartRef = useRef<HTMLDivElement>(null);
-  const [pulmonaryGroupsOpen, setPulmonaryGroupsOpen] = useState<Record<string, boolean>>({
-    'Oxygénation et scores': true,
-    Ventilation: true,
-  });
-
-  // Patient file data state
-  const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
-  const [fileDataLoading, setFileDataLoading] = useState(false);
-  const hasFileData = hasPatientFileData(patientId);
-
-  // Load patient file data
-  useEffect(() => {
-    if (hasFileData) {
-      setFileDataLoading(true);
-      loadPatientFileData(patientId)
-        .then((data) => setPatientFileData(data))
-        .finally(() => setFileDataLoading(false));
-    } else {
-      setPatientFileData(null);
-    }
-  }, [patientId, hasFileData]);
+  // Patient file data loading removed (blood gas / oxygenation data no longer used here)
+  const patientFileData: PatientFileData | null = null;
+  const fileDataLoading = false;
 
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRange = (range: string): number => {
@@ -631,100 +613,6 @@ const Optilungs = () => {
           </CardContent>
         </Card>
 
-        <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données pulmonaires..." variant="skeleton">
-          <div className="space-y-4 mb-6">
-            {([
-              {
-                title: 'Oxygénation et scores',
-                metrics: [
-                  { label: 'SpO2', value: 94, unit: '%', min: 70, max: 100, targetMin: 92, targetMax: 100 },
-                  { label: 'PaO2', value: 78, unit: 'mmHg', min: 40, max: 150, targetMin: 80, targetMax: 100 },
-                  { label: 'FiO2', value: 45, unit: '%', min: 21, max: 100, targetMin: 21, targetMax: 40 },
-                  { label: 'Pression moyenne', value: 14, unit: 'cmH2O', min: 5, max: 30, targetMin: 8, targetMax: 15 },
-                  { label: 'OI', value: 9, unit: '', min: 0, max: 40, targetMin: 0, targetMax: 8 },
-                  { label: 'OSI', value: 7.2, unit: '', min: 0, max: 30, targetMin: 0, targetMax: 5 },
-                  { label: 'P/F ratio', value: 167, unit: '', min: 50, max: 500, targetMin: 300, targetMax: 500 },
-                  { label: 'S/F ratio', value: 209, unit: '', min: 50, max: 500, targetMin: 264, targetMax: 500 },
-                ],
-              },
-              {
-                title: 'Ventilation',
-                metrics: [
-                  { label: 'pH', value: 7.32, unit: '', min: 7.0, max: 7.6, targetMin: 7.35, targetMax: 7.45 },
-                  { label: 'PaCO2', value: 48, unit: 'mmHg', min: 25, max: 80, targetMin: 35, targetMax: 45 },
-                  { label: 'Vt', value: 6.2, unit: 'ml/kg', min: 3, max: 12, targetMin: 5, targetMax: 7 },
-                  { label: 'Resp Rate', value: 22, unit: '/min', min: 10, max: 50, targetMin: 15, targetMax: 25 },
-                  { label: 'DeltaP', value: 16, unit: 'cmH2O', min: 5, max: 35, targetMin: 0, targetMax: 14 },
-                  { label: 'Pplat', value: 28, unit: 'cmH2O', min: 10, max: 45, targetMin: 0, targetMax: 28 },
-                  { label: 'Compliance', value: 32, unit: 'mL/cmH2O', min: 10, max: 80, targetMin: 40, targetMax: 80 },
-                  { label: 'AVDSF', value: 0.42, unit: '', min: 0, max: 1, targetMin: 0, targetMax: 0.3 },
-                ],
-              },
-            ] as const).map((group) => {
-              const abnormal = group.metrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax)).length;
-              const isOpen = pulmonaryGroupsOpen[group.title] ?? false;
-              return (
-                <Card key={group.title} className="bg-card shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => setPulmonaryGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
-                    className="w-full"
-                  >
-                    <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
-                      <div className="flex items-center gap-2">
-                        <KpiCircle count={abnormal} groupLabel={group.title} />
-                        <div className="text-left">
-                          <div className="text-base font-semibold text-foreground">{group.title}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {abnormal === 0
-                              ? 'Tous les paramètres dans les cibles'
-                              : `${abnormal} paramètre${abnormal > 1 ? 's' : ''} hors cible`}
-                          </div>
-                        </div>
-                      </div>
-                      <ChevronDown
-                        className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                      />
-                    </div>
-                  </button>
-                  {isOpen && (
-                    <CardContent className="pt-4 border-t">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-8">
-                        {group.metrics.map((metric, index) => {
-                          const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                          const valueColor = inRange ? 'text-muted-foreground' : 'text-status-critical';
-
-                          return (
-                            <div key={index} className="flex flex-col items-center">
-                              <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide text-center">
-                                {metric.label}
-                              </div>
-                              <div className="flex items-baseline gap-1 mb-3">
-                                <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>
-                                  {metric.value}
-                                </div>
-                                {metric.unit && (
-                                  <div className="text-[10px] text-muted-foreground">{metric.unit}</div>
-                                )}
-                              </div>
-                              <MetricRangeBar
-                                value={metric.value}
-                                min={metric.min}
-                                max={metric.max}
-                                targetMin={metric.targetMin}
-                                targetMax={metric.targetMax}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        </DataLoadingOverlay>
 
         {/* VAP Prediction 1 Dialog */}
         <Dialog open={openDialog === 'vap1'} onOpenChange={(open) => !open && setOpenDialog(null)}>
