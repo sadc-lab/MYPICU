@@ -371,12 +371,17 @@ const AutoregStudy = () => {
                       glissante PIC/PAM (fenêtre 30 échantillons)
                     </CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={downloadCSV}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Exporter CSV
-                  </Button>
-                </div>
-              </CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={downloadCSV}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Exporter CSV
+                    </Button>
+                    <Button variant="default" size="sm" onClick={downloadPDF}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Exporter PDF
+                    </Button>
+                  </div>
+
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <SummaryStat label="PPC optimale" value={result.optimalPPC} unit="mmHg" highlight />
