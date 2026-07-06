@@ -238,7 +238,7 @@ const AutoregStudy = () => {
               />
               <Button onClick={openFilePicker} disabled={parsing}>
                 <FileText className="mr-2 h-4 w-4" />
-                {parsing ? 'Analyse…' : 'Sélectionner un fichier'}
+                {parsing ? 'Analyse…' : 'Ajouter un patient'}
               </Button>
               {fileName && (
                 <span className="text-sm text-muted-foreground truncate">
