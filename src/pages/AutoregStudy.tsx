@@ -39,6 +39,8 @@ import {
   type OptimalTimePoint,
 } from '@/services/autoregComputation.service';
 import { useStudyPatients } from '@/hooks/useStudyPatients';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const AutoregStudy = () => {
   const patientsController = useStudyPatients();
