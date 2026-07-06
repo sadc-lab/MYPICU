@@ -79,17 +79,6 @@ const AutoregStudy = () => {
     }
   };
 
-  const openFilePicker = () => {
-    if (!active) {
-      const created = addPatient('');
-      // brief delay to let state settle, then open
-      setTimeout(() => inputRef.current?.click(), 50);
-      void created;
-      return;
-    }
-    inputRef.current?.click();
-  };
-
   const timeSeriesChartData = useMemo(() => {
     if (!result) return [];
     const step = Math.max(1, Math.floor(result.samples.length / 800));
@@ -200,10 +189,16 @@ const AutoregStudy = () => {
                   e.currentTarget.value = '';
                 }}
               />
-              <Button onClick={openFilePicker} disabled={parsing}>
-                <FileText className="mr-2 h-4 w-4" />
-                {parsing ? 'Analyse…' : 'Ajouter un patient'}
+              <Button onClick={() => addPatient('')} disabled={parsing}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Ajouter un patient
               </Button>
+              {active && (
+                <Button onClick={() => inputRef.current?.click()} disabled={parsing}>
+                  <LineChart className="mr-2 h-4 w-4" />
+                  {parsing ? 'Analyse…' : 'Lancer les calculs'}
+                </Button>
+              )}
               {fileName && (
                 <span className="text-sm text-muted-foreground truncate">
                   Fichier chargé : <span className="font-medium text-foreground">{fileName}</span>
