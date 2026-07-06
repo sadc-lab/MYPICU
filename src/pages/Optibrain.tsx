@@ -1146,7 +1146,7 @@ const Optibrain = () => {
                 {brainOptimisationMetrics.map((metric) => {
                   const topLabel = (metric as any).topLabel as string | undefined;
                   const criticalLabel =
-                    metric.criticalLabel ||
+                    (metric as any).criticalLabel ||
                     (topLabel && topLabel !== metric.displayValue ? topLabel : undefined);
                   return (
                     <SelectableMetricTile
