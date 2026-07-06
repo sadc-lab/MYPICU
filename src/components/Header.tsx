@@ -365,7 +365,9 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
           </div>
 
           <nav className="hidden md:flex gap-2 items-center" data-guide="patient-nav">
-            {hasPatients && (
+            {studyNav ? (
+              studyNav
+            ) : hasPatients && (
               <>
                 <Badge variant="default" className="bg-primary text-primary-foreground text-xs" data-guide="tour-info">
                   {isOnDisplayedPatient ? `${currentIndex + 1}/${displayedPatients.length}` : `${displayedPatients.length} patients`}
