@@ -842,6 +842,15 @@ const Optibrain = () => {
     },
   ];
 
+  const orderedBrainOptimisationMetrics = [
+    brainOptimisationMetrics[0],
+    brainOptimisationMetrics[5],
+    brainOptimisationMetrics[1],
+    brainOptimisationMetrics[3],
+    brainOptimisationMetrics[4],
+    brainOptimisationMetrics[2],
+  ];
+
   // Auto-select all problematic clinical indicators by default (once data arrives)
   useEffect(() => {
     if (clinicalAutoSelectedRef.current) return;
