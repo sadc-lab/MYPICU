@@ -1049,10 +1049,8 @@ const Optibrain = () => {
       <Header />
       <PatientHeader currentPage="optibrain" />
 
-      <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px]">
-        <div className="mb-6">
-          <VitalSignsPanel />
-        </div>
+      <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px] space-y-6">
+        <VitalSignsPanel />
 
         {(() => {
           const brainProblemCount = brainOptimisationMetrics.filter(
