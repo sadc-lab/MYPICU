@@ -127,7 +127,7 @@ const AutoregStudy = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <StudyHeader patientsController={patientsController} />
+      <Header studyNav={<StudyNav patientsController={patientsController} />} />
 
       {/* Landing hero */}
       <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/5 via-background to-background">
