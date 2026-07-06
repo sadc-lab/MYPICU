@@ -66,6 +66,7 @@ import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowS
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { VitalSignsPanel } from "@/components/VitalSignsPanel";
+import { CollapsibleModuleCard, CountCircle } from "@/components/CollapsibleModuleCard";
 
 
 const Optibrain = () => {
