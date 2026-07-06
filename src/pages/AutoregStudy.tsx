@@ -72,6 +72,36 @@ const AutoregStudy = () => {
       setRolling(rolled);
       setFileName(file.name);
       if (active) updatePatient(active.id, { fileName: file.name });
+      // Persist results in Supabase (linked to study patient id)
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && active) {
+          const { error: insertError } = await supabase
+            .from('autoreg_study_results')
+            .insert({
+              user_id: user.id,
+              study_patient_id: active.id,
+              study_patient_code: active.code,
+              study_patient_label: active.label,
+              file_name: file.name,
+              optimal_ppc: analysis.optimalPPC,
+              lower_limit: analysis.lowerLimit,
+              upper_limit: analysis.upperLimit,
+              min_prx: analysis.minPrx,
+              sample_count: analysis.sampleCount,
+              duration_hours: analysis.durationHours,
+              curve: analysis.curve as any,
+              rolling: rolled as any,
+            });
+          if (insertError) throw insertError;
+          toast.success('Résultats enregistrés dans la base de données');
+        } else if (!user) {
+          toast.info("Connectez-vous pour conserver les résultats dans la base.");
+        }
+      } catch (persistErr: any) {
+        console.error('Persist autoreg result error:', persistErr);
+        toast.error("Impossible d'enregistrer les résultats : " + (persistErr.message || 'erreur inconnue'));
+      }
     } catch (e: any) {
       setError(e.message || 'Erreur lors du traitement du fichier.');
       setResult(null);
