@@ -28,7 +28,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from "recharts";
-import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
+
 import { KpiCircle } from "@/components/KpiCircle";
 import { useTimeRange } from "@/hooks/useTimeRange";
 import { getStatusHexColor } from "@/utils/colorUtils";
@@ -79,9 +79,6 @@ const Optibrain = () => {
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
-  const [brainGroupsOpen, setBrainGroupsOpen] = useState<Record<string, boolean>>({
-    "Pression intracrânienne et état neurologique": true,
-  });
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
   // Track whether the auto-selection of problematic indicators has already
   // run, so the user can later deselect them without us re-adding them.
@@ -555,37 +552,6 @@ const Optibrain = () => {
 
   const showPatientNotFound = !patient && !patientLoading;
 
-  // Override brainMetrics with real data when available
-  const brainMetrics = useMemo(() => {
-    return importedBrainMetrics.map((metric) => {
-      if (metric.label === "PIC" && realBrainValues.pic !== null) {
-        return {
-          ...metric,
-          value: Math.round(realBrainValues.pic * 10) / 10,
-        };
-      }
-      if (metric.label === "PPC" && realBrainValues.ppc !== null) {
-        return {
-          ...metric,
-          value: Math.round(realBrainValues.ppc * 10) / 10,
-        };
-      }
-      if (metric.label === "PaCO2" && realBrainValues.paco2 !== null) {
-        return {
-          ...metric,
-          value: Math.round(realBrainValues.paco2 * 10) / 10,
-        };
-      }
-      // Use patient-specific GCS value
-      if (metric.label === "Glasgow (GCS)" && patient?.gcs !== undefined) {
-        return {
-          ...metric,
-          value: patient.gcs,
-        };
-      }
-      return metric;
-    });
-  }, [realBrainValues.pic, realBrainValues.ppc, realBrainValues.paco2, patient?.gcs]);
 
   // Get PIC status based on value (target < 20 mmHg)
   const getPicStatus = (value: number | null): string => {
@@ -743,7 +709,7 @@ const Optibrain = () => {
         : neurologicalStateConfig.currentState;
 
       return {
-        label: "État actuel",
+        label: "État neurologique",
         value: bigValue,
         displayValue: bigValue,
         unit: "",
@@ -799,6 +765,46 @@ const Optibrain = () => {
         metricKey: "pic",
       };
     })(),
+    {
+      label: "PPC",
+      value: realBrainValues.ppc !== null ? Math.round(realBrainValues.ppc) : "--",
+      displayValue: realBrainValues.ppc !== null ? Math.round(realBrainValues.ppc).toString() : "--",
+      unit: "mmHg",
+      status: getPpcStatus(realBrainValues.ppc) as TileStatus,
+      hasDetails: false,
+      topLabel: realBrainValues.ppc !== null ? `PPC ${Math.round(realBrainValues.ppc)} mmHg` : "PPC --",
+      metricKey: "ppc",
+    },
+    {
+      label: "Glasgow (GCS)",
+      value: patient?.gcs ?? "--",
+      displayValue: patient?.gcs ?? "--",
+      unit: "",
+      status: (() => {
+        const gcs = patient?.gcs;
+        if (gcs === undefined || gcs === null) return "normal";
+        if (gcs >= 13) return "normal";
+        if (gcs >= 9) return "warning";
+        return "critical";
+      })() as TileStatus,
+      hasDetails: false,
+      metricKey: "glasgow",
+    },
+    {
+      label: "PaCO2",
+      value: realBrainValues.paco2 !== null ? Math.round(realBrainValues.paco2) : "--",
+      displayValue: realBrainValues.paco2 !== null ? Math.round(realBrainValues.paco2).toString() : "--",
+      unit: "mmHg",
+      status: (() => {
+        const v = realBrainValues.paco2;
+        if (v === null) return "normal";
+        if (v >= 35 && v <= 45) return "normal";
+        if ((v >= 30 && v < 35) || (v > 45 && v <= 50)) return "warning";
+        return "critical";
+      })() as TileStatus,
+      hasDetails: false,
+      metricKey: "paco2",
+    },
     {
       label: "Autorégulation",
       value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
@@ -866,9 +872,6 @@ const Optibrain = () => {
     });
   }, [patientFileData, brainOptimisationMetrics]);
 
-  const isInRange = (value: number, min: number, max: number) => {
-    return value >= min && value <= max;
-  };
 
   // Calculate clinical adherence (average of indicators with real data only)
   const clinicalAdherence = useMemo(() => {
@@ -1235,7 +1238,7 @@ const Optibrain = () => {
                       { key: 'above30', label: '> 30 mmHg', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical' },
                     ].filter(s => s.pct > 0);
 
-                    const showNeuro = selectedBrainIndicators.includes("État actuel");
+                    const showNeuro = selectedBrainIndicators.includes("État neurologique");
                     const showPic = selectedBrainIndicators.includes("PIC");
 
                     if (!showNeuro && !showPic) return null;
@@ -1667,131 +1670,6 @@ const Optibrain = () => {
           </CardContent>
         </Card>
 
-        <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cérébrales..." variant="skeleton">
-          <div className="space-y-4 mb-6">
-            {(() => {
-              const groups: Array<{ title: string; metricLabels: string[] }> = [
-                { title: "Pression intracrânienne et état neurologique", metricLabels: ["PIC", "PPC", "Glasgow (GCS)", "PaCO2"] },
-              ];
-              return groups.map((group) => {
-                const groupMetrics = brainMetrics.filter(m => group.metricLabels.includes(m.label));
-                if (groupMetrics.length === 0) return null;
-                const offTarget = groupMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax));
-                const abnormal = offTarget.length;
-                const isOpen = brainGroupsOpen[group.title] ?? false;
-
-                // Synthèse contextualisée : liste les paramètres hors cible avec direction
-                const formatVal = (v: number) => {
-                  const abs = Math.abs(v);
-                  if (abs >= 100) return Math.round(v).toString();
-                  if (abs >= 10) return (Math.round(v * 10) / 10).toString();
-                  return (Math.round(v * 100) / 100).toString();
-                };
-                // Tri par "écart relatif à la cible" → les plus critiques en premier
-                const offTargetSorted = [...offTarget].sort((a, b) => {
-                  const deviation = (m: typeof a) => {
-                    if (m.value > m.targetMax) return (m.value - m.targetMax) / Math.max(Math.abs(m.targetMax), 1);
-                    if (m.value < m.targetMin) return (m.targetMin - m.value) / Math.max(Math.abs(m.targetMin), 1);
-                    return 0;
-                  };
-                  return deviation(b) - deviation(a);
-                });
-                const renderItem = (m: typeof offTarget[number]) => {
-                  const arrow = m.value > m.targetMax ? "↑" : m.value < m.targetMin ? "↓" : "";
-                  return `${m.label} ${arrow}${formatVal(m.value)}`;
-                };
-                const COMPACT_LIMIT = 2;
-                const compactItems = offTargetSorted.slice(0, COMPACT_LIMIT).map(renderItem);
-                const remaining = offTargetSorted.length - compactItems.length;
-                const compactSummary = abnormal === 0
-                  ? "Tous les paramètres dans les cibles"
-                  : compactItems.join(" · ") + (remaining > 0 ? ` · +${remaining}` : "");
-                const fullSummary = abnormal === 0
-                  ? "Tous les paramètres dans les cibles"
-                  : offTargetSorted.map(renderItem).join(" · ");
-
-                return (
-                  <Card key={group.title} className="bg-card shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() => setBrainGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
-                      className="w-full"
-                    >
-                      <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors gap-3">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <KpiCircle count={abnormal} groupLabel={group.title} />
-                          <div className="text-left min-w-0 flex-1">
-                            <div className="text-base font-semibold text-foreground">{group.title}</div>
-                            <TooltipProvider delayDuration={150}>
-                              <UITooltip>
-                                <TooltipTrigger asChild>
-                                  <div
-                                    className={`text-xs mt-0.5 truncate cursor-help ${abnormal === 0 ? "text-muted-foreground" : "text-status-critical font-medium"}`}
-                                  >
-                                    {compactSummary}
-                                  </div>
-                                </TooltipTrigger>
-                                {abnormal > 0 && (
-                                  <TooltipContent side="bottom" align="start" className="p-2.5 max-w-[320px]">
-                                    <div className="text-xs font-semibold text-foreground mb-1.5">
-                                      {abnormal} paramètre{abnormal > 1 ? "s" : ""} hors cible
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                      {offTargetSorted.map(m => {
-                                        const arrow = m.value > m.targetMax ? "↑" : "↓";
-                                        const target = `cible ${formatVal(m.targetMin)}–${formatVal(m.targetMax)}`;
-                                        return (
-                                          <div key={m.label} className="flex items-center justify-between gap-3 text-xs">
-                                            <span className="font-medium">{m.label}</span>
-                                            <span className="text-status-critical tabular-nums">
-                                              {arrow}{formatVal(m.value)} <span className="text-muted-foreground font-normal">({target})</span>
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </TooltipContent>
-                                )}
-                              </UITooltip>
-                            </TooltipProvider>
-                          </div>
-                        </div>
-                        <ChevronDown
-                          className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isOpen ? "rotate-180" : ""}`}
-                        />
-                      </div>
-                    </button>
-                    {isOpen && (
-                      <CardContent className="pt-4 border-t">
-                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
-                          {groupMetrics.map((metric, index) => {
-                            const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                            const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
-                            return (
-                              <div key={index} className="flex flex-col items-center">
-                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
-                                <div className="flex items-center gap-2 mb-3">
-                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
-                                </div>
-                                <MetricRangeBar
-                                  value={metric.value}
-                                  min={metric.min}
-                                  max={metric.max}
-                                  targetMin={metric.targetMin}
-                                  targetMax={metric.targetMax}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    )}
-                  </Card>
-                );
-              });
-            })()}
-          </div>
-        </DataLoadingOverlay>
 
         
       </main>
