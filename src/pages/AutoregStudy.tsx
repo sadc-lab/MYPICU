@@ -356,7 +356,7 @@ const AutoregStudy = () => {
                   e.currentTarget.value = '';
                 }}
               />
-              <Button onClick={() => addPatient('')} disabled={parsing}>
+              <Button onClick={() => { setAddError(null); setAddOpen(true); }} disabled={parsing}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Ajouter un patient
               </Button>
