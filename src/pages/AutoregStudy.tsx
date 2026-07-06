@@ -394,7 +394,7 @@ const AutoregStudy = () => {
               </CardContent>
             </Card>
 
-            <Card className="mb-6">
+            <Card className="mb-6" id="pdf-chart-curve" data-pdf-title="Courbe d'autorégulation · PRx vs PPC">
               <CardHeader>
                 <CardTitle>Courbe d'autorégulation · PRx vs PPC</CardTitle>
                 <CardDescription>
