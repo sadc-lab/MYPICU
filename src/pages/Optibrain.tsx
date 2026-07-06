@@ -1303,11 +1303,10 @@ const Optibrain = () => {
                   })()}
                 </div>
               )}
-            </CardContent>
-          )}
-            </Card>
+            </CollapsibleModuleCard>
           );
         })()}
+
 
         <Card className="bg-card shadow-sm mb-6">
           <CardHeader className="px-4 sm:px-6">
