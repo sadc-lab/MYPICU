@@ -1153,7 +1153,7 @@ const Optibrain = () => {
               
               {/* Selectable Brain Metrics */}
               <div className="grid grid-cols-3 gap-2 sm:gap-6 pt-4">
-                {brainOptimisationMetrics.map((metric) => {
+                {orderedBrainOptimisationMetrics.map((metric) => {
                   const topLabel = (metric as any).topLabel as string | undefined;
                   const criticalLabel =
                     (metric as any).criticalLabel ||
