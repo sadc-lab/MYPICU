@@ -1412,7 +1412,27 @@ const Optibrain = () => {
               title="Adhérence aux cibles recommandées"
               subtitle={
                 patientFileData
-                  ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? "s" : ""} à surveiller${clinicalAdherence !== null ? ` · ${clinicalAdherence}% d'adhérence` : ""}`
+                  ? (() => {
+                      const abnormal = clinicalIndicators.filter(
+                        (i) => i.status !== null && i.status !== "normal"
+                      );
+                      if (abnormal.length > 0) {
+                        return (
+                          <span className="text-xs text-muted-foreground truncate">
+                            {abnormal.map((i, idx) => (
+                              <span key={i.label}>
+                                <span className={i.status === "critical" ? "text-status-critical font-semibold" : "text-status-warning font-semibold"}>
+                                  {i.label}
+                                </span>
+                                {idx < abnormal.length - 1 ? " • " : ""}
+                              </span>
+                            ))}
+                            {clinicalAdherence !== null ? ` · ${clinicalAdherence}% d'adhérence` : ""}
+                          </span>
+                        );
+                      }
+                      return `Tous les indicateurs dans la cible${clinicalAdherence !== null ? ` · ${clinicalAdherence}% d'adhérence` : ""}`;
+                    })()
                   : "Pas de données disponibles"
               }
               contentClassName="pt-0 px-3 sm:px-6 pb-4"
