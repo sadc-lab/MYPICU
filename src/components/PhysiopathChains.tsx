@@ -1,15 +1,9 @@
-import { ArrowRight, Activity, Network, Blocks, X } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Activity, Blocks, X } from 'lucide-react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import kidneyIcon from '@/assets/kidney-icon.svg';
