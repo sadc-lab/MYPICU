@@ -139,6 +139,22 @@ function matchStep(step: ChainIndicator, failing: FailingIndicator[]) {
   );
 }
 
+const ModuleIcon = ({ module }: { module: ModuleKey }) => {
+  const cls = 'h-4 w-4';
+  if (module === 'optiheart') return <HeartIcon className={cn(cls, 'text-status-critical')} />;
+  const src =
+    module === 'optibrain'
+      ? brainIcon
+      : module === 'optilungs'
+        ? lungsIcon
+        : module === 'optirenal'
+          ? kidneyIcon
+          : intestineIcon;
+  return <img src={src} alt="" className={cls} />;
+};
+
+
+
 export const PhysiopathChains = ({
   failingIndicators,
   onModuleClick,
