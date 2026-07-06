@@ -832,9 +832,6 @@ const Optibrain = () => {
     });
   }, [patientFileData, brainOptimisationMetrics]);
 
-  const isInRange = (value: number, min: number, max: number) => {
-    return value >= min && value <= max;
-  };
 
   // Calculate clinical adherence (average of indicators with real data only)
   const clinicalAdherence = useMemo(() => {
