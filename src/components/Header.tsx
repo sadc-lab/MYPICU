@@ -35,12 +35,15 @@ import {
 } from '@/components/ui/sheet';
 import mypicuLogo from '@/assets/mypicu-logo.png';
 
+import React from 'react';
+
 interface HeaderProps {
   selectedPed?: 'A' | 'B' | 'C';
   patients?: Patient[];
+  studyNav?: React.ReactNode;
 }
 
-export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProps) => {
+export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: HeaderProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
