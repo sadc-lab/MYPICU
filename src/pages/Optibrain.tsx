@@ -66,7 +66,8 @@ import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowS
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { VitalSignsPanel } from "@/components/VitalSignsPanel";
-import { CollapsibleModuleCard, CountCircle } from "@/components/CollapsibleModuleCard";
+import { CollapsibleModuleCard, CountCircle, StatusIconCircle } from "@/components/CollapsibleModuleCard";
+import { SelectableMetricTile, TileStatus } from "@/components/SelectableMetricTile";
 
 
 const Optibrain = () => {
@@ -1063,12 +1064,17 @@ const Optibrain = () => {
               expanded={optimisationExpanded}
               onToggle={() => setOptimisationExpanded((p) => !p)}
               headerIcon={
-                <KpiCircle
-                  count={brainProblemCount}
-                  hasCritical={brainHasCritical}
-                  groupLabel="Optimisation cérébrale"
-                  itemLabel="indicateur"
-                />
+                <StatusIconCircle status={brainHasCritical ? "critical" : brainProblemCount > 0 ? "warning" : "normal"}>
+                  <img
+                    src={brainIcon}
+                    alt="cerveau"
+                    className="h-6 w-6 sm:h-8 sm:w-8"
+                    style={{
+                      filter:
+                        'invert(60%) sepia(80%) saturate(600%) hue-rotate(0deg) brightness(95%) contrast(90%)',
+                    }}
+                  />
+                </StatusIconCircle>
               }
               title="Optimisation cérébrale actuelle"
               subtitle={(() => {
@@ -1135,66 +1141,34 @@ const Optibrain = () => {
                 </div>
               )}
               
-              {/* Selectable Brain Metrics with distribution bars below each */}
-              <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-3">
-                {brainOptimisationMetrics.map((metric, index) => {
-                  const isSelected = selectedBrainIndicators.includes(metric.label);
-                  const statusColor = metric.status === "critical" 
-                    ? "text-status-critical" 
-                    : metric.status === "warning" 
-                      ? "text-status-warning" 
-                      : "text-foreground";
-                  
-                  // Subtle status background for the card
-                  const statusBg = metric.status === "critical" 
-                    ? "bg-status-critical/5" 
-                    : metric.status === "warning" 
-                      ? "bg-status-warning/5" 
-                      : "bg-muted/30";
-                  
+              {/* Selectable Brain Metrics */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-6 pt-4">
+                {brainOptimisationMetrics.map((metric) => {
+                  const topLabel = (metric as any).topLabel as string | undefined;
+                  const criticalLabel =
+                    (metric as any).criticalLabel ||
+                    (topLabel && topLabel !== metric.displayValue ? topLabel : undefined);
                   return (
-                    <div key={index} className="flex flex-col gap-2">
-                      {/* Metric card */}
-                      <div
-                        className={`flex flex-col items-center cursor-pointer p-2 sm:p-2.5 rounded-lg transition-all border ${statusBg} ${
-                          isSelected
-                            ? metric.status === "critical"
-                              ? "border-status-critical shadow-sm ring-1 ring-status-critical/20"
-                              : metric.status === "warning"
-                                ? "border-status-warning shadow-sm ring-1 ring-status-warning/20"
-                                : "border-primary shadow-sm ring-1 ring-primary/20"
-                            : "border-transparent hover:border-border hover:shadow-sm"
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (metric.hasDetails) {
-                            setSelectedBrainIndicators((prev) =>
-                              prev.includes(metric.label)
-                                ? prev.filter((label) => label !== metric.label)
-                                : [...prev, metric.label]
-                            );
-                          }
-                        }}
-                      >
-                        {(metric as any).topLabel ? (
-                          <div className="text-[11px] sm:text-xs font-semibold text-foreground mb-1.5 text-center leading-tight">
-                            {(metric as any).topLabel}
-                          </div>
-                        ) : (
-                          <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-center">
-                            {metric.label}
-                          </div>
-                        )}
-                        <div className="flex items-baseline gap-1 justify-center">
-                          <div className={`text-base sm:text-xl font-bold ${statusColor} tabular-nums leading-tight text-center`}>
-                            {metric.displayValue}
-                          </div>
-                          {metric.unit && (
-                            <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    <SelectableMetricTile
+                      key={metric.label}
+                      label={metric.label}
+                      displayValue={metric.displayValue}
+                      unit={metric.unit}
+                      status={(metric.status as TileStatus) || 'normal'}
+                      criticalLabel={criticalLabel}
+                      criticalColor={(metric as any).criticalColor || 'text-muted-foreground'}
+                      isSelected={selectedBrainIndicators.includes(metric.label)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (metric.hasDetails) {
+                          setSelectedBrainIndicators((prev) =>
+                            prev.includes(metric.label)
+                              ? prev.filter((l) => l !== metric.label)
+                              : [...prev, metric.label]
+                          );
+                        }
+                      }}
+                    />
                   );
                 })}
               </div>
