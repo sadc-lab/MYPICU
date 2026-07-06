@@ -28,6 +28,8 @@ const transformDbPatient = (row: any): Patient => ({
   kidneyScore: row.kidney_score,
   ward: row.ward === 'pedB' ? 'pedB' : 'pedA',
   gcs: row.gcs,
+  allergies: row.allergies || undefined,
+  intolerances: row.intolerances || undefined,
 });
 
 // Helper to transform Patient to database row
