@@ -7,6 +7,16 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
   Upload,
   FileText,
   Download,
@@ -44,7 +54,7 @@ import { toast } from 'sonner';
 
 const AutoregStudy = () => {
   const patientsController = useStudyPatients();
-  const { patients, active, addPatient, updatePatient } = patientsController;
+  const { patients, active, addPatient, updatePatient, removePatient } = patientsController;
 
   const [fileName, setFileName] = useState<string | null>(null);
   const [result, setResult] = useState<AutoregResult | null>(null);
@@ -52,6 +62,34 @@ const AutoregStudy = () => {
   const [error, setError] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Add-patient dialog state (label + required CSV)
+  const [addOpen, setAddOpen] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const submitNewPatient = async () => {
+    setAddError(null);
+    if (!newFile) {
+      setAddError('Veuillez sélectionner un fichier CSV ou JSON.');
+      return;
+    }
+    const created = addPatient(newLabel);
+    if (newLabel.trim()) {
+      updatePatient(created.id, { label: newLabel.trim() });
+    }
+    setAddOpen(false);
+    const fileToProcess = newFile;
+    setNewLabel('');
+    setNewFile(null);
+    try {
+      await handleFile(fileToProcess);
+    } catch {
+      // handleFile already surfaces errors
+      removePatient(created.id);
+    }
+  };
 
   const handleFile = async (file: File) => {
     setError(null);
