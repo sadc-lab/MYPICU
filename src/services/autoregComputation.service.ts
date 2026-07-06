@@ -298,20 +298,51 @@ export function rollingOptimal(
 }
 
 // CSV export helper
-export function resultsToCSV(result: AutoregResult): string {
+export interface CSVMetadata {
+  subjectId?: string;
+  subjectCode?: string;
+  subjectLabel?: string;
+  fileName?: string;
+  studyDate?: Date;
+  exportedAt?: Date;
+}
+
+function csvEscape(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+export function resultsToCSV(result: AutoregResult, meta: CSVMetadata = {}): string {
   const lines: string[] = [];
-  lines.push("# Résumé");
-  lines.push(`PPC optimale,${result.optimalPPC ?? ""}`);
-  lines.push(`LLA,${result.lowerLimit ?? ""}`);
-  lines.push(`ULA,${result.upperLimit ?? ""}`);
+  const exportedAt = meta.exportedAt ?? new Date();
+  const studyDate = meta.studyDate ?? result.samples[0]?.time ?? null;
+
+  lines.push("# Métadonnées du sujet");
+  lines.push(`ID patient,${csvEscape(meta.subjectId)}`);
+  lines.push(`Code sujet,${csvEscape(meta.subjectCode)}`);
+  lines.push(`Libellé sujet,${csvEscape(meta.subjectLabel)}`);
+  lines.push(`Fichier source,${csvEscape(meta.fileName)}`);
+  lines.push(`Date d'étude,${studyDate ? studyDate.toISOString() : ""}`);
+  lines.push(`Date d'export,${exportedAt.toISOString()}`);
+  lines.push("");
+
+  lines.push("# Résumé des résultats optimaux");
+  lines.push(`PPC optimale (mmHg),${result.optimalPPC ?? ""}`);
+  lines.push(`LLA (mmHg),${result.lowerLimit ?? ""}`);
+  lines.push(`ULA (mmHg),${result.upperLimit ?? ""}`);
   lines.push(`PRx minimum,${result.minPrx ?? ""}`);
   lines.push(`Nombre d'échantillons,${result.sampleCount}`);
   lines.push(`Durée (h),${result.durationHours}`);
   lines.push("");
+
   lines.push("# Courbe PRx vs PPC");
-  lines.push("PPC (mmHg),PRx moyen,N");
-  result.curve.forEach((p) => lines.push(`${p.ppc},${p.prx},${p.count}`));
+  lines.push("PPC (mmHg),PRx moyen,N échantillons,Autorégulation");
+  result.curve.forEach((p) =>
+    lines.push(`${p.ppc},${p.prx},${p.count},${p.prx < 0.3 ? "Préservée" : "Altérée"}`),
+  );
   lines.push("");
+
   lines.push("# Séries temporelles");
   lines.push("Horodate,PIC,PAM,PPC,PRx");
   result.samples.forEach((s) =>
@@ -321,3 +352,4 @@ export function resultsToCSV(result: AutoregResult): string {
   );
   return lines.join("\n");
 }
+
