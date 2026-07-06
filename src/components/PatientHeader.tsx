@@ -105,13 +105,14 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
           <div className="flex-1">
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={() => navigate("/")}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground -ml-2 mb-1"
+              className="text-muted-foreground hover:text-foreground -ml-2 mb-1 px-2 gap-0.5"
               title="Accueil"
               aria-label="Accueil"
               data-export-hide
             >
+              <ChevronLeft className="h-3 w-3" />
               <Home className="h-4 w-4" />
             </Button>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
