@@ -1280,7 +1280,7 @@ const Optibrain = () => {
                     return (
                       <div className="space-y-3 pt-2 border-t border-border">
                         {showNeuro && neuroSegments.length > 0 && renderBar("État neurologique", neuroSegments)}
-                        {showPic && picSegments.length > 0 && renderBar("PIC", picSegments)}
+                        {showPic && picSegments.length > 0 && renderBar("Niveau de PIC", picSegments)}
                       </div>
                     );
                   })()}
