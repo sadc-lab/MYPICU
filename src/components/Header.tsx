@@ -483,7 +483,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                 <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-foreground" data-guide="user-menu">
                   <User className="h-5 w-5" />
                   <span className="hidden md:inline">
-                    {user?.user_metadata?.full_name || 'Philippe Jouvet'}
+                    {user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
