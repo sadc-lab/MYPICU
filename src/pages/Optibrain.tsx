@@ -1246,7 +1246,7 @@ const Optibrain = () => {
                     ].filter(s => s.pct > 0);
 
                     const showNeuro = selectedBrainIndicators.includes("État neurologique");
-                    const showPic = selectedBrainIndicators.includes("PIC");
+                    const showPic = selectedBrainIndicators.includes("Niveau de PIC");
 
                     if (!showNeuro && !showPic) return null;
 
