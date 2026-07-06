@@ -461,7 +461,7 @@ const AutoregStudy = () => {
             </Card>
 
             {rollingChartData.length > 0 && (
-              <Card className="mb-6">
+              <Card className="mb-6" id="pdf-chart-rolling" data-pdf-title="PPC optimale et limites dans le temps">
                 <CardHeader>
                   <CardTitle>PPC optimale et limites dans le temps</CardTitle>
                   <CardDescription>
