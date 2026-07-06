@@ -1,15 +1,26 @@
 import { useMemo, useRef, useState } from 'react';
-import { StudyHeader } from '@/components/study/StudyHeader';
+import { Header } from '@/components/Header';
+import { StudyNav } from '@/components/study/StudyNav';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Upload, FileText, Download, Activity, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+  Upload,
+  FileText,
+  Download,
+  
+  AlertCircle,
+  CheckCircle2,
+  Brain,
+  LineChart,
+  ShieldCheck,
+  UserPlus,
+} from 'lucide-react';
 import {
   ComposedChart,
   Line,
-  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -27,8 +38,12 @@ import {
   type AutoregResult,
   type OptimalTimePoint,
 } from '@/services/autoregComputation.service';
+import { useStudyPatients } from '@/hooks/useStudyPatients';
 
 const AutoregStudy = () => {
+  const patientsController = useStudyPatients();
+  const { patients, active, addPatient, updatePatient } = patientsController;
+
   const [fileName, setFileName] = useState<string | null>(null);
   const [result, setResult] = useState<AutoregResult | null>(null);
   const [rolling, setRolling] = useState<OptimalTimePoint[]>([]);
@@ -40,9 +55,7 @@ const AutoregStudy = () => {
     setError(null);
     setParsing(true);
     try {
-      if (file.size > 25 * 1024 * 1024) {
-        throw new Error('Fichier trop volumineux (max 25 Mo).');
-      }
+      if (file.size > 25 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 25 Mo).');
       const text = await file.text();
       const samples = parseAny(text);
       if (samples.length < 30) {
@@ -56,6 +69,7 @@ const AutoregStudy = () => {
       setResult(analysis);
       setRolling(rolled);
       setFileName(file.name);
+      if (active) updatePatient(active.id, { fileName: file.name });
     } catch (e: any) {
       setError(e.message || 'Erreur lors du traitement du fichier.');
       setResult(null);
@@ -65,18 +79,23 @@ const AutoregStudy = () => {
     }
   };
 
+  const openFilePicker = () => {
+    if (!active) {
+      const created = addPatient('');
+      // brief delay to let state settle, then open
+      setTimeout(() => inputRef.current?.click(), 50);
+      void created;
+      return;
+    }
+    inputRef.current?.click();
+  };
+
   const timeSeriesChartData = useMemo(() => {
     if (!result) return [];
-    // Downsample if huge
     const step = Math.max(1, Math.floor(result.samples.length / 800));
     return result.samples
       .filter((_, i) => i % step === 0)
-      .map((s) => ({
-        t: s.time.getTime(),
-        pic: s.pic,
-        pam: s.pam,
-        ppc: s.ppc,
-      }));
+      .map((s) => ({ t: s.time.getTime(), pic: s.pic, pam: s.pam, ppc: s.ppc }));
   }, [result]);
 
   const rollingChartData = useMemo(
@@ -97,48 +116,78 @@ const AutoregStudy = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `autoreg_resultats_${Date.now()}.csv`;
+    a.download = `autoreg_${active?.code ?? 'sujet'}_${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  const formatTime = (t: number) => {
-    const d = new Date(t);
-    return d.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
-  };
+  const formatTime = (t: number) =>
+    new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
 
   return (
     <div className="min-h-screen bg-background">
-      <StudyHeader />
+      <Header studyNav={<StudyNav patientsController={patientsController} />} />
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Hero */}
-        <section className="mb-8 text-center">
+      {/* Landing hero */}
+      <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/5 via-background to-background">
+        <div className="container mx-auto max-w-5xl px-4 pt-10 sm:pt-16 pb-4 text-center">
           <Badge variant="outline" className="mb-3">
             Étude clinique · Usage recherche uniquement
           </Badge>
-          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
-            Validation de l'autorégulation cérébrale
+          <h1 className="text-3xl sm:text-5xl font-bold text-foreground tracking-tight mb-2">
+            Validation clinique de l'autorégulation cérébrale
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Importez vos données de monitorage (PIC, PAM, PPC) pour calculer l'indice PRx,
-            visualiser la courbe d'autorégulation et estimer la PPC optimale, la LLA et l'ULA.
-          </p>
-        </section>
+        </div>
+        <div className="container mx-auto max-w-6xl px-4 pb-6">
+          <section id="methodology" className="grid md:grid-cols-3 gap-4">
+            <StepCard
+              n={1}
+              title="Créer un sujet"
+              desc="Ajoutez un pseudonyme via le bouton Sujet dans la barre du haut."
+            />
+            <StepCard
+              n={2}
+              title="Importer les données"
+              desc="CSV (Horodate, PIC, PAM, PPC) ou JSON Fisher. Détection automatique."
+            />
+            <StepCard
+              n={3}
+              title="Analyser et exporter"
+              desc="Visualisations interactives et export CSV des résultats calculés."
+            />
+          </section>
+        </div>
+      </section>
 
-        {/* Import */}
+      <main className="container mx-auto px-4 py-8 max-w-6xl">
+
+        {/* Import panel */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Upload className="h-5 w-5" />
               Import des données
+              {active && (
+                <Badge variant="secondary" className="ml-2">
+                  {active.code} · {active.label}
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription>
-              Formats acceptés&nbsp;: CSV (colonnes <code>Horodate, PIC, PAM, PPC</code>) ou JSON
-              Fisher. Détection automatique du format.
+              Formats acceptés : CSV (colonnes <code>Horodate, PIC, PAM, PPC</code>) ou JSON Fisher.
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {!active && patients.length === 0 && (
+              <Alert className="mb-4">
+                <UserPlus className="h-4 w-4" />
+                <AlertTitle>Aucun sujet</AlertTitle>
+                <AlertDescription>
+                  Créez d'abord un sujet via le bouton <strong>Sujet</strong> en haut à droite, ou cliquez
+                  ci-dessous pour en créer un automatiquement puis importer un fichier.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <input
                 ref={inputRef}
@@ -148,11 +197,12 @@ const AutoregStudy = () => {
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) handleFile(f);
+                  e.currentTarget.value = '';
                 }}
               />
-              <Button onClick={() => inputRef.current?.click()} disabled={parsing}>
+              <Button onClick={openFilePicker} disabled={parsing}>
                 <FileText className="mr-2 h-4 w-4" />
-                {parsing ? 'Analyse…' : 'Sélectionner un fichier'}
+                {parsing ? 'Analyse…' : 'Ajouter un patient'}
               </Button>
               {fileName && (
                 <span className="text-sm text-muted-foreground truncate">
@@ -174,15 +224,30 @@ const AutoregStudy = () => {
         {!result && !error && (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
-              <Activity className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p>Aucune donnée. Importez un fichier pour lancer l'analyse.</p>
+              <p className="mb-6">Aucune donnée. Importez un fichier pour lancer l'analyse.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
+                <FeatureCard
+                  icon={<Brain className="h-5 w-5" />}
+                  title="Indice PRx"
+                  desc="Corrélation glissante PIC/PAM sur fenêtre 30 échantillons."
+                />
+                <FeatureCard
+                  icon={<LineChart className="h-5 w-5" />}
+                  title="Courbe en U"
+                  desc="Détection automatique de la PPC optimale et des limites LLA/ULA."
+                />
+                <FeatureCard
+                  icon={<ShieldCheck className="h-5 w-5" />}
+                  title="Données locales"
+                  desc="Traitement 100% navigateur, aucune donnée transmise à un serveur."
+                />
+              </div>
             </CardContent>
           </Card>
         )}
 
         {result && (
           <>
-            {/* Summary */}
             <Card className="mb-6">
               <CardHeader>
                 <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -192,8 +257,8 @@ const AutoregStudy = () => {
                       Résultats de l'analyse
                     </CardTitle>
                     <CardDescription>
-                      {result.sampleCount} échantillons · {result.durationHours} h ·
-                      PRx = corrélation glissante PIC/PAM (fenêtre 30 échantillons)
+                      {result.sampleCount} échantillons · {result.durationHours} h · PRx = corrélation
+                      glissante PIC/PAM (fenêtre 30 échantillons)
                     </CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={downloadCSV}>
@@ -212,7 +277,6 @@ const AutoregStudy = () => {
               </CardContent>
             </Card>
 
-            {/* U-curve */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Courbe d'autorégulation · PRx vs PPC</CardTitle>
@@ -252,7 +316,6 @@ const AutoregStudy = () => {
                           border: '1px solid hsl(var(--border))',
                           borderRadius: 8,
                         }}
-                        formatter={(v: any, name: string) => [v, name]}
                         labelFormatter={(l) => `PPC : ${l} mmHg`}
                       />
                       <Line
@@ -280,7 +343,6 @@ const AutoregStudy = () => {
               </CardContent>
             </Card>
 
-            {/* Rolling optimal PPC */}
             {rollingChartData.length > 0 && (
               <Card className="mb-6">
                 <CardHeader>
@@ -326,7 +388,6 @@ const AutoregStudy = () => {
               </Card>
             )}
 
-            {/* Time series PIC/PAM/PPC */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Séries temporelles PIC / PAM / PPC</CardTitle>
@@ -363,7 +424,6 @@ const AutoregStudy = () => {
               </CardContent>
             </Card>
 
-            {/* Curve table */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Tableau des résultats</CardTitle>
@@ -407,13 +467,43 @@ const AutoregStudy = () => {
         )}
 
         <p className="text-xs text-muted-foreground text-center mt-8">
-          Cet outil est fourni à des fins de recherche clinique. Il ne remplace pas
-          l'évaluation médicale et n'est pas un dispositif médical homologué.
+          Cet outil est fourni à des fins de recherche clinique. Il ne remplace pas l'évaluation
+          médicale et n'est pas un dispositif médical homologué.
         </p>
       </main>
     </div>
   );
 };
+
+const FeatureCard = ({
+  icon,
+  title,
+  desc,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) => (
+  <div className="rounded-lg border bg-card p-4">
+    <div className="flex items-center gap-2 text-primary mb-1">
+      {icon}
+      <span className="font-semibold text-foreground">{title}</span>
+    </div>
+    <p className="text-sm text-muted-foreground">{desc}</p>
+  </div>
+);
+
+const StepCard = ({ n, title, desc }: { n: number; title: string; desc: string }) => (
+  <div className="rounded-lg border bg-card p-4">
+    <div className="flex items-center gap-2 mb-1">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+        {n}
+      </span>
+      <span className="font-semibold text-foreground">{title}</span>
+    </div>
+    <p className="text-sm text-muted-foreground">{desc}</p>
+  </div>
+);
 
 const SummaryStat = ({
   label,
@@ -428,11 +518,7 @@ const SummaryStat = ({
   digits?: number;
   highlight?: boolean;
 }) => (
-  <div
-    className={`rounded-lg border p-4 ${
-      highlight ? 'bg-primary/5 border-primary/30' : 'bg-card'
-    }`}
-  >
+  <div className={`rounded-lg border p-4 ${highlight ? 'bg-primary/5 border-primary/30' : 'bg-card'}`}>
     <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
     <div className="mt-1 flex items-baseline gap-1">
       <span className={`text-2xl font-bold ${highlight ? 'text-primary' : 'text-foreground'}`}>

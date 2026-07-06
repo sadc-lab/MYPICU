@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle, Menu, X, Home, Upload } from 'lucide-react';
+import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle, Menu, X, Home, Upload, Brain } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, getPatientsForPed, Patient } from '@/utils/patientData';
@@ -35,12 +35,15 @@ import {
 } from '@/components/ui/sheet';
 import mypicuLogo from '@/assets/mypicu-logo.png';
 
+import React from 'react';
+
 interface HeaderProps {
   selectedPed?: 'A' | 'B' | 'C';
   patients?: Patient[];
+  studyNav?: React.ReactNode;
 }
 
-export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProps) => {
+export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: HeaderProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -362,7 +365,9 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
           </div>
 
           <nav className="hidden md:flex gap-2 items-center" data-guide="patient-nav">
-            {hasPatients && (
+            {studyNav ? (
+              studyNav
+            ) : hasPatients && (
               <>
                 <Badge variant="default" className="bg-primary text-primary-foreground text-xs" data-guide="tour-info">
                   {isOnDisplayedPatient ? `${currentIndex + 1}/${displayedPatients.length}` : `${displayedPatients.length} patients`}
@@ -502,6 +507,12 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
                   <Link to="/admin/import" className="flex items-center gap-2">
                     <Upload className="h-4 w-4" />
                     Import données
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/autoreg" className="flex items-center gap-2">
+                    <Brain className="h-4 w-4" />
+                    Étude Optibrain
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
