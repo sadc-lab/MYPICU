@@ -432,99 +432,89 @@ const Optilungs = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Card className="border-2 border-border">
-              <CardHeader
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setClinicalExpanded(!clinicalExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-4">
+            <CollapsibleModuleCard
+              variant="nested"
+              expanded={clinicalExpanded}
+              onToggle={() => setClinicalExpanded(!clinicalExpanded)}
+              headerIcon={
+                <CountCircle
+                  count={outOfRangeCount}
+                  total={totalIndicators}
+                  status={
+                    outOfRangeCount === 0
+                      ? 'inactive'
+                      : outOfRangeCount <= 2
+                        ? 'warning'
+                        : 'critical'
+                  }
+                />
+              }
+              title="Indicateurs à surveiller"
+              subtitle={
+                outOfRangeCount > 0
+                  ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? 's' : ''} à surveiller`
+                  : 'Tous les indicateurs dans la cible'
+              }
+              contentClassName="px-3 sm:px-6 pb-4"
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4 pt-4">
+                {clinicalIndicators.map((indicator, index) => {
+                  const isSelected = selectedIndicators.includes(indicator.label);
+                  const adherenceDotColor =
+                    indicator.adherencePercentage === null
+                      ? "bg-status-inactive/40"
+                      : (indicator.adherencePercentage ?? 0) >= 90
+                        ? "bg-status-normal"
+                        : (indicator.adherencePercentage ?? 0) >= 80
+                          ? "bg-status-warning"
+                          : "bg-status-critical";
+                  return (
                     <div
-                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold border-4 shrink-0 ${
-                        outOfRangeCount === 0
-                          ? "border-muted-foreground text-muted-foreground bg-muted"
-                          : outOfRangeCount <= 2
-                            ? "border-status-warning text-status-warning bg-status-warning/10"
-                            : "border-status-critical text-status-critical bg-status-critical/10"
+                      key={index}
+                      className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all border-2 ${
+                        isSelected
+                          ? "bg-card shadow-sm border-primary"
+                          : "border-transparent hover:bg-muted/50"
                       }`}
+                      onClick={() => {
+                        setSelectedIndicators(prev =>
+                          prev.includes(indicator.label)
+                            ? prev.filter(label => label !== indicator.label)
+                            : [...prev, indicator.label]
+                        );
+                        setTimeout(() => {
+                          chartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                      }}
                     >
-                      {outOfRangeCount}/{totalIndicators}
+                      <TooltipProvider delayDuration={200}>
+                        <UITooltip>
+                          <TooltipTrigger asChild>
+                            <div className={`w-3 h-3 rounded-full mt-1 ${adherenceDotColor} cursor-help`}></div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs max-w-48">
+                            {indicator.adherencePercentage !== null
+                              ? (
+                                <div>
+                                  <div className="font-semibold">{indicator.adherencePercentage}% adhérence</div>
+                                  <div className="text-muted-foreground mt-1">% du temps passé dans la cible recommandée</div>
+                                </div>
+                              )
+                              : "Pas de données"
+                            }
+                          </TooltipContent>
+                        </UITooltip>
+                      </TooltipProvider>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">{indicator.label}</p>
+                        <p className="text-xs text-muted-foreground">{indicator.target}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">Indicateurs à surveiller</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {outOfRangeCount > 0 ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? 's' : ''} à surveiller` : "Tous les indicateurs dans la cible"}
-                      </p>
-                    </div>
-                  </div>
-                  {clinicalExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                  )}
-                </div>
-              </CardHeader>
-              {clinicalExpanded && (
-                <CardContent className="pt-0 px-3 sm:px-6">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4 pt-4">
-                    {clinicalIndicators.map((indicator, index) => {
-                      const isSelected = selectedIndicators.includes(indicator.label);
-                      const adherenceDotColor =
-                        indicator.adherencePercentage === null
-                          ? "bg-status-inactive/40"
-                          : (indicator.adherencePercentage ?? 0) >= 90
-                            ? "bg-status-normal"
-                            : (indicator.adherencePercentage ?? 0) >= 80
-                              ? "bg-status-warning"
-                              : "bg-status-critical";
-                      return (
-                        <div
-                          key={index}
-                          className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all border-2 ${
-                            isSelected
-                              ? "bg-card shadow-sm border-primary"
-                              : "border-transparent hover:bg-muted/50"
-                          }`}
-                          onClick={() => {
-                            setSelectedIndicators(prev =>
-                              prev.includes(indicator.label)
-                                ? prev.filter(label => label !== indicator.label)
-                                : [...prev, indicator.label]
-                            );
-                            setTimeout(() => {
-                              chartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }, 100);
-                          }}
-                        >
-                          <TooltipProvider delayDuration={200}>
-                            <UITooltip>
-                              <TooltipTrigger asChild>
-                                <div className={`w-3 h-3 rounded-full mt-1 ${adherenceDotColor} cursor-help`}></div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-48">
-                                {indicator.adherencePercentage !== null
-                                  ? (
-                                    <div>
-                                      <div className="font-semibold">{indicator.adherencePercentage}% adhérence</div>
-                                      <div className="text-muted-foreground mt-1">% du temps passé dans la cible recommandée</div>
-                                    </div>
-                                  )
-                                  : "Pas de données"
-                                }
-                              </TooltipContent>
-                            </UITooltip>
-                          </TooltipProvider>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">{indicator.label}</p>
-                            <p className="text-xs text-muted-foreground">{indicator.target}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+                  );
+                })}
+              </div>
+            </CollapsibleModuleCard>
+
             {/* Monitoring Chart */}
             <Card ref={chartRef} className="border-2 border-border">
               <CardHeader className="px-3 sm:px-6">
