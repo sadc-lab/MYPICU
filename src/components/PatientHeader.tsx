@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronDown, Bell, Home } from "lucide-react";
+import { ChevronLeft, ChevronDown, Bell, Home, AlertTriangle, Ban } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";
@@ -137,6 +137,24 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             <p className="text-xs sm:text-sm text-foreground mt-2">
               <strong>Diagnostic:</strong> {patient.diagnosis}
             </p>
+            {(patient.allergies || patient.intolerances) && (
+              <div className="mt-2 space-y-1">
+                {patient.allergies && (
+                  <div className="flex items-center gap-1.5 text-xs text-destructive">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    <span className="font-medium">Allergies:</span>
+                    <span>{patient.allergies}</span>
+                  </div>
+                )}
+                {patient.intolerances && (
+                  <div className="flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400">
+                    <Ban className="h-3.5 w-3.5 shrink-0" />
+                    <span className="font-medium">Intolérances:</span>
+                    <span>{patient.intolerances}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <Collapsible open={showReminders} onOpenChange={setShowReminders} className="mt-3">
               <CollapsibleTrigger className="flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors">

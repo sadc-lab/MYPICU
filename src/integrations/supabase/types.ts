@@ -190,6 +190,7 @@ export type Database = {
         Row: {
           adherence: number | null
           age: string
+          allergies: string | null
           brain_score: number | null
           created_at: string | null
           diagnosis: string
@@ -197,6 +198,7 @@ export type Database = {
           gcs: number | null
           heart_score: number | null
           id: string
+          intolerances: string | null
           kidney_score: number | null
           lungs_score: number | null
           name: string
@@ -211,6 +213,7 @@ export type Database = {
         Insert: {
           adherence?: number | null
           age: string
+          allergies?: string | null
           brain_score?: number | null
           created_at?: string | null
           diagnosis: string
@@ -218,6 +221,7 @@ export type Database = {
           gcs?: number | null
           heart_score?: number | null
           id: string
+          intolerances?: string | null
           kidney_score?: number | null
           lungs_score?: number | null
           name: string
@@ -232,6 +236,7 @@ export type Database = {
         Update: {
           adherence?: number | null
           age?: string
+          allergies?: string | null
           brain_score?: number | null
           created_at?: string | null
           diagnosis?: string
@@ -239,6 +244,7 @@ export type Database = {
           gcs?: number | null
           heart_score?: number | null
           id?: string
+          intolerances?: string | null
           kidney_score?: number | null
           lungs_score?: number | null
           name?: string

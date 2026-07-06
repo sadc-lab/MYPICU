@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { Droplets } from 'lucide-react';
+import { Droplets, AlertTriangle, Ban } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { Patient } from '@/types/patient.types';
 import { useNavigate } from 'react-router-dom';
@@ -112,6 +112,26 @@ export const PatientCard = ({ patient }: PatientCardProps) => {
         <span>Adh: <span className="font-medium text-foreground">{patient.adherence}%</span></span>
         <span>#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</span>
       </div>
+
+      {/* Allergies / Intolerances */}
+      {(patient.allergies || patient.intolerances) && (
+        <div className="mb-3 space-y-1">
+          {patient.allergies && (
+            <div className="flex items-center gap-1.5 text-xs text-destructive">
+              <AlertTriangle className="h-3 w-3 shrink-0" />
+              <span className="font-medium">Allergies:</span>
+              <span className="truncate">{patient.allergies}</span>
+            </div>
+          )}
+          {patient.intolerances && (
+            <div className="flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400">
+              <Ban className="h-3 w-3 shrink-0" />
+              <span className="font-medium">Intolérances:</span>
+              <span className="truncate">{patient.intolerances}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Bottom row: organ scores */}
       <div className="flex gap-1.5">
