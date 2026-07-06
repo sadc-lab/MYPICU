@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
-import { StudyHeader } from '@/components/study/StudyHeader';
+import { Header } from '@/components/Header';
+import { StudyNav } from '@/components/study/StudyNav';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
