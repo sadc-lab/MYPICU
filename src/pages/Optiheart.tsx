@@ -11,6 +11,7 @@ import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus, Ale
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 import { MetricRangeBar } from '@/components/MetricRangeBar';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
+import { CollapsibleModuleCard, CountCircle } from '@/components/CollapsibleModuleCard';
 
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
