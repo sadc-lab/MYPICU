@@ -103,6 +103,17 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 mb-3 sm:mb-4">
           <div className="flex-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/")}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground -ml-2 mb-1"
+              title="Accueil"
+              aria-label="Accueil"
+              data-export-hide
+            >
+              <Home className="h-4 w-4" />
+            </Button>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
               <span>#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</span>{" "}
               <span data-patient-name>{patient.name}</span>
