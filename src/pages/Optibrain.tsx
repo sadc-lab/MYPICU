@@ -1402,9 +1402,8 @@ const Optibrain = () => {
                       );
                     })}
                   </div>
-                </CardContent>
-              )}
-            </Card>
+            </CollapsibleModuleCard>
+
 
             <Card className="border-2 border-border">
               <CardHeader
