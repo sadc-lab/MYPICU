@@ -1,6 +1,8 @@
-import { ArrowRight, Activity, Network } from 'lucide-react';
+import { ArrowRight, Activity, Network, Blocks, Link2, X } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -8,6 +10,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import brainIcon from '@/assets/brain-icon.svg';
+import lungsIcon from '@/assets/lungs-icon.svg';
+import kidneyIcon from '@/assets/kidney-icon.svg';
+import intestineIcon from '@/assets/intestine-icon.svg';
+import { HeartIcon } from '@/components/icons/HeartIcon';
 
 export type ModuleKey =
   | 'optibrain'
@@ -132,18 +139,93 @@ function matchStep(step: ChainIndicator, failing: FailingIndicator[]) {
   );
 }
 
+const ModuleIcon = ({ module }: { module: ModuleKey }) => {
+  const cls = 'h-4 w-4';
+  if (module === 'optiheart') return <HeartIcon className={cn(cls, 'text-status-critical')} />;
+  const src =
+    module === 'optibrain'
+      ? brainIcon
+      : module === 'optilungs'
+        ? lungsIcon
+        : module === 'optirenal'
+          ? kidneyIcon
+          : intestineIcon;
+  return <img src={src} alt="" className={cls} />;
+};
+
+
+
 export const PhysiopathChains = ({
   failingIndicators,
   onModuleClick,
 }: PhysiopathChainsProps) => {
-  const activeChains = CHAINS.map((chain) => {
+export const PhysiopathChains = ({
+  failingIndicators,
+  onModuleClick,
+}: PhysiopathChainsProps) => {
+  const [selected, setSelected] = useState<Set<ModuleKey>>(new Set());
+
+  const toggleModule = (m: ModuleKey) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(m)) next.delete(m);
+      else next.add(m);
+      return next;
+    });
+  };
+  const clearSelection = () => setSelected(new Set());
+
+  const allChainsMatched = CHAINS.map((chain) => {
     const matched = chain.steps
       .map((step) => ({ step, indicator: matchStep(step, failingIndicators) }))
       .filter((m) => m.indicator);
     return { chain, matched };
-  }).filter((c) => c.matched.length >= 2);
+  });
 
-  if (activeChains.length === 0) return null;
+  const activeChains = allChainsMatched.filter((c) => c.matched.length >= 2);
+
+  // Lego view: chains whose steps are contained within the selected modules
+  const legoChains = useMemo(() => {
+    if (selected.size < 2) return [];
+    return allChainsMatched.filter(({ chain, matched }) => {
+      if (matched.length < 2) return false;
+      // At least 2 matched steps must belong to selected modules, and each
+      // selected module used must actually contribute.
+      const usedModules = new Set(
+        matched
+          .filter((m) => selected.has(m.step.module))
+          .map((m) => m.step.module),
+      );
+      return usedModules.size >= 2;
+    });
+  }, [selected, failingIndicators]);
+
+  // Shared indicators = indicators (by normalized label) referenced by ≥2
+  // selected modules across the chain catalog or the failing list.
+  const sharedIndicators = useMemo(() => {
+    if (selected.size < 2) return [];
+    const byLabel = new Map<
+      string,
+      { label: string; modules: Set<ModuleKey>; failingIn: Set<ModuleKey> }
+    >();
+    const push = (label: string, module: ModuleKey, failing: boolean) => {
+      if (!selected.has(module)) return;
+      const key = label.toLowerCase();
+      const entry =
+        byLabel.get(key) ??
+        { label, modules: new Set<ModuleKey>(), failingIn: new Set<ModuleKey>() };
+      entry.modules.add(module);
+      if (failing) entry.failingIn.add(module);
+      byLabel.set(key, entry);
+    };
+    CHAINS.forEach((c) => c.steps.forEach((s) => push(s.label, s.module, false)));
+    failingIndicators.forEach((f) => push(f.label, f.module, true));
+    return Array.from(byLabel.values())
+      .filter((e) => e.modules.size >= 2)
+      .sort((a, b) => b.failingIn.size - a.failingIn.size);
+  }, [selected, failingIndicators]);
+
+  if (activeChains.length === 0 && selected.size === 0) return null;
 
   return (
     <Card className="shadow-sm border-status-warning/30">
@@ -172,7 +254,151 @@ export const PhysiopathChains = ({
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="pt-5">
+      <CardContent className="pt-5 space-y-5">
+        {/* ==== LEGO BUILDER ==== */}
+        <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
+                <Blocks className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-foreground">
+                  Vue Lego — assembler les modules
+                </h4>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Sélectionnez au moins 2 modules pour révéler les indicateurs
+                  partagés et les interrelations
+                </p>
+              </div>
+            </div>
+            {selected.size > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={clearSelection}
+              >
+                <X className="h-3 w-3" /> Réinitialiser
+              </Button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(MODULE_LABEL) as ModuleKey[]).map((m) => {
+              const isOn = selected.has(m);
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => toggleModule(m)}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-medium transition-all',
+                    'shadow-[inset_0_-3px_0_0_rgba(0,0,0,0.08)]',
+                    isOn
+                      ? 'bg-primary/15 border-primary text-foreground ring-1 ring-primary'
+                      : 'bg-card border-border hover:border-primary/50 text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <ModuleIcon module={m} />
+                  {MODULE_LABEL[m]}
+                </button>
+              );
+            })}
+          </div>
+
+          {selected.size >= 2 && (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {/* Shared indicators */}
+              <div className="rounded-md border bg-card p-3">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Link2 className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Indicateurs partagés ({sharedIndicators.length})
+                  </span>
+                </div>
+                {sharedIndicators.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">
+                    Aucun indicateur commun entre ces modules.
+                  </p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {sharedIndicators.map((ind) => {
+                      const failing = ind.failingIn.size > 0;
+                      return (
+                        <li
+                          key={ind.label}
+                          className="flex items-center justify-between gap-2 text-xs"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <span
+                              className={cn(
+                                'h-1.5 w-1.5 rounded-full',
+                                failing ? 'bg-status-critical' : 'bg-muted-foreground/40',
+                              )}
+                            />
+                            <span
+                              className={cn(
+                                'font-medium',
+                                failing ? 'text-status-critical' : 'text-foreground',
+                              )}
+                            >
+                              {ind.label}
+                            </span>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            {Array.from(ind.modules).map((mm) => (
+                              <span
+                                key={mm}
+                                title={MODULE_LABEL[mm]}
+                                className={cn(
+                                  'h-2 w-2 rounded-full',
+                                  MODULE_DOT[mm],
+                                  !ind.failingIn.has(mm) && 'opacity-40',
+                                )}
+                              />
+                            ))}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              {/* Interrelations (chains restricted to selection) */}
+              <div className="rounded-md border bg-card p-3">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Network className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Interrelations ({legoChains.length})
+                  </span>
+                </div>
+                {legoChains.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">
+                    Aucune interrelation active reliant ces modules.
+                  </p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {legoChains.map(({ chain, matched }) => (
+                      <li key={chain.id} className="text-xs">
+                        <span className="font-medium text-foreground">
+                          {chain.name}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {' '}
+                          — {matched.length}/{chain.steps.length} indicateurs
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ==== Existing auto-detected chains ==== */}
         <TooltipProvider delayDuration={200}>
           <div className="space-y-4">
             {activeChains.map(({ chain, matched }) => {
