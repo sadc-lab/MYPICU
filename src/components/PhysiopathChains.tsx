@@ -1,4 +1,4 @@
-import { ArrowRight, Activity, Network, Blocks, Link2, X } from 'lucide-react';
+import { ArrowRight, Activity, Network, Blocks, X } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
