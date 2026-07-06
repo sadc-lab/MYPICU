@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronDown, Bell, Home, AlertTriangle, Ban } from "lucide-react";
+import { ChevronDown, Bell, Home, AlertTriangle, Ban } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";
@@ -101,30 +101,19 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   return (
     <div className="bg-card border-b border-border mb-4 sm:mb-6">
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center gap-1 mb-3 sm:mb-4" data-export-hide>
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="text-muted-foreground hover:text-foreground text-sm"
-            size="sm"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Retour aux patients
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/")}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            title="Accueil"
-            aria-label="Accueil"
-          >
-            <Home className="h-4 w-4" />
-          </Button>
-        </div>
-
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 mb-3 sm:mb-4">
           <div className="flex-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/")}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground -ml-2 mb-1"
+              title="Accueil"
+              aria-label="Accueil"
+              data-export-hide
+            >
+              <Home className="h-4 w-4" />
+            </Button>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
               <span>#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</span>{" "}
               <span data-patient-name>{patient.name}</span>
