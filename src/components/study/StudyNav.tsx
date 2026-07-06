@@ -1,8 +1,5 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,16 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight, List, Plus, Trash2, UserRound } from 'lucide-react';
+import { ChevronLeft, ChevronRight, List, Trash2, UserRound } from 'lucide-react';
 import { useStudyPatients, type StudyPatient } from '@/hooks/useStudyPatients';
 
 interface StudyNavProps {
@@ -30,52 +18,10 @@ interface StudyNavProps {
 export const StudyNav = ({ patientsController }: StudyNavProps) => {
   const fallback = useStudyPatients();
   const ctrl = patientsController ?? fallback;
-  const { patients, active, activeIndex, next, previous, setActiveId, addPatient, removePatient } = ctrl;
-
-  const [addOpen, setAddOpen] = useState(false);
-  const [label, setLabel] = useState('');
-
-  const submitAdd = () => {
-    addPatient(label);
-    setLabel('');
-    setAddOpen(false);
-  };
+  const { patients, active, activeIndex, next, previous, setActiveId, removePatient } = ctrl;
 
   if (patients.length === 0) {
-    return (
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogTrigger asChild>
-          <Button size="sm" className="h-8 gap-1">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Sujet</span>
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter un sujet à l'étude</DialogTitle>
-            <DialogDescription>
-              Créez un pseudonyme pour identifier ce sujet. Aucune donnée nominative ne doit être saisie.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="subject-label">Identifiant / pseudonyme</Label>
-            <Input
-              id="subject-label"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="ex : Sujet Alpha, TBI-001…"
-              onKeyDown={(e) => e.key === 'Enter' && submitAdd()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddOpen(false)}>
-              Annuler
-            </Button>
-            <Button onClick={submitAdd}>Créer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
+    return null;
   }
 
   return (
@@ -151,39 +97,6 @@ export const StudyNav = ({ patientsController }: StudyNavProps) => {
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogTrigger asChild>
-          <Button size="sm" className="h-8 gap-1">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Sujet</span>
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter un sujet à l'étude</DialogTitle>
-            <DialogDescription>
-              Créez un pseudonyme pour identifier ce sujet. Aucune donnée nominative ne doit être saisie.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="subject-label">Identifiant / pseudonyme</Label>
-            <Input
-              id="subject-label"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="ex : Sujet Alpha, TBI-001…"
-              onKeyDown={(e) => e.key === 'Enter' && submitAdd()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddOpen(false)}>
-              Annuler
-            </Button>
-            <Button onClick={submitAdd}>Créer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
