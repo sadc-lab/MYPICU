@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle, Menu, X, Home, Upload } from 'lucide-react';
+import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle, Menu, X, Home, Upload, Brain } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, getPatientsForPed, Patient } from '@/utils/patientData';
@@ -502,6 +502,12 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
                   <Link to="/admin/import" className="flex items-center gap-2">
                     <Upload className="h-4 w-4" />
                     Import données
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/autoreg" className="flex items-center gap-2">
+                    <Brain className="h-4 w-4" />
+                    Étude Optibrain
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
