@@ -101,28 +101,6 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   return (
     <div className="bg-card border-b border-border mb-4 sm:mb-6">
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center gap-1 mb-3 sm:mb-4" data-export-hide>
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="text-muted-foreground hover:text-foreground text-sm"
-            size="sm"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Retour aux patients
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/")}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            title="Accueil"
-            aria-label="Accueil"
-          >
-            <Home className="h-4 w-4" />
-          </Button>
-        </div>
-
         <div className="flex flex-col lg:flex-row items-start justify-between gap-4 mb-3 sm:mb-4">
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
