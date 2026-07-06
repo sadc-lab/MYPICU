@@ -1064,12 +1064,17 @@ const Optibrain = () => {
               expanded={optimisationExpanded}
               onToggle={() => setOptimisationExpanded((p) => !p)}
               headerIcon={
-                <KpiCircle
-                  count={brainProblemCount}
-                  hasCritical={brainHasCritical}
-                  groupLabel="Optimisation cérébrale"
-                  itemLabel="indicateur"
-                />
+                <StatusIconCircle status={brainHasCritical ? "critical" : brainProblemCount > 0 ? "warning" : "normal"}>
+                  <img
+                    src={brainIcon}
+                    alt="cerveau"
+                    className="h-6 w-6 sm:h-8 sm:w-8"
+                    style={{
+                      filter:
+                        'invert(60%) sepia(80%) saturate(600%) hue-rotate(0deg) brightness(95%) contrast(90%)',
+                    }}
+                  />
+                </StatusIconCircle>
               }
               title="Optimisation cérébrale actuelle"
               subtitle={(() => {
