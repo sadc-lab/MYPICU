@@ -170,10 +170,7 @@ const Optigastro = () => {
             </>
           }
         >
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pt-4">
-            État gastrique
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6 mt-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6 pt-4">
             {gastroOptimisationMetrics.map((metric) => (
               <SelectableMetricTile
                 key={metric.label}
