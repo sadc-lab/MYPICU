@@ -1493,9 +1493,8 @@ const Optibrain = () => {
                       );
                     })}
                   </div>
-                </CardContent>
-              )}
-            </Card>
+            </CollapsibleModuleCard>
+
 
             {/* Monitoring Chart */}
             <Card ref={chartRef} className="border-2 border-border">
