@@ -364,9 +364,7 @@ const Optilungs = () => {
                     return;
                   }
                   setSelectedLungOptIndicators((prev) =>
-                    prev.includes(metric.label)
-                      ? prev.filter((l) => l !== metric.label)
-                      : [...prev, metric.label]
+                    prev.includes(metric.label) ? [] : [metric.label]
                   );
                 }}
               />

@@ -1163,9 +1163,7 @@ const Optibrain = () => {
                         e.stopPropagation();
                         if (metric.hasDetails) {
                           setSelectedBrainIndicators((prev) =>
-                            prev.includes(metric.label)
-                              ? prev.filter((l) => l !== metric.label)
-                              : [...prev, metric.label]
+                            prev.includes(metric.label) ? [] : [metric.label]
                           );
                         }
                       }}

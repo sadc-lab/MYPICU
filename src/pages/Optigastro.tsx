@@ -184,9 +184,7 @@ const Optigastro = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelectedGastroOptIndicators((prev) =>
-                    prev.includes(metric.label)
-                      ? prev.filter((l) => l !== metric.label)
-                      : [...prev, metric.label]
+                    prev.includes(metric.label) ? [] : [metric.label]
                   );
                 }}
               />
