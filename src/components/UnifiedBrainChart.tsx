@@ -249,7 +249,7 @@ export function UnifiedBrainChart({
   // If selectedIndicators is undefined or empty, show all
   const showAll = !selectedIndicators || selectedIndicators.length === 0;
   const showNeuro = showAll || selectedIndicators.includes("État Neuro") || selectedIndicators.includes("État actuel") || selectedIndicators.includes("État neurologique");
-  const showPIC = showAll || selectedIndicators.includes("PIC");
+  const showPIC = showAll || selectedIndicators.includes("PIC") || selectedIndicators.includes("Niveau de PIC");
   const showPAM = showAll || selectedIndicators.includes("PAM Opt") || selectedIndicators.includes("PPC Opt");
 
   useEffect(() => {
