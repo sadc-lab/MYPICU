@@ -1405,35 +1405,27 @@ const Optibrain = () => {
             </CollapsibleModuleCard>
 
 
-            <Card className="border-2 border-border">
-              <CardHeader
-                className="py-3 px-4 sm:px-6 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setClinicalExpanded(!clinicalExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <KpiCircle
-                      count={clinicalAdherence !== null ? outOfRangeCount : 0}
-                      hasCritical={clinicalAdherence !== null && outOfRangeCount >= 3}
-                      groupLabel="Adhérence aux cibles"
-                      itemLabel="indicateur"
-                    />
-                    <div className="min-w-0">
-                       <h3 className="text-xs sm:text-sm font-semibold text-foreground">Adhérence aux cibles recommandées</h3>
-                       <p className="text-xs text-muted-foreground mt-1">
-                        {patientFileData ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? "s" : ""} à surveiller${clinicalAdherence !== null ? ` · ${clinicalAdherence}% d'adhérence` : ""}` : "Pas de données disponibles"}
-                      </p>
-                    </div>
-                  </div>
-                  {clinicalExpanded ? (
-                     <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                   ) : (
-                     <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                  )}
-                </div>
-              </CardHeader>
-              {clinicalExpanded && (
-                <CardContent className="pt-0 px-3 sm:px-6">
+            <CollapsibleModuleCard
+              variant="nested"
+              expanded={clinicalExpanded}
+              onToggle={() => setClinicalExpanded(!clinicalExpanded)}
+              headerIcon={
+                <KpiCircle
+                  count={clinicalAdherence !== null ? outOfRangeCount : 0}
+                  hasCritical={clinicalAdherence !== null && outOfRangeCount >= 3}
+                  groupLabel="Adhérence aux cibles"
+                  itemLabel="indicateur"
+                />
+              }
+              title="Adhérence aux cibles recommandées"
+              subtitle={
+                patientFileData
+                  ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? "s" : ""} à surveiller${clinicalAdherence !== null ? ` · ${clinicalAdherence}% d'adhérence` : ""}`
+                  : "Pas de données disponibles"
+              }
+              contentClassName="pt-0 px-3 sm:px-6 pb-4"
+            >
+
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 pt-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
