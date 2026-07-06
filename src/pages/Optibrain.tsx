@@ -1312,7 +1312,27 @@ const Optibrain = () => {
               title="Monitorage et interventions en place"
               subtitle={
                 patientFileData
-                  ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}${monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}`
+                  ? (() => {
+                      const abnormal = monitoringTargets.filter(
+                        (t) => t.status !== null && t.status !== "normal"
+                      );
+                      if (abnormal.length > 0) {
+                        return (
+                          <span className="text-xs text-muted-foreground truncate">
+                            {abnormal.map((t, idx) => (
+                              <span key={t.label}>
+                                <span className={t.status === "critical" ? "text-status-critical font-semibold" : "text-status-warning font-semibold"}>
+                                  {t.label}
+                                </span>
+                                {idx < abnormal.length - 1 ? " • " : ""}
+                              </span>
+                            ))}
+                            {monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}
+                          </span>
+                        );
+                      }
+                      return `Tous les paramètres adhérents${monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}`;
+                    })()
                   : "Pas de données disponibles"
               }
               contentClassName="pt-0 px-3 sm:px-6 pb-4"
