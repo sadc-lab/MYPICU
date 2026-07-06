@@ -23,6 +23,8 @@ export const pedAPatients: Patient[] = [
     lungsScore: 1,
     kidneyScore: 0,
     gcs: 3,
+    allergies: "Pénicilline, Latex",
+    intolerances: "Morphine (nausées), Produits laitiers",
   },
   {
     id: "#25",
