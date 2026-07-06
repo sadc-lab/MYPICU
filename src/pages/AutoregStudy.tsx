@@ -10,13 +10,12 @@ import {
   Upload,
   FileText,
   Download,
-  Activity,
+  
   AlertCircle,
   CheckCircle2,
   Brain,
   LineChart,
   ShieldCheck,
-  ArrowRight,
   UserPlus,
 } from 'lucide-react';
 import {
@@ -142,38 +141,6 @@ const AutoregStudy = () => {
             Plateforme indépendante dérivée de MYPICU pour tester la détection de la PPC optimale,
             la LLA et l'ULA à partir de vos données de monitorage (PIC, PAM, PPC).
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button size="lg" onClick={openFilePicker} disabled={parsing}>
-              <Upload className="mr-2 h-4 w-4" />
-              {active ? `Importer pour ${active.code}` : "Commencer l'analyse"}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => document.getElementById('methodology')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              En savoir plus
-            </Button>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
-            <FeatureCard
-              icon={<Brain className="h-5 w-5" />}
-              title="Indice PRx"
-              desc="Corrélation glissante PIC/PAM sur fenêtre 30 échantillons."
-            />
-            <FeatureCard
-              icon={<LineChart className="h-5 w-5" />}
-              title="Courbe en U"
-              desc="Détection automatique de la PPC optimale et des limites LLA/ULA."
-            />
-            <FeatureCard
-              icon={<ShieldCheck className="h-5 w-5" />}
-              title="Données locales"
-              desc="Traitement 100% navigateur, aucune donnée transmise à un serveur."
-            />
-          </div>
         </div>
       </section>
 
@@ -260,8 +227,24 @@ const AutoregStudy = () => {
         {!result && !error && (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
-              <Activity className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p>Aucune donnée. Importez un fichier pour lancer l'analyse.</p>
+              <p className="mb-6">Aucune donnée. Importez un fichier pour lancer l'analyse.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
+                <FeatureCard
+                  icon={<Brain className="h-5 w-5" />}
+                  title="Indice PRx"
+                  desc="Corrélation glissante PIC/PAM sur fenêtre 30 échantillons."
+                />
+                <FeatureCard
+                  icon={<LineChart className="h-5 w-5" />}
+                  title="Courbe en U"
+                  desc="Détection automatique de la PPC optimale et des limites LLA/ULA."
+                />
+                <FeatureCard
+                  icon={<ShieldCheck className="h-5 w-5" />}
+                  title="Données locales"
+                  desc="Traitement 100% navigateur, aucune donnée transmise à un serveur."
+                />
+              </div>
             </CardContent>
           </Card>
         )}
