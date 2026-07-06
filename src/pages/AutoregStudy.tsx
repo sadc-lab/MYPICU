@@ -137,10 +137,6 @@ const AutoregStudy = () => {
           <h1 className="text-3xl sm:text-5xl font-bold text-foreground tracking-tight mb-4">
             Validation clinique de l'autorégulation cérébrale
           </h1>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Plateforme indépendante dérivée de MYPICU pour tester la détection de la PPC optimale,
-            la LLA et l'ULA à partir de vos données de monitorage (PIC, PAM, PPC).
-          </p>
         </div>
       </section>
 
