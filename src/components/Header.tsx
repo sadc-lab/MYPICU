@@ -505,6 +505,12 @@ export const Header = ({ selectedPed = 'A', patients: propPatients }: HeaderProp
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/autoreg" className="flex items-center gap-2">
+                    <Brain className="h-4 w-4" />
+                    Étude Optibrain
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/feedback">Commentaires</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setShowGuide(true)}>
