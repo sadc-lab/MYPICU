@@ -244,131 +244,6 @@ const Optiheart = () => {
         <div className="mb-6">
           <VitalSignsPanel />
         </div>
-        <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cardiaques..." variant="skeleton">
-          <div className="space-y-4 mb-6">
-            {(() => {
-              const groups: Array<{ title: string; metricLabels: string[] }> = [
-                { title: "Hémodynamique", metricLabels: ["Cardiac Output", "Cardiac Index", "CVP", "SVR"] },
-                { title: "Perfusion tissulaire", metricLabels: ["Lactate", "ScvO2"] },
-              ];
-              return groups.map((group) => {
-                const groupMetrics = heartMetrics.filter(m => group.metricLabels.includes(m.label));
-                if (groupMetrics.length === 0) return null;
-                const abnormal = groupMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax)).length;
-                const isOpen = heartGroupsOpen[group.title] ?? false;
-                return (
-                  <Card key={group.title} className="bg-card shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() => setHeartGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
-                      className="w-full"
-                    >
-                      <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
-                        <div className="flex items-center gap-2">
-                          <KpiCircle count={abnormal} groupLabel={group.title} />
-                          <div className="text-left">
-                            <div className="text-base font-semibold text-foreground">{group.title}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {abnormal === 0
-                                ? "Tous les paramètres dans les cibles"
-                                : `${abnormal} paramètre${abnormal > 1 ? "s" : ""} hors cible`}
-                            </div>
-                          </div>
-                        </div>
-                        <ChevronDown
-                          className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
-                        />
-                      </div>
-                    </button>
-                    {isOpen && (
-                      <CardContent className="pt-4 border-t">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-8">
-                          {groupMetrics.map((metric, index) => {
-                            const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                            const valueColor = inRange ? 'text-muted-foreground' : 'text-status-critical';
-                            return (
-                              <div key={index} className="flex flex-col items-center">
-                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide text-center">
-                                  {metric.label}
-                                </div>
-                                <div className="flex items-baseline gap-1 mb-3">
-                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>
-                                    {metric.value}
-                                  </div>
-                                  {metric.unit && (
-                                    <div className="text-[10px] text-muted-foreground">{metric.unit}</div>
-                                  )}
-                                </div>
-                                <MetricRangeBar
-                                  value={metric.value}
-                                  min={metric.min}
-                                  max={metric.max}
-                                  targetMin={metric.targetMin}
-                                  targetMax={metric.targetMax}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    )}
-                  </Card>
-                );
-              });
-            })()}
-          </div>
-        </DataLoadingOverlay>
-
-
-        {/* Cardiac State Dialog */}
-        <Dialog open={openDialog === 'cardiac'} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>État Cardiaque</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                <span className="text-destructive font-semibold">Choc cardiogénique</span> depuis : 2am
-              </p>
-              <div className="space-y-3">
-                {[
-                  { label: 'Choc cardiogénique', percent: 45, status: 'critical' },
-                  { label: 'Insuffisance cardiaque', percent: 25, status: 'warning' },
-                  { label: 'Arythmie', percent: 15, status: 'warning' },
-                  { label: 'Stable', percent: 15, status: 'normal' }
-                ].map((state, index) => (
-                  <div key={index} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-foreground">{state.label}</span>
-                      <span className={
-                        state.status === 'critical' ? 'text-destructive font-semibold' :
-                        state.status === 'warning' ? 'text-status-warning font-semibold' :
-                        'text-muted-foreground font-semibold'
-                      }>
-                        {state.percent}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                      <div 
-                        className={`h-2 rounded-full transition-all ${
-                          state.status === 'critical' ? 'bg-destructive' :
-                          state.status === 'warning' ? 'bg-status-warning' :
-                          'bg-muted-foreground'
-                        }`}
-                        style={{ width: `${state.percent}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="pt-3 border-t text-sm text-muted-foreground">
-                Débit cardiaque actuel : <span className="text-foreground font-semibold">3.2 L/min</span>
-                <span className="ml-4">Débit moyen : <span className="text-foreground font-semibold">3.5 L/min</span></span>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         <Card className="shadow-sm mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -559,6 +434,130 @@ const Optiheart = () => {
             </Card>
           </CardContent>
         </Card>
+
+        <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cardiaques..." variant="skeleton">
+          <div className="space-y-4 mb-6">
+            {(() => {
+              const groups: Array<{ title: string; metricLabels: string[] }> = [
+                { title: "Hémodynamique", metricLabels: ["Cardiac Output", "Cardiac Index", "CVP", "SVR"] },
+                { title: "Perfusion tissulaire", metricLabels: ["Lactate", "ScvO2"] },
+              ];
+              return groups.map((group) => {
+                const groupMetrics = heartMetrics.filter(m => group.metricLabels.includes(m.label));
+                if (groupMetrics.length === 0) return null;
+                const abnormal = groupMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax)).length;
+                const isOpen = heartGroupsOpen[group.title] ?? false;
+                return (
+                  <Card key={group.title} className="bg-card shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setHeartGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
+                      className="w-full"
+                    >
+                      <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center gap-2">
+                          <KpiCircle count={abnormal} groupLabel={group.title} />
+                          <div className="text-left">
+                            <div className="text-base font-semibold text-foreground">{group.title}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {abnormal === 0
+                                ? "Tous les paramètres dans les cibles"
+                                : `${abnormal} paramètre${abnormal > 1 ? "s" : ""} hors cible`}
+                            </div>
+                          </div>
+                        </div>
+                        <ChevronDown
+                          className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+                        />
+                      </div>
+                    </button>
+                    {isOpen && (
+                      <CardContent className="pt-4 border-t">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-8">
+                          {groupMetrics.map((metric, index) => {
+                            const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
+                            const valueColor = inRange ? 'text-muted-foreground' : 'text-status-critical';
+                            return (
+                              <div key={index} className="flex flex-col items-center">
+                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide text-center">
+                                  {metric.label}
+                                </div>
+                                <div className="flex items-baseline gap-1 mb-3">
+                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>
+                                    {metric.value}
+                                  </div>
+                                  {metric.unit && (
+                                    <div className="text-[10px] text-muted-foreground">{metric.unit}</div>
+                                  )}
+                                </div>
+                                <MetricRangeBar
+                                  value={metric.value}
+                                  min={metric.min}
+                                  max={metric.max}
+                                  targetMin={metric.targetMin}
+                                  targetMax={metric.targetMax}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              });
+            })()}
+          </div>
+        </DataLoadingOverlay>
+
+        {/* Cardiac State Dialog */}
+        <Dialog open={openDialog === 'cardiac'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>État Cardiaque</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                <span className="text-destructive font-semibold">Choc cardiogénique</span> depuis : 2am
+              </p>
+              <div className="space-y-3">
+                {[
+                  { label: 'Choc cardiogénique', percent: 45, status: 'critical' },
+                  { label: 'Insuffisance cardiaque', percent: 25, status: 'warning' },
+                  { label: 'Arythmie', percent: 15, status: 'warning' },
+                  { label: 'Stable', percent: 15, status: 'normal' }
+                ].map((state, index) => (
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-foreground">{state.label}</span>
+                      <span className={
+                        state.status === 'critical' ? 'text-destructive font-semibold' :
+                        state.status === 'warning' ? 'text-status-warning font-semibold' :
+                        'text-muted-foreground font-semibold'
+                      }>
+                        {state.percent}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                      <div 
+                        className={`h-2 rounded-full transition-all ${
+                          state.status === 'critical' ? 'bg-destructive' :
+                          state.status === 'warning' ? 'bg-status-warning' :
+                          'bg-muted-foreground'
+                        }`}
+                        style={{ width: `${state.percent}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="pt-3 border-t text-sm text-muted-foreground">
+                Débit cardiaque actuel : <span className="text-foreground font-semibold">3.2 L/min</span>
+                <span className="ml-4">Débit moyen : <span className="text-foreground font-semibold">3.5 L/min</span></span>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         
       </main>
