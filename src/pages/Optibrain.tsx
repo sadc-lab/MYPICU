@@ -1238,7 +1238,7 @@ const Optibrain = () => {
                       { key: 'above30', label: '> 30 mmHg', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical' },
                     ].filter(s => s.pct > 0);
 
-                    const showNeuro = selectedBrainIndicators.includes("État actuel");
+                    const showNeuro = selectedBrainIndicators.includes("État neurologique");
                     const showPic = selectedBrainIndicators.includes("PIC");
 
                     if (!showNeuro && !showPic) return null;
