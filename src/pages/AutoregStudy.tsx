@@ -85,7 +85,7 @@ const AutoregStudy = () => {
 
   // Per-patient cache so each subject is independent
   const [analysisByPatient, setAnalysisByPatient] = useState<Record<string, PatientAnalysis>>({});
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | ReadinessError | null>(null);
   const [parsing, setParsing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
