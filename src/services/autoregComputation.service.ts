@@ -90,12 +90,11 @@ export function parseCSV(text: string): RawSample[] {
     const cells = lines[i].split(delim);
     const t = parseDate(cells[idx.time]);
     if (!t) continue;
-    out.push({
-      time: t,
-      pic: idx.pic !== undefined ? parseNum(cells[idx.pic]) : null,
-      pam: idx.pam !== undefined ? parseNum(cells[idx.pam]) : null,
-      ppc: idx.ppc !== undefined ? parseNum(cells[idx.ppc]) : null,
-    });
+    const pic = idx.pic !== undefined ? parseNum(cells[idx.pic]) : null;
+    let pam = idx.pam !== undefined ? parseNum(cells[idx.pam]) : null;
+    const ppc = idx.ppc !== undefined ? parseNum(cells[idx.ppc]) : null;
+    if (pam === null && ppc !== null && pic !== null) pam = ppc + pic;
+    out.push({ time: t, pic, pam, ppc });
   }
   return out.sort((a, b) => a.time.getTime() - b.time.getTime());
 }
