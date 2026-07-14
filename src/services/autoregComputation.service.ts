@@ -31,6 +31,8 @@ export interface AutoregResult {
 
 const PRX_THRESHOLD = 0.3;
 
+const REQUIRED_SAMPLES = 30;
+
 // ---------- Parsing ----------
 
 function parseNum(v: string | number | null | undefined): number | null {
@@ -146,6 +148,32 @@ export function parseAny(text: string): RawSample[] {
     }
   }
   return parseCSV(text);
+}
+
+export function describeAnalysisReadiness(samples: RawSample[]): string | null {
+  if (samples.length < REQUIRED_SAMPLES) {
+    return `Fichier invalide ou insuffisant : au moins ${REQUIRED_SAMPLES} échantillons horodatés sont requis.`;
+  }
+
+  const complete = samples.filter((s) => s.pic !== null && s.pam !== null && s.ppc !== null);
+  if (complete.length < REQUIRED_SAMPLES) {
+    return `Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent PIC, PAM et PPC exploitables.`;
+  }
+
+  const constantFields = [
+    { label: 'PIC', values: complete.map((s) => s.pic as number) },
+    { label: 'PAM', values: complete.map((s) => s.pam as number) },
+    { label: 'PPC', values: complete.map((s) => s.ppc as number) },
+  ].filter(({ values }) => new Set(values.map((v) => v.toFixed(3))).size < 2);
+
+  if (constantFields.length > 0) {
+    const details = constantFields
+      .map(({ label, values }) => `${label}=${values[0].toFixed(1)}`)
+      .join(', ');
+    return `Calcul impossible pour ce fichier : ${details} sur les ${complete.length} échantillons exploitables. La corrélation PRx nécessite des variations de PIC/PAM et la courbe PPC nécessite des valeurs PPC variables.`;
+  }
+
+  return null;
 }
 
 // ---------- Computation ----------
