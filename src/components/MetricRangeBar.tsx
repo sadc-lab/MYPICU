@@ -17,6 +17,8 @@ interface MetricRangeBarProps {
   valueSize?: 'sm' | 'md' | 'lg' | 'xl';
   /** Masque le texte de la valeur au-dessus du triangle (n'affiche que la flèche). */
   hideValueLabel?: boolean;
+  /** Masque les chiffres des bornes de la cible sous la barre. */
+  hideTargetLabels?: boolean;
 }
 
 export const MetricRangeBar = ({
