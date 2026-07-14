@@ -65,6 +65,7 @@ const HEADER_MAP: Record<string, "time" | "pic" | "pam" | "ppc"> = {
   abpm: "pam",
   ppc: "ppc",
   cpp: "ppc",
+  rawppc: "ppc",
 };
 
 export function parseCSV(text: string): RawSample[] {
