@@ -682,6 +682,7 @@ const AutoregStudy = () => {
               </Card>
             )}
 
+            {timeSeriesChartData.length > 0 && (
             <Card className="mb-6" id="pdf-chart-timeseries" data-pdf-title="Séries temporelles PIC / PAM / PPC">
               <CardHeader>
                 <CardTitle>Séries temporelles PIC / PAM / PPC</CardTitle>
@@ -717,6 +718,8 @@ const AutoregStudy = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
+
 
             <Card className="mb-6">
               <CardHeader>
