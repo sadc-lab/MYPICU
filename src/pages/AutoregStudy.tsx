@@ -42,6 +42,7 @@ import {
 import * as XLSX from 'xlsx';
 import {
   parseAny,
+  describeAnalysisReadiness,
   runAnalysis,
   rollingOptimal,
   resultsToCSV,
@@ -102,6 +103,13 @@ const AutoregStudy = () => {
         .limit(1)
         .maybeSingle();
       if (cancelled || fetchError || !data) return;
+      const savedCurve = Array.isArray(data.curve) ? data.curve : [];
+      if (savedCurve.length === 0 && data.optimal_ppc === null) {
+        setError(
+          `Le dernier fichier enregistré (${data.file_name ?? 'sans nom'}) ne contient pas de résultat calculable. Réimportez un fichier avec des variations exploitables de PIC/PAM/PPC.`,
+        );
+        return;
+      }
       const restored: AutoregResult = {
         optimalPPC: data.optimal_ppc !== null ? Number(data.optimal_ppc) : null,
         lowerLimit: data.lower_limit !== null ? Number(data.lower_limit) : null,
@@ -109,7 +117,7 @@ const AutoregStudy = () => {
         minPrx: data.min_prx !== null ? Number(data.min_prx) : null,
         sampleCount: data.sample_count ?? 0,
         durationHours: data.duration_hours !== null ? Number(data.duration_hours) : 0,
-        curve: (data.curve as any) ?? [],
+        curve: savedCurve as any,
         samples: [],
       };
       setAnalysisByPatient((prev) =>
@@ -173,12 +181,14 @@ const AutoregStudy = () => {
       if (file.size > 25 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 25 Mo).');
       const text = await readFileAsText(file);
       const samples = parseAny(text);
-      if (samples.length < 30) {
+      const readinessError = describeAnalysisReadiness(samples);
+      if (readinessError) throw new Error(readinessError);
+      const analysis = runAnalysis(samples, 30, 5);
+      if (analysis.curve.length === 0 || analysis.optimalPPC === null) {
         throw new Error(
-          "Fichier invalide ou insuffisant : au moins 30 échantillons avec Horodate, PIC, PAM sont requis.",
+          "Calcul impossible : aucune courbe PRx/PPC exploitable n'a pu être générée avec ce fichier.",
         );
       }
-      const analysis = runAnalysis(samples, 30, 5);
       const derived = analysis.samples;
       const rolled = rollingOptimal(derived, Math.min(240, Math.floor(derived.length / 3)), 30, 5);
       setAnalysisByPatient((prev) => ({
