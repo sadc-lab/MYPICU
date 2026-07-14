@@ -55,6 +55,7 @@ import {
   resultsToCSV,
   type AutoregResult,
   type OptimalTimePoint,
+  type ReadinessError,
 } from '@/services/autoregComputation.service';
 import { useStudyPatients } from '@/hooks/useStudyPatients';
 import { supabase } from '@/integrations/supabase/client';
