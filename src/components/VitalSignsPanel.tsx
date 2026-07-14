@@ -74,6 +74,7 @@ export const VitalSignsPanel = ({ defaultOpen = false }: VitalSignsPanelProps) =
                       max={vital.max}
                       targetMin={vital.targetMin}
                       targetMax={vital.targetMax}
+                      hideTargetLabels
                     />
                   </div>
                 );
