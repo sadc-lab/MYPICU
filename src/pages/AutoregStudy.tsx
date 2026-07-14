@@ -407,7 +407,7 @@ const AutoregStudy = () => {
                 </CardDescription>
               </div>
               <TooltipProvider delayDuration={100}>
-                <UiTooltip>
+                <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" aria-label="Étapes de validation" className="shrink-0 -mr-2 -mt-2">
                       <HelpCircle className="h-5 w-5 text-muted-foreground" />
@@ -433,7 +433,7 @@ const AutoregStudy = () => {
                       />
                     </div>
                   </TooltipContent>
-                </UiTooltip>
+                </Tooltip>
               </TooltipProvider>
             </div>
           </CardHeader>
@@ -635,7 +635,7 @@ const AutoregStudy = () => {
                           fillOpacity={0.08}
                         />
                       )}
-                      <Tooltip
+                      <RechartsTooltip
                         contentStyle={{
                           background: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
@@ -693,7 +693,7 @@ const AutoregStudy = () => {
                           label={{ value: 'mmHg', angle: -90, position: 'insideLeft' }}
                           tick={{ fontSize: 12 }}
                         />
-                        <Tooltip
+                        <RechartsTooltip
                           labelFormatter={(l) => new Date(l).toLocaleString('fr-CA')}
                           contentStyle={{
                             background: 'hsl(var(--card))',
@@ -732,7 +732,7 @@ const AutoregStudy = () => {
                         tick={{ fontSize: 11 }}
                       />
                       <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip
+                      <RechartsTooltip
                         labelFormatter={(l) => new Date(l).toLocaleString('fr-CA')}
                         contentStyle={{
                           background: 'hsl(var(--card))',
