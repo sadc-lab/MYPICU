@@ -161,10 +161,12 @@ export const MetricRangeBar = ({
           )
         )}
       </div>
-      <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
-        <span>{targetMin}</span>
-        <span>{targetMax}</span>
-      </div>
+      {!hideTargetLabels && (
+        <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
+          <span>{targetMin}</span>
+          <span>{targetMax}</span>
+        </div>
+      )}
     </div>
   );
 };
