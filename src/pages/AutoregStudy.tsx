@@ -17,6 +17,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Tooltip as UiTooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Upload,
   FileText,
   Download,
@@ -26,6 +32,7 @@ import {
   LineChart,
   ShieldCheck,
   UserPlus,
+  HelpCircle,
 } from 'lucide-react';
 import {
   ComposedChart,
@@ -377,25 +384,6 @@ const AutoregStudy = () => {
             Validation clinique de l'autorégulation cérébrale
           </h1>
         </div>
-        <div className="container mx-auto max-w-6xl px-4 pb-6">
-          <section id="methodology" className="grid md:grid-cols-3 gap-4">
-            <StepCard
-              n={1}
-              title="Créer un sujet"
-              desc="Ajoutez un pseudonyme via le bouton Sujet dans la barre du haut."
-            />
-            <StepCard
-              n={2}
-              title="Importer les données"
-              desc="CSV, Excel (.xlsx) ou JSON Fisher. Détection automatique."
-            />
-            <StepCard
-              n={3}
-              title="Analyser et exporter"
-              desc="Visualisations interactives et export CSV des résultats calculés."
-            />
-          </section>
-        </div>
       </section>
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -403,18 +391,51 @@ const AutoregStudy = () => {
         {/* Import panel */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Import des données
-              {active && (
-                <Badge variant="secondary" className="ml-2">
-                  {active.code} · {active.label}
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Formats acceptés : CSV, Excel (<code>.xlsx</code>) ou JSON Fisher (colonnes <code>Horodate, PIC, PAM, PPC</code>).
-            </CardDescription>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Import des données
+                  {active && (
+                    <Badge variant="secondary" className="ml-2">
+                      {active.code} · {active.label}
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Formats acceptés : CSV, Excel (<code>.xlsx</code>) ou JSON Fisher (colonnes <code>Horodate, PIC, PAM, PPC</code>).
+                </CardDescription>
+              </div>
+              <TooltipProvider delayDuration={100}>
+                <UiTooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Étapes de validation" className="shrink-0 -mr-2 -mt-2">
+                      <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" align="start" className="max-w-sm p-0 bg-card border shadow-lg">
+                    <div className="p-3 space-y-3">
+                      <p className="font-semibold text-sm text-foreground">Étapes de validation</p>
+                      <StepCard
+                        n={1}
+                        title="Créer un sujet"
+                        desc="Ajoutez un pseudonyme via le bouton Sujet dans la barre du haut."
+                      />
+                      <StepCard
+                        n={2}
+                        title="Importer les données"
+                        desc="CSV, Excel (.xlsx) ou JSON Fisher. Détection automatique."
+                      />
+                      <StepCard
+                        n={3}
+                        title="Analyser et exporter"
+                        desc="Visualisations interactives et export CSV des résultats calculés."
+                      />
+                    </div>
+                  </TooltipContent>
+                </UiTooltip>
+              </TooltipProvider>
+            </div>
           </CardHeader>
           <CardContent>
             {!active && patients.length === 0 && (
