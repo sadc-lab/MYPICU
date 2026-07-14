@@ -150,26 +150,31 @@ export function parseAny(text: string): RawSample[] {
   return parseCSV(text);
 }
 
-export function describeAnalysisReadiness(samples: RawSample[]): string | null {
-  const guide = (title: string, steps: string[]) =>
-    [title, ...steps.map((s) => `• ${s}`)].join('\n');
+export interface ReadinessError {
+  cause: string;
+  steps: string[];
+}
 
+export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError | null {
   if (samples.length === 0) {
-    return guide("Aucune donnée exploitable détectée dans le fichier.", [
-      "Vérifiez que le fichier contient bien des lignes horodatées.",
-      "Formats acceptés : CSV avec en-têtes (time, PIC, PAM, PPC) ou JSON Fisher (P####_Full_AR_Table_3min_Fisher).",
-      "Assurez-vous que les colonnes PIC, PAM et PPC ne sont pas vides.",
-    ]);
+    return {
+      cause: "Aucune donnée exploitable détectée dans le fichier.",
+      steps: [
+        "Vérifiez que le fichier contient bien des lignes horodatées.",
+        "Formats acceptés : CSV avec en-têtes (time, PIC, PAM, PPC) ou JSON Fisher (P####_Full_AR_Table_3min_Fisher).",
+        "Assurez-vous que les colonnes PIC, PAM et PPC ne sont pas vides.",
+      ],
+    };
   }
 
   if (samples.length < REQUIRED_SAMPLES) {
-    return guide(
-      `Fichier insuffisant : ${samples.length} échantillon(s) détecté(s), ${REQUIRED_SAMPLES} minimum requis.`,
-      [
+    return {
+      cause: `Fichier insuffisant : ${samples.length} échantillon(s) détecté(s), ${REQUIRED_SAMPLES} minimum requis.`,
+      steps: [
         "Prolongez la période d'enregistrement (au moins 90 minutes recommandé).",
         "Vérifiez la fréquence d'échantillonnage (1 point / minute minimum).",
       ],
-    );
+    };
   }
 
   const missing = {
@@ -179,25 +184,25 @@ export function describeAnalysisReadiness(samples: RawSample[]): string | null {
   };
   const emptyFields = Object.entries(missing).filter(([, n]) => n === samples.length).map(([k]) => k);
   if (emptyFields.length > 0) {
-    return guide(
-      `Champs entièrement vides : ${emptyFields.join(', ')}.`,
-      [
+    return {
+      cause: `Champs entièrement vides : ${emptyFields.join(', ')}.`,
+      steps: [
         "Vérifiez le mapping des colonnes du fichier source.",
         "PIC, PAM et PPC doivent tous être présents (PPC peut être calculé automatiquement si PAM et PIC le sont).",
         "Contrôlez qu'aucun filtre n'a supprimé ces canaux à l'export du moniteur.",
       ],
-    );
+    };
   }
 
   const complete = samples.filter((s) => s.pic !== null && s.pam !== null && s.ppc !== null);
   if (complete.length < REQUIRED_SAMPLES) {
-    return guide(
-      `Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent PIC, PAM et PPC exploitables.`,
-      [
+    return {
+      cause: `Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent PIC, PAM et PPC exploitables.`,
+      steps: [
         "Trop de valeurs manquantes : contrôlez les artefacts et les périodes de déconnexion du capteur.",
         "Réexportez le fichier sur une plage temporelle où les 3 signaux sont enregistrés simultanément.",
       ],
-    );
+    };
   }
 
   const constantFields = [
@@ -210,15 +215,15 @@ export function describeAnalysisReadiness(samples: RawSample[]): string | null {
     const details = constantFields
       .map(({ label, values }) => `${label} = ${values[0].toFixed(1)} (constant)`)
       .join(', ');
-    return guide(
-      `Signaux constants détectés : ${details}.`,
-      [
+    return {
+      cause: `Signaux constants détectés : ${details}.`,
+      steps: [
         "La corrélation PRx nécessite des variations physiologiques de PIC et PAM.",
         "La courbe PPC optimale nécessite une variabilité de PPC sur la période.",
         "Vérifiez que le capteur PIC était bien connecté et non zéroté artificiellement.",
         "Réexportez une plage où les signaux évoluent réellement (éviter les périodes de sédation profonde stable).",
       ],
-    );
+    };
   }
 
   return null;
