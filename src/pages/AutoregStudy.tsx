@@ -377,7 +377,7 @@ const AutoregStudy = () => {
             <StepCard
               n={2}
               title="Importer les données"
-              desc="CSV (Horodate, PIC, PAM, PPC) ou JSON Fisher. Détection automatique."
+              desc="CSV, Excel (.xlsx) ou JSON Fisher. Détection automatique."
             />
             <StepCard
               n={3}
@@ -403,7 +403,7 @@ const AutoregStudy = () => {
               )}
             </CardTitle>
             <CardDescription>
-              Formats acceptés : CSV (colonnes <code>Horodate, PIC, PAM, PPC</code>) ou JSON Fisher.
+              Formats acceptés : CSV, Excel (<code>.xlsx</code>) ou JSON Fisher (colonnes <code>Horodate, PIC, PAM, PPC</code>).
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -421,7 +421,7 @@ const AutoregStudy = () => {
               <input
                 ref={inputRef}
                 type="file"
-                accept=".csv,.json,.txt"
+                accept=".csv,.json,.txt,.xlsx,.xls"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -480,7 +480,7 @@ const AutoregStudy = () => {
                 <Input
                   id="new-patient-file"
                   type="file"
-                  accept=".csv,.json,.txt"
+                  accept=".csv,.json,.txt,.xlsx,.xls"
                   onChange={(e) => setNewFile(e.target.files?.[0] ?? null)}
                 />
                 {newFile && (
