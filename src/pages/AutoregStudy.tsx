@@ -434,9 +434,9 @@ const AutoregStudy = () => {
                 Ajouter un patient
               </Button>
               {active && (
-                <Button onClick={() => inputRef.current?.click()} disabled={parsing}>
-                  <LineChart className="mr-2 h-4 w-4" />
-                  {parsing ? 'Analyse…' : 'Lancer les calculs'}
+                <Button variant="outline" onClick={() => inputRef.current?.click()} disabled={parsing}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  {parsing ? 'Analyse…' : 'Modifier fichier'}
                 </Button>
               )}
               {fileName && (
