@@ -17,6 +17,8 @@ interface MetricRangeBarProps {
   valueSize?: 'sm' | 'md' | 'lg' | 'xl';
   /** Masque le texte de la valeur au-dessus du triangle (n'affiche que la flèche). */
   hideValueLabel?: boolean;
+  /** Masque les chiffres des bornes de la cible sous la barre. */
+  hideTargetLabels?: boolean;
 }
 
 export const MetricRangeBar = ({
@@ -31,6 +33,7 @@ export const MetricRangeBar = ({
   tooltipContent,
   valueSize = 'sm',
   hideValueLabel = false,
+  hideTargetLabels = false,
 }: MetricRangeBarProps) => {
   const range = max - min;
   const inRange = value >= targetMin && value <= targetMax;
@@ -158,10 +161,12 @@ export const MetricRangeBar = ({
           )
         )}
       </div>
-      <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
-        <span>{targetMin}</span>
-        <span>{targetMax}</span>
-      </div>
+      {!hideTargetLabels && (
+        <div className="flex justify-between items-center mt-1.5 text-xs text-muted-foreground">
+          <span>{targetMin}</span>
+          <span>{targetMax}</span>
+        </div>
+      )}
     </div>
   );
 };

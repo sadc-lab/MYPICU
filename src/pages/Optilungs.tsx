@@ -15,6 +15,9 @@ import { MetricRangeBar } from '@/components/MetricRangeBar';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
 import lungsIcon from '@/assets/lungs-icon.svg';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
+import { CollapsibleModuleCard, StatusIconCircle, CountCircle } from '@/components/CollapsibleModuleCard';
+import { SelectableMetricTile } from '@/components/SelectableMetricTile';
+import { OptimisationChart } from '@/components/OptimisationChart';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { lungMetrics as importedLungMetrics } from '@/utils/organMetrics';
@@ -44,27 +47,9 @@ const Optilungs = () => {
   const [selectedLungOptIndicators, setSelectedLungOptIndicators] = useState<string[]>([]);
   const [optChartTimeRange, setOptChartTimeRange] = useState<string>("24h");
   const chartRef = useRef<HTMLDivElement>(null);
-  const [pulmonaryGroupsOpen, setPulmonaryGroupsOpen] = useState<Record<string, boolean>>({
-    'Oxygénation et scores': true,
-    Ventilation: true,
-  });
-
-  // Patient file data state
-  const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
-  const [fileDataLoading, setFileDataLoading] = useState(false);
-  const hasFileData = hasPatientFileData(patientId);
-
-  // Load patient file data
-  useEffect(() => {
-    if (hasFileData) {
-      setFileDataLoading(true);
-      loadPatientFileData(patientId)
-        .then((data) => setPatientFileData(data))
-        .finally(() => setFileDataLoading(false));
-    } else {
-      setPatientFileData(null);
-    }
-  }, [patientId, hasFileData]);
+  // Patient file data loading removed (blood gas / oxygenation data no longer used here)
+  const patientFileData: PatientFileData | null = null;
+  const fileDataLoading = false;
 
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRange = (range: string): number => {
@@ -337,162 +322,79 @@ const Optilungs = () => {
       <Header />
       <PatientHeader currentPage="optilungs" />
 
-      <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <div className="mb-6">
-          <VitalSignsPanel />
-        </div>
-        <Card className="bg-card shadow-sm mb-6">
-          <CardHeader
-            className="cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setOptimisationExpanded(prev => !prev)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 border-destructive text-destructive bg-destructive/10 shrink-0">
-                  <img src={lungsIcon} alt="lungs" className="h-6 w-6 sm:h-8 sm:w-8" style={{ filter: "invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)" }} />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-xs sm:text-sm font-semibold text-foreground">Optimisation pulmonaire</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    <span className="font-semibold text-destructive">Hypoxémie sévère</span> • VAP Prediction : 75%
-                  </p>
-                </div>
-              </div>
-              {optimisationExpanded ? (
-                <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-              )}
-            </div>
-          </CardHeader>
-          {optimisationExpanded && (
-            <CardContent className="pt-0 space-y-4">
-              {/* Selectable Lung Metrics - Optibrain style */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6 pt-4">
-                {lungOptimisationMetrics.map((metric, index) => {
-                  const isSelected = selectedLungOptIndicators.includes(metric.label);
-                  const statusColor = metric.status === "critical" 
-                    ? "text-status-critical" 
-                    : metric.status === "warning" 
-                      ? "text-status-warning" 
-                      : "text-foreground";
+      <main className="container mx-auto px-6 pb-8 max-w-[1600px] space-y-6">
+        <VitalSignsPanel />
 
-                  return (
-                    <div
-                      key={index}
-                      className={`flex flex-col items-center cursor-pointer p-2 sm:p-3 rounded-lg transition-all border-2 ${
-                        isSelected
-                          ? "bg-card shadow-sm border-primary"
-                          : "border-transparent hover:bg-muted/50"
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!metric.selectable) {
-                          setOpenDialog('ventilateur');
-                          return;
-                        }
-                        setSelectedLungOptIndicators((prev) =>
-                          prev.includes(metric.label)
-                            ? prev.filter((l) => l !== metric.label)
-                            : [...prev, metric.label]
-                        );
-                      }}
-                    >
-                      <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
-                        {metric.label}
-                      </div>
-                      <div className="flex items-baseline gap-1 mb-1">
-                        {metric.icon && <Gauge className="h-5 w-5 sm:h-6 sm:w-6 text-primary self-center" />}
-                        <div className={`text-2xl sm:text-4xl font-bold ${statusColor}`}>{metric.displayValue}</div>
-                        {metric.unit && <span className="text-[10px] text-muted-foreground">{metric.unit}</span>}
-                      </div>
-                      {metric.criticalLabel && (
-                        <div className={`text-[10px] sm:text-xs font-medium ${metric.criticalColor} text-center leading-tight`}>
-                          {metric.criticalLabel}
-                        </div>
-                      )}
-                    </div>
+        <CollapsibleModuleCard
+          expanded={optimisationExpanded}
+          onToggle={() => setOptimisationExpanded((prev) => !prev)}
+          headerIcon={
+            <StatusIconCircle status="critical">
+              <img
+                src={lungsIcon}
+                alt="lungs"
+                className="h-6 w-6 sm:h-8 sm:w-8"
+                style={{ filter: "invert(28%) sepia(89%) saturate(2641%) hue-rotate(343deg) brightness(95%) contrast(94%)" }}
+              />
+            </StatusIconCircle>
+          }
+          title="Optimisation pulmonaire"
+          subtitle={
+            <>
+              <span className="font-semibold text-destructive">Hypoxémie sévère</span> • VAP Prediction : 75%
+            </>
+          }
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6 pt-4">
+            {lungOptimisationMetrics.map((metric) => (
+              <SelectableMetricTile
+                key={metric.label}
+                label={metric.label}
+                displayValue={metric.displayValue}
+                unit={metric.unit}
+                status={metric.status}
+                criticalLabel={metric.criticalLabel}
+                criticalColor={metric.criticalColor}
+                icon={metric.icon ? <Gauge className="h-5 w-5 sm:h-6 sm:w-6 text-primary self-center" /> : undefined}
+                isSelected={selectedLungOptIndicators.includes(metric.label)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!metric.selectable) {
+                    setOpenDialog('ventilateur');
+                    return;
+                  }
+                  setSelectedLungOptIndicators((prev) =>
+                    prev.includes(metric.label) ? [] : [metric.label]
                   );
-                })}
+                }}
+              />
+            ))}
+          </div>
+          {selectedLungOptIndicators.length > 0 && (
+            <div className="border-t border-border pt-4 mt-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium text-foreground">Évolution temporelle</div>
+                <TimeWindowSelector
+                  value={optChartTimeRange as TimeWindowValue}
+                  onChange={(v) => setOptChartTimeRange(v)}
+                  includeStay={true}
+                  size="sm"
+                  variant="compact"
+                />
               </div>
-              {/* Embedded Chart - shown when indicators are selected */}
-              {selectedLungOptIndicators.length > 0 && (
-                <div className="border-t border-border pt-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-foreground">Évolution temporelle</div>
-                    <TimeWindowSelector
-                      value={optChartTimeRange as TimeWindowValue}
-                      onChange={(v) => setOptChartTimeRange(v)}
-                      includeStay={true}
-                      size="sm"
-                      variant="compact"
-                    />
-                  </div>
-                  <div className="h-[250px] sm:h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={lungOptChartData}>
-                        {selectedLungOptIndicators.map((label) => {
-                          const zone = optTargetZones[label];
-                          if (!zone) return null;
-                          const color = getOptIndicatorColor(label);
-                          return (
-                            <ReferenceArea
-                              key={`zone-${label}`}
-                              y1={zone.min}
-                              y2={zone.max}
-                              fill={color}
-                              fillOpacity={0.08}
-                              stroke={color}
-                              strokeOpacity={0.3}
-                              strokeDasharray="4 2"
-                            />
-                          );
-                        })}
-                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                         <XAxis dataKey="time" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickLine={false} />
-                         <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
-                         <Tooltip
-                            contentStyle={{
-                              backgroundColor: "hsl(var(--popover))",
-                              border: "1px solid hsl(var(--border))",
-                              borderRadius: "8px",
-                              fontSize: "12px",
-                              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                              padding: "12px",
-                              color: "hsl(var(--popover-foreground))",
-                            }}
-                          labelStyle={{ fontWeight: 600, marginBottom: 8 }}
-                        />
-                        <Legend
-                          wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
-                          iconType="plainline"
-                          formatter={(value: string) => (
-                            <span style={{ color: getOptIndicatorColor(value), fontWeight: 500 }}>{value}</span>
-                          )}
-                        />
-                        {selectedLungOptIndicators.map((label, idx) => {
-                          const color = getOptIndicatorColor(label);
-                          return (
-                            <Line
-                              key={label}
-                              type="monotone"
-                              dataKey={label}
-                              stroke={color}
-                              strokeWidth={2.5}
-                              dot={false}
-                              activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2, fill: color }}
-                              connectNulls={false}
-                            />
-                          );
-                        })}
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-            </CardContent>
+              <OptimisationChart
+                data={lungOptChartData}
+                series={selectedLungOptIndicators.map((label) => ({
+                  label,
+                  color: getOptIndicatorColor(label),
+                  targetZone: optTargetZones[label],
+                }))}
+              />
+            </div>
           )}
-        </Card>
+        </CollapsibleModuleCard>
+
+
 
         {/* Clinical Indicators Section - Optibrain style */}
         <Card className="bg-card shadow-sm mb-6">
@@ -510,99 +412,89 @@ const Optilungs = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Card className="border-2 border-border">
-              <CardHeader
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setClinicalExpanded(!clinicalExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-4">
+            <CollapsibleModuleCard
+              variant="nested"
+              expanded={clinicalExpanded}
+              onToggle={() => setClinicalExpanded(!clinicalExpanded)}
+              headerIcon={
+                <CountCircle
+                  count={outOfRangeCount}
+                  total={totalIndicators}
+                  status={
+                    outOfRangeCount === 0
+                      ? 'inactive'
+                      : outOfRangeCount <= 2
+                        ? 'warning'
+                        : 'critical'
+                  }
+                />
+              }
+              title="Indicateurs à surveiller"
+              subtitle={
+                outOfRangeCount > 0
+                  ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? 's' : ''} à surveiller`
+                  : 'Tous les indicateurs dans la cible'
+              }
+              contentClassName="px-3 sm:px-6 pb-4"
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4 pt-4">
+                {clinicalIndicators.map((indicator, index) => {
+                  const isSelected = selectedIndicators.includes(indicator.label);
+                  const adherenceDotColor =
+                    indicator.adherencePercentage === null
+                      ? "bg-status-inactive/40"
+                      : (indicator.adherencePercentage ?? 0) >= 90
+                        ? "bg-status-normal"
+                        : (indicator.adherencePercentage ?? 0) >= 80
+                          ? "bg-status-warning"
+                          : "bg-status-critical";
+                  return (
                     <div
-                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold border-4 shrink-0 ${
-                        outOfRangeCount === 0
-                          ? "border-muted-foreground text-muted-foreground bg-muted"
-                          : outOfRangeCount <= 2
-                            ? "border-status-warning text-status-warning bg-status-warning/10"
-                            : "border-status-critical text-status-critical bg-status-critical/10"
+                      key={index}
+                      className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all border-2 ${
+                        isSelected
+                          ? "bg-card shadow-sm border-primary"
+                          : "border-transparent hover:bg-muted/50"
                       }`}
+                      onClick={() => {
+                        setSelectedIndicators(prev =>
+                          prev.includes(indicator.label)
+                            ? prev.filter(label => label !== indicator.label)
+                            : [...prev, indicator.label]
+                        );
+                        setTimeout(() => {
+                          chartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                      }}
                     >
-                      {outOfRangeCount}/{totalIndicators}
+                      <TooltipProvider delayDuration={200}>
+                        <UITooltip>
+                          <TooltipTrigger asChild>
+                            <div className={`w-3 h-3 rounded-full mt-1 ${adherenceDotColor} cursor-help`}></div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs max-w-48">
+                            {indicator.adherencePercentage !== null
+                              ? (
+                                <div>
+                                  <div className="font-semibold">{indicator.adherencePercentage}% adhérence</div>
+                                  <div className="text-muted-foreground mt-1">% du temps passé dans la cible recommandée</div>
+                                </div>
+                              )
+                              : "Pas de données"
+                            }
+                          </TooltipContent>
+                        </UITooltip>
+                      </TooltipProvider>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">{indicator.label}</p>
+                        <p className="text-xs text-muted-foreground">{indicator.target}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">Indicateurs à surveiller</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {outOfRangeCount > 0 ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? 's' : ''} à surveiller` : "Tous les indicateurs dans la cible"}
-                      </p>
-                    </div>
-                  </div>
-                  {clinicalExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                  )}
-                </div>
-              </CardHeader>
-              {clinicalExpanded && (
-                <CardContent className="pt-0 px-3 sm:px-6">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4 pt-4">
-                    {clinicalIndicators.map((indicator, index) => {
-                      const isSelected = selectedIndicators.includes(indicator.label);
-                      const adherenceDotColor =
-                        indicator.adherencePercentage === null
-                          ? "bg-status-inactive/40"
-                          : (indicator.adherencePercentage ?? 0) >= 90
-                            ? "bg-status-normal"
-                            : (indicator.adherencePercentage ?? 0) >= 80
-                              ? "bg-status-warning"
-                              : "bg-status-critical";
-                      return (
-                        <div
-                          key={index}
-                          className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all border-2 ${
-                            isSelected
-                              ? "bg-card shadow-sm border-primary"
-                              : "border-transparent hover:bg-muted/50"
-                          }`}
-                          onClick={() => {
-                            setSelectedIndicators(prev =>
-                              prev.includes(indicator.label)
-                                ? prev.filter(label => label !== indicator.label)
-                                : [...prev, indicator.label]
-                            );
-                            setTimeout(() => {
-                              chartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }, 100);
-                          }}
-                        >
-                          <TooltipProvider delayDuration={200}>
-                            <UITooltip>
-                              <TooltipTrigger asChild>
-                                <div className={`w-3 h-3 rounded-full mt-1 ${adherenceDotColor} cursor-help`}></div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-48">
-                                {indicator.adherencePercentage !== null
-                                  ? (
-                                    <div>
-                                      <div className="font-semibold">{indicator.adherencePercentage}% adhérence</div>
-                                      <div className="text-muted-foreground mt-1">% du temps passé dans la cible recommandée</div>
-                                    </div>
-                                  )
-                                  : "Pas de données"
-                                }
-                              </TooltipContent>
-                            </UITooltip>
-                          </TooltipProvider>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">{indicator.label}</p>
-                            <p className="text-xs text-muted-foreground">{indicator.target}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+                  );
+                })}
+              </div>
+            </CollapsibleModuleCard>
+
             {/* Monitoring Chart */}
             <Card ref={chartRef} className="border-2 border-border">
               <CardHeader className="px-3 sm:px-6">
@@ -719,100 +611,6 @@ const Optilungs = () => {
           </CardContent>
         </Card>
 
-        <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données pulmonaires..." variant="skeleton">
-          <div className="space-y-4 mb-6">
-            {([
-              {
-                title: 'Oxygénation et scores',
-                metrics: [
-                  { label: 'SpO2', value: 94, unit: '%', min: 70, max: 100, targetMin: 92, targetMax: 100 },
-                  { label: 'PaO2', value: 78, unit: 'mmHg', min: 40, max: 150, targetMin: 80, targetMax: 100 },
-                  { label: 'FiO2', value: 45, unit: '%', min: 21, max: 100, targetMin: 21, targetMax: 40 },
-                  { label: 'Pression moyenne', value: 14, unit: 'cmH2O', min: 5, max: 30, targetMin: 8, targetMax: 15 },
-                  { label: 'OI', value: 9, unit: '', min: 0, max: 40, targetMin: 0, targetMax: 8 },
-                  { label: 'OSI', value: 7.2, unit: '', min: 0, max: 30, targetMin: 0, targetMax: 5 },
-                  { label: 'P/F ratio', value: 167, unit: '', min: 50, max: 500, targetMin: 300, targetMax: 500 },
-                  { label: 'S/F ratio', value: 209, unit: '', min: 50, max: 500, targetMin: 264, targetMax: 500 },
-                ],
-              },
-              {
-                title: 'Ventilation',
-                metrics: [
-                  { label: 'pH', value: 7.32, unit: '', min: 7.0, max: 7.6, targetMin: 7.35, targetMax: 7.45 },
-                  { label: 'PaCO2', value: 48, unit: 'mmHg', min: 25, max: 80, targetMin: 35, targetMax: 45 },
-                  { label: 'Vt', value: 6.2, unit: 'ml/kg', min: 3, max: 12, targetMin: 5, targetMax: 7 },
-                  { label: 'Resp Rate', value: 22, unit: '/min', min: 10, max: 50, targetMin: 15, targetMax: 25 },
-                  { label: 'DeltaP', value: 16, unit: 'cmH2O', min: 5, max: 35, targetMin: 0, targetMax: 14 },
-                  { label: 'Pplat', value: 28, unit: 'cmH2O', min: 10, max: 45, targetMin: 0, targetMax: 28 },
-                  { label: 'Compliance', value: 32, unit: 'mL/cmH2O', min: 10, max: 80, targetMin: 40, targetMax: 80 },
-                  { label: 'AVDSF', value: 0.42, unit: '', min: 0, max: 1, targetMin: 0, targetMax: 0.3 },
-                ],
-              },
-            ] as const).map((group) => {
-              const abnormal = group.metrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax)).length;
-              const isOpen = pulmonaryGroupsOpen[group.title] ?? false;
-              return (
-                <Card key={group.title} className="bg-card shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => setPulmonaryGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
-                    className="w-full"
-                  >
-                    <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
-                      <div className="flex items-center gap-2">
-                        <KpiCircle count={abnormal} groupLabel={group.title} />
-                        <div className="text-left">
-                          <div className="text-base font-semibold text-foreground">{group.title}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {abnormal === 0
-                              ? 'Tous les paramètres dans les cibles'
-                              : `${abnormal} paramètre${abnormal > 1 ? 's' : ''} hors cible`}
-                          </div>
-                        </div>
-                      </div>
-                      <ChevronDown
-                        className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                      />
-                    </div>
-                  </button>
-                  {isOpen && (
-                    <CardContent className="pt-4 border-t">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-8">
-                        {group.metrics.map((metric, index) => {
-                          const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                          const valueColor = inRange ? 'text-muted-foreground' : 'text-status-critical';
-
-                          return (
-                            <div key={index} className="flex flex-col items-center">
-                              <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide text-center">
-                                {metric.label}
-                              </div>
-                              <div className="flex items-baseline gap-1 mb-3">
-                                <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>
-                                  {metric.value}
-                                </div>
-                                {metric.unit && (
-                                  <div className="text-[10px] text-muted-foreground">{metric.unit}</div>
-                                )}
-                              </div>
-                              <MetricRangeBar
-                                value={metric.value}
-                                min={metric.min}
-                                max={metric.max}
-                                targetMin={metric.targetMin}
-                                targetMax={metric.targetMax}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        </DataLoadingOverlay>
 
         {/* VAP Prediction 1 Dialog */}
         <Dialog open={openDialog === 'vap1'} onOpenChange={(open) => !open && setOpenDialog(null)}>

@@ -11,6 +11,7 @@ import { Info, ChevronDown, ChevronUp, Edit2, Check, X, Plus, Trash2, Minus, Ale
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 import { MetricRangeBar } from '@/components/MetricRangeBar';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
+import { CollapsibleModuleCard, CountCircle } from '@/components/CollapsibleModuleCard';
 
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -240,11 +241,10 @@ const Optiheart = () => {
       <Header />
       <PatientHeader currentPage="optiheart" />
       
-      <main className="container mx-auto px-6 pb-8 max-w-[1600px]">
-        <div className="mb-6">
-          <VitalSignsPanel />
-        </div>
-        <Card className="shadow-sm mb-6">
+      <main className="container mx-auto px-6 pb-8 max-w-[1600px] space-y-6">
+        <VitalSignsPanel />
+
+        <Card className="shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">
@@ -259,126 +259,100 @@ const Optiheart = () => {
           </CardHeader>
           <CardContent className="space-y-4">
 
-            {/* Clinical Indicators */}
-            <Card className="border-2 border-border">
-              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setClinicalExpanded(!clinicalExpanded)}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                      outOfRangeCount === 0 ? 'border-muted-foreground text-muted-foreground bg-muted/50' : 
-                       outOfRangeCount <= 2 ? 'border-status-warning text-status-warning bg-status-warning/10' : 
-                       'border-destructive text-destructive bg-destructive/10'
-                    }`}>
-                      {outOfRangeCount}
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">
-                        Indicateurs cliniques problématiques : surveiller DC, IC, et RVS
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {outOfRangeCount} indicateur{outOfRangeCount > 1 ? 's' : ''} hors cible sur {totalIndicators}
-                      </p>
-                    </div>
-                  </div>
-                  {clinicalExpanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
-                </div>
-              </CardHeader>
-              {clinicalExpanded && (
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-3 gap-4 pt-4">
-                    {clinicalIndicators.map((indicator, index) => {
-                      const isSelected = selectedIndicators.includes(indicator.label);
-                       const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-status-warning' : 'bg-status-normal';
-                      return (
-                        <div 
-                          key={index}
-                          className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all ${
-                            isSelected ? 'bg-primary/10 border-2 border-primary' : 'hover:bg-muted/50'
-                          }`}
-                          onClick={() => {
-                            setSelectedIndicators(prev =>
-                              prev.includes(indicator.label)
-                                ? prev.filter(label => label !== indicator.label)
-                                : [...prev, indicator.label]
-                            );
-                          }}
-                        >
-                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor} ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}`}></div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-1">
-                              <p className="text-sm font-medium text-foreground">
-                                {indicator.label} : {indicator.value}{indicator.unit}
-                              </p>
-                            </div>
-                            <p className="text-xs text-muted-foreground">{indicator.target}</p>
-                          </div>
+            <CollapsibleModuleCard
+              variant="nested"
+              expanded={clinicalExpanded}
+              onToggle={() => setClinicalExpanded(!clinicalExpanded)}
+              headerIcon={
+                <CountCircle
+                  count={outOfRangeCount}
+                  total={totalIndicators}
+                  status={outOfRangeCount === 0 ? 'inactive' : outOfRangeCount <= 2 ? 'warning' : 'critical'}
+                />
+              }
+              title="Indicateurs cliniques problématiques : surveiller DC, IC, et RVS"
+              subtitle={`${outOfRangeCount} indicateur${outOfRangeCount > 1 ? 's' : ''} hors cible sur ${totalIndicators}`}
+              contentClassName="pt-0 px-4 sm:px-6 pb-4"
+            >
+              <div className="grid grid-cols-3 gap-4 pt-4">
+                {clinicalIndicators.map((indicator, index) => {
+                  const isSelected = selectedIndicators.includes(indicator.label);
+                  const statusColor = indicator.status === 'critical' ? 'bg-destructive' : indicator.status === 'warning' ? 'bg-status-warning' : 'bg-status-normal';
+                  return (
+                    <div
+                      key={index}
+                      className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all border-2 ${
+                        isSelected ? 'bg-card shadow-sm border-primary' : 'border-transparent hover:bg-muted/50'
+                      }`}
+                      onClick={() => {
+                        setSelectedIndicators(prev =>
+                          prev.includes(indicator.label)
+                            ? prev.filter(label => label !== indicator.label)
+                            : [...prev, indicator.label]
+                        );
+                      }}
+                    >
+                      <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {indicator.label} : {indicator.value}{indicator.unit}
+                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-4 text-center">
-                    Click on an indicator to display it in the chart
-                  </p>
-                </CardContent>
-              )}
-            </Card>
+                        <p className="text-xs text-muted-foreground">{indicator.target}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-4 text-center">
+                Cliquez sur un indicateur pour l'afficher dans le graphique
+              </p>
+            </CollapsibleModuleCard>
 
-            {/* Monitoring Targets */}
-            <Card className="border-2 border-border">
-              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setChecklistExpanded(!checklistExpanded)}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 ${
-                      monitoringAdherence >= 90 ? 'border-status-normal text-status-normal bg-status-normal/10' : 
-                       monitoringAdherence >= 80 ? 'border-status-warning text-status-warning bg-status-warning/10' : 
-                       'border-destructive text-destructive bg-destructive/10'
-                    }`}>
-                      {monitoringAdherence}%
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">
-                        Adhérence globale des cibles de monitorage
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {targetOutOfRangeCount} cibles à surveiller
-                      </p>
-                    </div>
-                  </div>
-                  {checklistExpanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
-                </div>
-              </CardHeader>
-              {checklistExpanded && (
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
-                    {monitoringTargets.map((target, index) => {
-                      const statusColor = target.status === 'critical' ? 'bg-destructive' : target.status === 'warning' ? 'bg-status-warning' : 'bg-status-normal';
-                      return (
-                        <div 
-                          key={index}
-                          className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-all"
-                        >
-                          <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <p className="text-sm font-medium text-foreground">
-                                {target.label} : {target.value}{target.unit || ''}
-                              </p>
-                              <span className={`text-xs font-medium ${
-                                target.status === 'critical' ? 'text-destructive' : 
-                                target.status === 'warning' ? 'text-status-warning' : 'text-status-normal'
-                              }`}>
-                                {target.adherencePercentage}%
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">{target.target}</p>
-                          </div>
+            <CollapsibleModuleCard
+              variant="nested"
+              expanded={checklistExpanded}
+              onToggle={() => setChecklistExpanded(!checklistExpanded)}
+              headerIcon={
+                <CountCircle
+                  count={monitoringAdherence}
+                  status={monitoringAdherence >= 90 ? 'normal' : monitoringAdherence >= 80 ? 'warning' : 'critical'}
+                />
+              }
+              title="Adhérence globale des cibles de monitorage"
+              subtitle={`${targetOutOfRangeCount} cibles à surveiller`}
+              contentClassName="pt-0 px-4 sm:px-6 pb-4"
+            >
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                {monitoringTargets.map((target, index) => {
+                  const statusColor = target.status === 'critical' ? 'bg-destructive' : target.status === 'warning' ? 'bg-status-warning' : 'bg-status-normal';
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-all"
+                    >
+                      <div className={`w-3 h-3 rounded-full mt-1 ${statusColor}`}></div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {target.label} : {target.value}{target.unit || ''}
+                          </p>
+                          <span className={`text-xs font-medium ${
+                            target.status === 'critical' ? 'text-destructive' :
+                            target.status === 'warning' ? 'text-status-warning' : 'text-status-normal'
+                          }`}>
+                            {target.adherencePercentage}%
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+                        <p className="text-xs text-muted-foreground">{target.target}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CollapsibleModuleCard>
+
             <Card className="border-2 border-border">
               <CardHeader>
                 <CardTitle className="text-base">

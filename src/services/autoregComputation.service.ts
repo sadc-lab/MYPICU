@@ -31,6 +31,8 @@ export interface AutoregResult {
 
 const PRX_THRESHOLD = 0.3;
 
+const REQUIRED_SAMPLES = 30;
+
 // ---------- Parsing ----------
 
 function parseNum(v: string | number | null | undefined): number | null {
@@ -65,6 +67,7 @@ const HEADER_MAP: Record<string, "time" | "pic" | "pam" | "ppc"> = {
   abpm: "pam",
   ppc: "ppc",
   cpp: "ppc",
+  rawppc: "ppc",
 };
 
 export function parseCSV(text: string): RawSample[] {
@@ -89,12 +92,11 @@ export function parseCSV(text: string): RawSample[] {
     const cells = lines[i].split(delim);
     const t = parseDate(cells[idx.time]);
     if (!t) continue;
-    out.push({
-      time: t,
-      pic: idx.pic !== undefined ? parseNum(cells[idx.pic]) : null,
-      pam: idx.pam !== undefined ? parseNum(cells[idx.pam]) : null,
-      ppc: idx.ppc !== undefined ? parseNum(cells[idx.ppc]) : null,
-    });
+    const pic = idx.pic !== undefined ? parseNum(cells[idx.pic]) : null;
+    let pam = idx.pam !== undefined ? parseNum(cells[idx.pam]) : null;
+    const ppc = idx.ppc !== undefined ? parseNum(cells[idx.ppc]) : null;
+    if (pam === null && ppc !== null && pic !== null) pam = ppc + pic;
+    out.push({ time: t, pic, pam, ppc });
   }
   return out.sort((a, b) => a.time.getTime() - b.time.getTime());
 }
@@ -113,16 +115,23 @@ export function parseFisherJSON(json: unknown): RawSample[] {
       const headers = hdr.split(",").map((h) => h.trim());
       const values = String(val).split(",").map((v) => v.trim());
       const map: Record<string, string> = {};
-      headers.forEach((h, i) => (map[normHeader(h)] = values[i] || ""));
-
-      const t = parseDate(map["horodate"] || map["time"]);
-      if (!t) continue;
-      out.push({
-        time: t,
-        pic: parseNum(map["pic"]),
-        pam: parseNum(map["pam"]),
-        ppc: parseNum(map["ppc"]),
+      headers.forEach((h, i) => {
+        const canonical = HEADER_MAP[normHeader(h)];
+        const raw = values[i] ?? "";
+        if (canonical) {
+          // First non-empty value wins so `rawPPC` fills PPC when PPC is empty.
+          if (!map[canonical] && raw !== "") map[canonical] = raw;
+        }
       });
+
+      const t = parseDate(map["time"]);
+      if (!t) continue;
+      const pic = parseNum(map["pic"]);
+      let pam = parseNum(map["pam"]);
+      const ppc = parseNum(map["ppc"]);
+      // Derive PAM from PPC + PIC when only PPC/PIC are recorded (PPC = PAM − PIC).
+      if (pam === null && ppc !== null && pic !== null) pam = ppc + pic;
+      out.push({ time: t, pic, pam, ppc });
     }
   }
   return out.sort((a, b) => a.time.getTime() - b.time.getTime());
@@ -139,6 +148,85 @@ export function parseAny(text: string): RawSample[] {
     }
   }
   return parseCSV(text);
+}
+
+export interface ReadinessError {
+  cause: string;
+  steps: string[];
+}
+
+export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError | null {
+  if (samples.length === 0) {
+    return {
+      cause: "Aucune donnée exploitable détectée dans le fichier.",
+      steps: [
+        "Vérifiez que le fichier contient bien des lignes horodatées.",
+        "Formats acceptés : CSV avec en-têtes (time, PIC, PAM, PPC) ou JSON Fisher (P####_Full_AR_Table_3min_Fisher).",
+        "Assurez-vous que les colonnes PIC, PAM et PPC ne sont pas vides.",
+      ],
+    };
+  }
+
+  if (samples.length < REQUIRED_SAMPLES) {
+    return {
+      cause: `Fichier insuffisant : ${samples.length} échantillon(s) détecté(s), ${REQUIRED_SAMPLES} minimum requis.`,
+      steps: [
+        "Prolongez la période d'enregistrement (au moins 90 minutes recommandé).",
+        "Vérifiez la fréquence d'échantillonnage (1 point / minute minimum).",
+      ],
+    };
+  }
+
+  const missing = {
+    PIC: samples.filter((s) => s.pic === null).length,
+    PAM: samples.filter((s) => s.pam === null).length,
+    PPC: samples.filter((s) => s.ppc === null).length,
+  };
+  const emptyFields = Object.entries(missing).filter(([, n]) => n === samples.length).map(([k]) => k);
+  if (emptyFields.length > 0) {
+    return {
+      cause: `Champs entièrement vides : ${emptyFields.join(', ')}.`,
+      steps: [
+        "Vérifiez le mapping des colonnes du fichier source.",
+        "PIC, PAM et PPC doivent tous être présents (PPC peut être calculé automatiquement si PAM et PIC le sont).",
+        "Contrôlez qu'aucun filtre n'a supprimé ces canaux à l'export du moniteur.",
+      ],
+    };
+  }
+
+  const complete = samples.filter((s) => s.pic !== null && s.pam !== null && s.ppc !== null);
+  if (complete.length < REQUIRED_SAMPLES) {
+    return {
+      cause: `Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent PIC, PAM et PPC exploitables.`,
+      steps: [
+        "Trop de valeurs manquantes : contrôlez les artefacts et les périodes de déconnexion du capteur.",
+        "Réexportez le fichier sur une plage temporelle où les 3 signaux sont enregistrés simultanément.",
+      ],
+    };
+  }
+
+  const constantFields = [
+    { label: 'PIC', values: complete.map((s) => s.pic as number) },
+    { label: 'PAM', values: complete.map((s) => s.pam as number) },
+    { label: 'PPC', values: complete.map((s) => s.ppc as number) },
+  ].filter(({ values }) => new Set(values.map((v) => v.toFixed(3))).size < 2);
+
+  if (constantFields.length > 0) {
+    const details = constantFields
+      .map(({ label, values }) => `${label} = ${values[0].toFixed(1)} (constant)`)
+      .join(', ');
+    return {
+      cause: `Signaux constants détectés : ${details}.`,
+      steps: [
+        "La corrélation PRx nécessite des variations physiologiques de PIC et PAM.",
+        "La courbe PPC optimale nécessite une variabilité de PPC sur la période.",
+        "Vérifiez que le capteur PIC était bien connecté et non zéroté artificiellement.",
+        "Réexportez une plage où les signaux évoluent réellement (éviter les périodes de sédation profonde stable).",
+      ],
+    };
+  }
+
+  return null;
 }
 
 // ---------- Computation ----------
@@ -298,20 +386,51 @@ export function rollingOptimal(
 }
 
 // CSV export helper
-export function resultsToCSV(result: AutoregResult): string {
+export interface CSVMetadata {
+  subjectId?: string;
+  subjectCode?: string;
+  subjectLabel?: string;
+  fileName?: string;
+  studyDate?: Date;
+  exportedAt?: Date;
+}
+
+function csvEscape(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+export function resultsToCSV(result: AutoregResult, meta: CSVMetadata = {}): string {
   const lines: string[] = [];
-  lines.push("# Résumé");
-  lines.push(`PPC optimale,${result.optimalPPC ?? ""}`);
-  lines.push(`LLA,${result.lowerLimit ?? ""}`);
-  lines.push(`ULA,${result.upperLimit ?? ""}`);
+  const exportedAt = meta.exportedAt ?? new Date();
+  const studyDate = meta.studyDate ?? result.samples[0]?.time ?? null;
+
+  lines.push("# Métadonnées du sujet");
+  lines.push(`ID patient,${csvEscape(meta.subjectId)}`);
+  lines.push(`Code sujet,${csvEscape(meta.subjectCode)}`);
+  lines.push(`Libellé sujet,${csvEscape(meta.subjectLabel)}`);
+  lines.push(`Fichier source,${csvEscape(meta.fileName)}`);
+  lines.push(`Date d'étude,${studyDate ? studyDate.toISOString() : ""}`);
+  lines.push(`Date d'export,${exportedAt.toISOString()}`);
+  lines.push("");
+
+  lines.push("# Résumé des résultats optimaux");
+  lines.push(`PPC optimale (mmHg),${result.optimalPPC ?? ""}`);
+  lines.push(`LLA (mmHg),${result.lowerLimit ?? ""}`);
+  lines.push(`ULA (mmHg),${result.upperLimit ?? ""}`);
   lines.push(`PRx minimum,${result.minPrx ?? ""}`);
   lines.push(`Nombre d'échantillons,${result.sampleCount}`);
   lines.push(`Durée (h),${result.durationHours}`);
   lines.push("");
+
   lines.push("# Courbe PRx vs PPC");
-  lines.push("PPC (mmHg),PRx moyen,N");
-  result.curve.forEach((p) => lines.push(`${p.ppc},${p.prx},${p.count}`));
+  lines.push("PPC (mmHg),PRx moyen,N échantillons,Autorégulation");
+  result.curve.forEach((p) =>
+    lines.push(`${p.ppc},${p.prx},${p.count},${p.prx < 0.3 ? "Préservée" : "Altérée"}`),
+  );
   lines.push("");
+
   lines.push("# Séries temporelles");
   lines.push("Horodate,PIC,PAM,PPC,PRx");
   result.samples.forEach((s) =>
@@ -321,3 +440,4 @@ export function resultsToCSV(result: AutoregResult): string {
   );
   return lines.join("\n");
 }
+

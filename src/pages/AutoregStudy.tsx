@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Header } from '@/components/Header';
 import { StudyNav } from '@/components/study/StudyNav';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -7,16 +7,32 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Upload,
   FileText,
   Download,
-  
   AlertCircle,
   CheckCircle2,
   Brain,
   LineChart,
   ShieldCheck,
   UserPlus,
+  HelpCircle,
 } from 'lucide-react';
 import {
   ComposedChart,
@@ -24,63 +40,216 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   ReferenceArea,
   ReferenceDot,
   Legend,
 } from 'recharts';
+import * as XLSX from 'xlsx';
 import {
   parseAny,
+  describeAnalysisReadiness,
   runAnalysis,
   rollingOptimal,
   resultsToCSV,
   type AutoregResult,
   type OptimalTimePoint,
+  type ReadinessError,
 } from '@/services/autoregComputation.service';
 import { useStudyPatients } from '@/hooks/useStudyPatients';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface PatientAnalysis {
+  result: AutoregResult;
+  rolling: OptimalTimePoint[];
+  fileName: string;
+}
+
+async function readFileAsText(file: File): Promise<string> {
+  const lower = file.name.toLowerCase();
+  if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const first = wb.SheetNames[0];
+    if (!first) throw new Error('Fichier Excel sans feuille.');
+    return XLSX.utils.sheet_to_csv(wb.Sheets[first]);
+  }
+  return await file.text();
+}
 
 const AutoregStudy = () => {
   const patientsController = useStudyPatients();
-  const { patients, active, addPatient, updatePatient } = patientsController;
+  const { patients, active, addPatient, updatePatient, removePatient } = patientsController;
 
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [result, setResult] = useState<AutoregResult | null>(null);
-  const [rolling, setRolling] = useState<OptimalTimePoint[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  // Per-patient cache so each subject is independent
+  const [analysisByPatient, setAnalysisByPatient] = useState<Record<string, PatientAnalysis>>({});
+  const [error, setError] = useState<string | ReadinessError | null>(null);
   const [parsing, setParsing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = async (file: File) => {
+  const current = active ? analysisByPatient[active.id] ?? null : null;
+  const result = current?.result ?? null;
+  const rolling = current?.rolling ?? [];
+  const fileName = current?.fileName ?? null;
+
+  // Load saved analysis from Supabase whenever active patient changes and cache is empty
+  useEffect(() => {
+    if (!active) return;
+    if (analysisByPatient[active.id]) return;
+    let cancelled = false;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error: fetchError } = await supabase
+        .from('autoreg_study_results')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('study_patient_id', active.id)
+        .order('computed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled || fetchError || !data) return;
+      const savedCurve = Array.isArray(data.curve) ? data.curve : [];
+      if (savedCurve.length === 0 && data.optimal_ppc === null) {
+        setError(
+          `Le dernier fichier enregistré (${data.file_name ?? 'sans nom'}) ne contient pas de résultat calculable. Réimportez un fichier avec des variations exploitables de PIC/PAM/PPC.`,
+        );
+        return;
+      }
+      const restored: AutoregResult = {
+        optimalPPC: data.optimal_ppc !== null ? Number(data.optimal_ppc) : null,
+        lowerLimit: data.lower_limit !== null ? Number(data.lower_limit) : null,
+        upperLimit: data.upper_limit !== null ? Number(data.upper_limit) : null,
+        minPrx: data.min_prx !== null ? Number(data.min_prx) : null,
+        sampleCount: data.sample_count ?? 0,
+        durationHours: data.duration_hours !== null ? Number(data.duration_hours) : 0,
+        curve: savedCurve as any,
+        samples: [],
+      };
+      setAnalysisByPatient((prev) =>
+        prev[active.id]
+          ? prev
+          : {
+              ...prev,
+              [active.id]: {
+                result: restored,
+                rolling: (data.rolling as any) ?? [],
+                fileName: data.file_name ?? '',
+              },
+            },
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.id]);
+
+  // Add-patient dialog state (label + required file)
+  const [addOpen, setAddOpen] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const submitNewPatient = async () => {
+    setAddError(null);
+    if (!newFile) {
+      setAddError('Veuillez sélectionner un fichier CSV, JSON ou Excel.');
+      return;
+    }
+    const created = addPatient(newLabel);
+    const finalLabel = newLabel.trim();
+    if (finalLabel) {
+      updatePatient(created.id, { label: finalLabel });
+    }
+    const target = { id: created.id, code: created.code, label: finalLabel || created.label };
+    const fileToProcess = newFile;
+    setAddOpen(false);
+    setNewLabel('');
+    setNewFile(null);
+    const ok = await handleFile(fileToProcess, target);
+    if (!ok) {
+      removePatient(created.id);
+    }
+  };
+
+
+  const handleFile = async (file: File, patientOverride?: { id: string; code: string; label: string }): Promise<boolean> => {
     setError(null);
     setParsing(true);
+    const target = patientOverride ?? active;
+    if (!target) {
+      setError("Aucun patient sélectionné.");
+      setParsing(false);
+      return false;
+    }
     try {
       if (file.size > 25 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 25 Mo).');
-      const text = await file.text();
+      const text = await readFileAsText(file);
       const samples = parseAny(text);
-      if (samples.length < 30) {
-        throw new Error(
-          "Fichier invalide ou insuffisant : au moins 30 échantillons avec Horodate, PIC, PAM sont requis.",
-        );
+      const readinessError = describeAnalysisReadiness(samples);
+      if (readinessError) {
+        setError(readinessError);
+        setParsing(false);
+        return false;
       }
       const analysis = runAnalysis(samples, 30, 5);
+      if (analysis.curve.length === 0 || analysis.optimalPPC === null) {
+        throw new Error(
+          "Calcul impossible : aucune courbe PRx/PPC exploitable n'a pu être générée avec ce fichier.",
+        );
+      }
       const derived = analysis.samples;
       const rolled = rollingOptimal(derived, Math.min(240, Math.floor(derived.length / 3)), 30, 5);
-      setResult(analysis);
-      setRolling(rolled);
-      setFileName(file.name);
-      if (active) updatePatient(active.id, { fileName: file.name });
+      setAnalysisByPatient((prev) => ({
+        ...prev,
+        [target.id]: { result: analysis, rolling: rolled, fileName: file.name },
+      }));
+      updatePatient(target.id, { fileName: file.name });
+      // Persist results in Supabase (linked to study patient id)
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error: insertError } = await supabase
+            .from('autoreg_study_results')
+            .insert({
+              user_id: user.id,
+              study_patient_id: target.id,
+              study_patient_code: target.code,
+              study_patient_label: target.label,
+              file_name: file.name,
+              optimal_ppc: analysis.optimalPPC,
+              lower_limit: analysis.lowerLimit,
+              upper_limit: analysis.upperLimit,
+              min_prx: analysis.minPrx,
+              sample_count: analysis.sampleCount,
+              duration_hours: analysis.durationHours,
+              curve: analysis.curve as any,
+              rolling: rolled as any,
+            });
+          if (insertError) throw insertError;
+          toast.success('Résultats enregistrés dans la base de données');
+        } else {
+          toast.info("Connectez-vous pour conserver les résultats dans la base.");
+        }
+      } catch (persistErr: any) {
+        console.error('Persist autoreg result error:', persistErr);
+        toast.error("Impossible d'enregistrer les résultats : " + (persistErr.message || 'erreur inconnue'));
+      }
+      return true;
     } catch (e: any) {
       setError(e.message || 'Erreur lors du traitement du fichier.');
-      setResult(null);
-      setRolling([]);
+      return false;
     } finally {
       setParsing(false);
     }
   };
 
+
   const timeSeriesChartData = useMemo(() => {
-    if (!result) return [];
+    if (!result || !result.samples.length) return [];
     const step = Math.max(1, Math.floor(result.samples.length / 800));
     return result.samples
       .filter((_, i) => i % step === 0)
@@ -99,9 +268,18 @@ const AutoregStudy = () => {
     [rolling],
   );
 
+
   const downloadCSV = () => {
     if (!result) return;
-    const blob = new Blob([resultsToCSV(result)], { type: 'text/csv;charset=utf-8;' });
+    const csv = resultsToCSV(result, {
+      subjectId: active?.id,
+      subjectCode: active?.code,
+      subjectLabel: active?.label,
+      fileName: fileName ?? undefined,
+      studyDate: result.samples[0]?.time,
+      exportedAt: new Date(),
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -109,6 +287,90 @@ const AutoregStudy = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+
+  const downloadPDF = async () => {
+    if (!result) return;
+    try {
+      const [{ jsPDF }, autoTable, { toPng }] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable').then((m) => m.default),
+        import('html-to-image'),
+      ]);
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 40;
+      const now = new Date();
+
+      doc.setFontSize(16);
+      doc.text("Rapport d'autorégulation cérébrale", margin, 50);
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.text(
+        `Sujet : ${active?.code ?? '—'} · ${active?.label ?? ''}`,
+        margin,
+        70,
+      );
+      doc.text(`Fichier : ${fileName ?? '—'}`, margin, 84);
+      doc.text(`Généré le : ${now.toLocaleString('fr-CA')}`, margin, 98);
+      doc.setTextColor(0);
+
+      autoTable(doc, {
+        startY: 120,
+        head: [['Indicateur', 'Valeur']],
+        body: [
+          ['PPC optimale (mmHg)', result.optimalPPC?.toFixed(0) ?? '—'],
+          ['Limite basse LLA (mmHg)', result.lowerLimit?.toFixed(0) ?? '—'],
+          ['Limite haute ULA (mmHg)', result.upperLimit?.toFixed(0) ?? '—'],
+          ['PRx minimum', result.minPrx?.toFixed(2) ?? '—'],
+          ['Nombre d\'échantillons', String(result.sampleCount)],
+          ['Durée (h)', String(result.durationHours)],
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [30, 64, 175] },
+      });
+
+      // Capture each chart card as PNG and add to the PDF
+      const chartIds = ['pdf-chart-curve', 'pdf-chart-rolling', 'pdf-chart-timeseries'];
+      for (const id of chartIds) {
+        const node = document.getElementById(id);
+        if (!node) continue;
+        const png = await toPng(node, { backgroundColor: '#ffffff', pixelRatio: 2 });
+        const imgWidth = pageWidth - margin * 2;
+        const props = doc.getImageProperties(png);
+        const imgHeight = (props.height * imgWidth) / props.width;
+        doc.addPage();
+        doc.setFontSize(12);
+        doc.text(node.dataset.pdfTitle || 'Graphique', margin, 40);
+        doc.addImage(png, 'PNG', margin, 60, imgWidth, imgHeight);
+      }
+
+      // Curve table
+      doc.addPage();
+      doc.setFontSize(12);
+      doc.text('Courbe PRx vs PPC (bins de 5 mmHg)', margin, 40);
+      autoTable(doc, {
+        startY: 60,
+        head: [['PPC (mmHg)', 'PRx moyen', 'N échantillons', 'Autorégulation']],
+        body: result.curve.map((p) => [
+          p.ppc,
+          p.prx.toFixed(2),
+          p.count,
+          p.prx < 0.3 ? 'Préservée' : 'Altérée',
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [30, 64, 175] },
+        styles: { fontSize: 9 },
+      });
+
+      doc.save(`autoreg_${active?.code ?? 'sujet'}_${Date.now()}.pdf`);
+      toast.success('PDF généré');
+    } catch (err: any) {
+      console.error('PDF export error:', err);
+      toast.error("Échec de l'export PDF : " + (err.message || 'erreur inconnue'));
+    }
+  };
+
 
   const formatTime = (t: number) =>
     new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
@@ -127,25 +389,6 @@ const AutoregStudy = () => {
             Validation clinique de l'autorégulation cérébrale
           </h1>
         </div>
-        <div className="container mx-auto max-w-6xl px-4 pb-6">
-          <section id="methodology" className="grid md:grid-cols-3 gap-4">
-            <StepCard
-              n={1}
-              title="Créer un sujet"
-              desc="Ajoutez un pseudonyme via le bouton Sujet dans la barre du haut."
-            />
-            <StepCard
-              n={2}
-              title="Importer les données"
-              desc="CSV (Horodate, PIC, PAM, PPC) ou JSON Fisher. Détection automatique."
-            />
-            <StepCard
-              n={3}
-              title="Analyser et exporter"
-              desc="Visualisations interactives et export CSV des résultats calculés."
-            />
-          </section>
-        </div>
       </section>
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -153,18 +396,60 @@ const AutoregStudy = () => {
         {/* Import panel */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Import des données
-              {active && (
-                <Badge variant="secondary" className="ml-2">
-                  {active.code} · {active.label}
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Formats acceptés : CSV (colonnes <code>Horodate, PIC, PAM, PPC</code>) ou JSON Fisher.
-            </CardDescription>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Import des données
+                  {active && (
+                    <Badge variant="secondary" className="ml-2">
+                      {active.code} · {active.label}
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Formats acceptés : CSV, Excel (<code>.xlsx</code>) ou JSON Fisher (colonnes <code>Horodate, PIC, PAM, PPC</code>).
+                </CardDescription>
+              </div>
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Étapes de validation" className="shrink-0 -mr-2 -mt-2">
+                      <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="left"
+                    align="start"
+                    className="max-w-[16rem] sm:max-w-xs p-0 bg-card border shadow-lg"
+                  >
+                    <div className="p-2 sm:p-3 space-y-1 sm:space-y-2">
+                      <p className="font-semibold text-xs sm:text-sm text-foreground">Étapes de validation</p>
+                      <div className="space-y-1">
+                        <StepCard
+                          n={1}
+                          title="Créer un sujet"
+                          desc="Ajoutez un pseudonyme via le bouton Sujet."
+                          compact
+                        />
+                        <StepCard
+                          n={2}
+                          title="Importer les données"
+                          desc="CSV, Excel (.xlsx) ou JSON Fisher."
+                          compact
+                        />
+                        <StepCard
+                          n={3}
+                          title="Analyser et exporter"
+                          desc="Visualisations interactives et export CSV."
+                          compact
+                        />
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </CardHeader>
           <CardContent>
             {!active && patients.length === 0 && (
@@ -172,8 +457,8 @@ const AutoregStudy = () => {
                 <UserPlus className="h-4 w-4" />
                 <AlertTitle>Aucun sujet</AlertTitle>
                 <AlertDescription>
-                  Créez d'abord un sujet via le bouton <strong>Sujet</strong> en haut à droite, ou cliquez
-                  ci-dessous pour en créer un automatiquement puis importer un fichier.
+                  Cliquez sur <strong>Ajouter un patient</strong> pour créer un sujet et importer
+                  son fichier CSV/JSON en une seule étape.
                 </AlertDescription>
               </Alert>
             )}
@@ -181,7 +466,7 @@ const AutoregStudy = () => {
               <input
                 ref={inputRef}
                 type="file"
-                accept=".csv,.json,.txt"
+                accept=".csv,.json,.txt,.xlsx,.xls"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -189,14 +474,14 @@ const AutoregStudy = () => {
                   e.currentTarget.value = '';
                 }}
               />
-              <Button onClick={() => addPatient('')} disabled={parsing}>
+              <Button onClick={() => { setAddError(null); setAddOpen(true); }} disabled={parsing}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Ajouter un patient
               </Button>
               {active && (
-                <Button onClick={() => inputRef.current?.click()} disabled={parsing}>
-                  <LineChart className="mr-2 h-4 w-4" />
-                  {parsing ? 'Analyse…' : 'Lancer les calculs'}
+                <Button variant="outline" onClick={() => inputRef.current?.click()} disabled={parsing}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  {parsing ? 'Analyse…' : 'Modifier fichier'}
                 </Button>
               )}
               {fileName && (
@@ -209,12 +494,82 @@ const AutoregStudy = () => {
             {error && (
               <Alert variant="destructive" className="mt-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Impossible de traiter le fichier</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertTitle className="text-sm sm:text-base">Impossible de traiter le fichier</AlertTitle>
+                <AlertDescription>
+                  {typeof error === 'string' ? (
+                    <p className="text-xs sm:text-sm whitespace-pre-line">{error}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm sm:text-base font-semibold leading-snug">{error.cause}</p>
+                      <div className="space-y-1">
+                        <p className="text-[11px] sm:text-xs font-medium text-destructive/90 uppercase tracking-wide">
+                          Remédiation
+                        </p>
+                        <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-destructive/90 leading-relaxed">
+                          {error.steps.map((step, i) => (
+                            <li key={i}>{step}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    </div>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { setAddError(null); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ajouter un patient</DialogTitle>
+              <DialogDescription>
+                Renseignez un pseudonyme et joignez le fichier CSV ou JSON du sujet. Les deux sont
+                requis pour créer le patient et lancer l'analyse.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="new-patient-label">Pseudonyme (optionnel)</Label>
+                <Input
+                  id="new-patient-label"
+                  placeholder="ex. Sujet A"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-patient-file">Fichier CSV, Excel ou JSON *</Label>
+                <Input
+                  id="new-patient-file"
+                  type="file"
+                  accept=".csv,.json,.txt,.xlsx,.xls"
+                  onChange={(e) => setNewFile(e.target.files?.[0] ?? null)}
+                />
+                {newFile && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    Sélectionné : <span className="font-medium text-foreground">{newFile.name}</span>
+                  </p>
+                )}
+              </div>
+              {addError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{addError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddOpen(false)} disabled={parsing}>
+                Annuler
+              </Button>
+              <Button onClick={submitNewPatient} disabled={parsing || !newFile}>
+                {parsing ? 'Analyse…' : 'Créer et analyser'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {!result && !error && (
           <Card>
@@ -256,13 +611,20 @@ const AutoregStudy = () => {
                       glissante PIC/PAM (fenêtre 30 échantillons)
                     </CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={downloadCSV}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Exporter CSV
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={downloadCSV}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Exporter CSV
+                    </Button>
+                    <Button variant="default" size="sm" onClick={downloadPDF}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Exporter PDF
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <SummaryStat label="PPC optimale" value={result.optimalPPC} unit="mmHg" highlight />
                   <SummaryStat label="LLA" value={result.lowerLimit} unit="mmHg" />
@@ -272,7 +634,7 @@ const AutoregStudy = () => {
               </CardContent>
             </Card>
 
-            <Card className="mb-6">
+            <Card className="mb-6" id="pdf-chart-curve" data-pdf-title="Courbe d'autorégulation · PRx vs PPC">
               <CardHeader>
                 <CardTitle>Courbe d'autorégulation · PRx vs PPC</CardTitle>
                 <CardDescription>
@@ -305,7 +667,7 @@ const AutoregStudy = () => {
                           fillOpacity={0.08}
                         />
                       )}
-                      <Tooltip
+                      <RechartsTooltip
                         contentStyle={{
                           background: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
@@ -339,7 +701,7 @@ const AutoregStudy = () => {
             </Card>
 
             {rollingChartData.length > 0 && (
-              <Card className="mb-6">
+              <Card className="mb-6" id="pdf-chart-rolling" data-pdf-title="PPC optimale et limites dans le temps">
                 <CardHeader>
                   <CardTitle>PPC optimale et limites dans le temps</CardTitle>
                   <CardDescription>
@@ -363,7 +725,7 @@ const AutoregStudy = () => {
                           label={{ value: 'mmHg', angle: -90, position: 'insideLeft' }}
                           tick={{ fontSize: 12 }}
                         />
-                        <Tooltip
+                        <RechartsTooltip
                           labelFormatter={(l) => new Date(l).toLocaleString('fr-CA')}
                           contentStyle={{
                             background: 'hsl(var(--card))',
@@ -383,7 +745,8 @@ const AutoregStudy = () => {
               </Card>
             )}
 
-            <Card className="mb-6">
+            {timeSeriesChartData.length > 0 && (
+            <Card className="mb-6" id="pdf-chart-timeseries" data-pdf-title="Séries temporelles PIC / PAM / PPC">
               <CardHeader>
                 <CardTitle>Séries temporelles PIC / PAM / PPC</CardTitle>
                 <CardDescription>Données brutes après import.</CardDescription>
@@ -401,7 +764,7 @@ const AutoregStudy = () => {
                         tick={{ fontSize: 11 }}
                       />
                       <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip
+                      <RechartsTooltip
                         labelFormatter={(l) => new Date(l).toLocaleString('fr-CA')}
                         contentStyle={{
                           background: 'hsl(var(--card))',
@@ -418,6 +781,8 @@ const AutoregStudy = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
+
 
             <Card className="mb-6">
               <CardHeader>
@@ -488,15 +853,33 @@ const FeatureCard = ({
   </div>
 );
 
-const StepCard = ({ n, title, desc }: { n: number; title: string; desc: string }) => (
-  <div className="rounded-lg border bg-card p-4">
-    <div className="flex items-center gap-2 mb-1">
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+const StepCard = ({
+  n,
+  title,
+  desc,
+  compact = false,
+}: {
+  n: number;
+  title: string;
+  desc: string;
+  compact?: boolean;
+}) => (
+  <div className={`rounded-lg border bg-card ${compact ? 'p-2' : 'p-4'}`}>
+    <div className={`flex items-center gap-2 ${compact ? 'mb-0.5' : 'mb-1'}`}>
+      <span
+        className={`flex items-center justify-center rounded-full bg-primary text-primary-foreground font-bold ${
+          compact ? 'h-4 w-4 text-[10px]' : 'h-6 w-6 text-xs'
+        }`}
+      >
         {n}
       </span>
-      <span className="font-semibold text-foreground">{title}</span>
+      <span className={`font-semibold text-foreground ${compact ? 'text-xs' : 'text-sm'}`}>
+        {title}
+      </span>
     </div>
-    <p className="text-sm text-muted-foreground">{desc}</p>
+    <p className={`text-muted-foreground ${compact ? 'text-[11px] leading-snug' : 'text-sm'}`}>
+      {desc}
+    </p>
   </div>
 );
 
