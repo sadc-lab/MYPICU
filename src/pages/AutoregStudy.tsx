@@ -494,8 +494,26 @@ const AutoregStudy = () => {
             {error && (
               <Alert variant="destructive" className="mt-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Impossible de traiter le fichier</AlertTitle>
-                <AlertDescription className="whitespace-pre-line">{error}</AlertDescription>
+                <AlertTitle className="text-sm sm:text-base">Impossible de traiter le fichier</AlertTitle>
+                <AlertDescription>
+                  {typeof error === 'string' ? (
+                    <p className="text-xs sm:text-sm whitespace-pre-line">{error}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm sm:text-base font-semibold leading-snug">{error.cause}</p>
+                      <div className="space-y-1">
+                        <p className="text-[11px] sm:text-xs font-medium text-destructive/90 uppercase tracking-wide">
+                          Remédiation
+                        </p>
+                        <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-destructive/90 leading-relaxed">
+                          {error.steps.map((step, i) => (
+                            <li key={i}>{step}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    </div>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
           </CardContent>
