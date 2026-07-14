@@ -476,7 +476,7 @@ const AutoregStudy = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-patient-file">Fichier CSV ou JSON *</Label>
+                <Label htmlFor="new-patient-file">Fichier CSV, Excel ou JSON *</Label>
                 <Input
                   id="new-patient-file"
                   type="file"
