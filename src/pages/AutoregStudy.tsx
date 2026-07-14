@@ -409,7 +409,7 @@ const AutoregStudy = () => {
               <TooltipProvider delayDuration={100}>
                 <UiTooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="shrink-0 -mr-2 -mt-2">
+                    <Button variant="ghost" size="icon" aria-label="Étapes de validation" className="shrink-0 -mr-2 -mt-2">
                       <HelpCircle className="h-5 w-5 text-muted-foreground" />
                     </Button>
                   </TooltipTrigger>
