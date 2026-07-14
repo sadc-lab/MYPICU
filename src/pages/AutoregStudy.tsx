@@ -413,24 +413,33 @@ const AutoregStudy = () => {
                       <HelpCircle className="h-5 w-5 text-muted-foreground" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="left" align="start" className="max-w-sm p-0 bg-card border shadow-lg">
-                    <div className="p-3 space-y-3">
-                      <p className="font-semibold text-sm text-foreground">Étapes de validation</p>
-                      <StepCard
-                        n={1}
-                        title="Créer un sujet"
-                        desc="Ajoutez un pseudonyme via le bouton Sujet dans la barre du haut."
-                      />
-                      <StepCard
-                        n={2}
-                        title="Importer les données"
-                        desc="CSV, Excel (.xlsx) ou JSON Fisher. Détection automatique."
-                      />
-                      <StepCard
-                        n={3}
-                        title="Analyser et exporter"
-                        desc="Visualisations interactives et export CSV des résultats calculés."
-                      />
+                  <TooltipContent
+                    side="left"
+                    align="start"
+                    className="max-w-[16rem] sm:max-w-xs p-0 bg-card border shadow-lg"
+                  >
+                    <div className="p-2 sm:p-3 space-y-1 sm:space-y-2">
+                      <p className="font-semibold text-xs sm:text-sm text-foreground">Étapes de validation</p>
+                      <div className="space-y-1">
+                        <StepCard
+                          n={1}
+                          title="Créer un sujet"
+                          desc="Ajoutez un pseudonyme via le bouton Sujet."
+                          compact
+                        />
+                        <StepCard
+                          n={2}
+                          title="Importer les données"
+                          desc="CSV, Excel (.xlsx) ou JSON Fisher."
+                          compact
+                        />
+                        <StepCard
+                          n={3}
+                          title="Analyser et exporter"
+                          desc="Visualisations interactives et export CSV."
+                          compact
+                        />
+                      </div>
                     </div>
                   </TooltipContent>
                 </Tooltip>
