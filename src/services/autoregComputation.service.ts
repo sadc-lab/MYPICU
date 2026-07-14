@@ -65,6 +65,7 @@ const HEADER_MAP: Record<string, "time" | "pic" | "pam" | "ppc"> = {
   abpm: "pam",
   ppc: "ppc",
   cpp: "ppc",
+  rawppc: "ppc",
 };
 
 export function parseCSV(text: string): RawSample[] {
@@ -89,12 +90,11 @@ export function parseCSV(text: string): RawSample[] {
     const cells = lines[i].split(delim);
     const t = parseDate(cells[idx.time]);
     if (!t) continue;
-    out.push({
-      time: t,
-      pic: idx.pic !== undefined ? parseNum(cells[idx.pic]) : null,
-      pam: idx.pam !== undefined ? parseNum(cells[idx.pam]) : null,
-      ppc: idx.ppc !== undefined ? parseNum(cells[idx.ppc]) : null,
-    });
+    const pic = idx.pic !== undefined ? parseNum(cells[idx.pic]) : null;
+    let pam = idx.pam !== undefined ? parseNum(cells[idx.pam]) : null;
+    const ppc = idx.ppc !== undefined ? parseNum(cells[idx.ppc]) : null;
+    if (pam === null && ppc !== null && pic !== null) pam = ppc + pic;
+    out.push({ time: t, pic, pam, ppc });
   }
   return out.sort((a, b) => a.time.getTime() - b.time.getTime());
 }
@@ -113,16 +113,23 @@ export function parseFisherJSON(json: unknown): RawSample[] {
       const headers = hdr.split(",").map((h) => h.trim());
       const values = String(val).split(",").map((v) => v.trim());
       const map: Record<string, string> = {};
-      headers.forEach((h, i) => (map[normHeader(h)] = values[i] || ""));
-
-      const t = parseDate(map["horodate"] || map["time"]);
-      if (!t) continue;
-      out.push({
-        time: t,
-        pic: parseNum(map["pic"]),
-        pam: parseNum(map["pam"]),
-        ppc: parseNum(map["ppc"]),
+      headers.forEach((h, i) => {
+        const canonical = HEADER_MAP[normHeader(h)];
+        const raw = values[i] ?? "";
+        if (canonical) {
+          // First non-empty value wins so `rawPPC` fills PPC when PPC is empty.
+          if (!map[canonical] && raw !== "") map[canonical] = raw;
+        }
       });
+
+      const t = parseDate(map["time"]);
+      if (!t) continue;
+      const pic = parseNum(map["pic"]);
+      let pam = parseNum(map["pam"]);
+      const ppc = parseNum(map["ppc"]);
+      // Derive PAM from PPC + PIC when only PPC/PIC are recorded (PPC = PAM − PIC).
+      if (pam === null && ppc !== null && pic !== null) pam = ppc + pic;
+      out.push({ time: t, pic, pam, ppc });
     }
   }
   return out.sort((a, b) => a.time.getTime() - b.time.getTime());
