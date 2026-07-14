@@ -481,7 +481,7 @@ const AutoregStudy = () => {
               <Alert variant="destructive" className="mt-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Impossible de traiter le fichier</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="whitespace-pre-line">{error}</AlertDescription>
               </Alert>
             )}
           </CardContent>
