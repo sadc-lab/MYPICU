@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Header } from '@/components/Header';
 import { StudyNav } from '@/components/study/StudyNav';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,7 +20,6 @@ import {
   Upload,
   FileText,
   Download,
-  
   AlertCircle,
   CheckCircle2,
   Brain,
@@ -40,6 +39,7 @@ import {
   ReferenceDot,
   Legend,
 } from 'recharts';
+import * as XLSX from 'xlsx';
 import {
   parseAny,
   runAnalysis,
@@ -52,18 +52,86 @@ import { useStudyPatients } from '@/hooks/useStudyPatients';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface PatientAnalysis {
+  result: AutoregResult;
+  rolling: OptimalTimePoint[];
+  fileName: string;
+}
+
+async function readFileAsText(file: File): Promise<string> {
+  const lower = file.name.toLowerCase();
+  if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const first = wb.SheetNames[0];
+    if (!first) throw new Error('Fichier Excel sans feuille.');
+    return XLSX.utils.sheet_to_csv(wb.Sheets[first]);
+  }
+  return await file.text();
+}
+
 const AutoregStudy = () => {
   const patientsController = useStudyPatients();
   const { patients, active, addPatient, updatePatient, removePatient } = patientsController;
 
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [result, setResult] = useState<AutoregResult | null>(null);
-  const [rolling, setRolling] = useState<OptimalTimePoint[]>([]);
+  // Per-patient cache so each subject is independent
+  const [analysisByPatient, setAnalysisByPatient] = useState<Record<string, PatientAnalysis>>({});
   const [error, setError] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Add-patient dialog state (label + required CSV)
+  const current = active ? analysisByPatient[active.id] ?? null : null;
+  const result = current?.result ?? null;
+  const rolling = current?.rolling ?? [];
+  const fileName = current?.fileName ?? null;
+
+  // Load saved analysis from Supabase whenever active patient changes and cache is empty
+  useEffect(() => {
+    if (!active) return;
+    if (analysisByPatient[active.id]) return;
+    let cancelled = false;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error: fetchError } = await supabase
+        .from('autoreg_study_results')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('study_patient_id', active.id)
+        .order('computed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled || fetchError || !data) return;
+      const restored: AutoregResult = {
+        optimalPPC: data.optimal_ppc !== null ? Number(data.optimal_ppc) : null,
+        lowerLimit: data.lower_limit !== null ? Number(data.lower_limit) : null,
+        upperLimit: data.upper_limit !== null ? Number(data.upper_limit) : null,
+        minPrx: data.min_prx !== null ? Number(data.min_prx) : null,
+        sampleCount: data.sample_count ?? 0,
+        durationHours: data.duration_hours !== null ? Number(data.duration_hours) : 0,
+        curve: (data.curve as any) ?? [],
+        samples: [],
+      };
+      setAnalysisByPatient((prev) =>
+        prev[active.id]
+          ? prev
+          : {
+              ...prev,
+              [active.id]: {
+                result: restored,
+                rolling: (data.rolling as any) ?? [],
+                fileName: data.file_name ?? '',
+              },
+            },
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.id]);
+
+  // Add-patient dialog state (label + required file)
   const [addOpen, setAddOpen] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newFile, setNewFile] = useState<File | null>(null);
@@ -72,7 +140,7 @@ const AutoregStudy = () => {
   const submitNewPatient = async () => {
     setAddError(null);
     if (!newFile) {
-      setAddError('Veuillez sélectionner un fichier CSV ou JSON.');
+      setAddError('Veuillez sélectionner un fichier CSV, JSON ou Excel.');
       return;
     }
     const created = addPatient(newLabel);
@@ -96,9 +164,14 @@ const AutoregStudy = () => {
     setError(null);
     setParsing(true);
     const target = patientOverride ?? active;
+    if (!target) {
+      setError("Aucun patient sélectionné.");
+      setParsing(false);
+      return false;
+    }
     try {
       if (file.size > 25 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 25 Mo).');
-      const text = await file.text();
+      const text = await readFileAsText(file);
       const samples = parseAny(text);
       if (samples.length < 30) {
         throw new Error(
@@ -108,14 +181,15 @@ const AutoregStudy = () => {
       const analysis = runAnalysis(samples, 30, 5);
       const derived = analysis.samples;
       const rolled = rollingOptimal(derived, Math.min(240, Math.floor(derived.length / 3)), 30, 5);
-      setResult(analysis);
-      setRolling(rolled);
-      setFileName(file.name);
-      if (target) updatePatient(target.id, { fileName: file.name });
+      setAnalysisByPatient((prev) => ({
+        ...prev,
+        [target.id]: { result: analysis, rolling: rolled, fileName: file.name },
+      }));
+      updatePatient(target.id, { fileName: file.name });
       // Persist results in Supabase (linked to study patient id)
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user && target) {
+        if (user) {
           const { error: insertError } = await supabase
             .from('autoreg_study_results')
             .insert({
@@ -135,7 +209,7 @@ const AutoregStudy = () => {
             });
           if (insertError) throw insertError;
           toast.success('Résultats enregistrés dans la base de données');
-        } else if (!user) {
+        } else {
           toast.info("Connectez-vous pour conserver les résultats dans la base.");
         }
       } catch (persistErr: any) {
@@ -145,8 +219,6 @@ const AutoregStudy = () => {
       return true;
     } catch (e: any) {
       setError(e.message || 'Erreur lors du traitement du fichier.');
-      setResult(null);
-      setRolling([]);
       return false;
     } finally {
       setParsing(false);
@@ -155,7 +227,7 @@ const AutoregStudy = () => {
 
 
   const timeSeriesChartData = useMemo(() => {
-    if (!result) return [];
+    if (!result || !result.samples.length) return [];
     const step = Math.max(1, Math.floor(result.samples.length / 800));
     return result.samples
       .filter((_, i) => i % step === 0)
@@ -173,6 +245,7 @@ const AutoregStudy = () => {
       })),
     [rolling],
   );
+
 
   const downloadCSV = () => {
     if (!result) return;
