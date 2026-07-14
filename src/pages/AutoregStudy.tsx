@@ -384,25 +384,6 @@ const AutoregStudy = () => {
             Validation clinique de l'autorégulation cérébrale
           </h1>
         </div>
-        <div className="container mx-auto max-w-6xl px-4 pb-6">
-          <section id="methodology" className="grid md:grid-cols-3 gap-4">
-            <StepCard
-              n={1}
-              title="Créer un sujet"
-              desc="Ajoutez un pseudonyme via le bouton Sujet dans la barre du haut."
-            />
-            <StepCard
-              n={2}
-              title="Importer les données"
-              desc="CSV, Excel (.xlsx) ou JSON Fisher. Détection automatique."
-            />
-            <StepCard
-              n={3}
-              title="Analyser et exporter"
-              desc="Visualisations interactives et export CSV des résultats calculés."
-            />
-          </section>
-        </div>
       </section>
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
