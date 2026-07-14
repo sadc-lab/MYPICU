@@ -830,15 +830,33 @@ const FeatureCard = ({
   </div>
 );
 
-const StepCard = ({ n, title, desc }: { n: number; title: string; desc: string }) => (
-  <div className="rounded-lg border bg-card p-4">
-    <div className="flex items-center gap-2 mb-1">
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+const StepCard = ({
+  n,
+  title,
+  desc,
+  compact = false,
+}: {
+  n: number;
+  title: string;
+  desc: string;
+  compact?: boolean;
+}) => (
+  <div className={`rounded-lg border bg-card ${compact ? 'p-2' : 'p-4'}`}>
+    <div className={`flex items-center gap-2 ${compact ? 'mb-0.5' : 'mb-1'}`}>
+      <span
+        className={`flex items-center justify-center rounded-full bg-primary text-primary-foreground font-bold ${
+          compact ? 'h-4 w-4 text-[10px]' : 'h-6 w-6 text-xs'
+        }`}
+      >
         {n}
       </span>
-      <span className="font-semibold text-foreground">{title}</span>
+      <span className={`font-semibold text-foreground ${compact ? 'text-xs' : 'text-sm'}`}>
+        {title}
+      </span>
     </div>
-    <p className="text-sm text-muted-foreground">{desc}</p>
+    <p className={`text-muted-foreground ${compact ? 'text-[11px] leading-snug' : 'text-sm'}`}>
+      {desc}
+    </p>
   </div>
 );
 
