@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useSearchParams, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { CopilotPromptGenerator } from "@/components/CopilotPromptGenerator";
@@ -10,10 +10,6 @@ import { usePatient } from "@/hooks/usePatients";
 import Dashboard from "./pages/Dashboard";
 import Optistate from "./pages/Optistate";
 import Optibrain from "./pages/Optibrain";
-import Optiheart from "./pages/Optiheart";
-import Optilungs from "./pages/Optilungs";
-import Optirenal from "./pages/Optirenal";
-import Optigastro from "./pages/Optigastro";
 import Feedback from "./pages/Feedback";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -26,6 +22,14 @@ import NotFound from "./pages/NotFound";
 import AutoregStudy from "./pages/AutoregStudy";
 
 const queryClient = new QueryClient();
+
+// MVP1 : les modules d'organes secondaires renvoient vers le hub Optistate,
+// en conservant le paramètre `patient` pour ne pas perdre le contexte clinique.
+const RedirectToState = () => {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.toString();
+  return <Navigate to={query ? `/optistate?${query}` : "/optistate"} replace />;
+};
 
 const ORGAN_MAP: Record<string, string> = {
   "/optibrain": "cerveau",
@@ -104,10 +108,11 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/optistate" element={<ProtectedRoute><Optistate /></ProtectedRoute>} />
             <Route path="/optibrain" element={<ProtectedRoute><Optibrain /></ProtectedRoute>} />
-            <Route path="/optiheart" element={<ProtectedRoute><Optiheart /></ProtectedRoute>} />
-            <Route path="/optilungs" element={<ProtectedRoute><Optilungs /></ProtectedRoute>} />
-            <Route path="/optirenal" element={<ProtectedRoute><Optirenal /></ProtectedRoute>} />
-            <Route path="/optigastro" element={<ProtectedRoute><Optigastro /></ProtectedRoute>} />
+            {/* MVP1 : modules cœur/poumons/rénal/gastrique retirés — redirigés vers le hub Optistate en gardant le contexte patient */}
+            <Route path="/optiheart" element={<RedirectToState />} />
+            <Route path="/optilungs" element={<RedirectToState />} />
+            <Route path="/optirenal" element={<RedirectToState />} />
+            <Route path="/optigastro" element={<RedirectToState />} />
             <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
             <Route path="/admin/import" element={<ProtectedRoute><ImportPatientData /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
