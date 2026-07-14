@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Tooltip as UiTooltip,
+  Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
@@ -40,7 +40,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   ReferenceArea,
   ReferenceDot,
