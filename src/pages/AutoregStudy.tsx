@@ -190,7 +190,11 @@ const AutoregStudy = () => {
       const text = await readFileAsText(file);
       const samples = parseAny(text);
       const readinessError = describeAnalysisReadiness(samples);
-      if (readinessError) throw new Error(readinessError);
+      if (readinessError) {
+        setError(readinessError);
+        setParsing(false);
+        return false;
+      }
       const analysis = runAnalysis(samples, 30, 5);
       if (analysis.curve.length === 0 || analysis.optimalPPC === null) {
         throw new Error(
