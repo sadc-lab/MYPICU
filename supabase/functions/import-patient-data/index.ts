@@ -1,10 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
+// Origine(s) autorisée(s) pour les appels navigateur. Configurable via le
+// secret CORS_ALLOW_ORIGIN (ex: "https://mypicu.chusj.org"). Défaut: "*".
+const ALLOW_ORIGIN = Deno.env.get("CORS_ALLOW_ORIGIN") ?? "*";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOW_ORIGIN,
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Vary": "Origin",
 };
+
+const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
 
 // Time-series variable keys that contain {charttime, valeur}
 const TIME_SERIES_KEYS = [
@@ -61,22 +69,84 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: jsonHeaders,
+    });
+  }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // --- Authentification : exiger un JWT valide -----------------------
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Authentification requise" }), {
+        status: 401,
+        headers: jsonHeaders,
+      });
+    }
+
+    // Client "utilisateur" : hérite du JWT appelant, donc soumis à la RLS.
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const {
+      data: { user },
+      error: authError,
+    } = await userClient.auth.getUser();
+
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Session invalide" }), {
+        status: 401,
+        headers: jsonHeaders,
+      });
+    }
 
     const { patientId, data: patientData } = await req.json();
 
     if (!patientId || !patientData) {
       return new Response(
         JSON.stringify({ error: "patientId and data are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: jsonHeaders }
       );
     }
 
     // Format patient ID with # prefix for DB foreign key
     const dbPatientId = patientId.startsWith("#") ? patientId : `#${patientId}`;
+
+    // --- Autorisation : l'appelant doit être affecté à l'unité du patient.
+    // La lecture passe par le client utilisateur (RLS cloisonnée par unité) :
+    // si le patient n'est pas visible, l'utilisateur n'y a pas accès.
+    const { data: patientRow, error: patientError } = await userClient
+      .from("patients")
+      .select("id")
+      .eq("id", dbPatientId)
+      .maybeSingle();
+
+    if (patientError) {
+      return new Response(JSON.stringify({ error: patientError.message }), {
+        status: 500,
+        headers: jsonHeaders,
+      });
+    }
+
+    if (!patientRow) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Accès refusé : patient introuvable ou hors de vos unités assignées",
+        }),
+        { status: 403, headers: jsonHeaders }
+      );
+    }
+
+    // Client privilégié pour l'insertion en masse (après autorisation).
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const results = {
       vitals: 0,
@@ -191,12 +261,12 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ success: true, results }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: jsonHeaders }
     );
   }
 });
