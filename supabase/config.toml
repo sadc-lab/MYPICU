@@ -1,7 +1,6 @@
 project_id = "wzfdfrruaxqldhsfuxpe"
 
+# Le JWT est vérifié par la passerelle Supabase avant d'atteindre la fonction.
+# La fonction effectue en plus un contrôle d'autorisation par unité (ward).
 [functions.import-patient-data]
-verify_jwt = false
-
-[functions.cdss-agent]
-verify_jwt = false
+verify_jwt = true

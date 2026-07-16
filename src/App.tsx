@@ -100,7 +100,7 @@ const App = () => (
             <Route path="/auth/worker-signup" element={<WorkerSignup />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
-            <Route path="/autoreg" element={<AutoregStudy />} />
+            <Route path="/autoreg" element={<ProtectedRoute><AutoregStudy /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/optistate" element={<ProtectedRoute><Optistate /></ProtectedRoute>} />
             <Route path="/optibrain" element={<ProtectedRoute><Optibrain /></ProtectedRoute>} />
