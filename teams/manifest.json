@@ -1,0 +1,50 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "ef6ec8fa-2174-4353-a014-6aa8238a6b39",
+  "developer": {
+    "name": "SADC Lab",
+    "websiteUrl": "https://{{APP_HOST}}",
+    "privacyUrl": "https://{{APP_HOST}}/privacy",
+    "termsOfUseUrl": "https://{{APP_HOST}}/terms"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "MYPICU",
+    "full": "MYPICU — soins intensifs pédiatriques"
+  },
+  "description": {
+    "short": "Tableau de bord des soins intensifs pédiatriques.",
+    "full": "Suivi des patients de l'unité de soins intensifs pédiatriques : tableau de bord par organe, scores et objectifs, et outil d'étude de l'autorégulation cérébrale (PRx et COx). Usage clinique et recherche."
+  },
+  "accentColor": "#25397C",
+  "staticTabs": [
+    {
+      "entityId": "mypicu-dashboard",
+      "name": "Tableau de bord",
+      "contentUrl": "https://{{APP_HOST}}/",
+      "websiteUrl": "https://{{APP_HOST}}/",
+      "scopes": ["personal"]
+    },
+    {
+      "entityId": "mypicu-autoreg",
+      "name": "Autorégulation",
+      "contentUrl": "https://{{APP_HOST}}/autoreg",
+      "websiteUrl": "https://{{APP_HOST}}/autoreg",
+      "scopes": ["personal"]
+    }
+  ],
+  "configurableTabs": [
+    {
+      "configurationUrl": "https://{{APP_HOST}}/teams/config",
+      "canUpdateConfiguration": true,
+      "scopes": ["team", "groupChat"]
+    }
+  ],
+  "permissions": ["identity"],
+  "validDomains": ["{{APP_HOST}}"]
+}
