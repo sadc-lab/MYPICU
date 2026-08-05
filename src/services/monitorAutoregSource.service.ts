@@ -42,7 +42,11 @@ export interface MonitorAutoregSource {
   rawCounts: { pic: number; pam: number; ppc: number };
   /** True when PPC was computed as PAM − PIC instead of read from the monitor. */
   ppcDerived: boolean;
-  /** True when a channel hit the page cap and the series is incomplete. */
+  /**
+   * True when a channel could not be read in full — page cap reached, or a read
+   * error partway through. Either way the series is incomplete and the caller
+   * must say so rather than present it as the whole recording.
+   */
   truncated: boolean;
   bucketSeconds: number;
 }
@@ -71,11 +75,18 @@ async function fetchChannel(
       .select("charttime, valeur")
       .eq("patient_id", dbPatientId)
       .eq("variable_key", variableKey)
+      // `id` breaks ties: rows sharing a charttime would otherwise be ordered
+      // arbitrarily, and paging through an unstable order can duplicate or skip
+      // rows across page boundaries.
       .order("charttime", { ascending: true })
+      .order("id", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (error) {
+      // A failed page leaves a partial series. Flagging it is what keeps the
+      // caller from presenting an incomplete recording as a whole one.
       console.error(`patient_vitals: lecture de ${variableKey} échouée`, error);
+      truncated = true;
       break;
     }
     if (!data || data.length === 0) break;

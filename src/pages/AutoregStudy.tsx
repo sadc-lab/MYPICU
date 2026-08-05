@@ -265,6 +265,13 @@ const AutoregStudy = () => {
         setMonitorSource(fromMonitor);
         setSourceRecording(monitorSourceToFile(fromMonitor));
       }
+    } catch (e) {
+      // Probing is best-effort: the dialog falls back to asking for a file, but
+      // the failure is surfaced rather than swallowed as "no data available".
+      console.error('Recherche de données pour ce patient échouée:', e);
+      setAddError(
+        "La recherche de données pour ce patient a échoué. Joignez le fichier manuellement, ou réessayez.",
+      );
     } finally {
       setProbingRecording(false);
     }
@@ -785,8 +792,8 @@ const AutoregStudy = () => {
                       </p>
                       {monitorSource.truncated && (
                         <p className="text-warning">
-                          Séjour très long : les séries ont été tronquées à la lecture, l'analyse ne
-                          couvre pas la totalité du monitorage.
+                          Séries lues partiellement (séjour très long ou lecture interrompue) :
+                          l'analyse ne couvre pas la totalité du monitorage.
                         </p>
                       )}
                     </div>
