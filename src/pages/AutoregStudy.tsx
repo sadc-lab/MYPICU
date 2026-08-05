@@ -54,6 +54,7 @@ import {
   rollingOptimal,
   resultsToCSV,
   modeLabels,
+  PRX_THRESHOLD,
   type AutoregMode,
   type AutoregResult,
   type OptimalTimePoint,
@@ -120,12 +121,16 @@ const AutoregStudy = () => {
         );
         return;
       }
+      const restoredMinPrx = data.min_prx !== null ? Number(data.min_prx) : null;
       const restored: AutoregResult = {
         mode: ((data as any).mode as AutoregMode) ?? 'prx',
         optimalPPC: data.optimal_ppc !== null ? Number(data.optimal_ppc) : null,
         lowerLimit: data.lower_limit !== null ? Number(data.lower_limit) : null,
         upperLimit: data.upper_limit !== null ? Number(data.upper_limit) : null,
-        minPrx: data.min_prx !== null ? Number(data.min_prx) : null,
+        minPrx: restoredMinPrx,
+        plateauValid:
+          Array.isArray(savedCurve) && savedCurve.length >= 3 &&
+          restoredMinPrx !== null && restoredMinPrx < PRX_THRESHOLD,
         sampleCount: data.sample_count ?? 0,
         durationHours: data.duration_hours !== null ? Number(data.duration_hours) : 0,
         curve: savedCurve as any,
@@ -635,8 +640,22 @@ const AutoregStudy = () => {
               </CardHeader>
               <CardContent>
 
+                {!result.plateauValid && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Aucun plateau d'autorégulation fiable</AlertTitle>
+                    <AlertDescription className="text-xs sm:text-sm">
+                      L'index minimum ({labels.index} = {result.minPrx?.toFixed(2) ?? '—'}) reste au-dessus
+                      du seuil de {PRX_THRESHOLD.toFixed(1)} sur toute la plage : l'autorégulation semble
+                      globalement altérée et aucune courbe en U exploitable n'a été identifiée.
+                      La {labels.optimal.toLowerCase()} ci-dessous n'est <strong>pas cliniquement interprétable</strong>
+                      {' '}— il s'agit seulement du bin le moins altéré.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <SummaryStat label={labels.optimal} value={result.optimalPPC} unit="mmHg" highlight />
+                  <SummaryStat label={labels.optimal} value={result.optimalPPC} unit="mmHg" highlight={result.plateauValid} muted={!result.plateauValid} />
                   <SummaryStat label="LLA" value={result.lowerLimit} unit="mmHg" />
                   <SummaryStat label="ULA" value={result.upperLimit} unit="mmHg" />
                   <SummaryStat label={`${labels.index} minimum`} value={result.minPrx} unit="" digits={2} />
@@ -905,17 +924,19 @@ const SummaryStat = ({
   unit,
   digits = 0,
   highlight = false,
+  muted = false,
 }: {
   label: string;
   value: number | null;
   unit: string;
   digits?: number;
   highlight?: boolean;
+  muted?: boolean;
 }) => (
-  <div className={`rounded-lg border p-4 ${highlight ? 'bg-primary/5 border-primary/30' : 'bg-card'}`}>
+  <div className={`rounded-lg border p-4 ${highlight ? 'bg-primary/5 border-primary/30' : muted ? 'bg-muted/40 border-dashed opacity-70' : 'bg-card'}`}>
     <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
     <div className="mt-1 flex items-baseline gap-1">
-      <span className={`text-2xl font-bold ${highlight ? 'text-primary' : 'text-foreground'}`}>
+      <span className={`text-2xl font-bold ${highlight ? 'text-primary' : muted ? 'text-muted-foreground' : 'text-foreground'}`}>
         {value !== null ? value.toFixed(digits) : '—'}
       </span>
       {unit && <span className="text-xs text-muted-foreground">{unit}</span>}

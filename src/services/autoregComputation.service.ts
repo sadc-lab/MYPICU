@@ -50,11 +50,16 @@ export interface AutoregResult {
   upperLimit: number | null;
   // Minimal index value at the plateau nadir (min PRx / min COx).
   minPrx: number | null;
+  // True when a preserved-autoregulation zone exists (nadir index < threshold),
+  // i.e. the "optimal" value is clinically interpretable. False when the curve is
+  // globally above threshold (no real plateau) → optimal is not trustworthy.
+  plateauValid: boolean;
   sampleCount: number;
   durationHours: number;
 }
 
-const PRX_THRESHOLD = 0.3;
+// Index threshold above which autoregulation is considered impaired (PRx/COx).
+export const PRX_THRESHOLD = 0.3;
 
 const REQUIRED_SAMPLES = 30;
 
@@ -395,9 +400,10 @@ export function analyzeCurve(curve: CurvePoint[]): {
   lowerLimit: number | null;
   upperLimit: number | null;
   minPrx: number | null;
+  plateauValid: boolean;
 } {
   if (curve.length === 0) {
-    return { optimalPPC: null, lowerLimit: null, upperLimit: null, minPrx: null };
+    return { optimalPPC: null, lowerLimit: null, upperLimit: null, minPrx: null, plateauValid: false };
   }
   let minPrx = Infinity;
   let optimalPPC: number | null = null;
@@ -427,11 +433,18 @@ export function analyzeCurve(curve: CurvePoint[]): {
     }
   }
 
+  const roundedMin = minPrx === Infinity ? null : Math.round(minPrx * 100) / 100;
+  // A trustworthy plateau requires a preserved zone: the nadir must dip below the
+  // impairment threshold. If every bin sits above it, autoregulation is globally
+  // impaired and no meaningful "optimal" pressure exists.
+  const plateauValid = curve.length >= 3 && roundedMin !== null && roundedMin < PRX_THRESHOLD;
+
   return {
     optimalPPC,
     lowerLimit,
     upperLimit,
-    minPrx: minPrx === Infinity ? null : Math.round(minPrx * 100) / 100,
+    minPrx: roundedMin,
+    plateauValid,
   };
 }
 
