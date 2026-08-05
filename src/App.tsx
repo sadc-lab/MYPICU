@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useSearchParams, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { TeamsHostBridge } from "@/components/TeamsHostBridge";
 import { CopilotPromptGenerator } from "@/components/CopilotPromptGenerator";
 import { usePatient } from "@/hooks/usePatients";
 import Dashboard from "./pages/Dashboard";
@@ -24,6 +25,7 @@ import WorkerSignup from "./pages/auth/WorkerSignup";
 import ImportPatientData from "./pages/admin/ImportPatientData";
 import NotFound from "./pages/NotFound";
 import AutoregStudy from "./pages/AutoregStudy";
+import TeamsConfig from "./pages/TeamsConfig";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +92,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
+        <TeamsHostBridge />
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -100,6 +103,9 @@ const App = () => (
             <Route path="/auth/worker-signup" element={<WorkerSignup />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
+            {/* Teams ouvre cette page pour configurer un onglet de canal :
+                elle doit rester hors authentification. */}
+            <Route path="/teams/config" element={<TeamsConfig />} />
             <Route path="/autoreg" element={<ProtectedRoute><AutoregStudy /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/optistate" element={<ProtectedRoute><Optistate /></ProtectedRoute>} />

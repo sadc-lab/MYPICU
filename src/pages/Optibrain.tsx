@@ -1138,14 +1138,22 @@ const Optibrain = () => {
               contentClassName="pt-0 px-4 sm:px-6 pb-4 space-y-5"
             >
 
-              {/* Alert if no autoregulation data available yet */}
+              {/* No result to show. "En cours de calcul" only applies when a
+                  recording actually exists: without one, nothing is computing
+                  and saying otherwise would suggest a pending result. */}
               {!optimalPPCResult.hasData && (
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-status-warning/10 border border-status-warning/30 mt-4">
                   <AlertCircle className="h-5 w-5 text-status-warning shrink-0" />
                   <div className="text-sm">
-                    <p className="font-medium text-foreground">Données d'autorégulation en cours de calcul</p>
+                    <p className="font-medium text-foreground">
+                      {hasAutoregData
+                        ? "Données d'autorégulation en cours de calcul"
+                        : "Aucune donnée d'autorégulation pour ce patient"}
+                    </p>
                     <p className="text-muted-foreground text-xs mt-0.5">
-                      Les résultats d'optimisation cérébrale seront disponibles après environ 30 minutes de monitorage continu.
+                      {hasAutoregData
+                        ? "Les résultats d'optimisation cérébrale seront disponibles après environ 30 minutes de monitorage continu."
+                        : "Aucun enregistrement PIC/PAM (PRx) ni rSO₂/PAM (COx) n'est disponible : la PPC/PAM optimale ne peut pas être calculée."}
                     </p>
                   </div>
                 </div>
