@@ -26,16 +26,21 @@ interface RawAutoregulationEntry {
   [key: string]: string;
 }
 
+// The Fisher table is located by name (any key containing "Fisher"), so no
+// patient-specific key needs to be declared here.
 interface AutoregulationFileData {
-  P8448_Full_AR_Table_3min_Fisher?: RawAutoregulationEntry[];
   [key: string]: RawAutoregulationEntry[] | undefined;
 }
 
 // Cache for loaded autoregulation data
 const autoregulationCache = new Map<string, AutoregulationFileData>();
 
-// Available patient IDs with autoregulation data files (PRx-based)
-const AVAILABLE_AUTOREGULATION_PATIENTS = ["8448"];
+// Patient IDs shipping a PRx (invasive PIC/PAM) Fisher export in public/, as
+// `autoregulation_ppc_optimale_<id>.json`. Empty for now: the only such file was
+// patient 8448's, whose PAM, PPC and PRx columns were entirely empty (no ICP
+// catheter — PIC was a constant 0), so it could never yield a PPCopt. Add an id
+// back here only once a real export with populated PIC/PAM/PRx accompanies it.
+const AVAILABLE_AUTOREGULATION_PATIENTS: string[] = [];
 
 // Patient IDs using NIRS-based autoregulation (COx)
 const NIRS_AUTOREGULATION_PATIENTS = ["8749"];
