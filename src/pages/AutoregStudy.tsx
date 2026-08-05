@@ -74,6 +74,11 @@ import {
 } from '@/services/autoregComputation.service';
 import { useStudyPatients, type StudyPatient } from '@/hooks/useStudyPatients';
 import { usePatients } from '@/hooks/usePatients';
+import {
+  loadAutoregSourceFromVitals,
+  monitorSourceToFile,
+  type MonitorAutoregSource,
+} from '@/services/monitorAutoregSource.service';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -129,7 +134,9 @@ const AutoregStudy = () => {
 
   const current = active ? analysisByPatient[active.id] ?? null : null;
   const result = current?.result ?? null;
-  const rolling = current?.rolling ?? [];
+  // Memoised so the `?? []` fallback does not hand a fresh array to the memos
+  // downstream on every render, which would defeat their caching.
+  const rolling = useMemo(() => current?.rolling ?? [], [current]);
   const fileName = current?.fileName ?? null;
 
   // Load saved analysis from Supabase whenever active patient changes and cache is empty
@@ -217,6 +224,9 @@ const AutoregStudy = () => {
   const [sourcePatientId, setSourcePatientId] = useState<string>('');
   const [sourceRecording, setSourceRecording] = useState<File | null>(null);
   const [probingRecording, setProbingRecording] = useState(false);
+  // Set when the recording was assembled from the monitoring series in Supabase
+  // rather than from a raw file bundled with the app.
+  const [monitorSource, setMonitorSource] = useState<MonitorAutoregSource | null>(null);
 
   const { data: patientResponse } = usePatients(undefined);
   const unitPatients = patientResponse?.patients ?? [];
@@ -227,22 +237,37 @@ const AutoregStudy = () => {
     setNewFile(null);
     setSourcePatientId('');
     setSourceRecording(null);
+    setMonitorSource(null);
     setAddError(null);
   };
 
-  // Picking a patient prefills the pseudonym and looks for their bundled recording,
-  // so a known subject can be analysed without any manual import.
+  // Picking a patient prefills the pseudonym and looks for a recording, so a known
+  // subject can be analysed without any manual import. Two sources are tried, in
+  // order: the raw file bundled with the app, then — for patients without one —
+  // the PIC/PAM series already charted in Supabase.
   const selectSourcePatient = async (patientId: string) => {
     setSourcePatientId(patientId);
     setAddError(null);
     setSourceRecording(null);
+    setMonitorSource(null);
     const picked = unitPatients.find((p) => p.id === patientId);
     if (!picked) return;
     setNewLabel(picked.name);
     setProbingRecording(true);
-    const recording = await fetchPatientRecording(picked.id);
-    setSourceRecording(recording);
-    setProbingRecording(false);
+    try {
+      const recording = await fetchPatientRecording(picked.id);
+      if (recording) {
+        setSourceRecording(recording);
+        return;
+      }
+      const fromMonitor = await loadAutoregSourceFromVitals(picked.id);
+      if (fromMonitor) {
+        setMonitorSource(fromMonitor);
+        setSourceRecording(monitorSourceToFile(fromMonitor));
+      }
+    } finally {
+      setProbingRecording(false);
+    }
   };
 
   const submitNewPatient = async () => {
@@ -356,6 +381,23 @@ const AutoregStudy = () => {
       .filter((_, i) => i % step === 0)
       .map((s) => ({ t: s.time.getTime(), pic: s.pic, pam: s.pam, ppc: s.ppc, nirs: s.nirs }));
   }, [result]);
+
+  // LLA/ULA come out null when the curve never crosses the threshold on that side
+  // over the whole recording. The rolling analysis works on shorter windows and
+  // does find them part of the time, so its most recent estimate is shown instead
+  // of a dash — labelled as such, never passed off as the whole-recording limit.
+  const lastRollingLimits = useMemo(() => {
+    let lower: { value: number; time: string } | null = null;
+    let upper: { value: number; time: string } | null = null;
+    for (const r of rolling) {
+      if (r.lowerLimit !== null) lower = { value: r.lowerLimit, time: r.time };
+      if (r.upperLimit !== null) upper = { value: r.upperLimit, time: r.time };
+    }
+    return { lower, upper };
+  }, [rolling]);
+
+  const llaFallback = result?.lowerLimit === null ? lastRollingLimits.lower : null;
+  const ulaFallback = result?.upperLimit === null ? lastRollingLimits.upper : null;
 
   const rollingChartData = useMemo(
     () =>
@@ -720,19 +762,39 @@ const AutoregStudy = () => {
                   </Select>
                   {probingRecording && (
                     <p className="text-xs text-muted-foreground">
-                      Recherche d'un enregistrement pour ce patient…
+                      Recherche d'un enregistrement, puis des données du moniteur…
                     </p>
                   )}
-                  {!probingRecording && sourcePatient && sourceRecording && (
+                  {!probingRecording && sourcePatient && sourceRecording && !monitorSource && (
                     <p className="text-xs text-success flex items-center gap-1.5">
                       <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                       Enregistrement trouvé : {sourceRecording.name} — aucun import manuel nécessaire.
                     </p>
                   )}
+                  {!probingRecording && sourcePatient && monitorSource && (
+                    <div className="text-xs text-success space-y-1">
+                      <p className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                        Données du moniteur trouvées : {monitorSource.pairedSamples} échantillons
+                        PIC + PAM appariés (moyenne par {monitorSource.bucketSeconds} s).
+                      </p>
+                      <p className="text-muted-foreground">
+                        Analyse en PRx à partir des séries enregistrées dans la base
+                        {monitorSource.ppcDerived ? ', PPC calculée comme PAM − PIC' : ''}. Aucune
+                        rSO₂ n'est disponible dans la base : pour un COx, joignez l'enregistrement brut.
+                      </p>
+                      {monitorSource.truncated && (
+                        <p className="text-warning">
+                          Séjour très long : les séries ont été tronquées à la lecture, l'analyse ne
+                          couvre pas la totalité du monitorage.
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {!probingRecording && sourcePatient && !sourceRecording && (
                     <p className="text-xs text-muted-foreground">
-                      Aucun enregistrement d'autorégulation n'accompagne ce patient : joignez le
-                      fichier ci-dessous.
+                      Ni enregistrement livré avec l'application, ni série PIC + PAM exploitable dans
+                      la base pour ce patient : joignez le fichier ci-dessous.
                     </p>
                   )}
                 </div>
@@ -749,7 +811,12 @@ const AutoregStudy = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-patient-file">
-                  Fichier CSV, Excel ou JSON {sourceRecording ? '(remplace l’enregistrement du patient)' : '*'}
+                  Fichier CSV, Excel ou JSON{' '}
+                  {monitorSource
+                    ? '(remplace les données du moniteur)'
+                    : sourceRecording
+                      ? '(remplace l’enregistrement du patient)'
+                      : '*'}
                 </Label>
                 <Input
                   id="new-patient-file"
@@ -842,7 +909,11 @@ const AutoregStudy = () => {
               </CardHeader>
               <CardContent className="space-y-4">
 
-                <InterpretationBanner result={result} labels={labels} />
+                <InterpretationBanner
+                  result={result}
+                  labels={labels}
+                  rollingLimitsShown={Boolean(llaFallback || ulaFallback)}
+                />
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                   <SummaryStat
@@ -855,15 +926,33 @@ const AutoregStudy = () => {
                   />
                   <SummaryStat
                     label="LLA"
-                    value={result.lowerLimit}
+                    value={result.lowerLimit ?? llaFallback?.value ?? null}
                     unit="mmHg"
-                    hint={`Limite basse : sous cette pression, ${labels.index} repasse au-dessus de ${PRX_THRESHOLD.toFixed(1)} (autorégulation perdue).`}
+                    note={
+                      llaFallback
+                        ? `dernière fenêtre · ${formatTime(new Date(llaFallback.time).getTime())}`
+                        : undefined
+                    }
+                    hint={
+                      llaFallback
+                        ? `Aucune limite basse n'est identifiable sur l'ensemble de l'enregistrement : ${labels.index} ne repasse jamais au-dessus de ${PRX_THRESHOLD.toFixed(1)} sous l'optimum. La valeur affichée est la dernière estimation de l'analyse glissante, à titre indicatif.`
+                        : `Limite basse : sous cette pression, ${labels.index} repasse au-dessus de ${PRX_THRESHOLD.toFixed(1)} (autorégulation perdue).`
+                    }
                   />
                   <SummaryStat
                     label="ULA"
-                    value={result.upperLimit}
+                    value={result.upperLimit ?? ulaFallback?.value ?? null}
                     unit="mmHg"
-                    hint={`Limite haute : au-dessus de cette pression, ${labels.index} repasse au-dessus de ${PRX_THRESHOLD.toFixed(1)}.`}
+                    note={
+                      ulaFallback
+                        ? `dernière fenêtre · ${formatTime(new Date(ulaFallback.time).getTime())}`
+                        : undefined
+                    }
+                    hint={
+                      ulaFallback
+                        ? `Aucune limite haute n'est identifiable sur l'ensemble de l'enregistrement : ${labels.index} ne repasse jamais au-dessus de ${PRX_THRESHOLD.toFixed(1)} au-dessus de l'optimum. La valeur affichée est la dernière estimation de l'analyse glissante, à titre indicatif.`
+                        : `Limite haute : au-dessus de cette pression, ${labels.index} repasse au-dessus de ${PRX_THRESHOLD.toFixed(1)}.`
+                    }
                   />
                   <SummaryStat
                     label={`${labels.index} minimum`}
@@ -1222,6 +1311,7 @@ const SummaryStat = ({
   highlight = false,
   muted = false,
   hint,
+  note,
 }: {
   label: string;
   value: number | null;
@@ -1230,6 +1320,8 @@ const SummaryStat = ({
   highlight?: boolean;
   muted?: boolean;
   hint?: string;
+  /** Provenance caveat shown under the value (e.g. a rolling-window estimate). */
+  note?: string;
 }) => (
   <div className={`rounded-lg border p-4 ${highlight ? 'bg-primary/5 border-primary/30' : muted ? 'bg-muted/40 border-dashed opacity-70' : 'bg-card'}`}>
     <div className="flex items-start justify-between gap-1">
@@ -1237,11 +1329,12 @@ const SummaryStat = ({
       {hint && <HintButton text={hint} />}
     </div>
     <div className="mt-1 flex items-baseline gap-1">
-      <span className={`text-2xl font-bold ${highlight ? 'text-primary' : muted ? 'text-muted-foreground' : 'text-foreground'}`}>
+      <span className={`text-2xl font-bold ${note ? 'text-muted-foreground' : highlight ? 'text-primary' : muted ? 'text-muted-foreground' : 'text-foreground'}`}>
         {value !== null ? value.toFixed(digits) : '—'}
       </span>
       {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
     </div>
+    {note && <div className="mt-0.5 text-[10px] italic text-muted-foreground leading-tight">{note}</div>}
   </div>
 );
 
@@ -1271,9 +1364,12 @@ type ModeLabelSet = ReturnType<typeof modeLabels>;
 const InterpretationBanner = ({
   result,
   labels,
+  rollingLimitsShown = false,
 }: {
   result: AutoregResult;
   labels: ModeLabelSet;
+  /** True when the LLA/ULA tiles fall back to the last rolling-window estimate. */
+  rollingLimitsShown?: boolean;
 }) => {
   const hasRange = result.lowerLimit !== null && result.upperLimit !== null;
   const ok = result.plateauValid;
@@ -1302,8 +1398,12 @@ const InterpretationBanner = ({
   ) : (
     <>
       Autorégulation préservée autour de <strong>{result.optimalPPC} mmHg</strong> ({labels.index} ={' '}
-      {min}), mais les limites LLA/ULA ne sont pas identifiables : la plage de {labels.pressure}{' '}
-      enregistrée ne franchit pas le seuil de part et d'autre de l'optimum.
+      {min}), mais les limites LLA/ULA ne sont pas identifiables sur l'ensemble de l'enregistrement :
+      la plage de {labels.pressure} enregistrée ne franchit pas le seuil de part et d'autre de
+      l'optimum.
+      {rollingLimitsShown
+        ? " Les tuiles LLA/ULA montrent la dernière estimation de l'analyse glissante, à titre indicatif."
+        : ''}
     </>
   );
 
