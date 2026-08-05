@@ -24,6 +24,7 @@ export type Database = {
           id: string
           lower_limit: number | null
           min_prx: number | null
+          mode: string
           optimal_ppc: number | null
           rolling: Json | null
           sample_count: number | null
@@ -42,6 +43,7 @@ export type Database = {
           id?: string
           lower_limit?: number | null
           min_prx?: number | null
+          mode?: string
           optimal_ppc?: number | null
           rolling?: Json | null
           sample_count?: number | null
@@ -60,6 +62,7 @@ export type Database = {
           id?: string
           lower_limit?: number | null
           min_prx?: number | null
+          mode?: string
           optimal_ppc?: number | null
           rolling?: Json | null
           sample_count?: number | null

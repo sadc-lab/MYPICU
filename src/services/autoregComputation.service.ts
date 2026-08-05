@@ -1,29 +1,54 @@
 // Autoregulation computation service for the standalone /autoreg study page.
-// Parses user-uploaded CSV or JSON files and computes PRx-based indices.
+// Parses user-uploaded CSV or JSON files and computes an autoregulation index:
+//   - PRx mode  : correlation PIC (ICP) ↔ PAM, binned by PPC  → PPC optimale
+//   - COx mode  : correlation rSO2 (NIRS) ↔ PAM, binned by PAM → PAM optimale
+// The mode is auto-detected from the columns present in the file (NIRS → COx).
+
+export type AutoregMode = "prx" | "cox";
+
+export interface ModeLabels {
+  index: string;    // "PRx" | "COx"
+  pressure: string; // "PPC" | "PAM"
+  optimal: string;  // "PPC optimale" | "PAM optimale"
+  signal: string;   // "PIC" | "rSO₂"
+}
+
+export function modeLabels(mode: AutoregMode): ModeLabels {
+  return mode === "cox"
+    ? { index: "COx", pressure: "PAM", optimal: "PAM optimale", signal: "rSO₂" }
+    : { index: "PRx", pressure: "PPC", optimal: "PPC optimale", signal: "PIC" };
+}
 
 export interface RawSample {
   time: Date;
   pic: number | null;
   pam: number | null;
   ppc: number | null;
+  nirs: number | null;
 }
 
 export interface DerivedSample extends RawSample {
+  // Autoregulation index (PRx or COx depending on mode).
   prx: number | null;
 }
 
 export interface CurvePoint {
+  // Pressure axis carrier: PPC in PRx mode, PAM in COx mode.
   ppc: number;
+  // Index carrier: PRx in PRx mode, COx in COx mode.
   prx: number;
   count: number;
 }
 
 export interface AutoregResult {
+  mode: AutoregMode;
   samples: DerivedSample[];
   curve: CurvePoint[];
+  // Optimal pressure (PPCopt in PRx mode, PAMopt in COx mode).
   optimalPPC: number | null;
   lowerLimit: number | null;
   upperLimit: number | null;
+  // Minimal index value at the plateau nadir (min PRx / min COx).
   minPrx: number | null;
   sampleCount: number;
   durationHours: number;
@@ -32,6 +57,11 @@ export interface AutoregResult {
 const PRX_THRESHOLD = 0.3;
 
 const REQUIRED_SAMPLES = 30;
+
+// Detect the autoregulation mode from parsed samples: NIRS present → COx.
+export function detectMode(samples: RawSample[]): AutoregMode {
+  return samples.some((s) => s.nirs !== null) ? "cox" : "prx";
+}
 
 // ---------- Parsing ----------
 
@@ -54,7 +84,7 @@ function normHeader(h: string): string {
 }
 
 // Map header aliases → canonical field
-const HEADER_MAP: Record<string, "time" | "pic" | "pam" | "ppc"> = {
+const HEADER_MAP: Record<string, "time" | "pic" | "pam" | "ppc" | "nirs"> = {
   horodate: "time",
   time: "time",
   timestamp: "time",
@@ -64,10 +94,20 @@ const HEADER_MAP: Record<string, "time" | "pic" | "pam" | "ppc"> = {
   icp: "pic",
   pam: "pam",
   map: "pam",
+  abp: "pam",
   abpm: "pam",
   ppc: "ppc",
   cpp: "ppc",
   rawppc: "ppc",
+  // NIRS / cerebral oximetry aliases → drive COx mode
+  nirs: "nirs",
+  rso2: "nirs",
+  rso2l: "nirs",
+  rso2r: "nirs",
+  sto2: "nirs",
+  scto2: "nirs",
+  crso2: "nirs",
+  cox: "nirs",
 };
 
 export function parseCSV(text: string): RawSample[] {
@@ -95,8 +135,9 @@ export function parseCSV(text: string): RawSample[] {
     const pic = idx.pic !== undefined ? parseNum(cells[idx.pic]) : null;
     let pam = idx.pam !== undefined ? parseNum(cells[idx.pam]) : null;
     const ppc = idx.ppc !== undefined ? parseNum(cells[idx.ppc]) : null;
+    const nirs = idx.nirs !== undefined ? parseNum(cells[idx.nirs]) : null;
     if (pam === null && ppc !== null && pic !== null) pam = ppc + pic;
-    out.push({ time: t, pic, pam, ppc });
+    out.push({ time: t, pic, pam, ppc, nirs });
   }
   return out.sort((a, b) => a.time.getTime() - b.time.getTime());
 }
@@ -129,9 +170,10 @@ export function parseFisherJSON(json: unknown): RawSample[] {
       const pic = parseNum(map["pic"]);
       let pam = parseNum(map["pam"]);
       const ppc = parseNum(map["ppc"]);
+      const nirs = parseNum(map["nirs"]);
       // Derive PAM from PPC + PIC when only PPC/PIC are recorded (PPC = PAM − PIC).
       if (pam === null && ppc !== null && pic !== null) pam = ppc + pic;
-      out.push({ time: t, pic, pam, ppc });
+      out.push({ time: t, pic, pam, ppc, nirs });
     }
   }
   return out.sort((a, b) => a.time.getTime() - b.time.getTime());
@@ -161,8 +203,8 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
       cause: "Aucune donnée exploitable détectée dans le fichier.",
       steps: [
         "Vérifiez que le fichier contient bien des lignes horodatées.",
-        "Formats acceptés : CSV avec en-têtes (time, PIC, PAM, PPC) ou JSON Fisher (P####_Full_AR_Table_3min_Fisher).",
-        "Assurez-vous que les colonnes PIC, PAM et PPC ne sont pas vides.",
+        "Formats acceptés : CSV/Excel avec en-têtes horodatées, soit NIRS + PAM (rSO₂, PAM) pour le COx, soit PIC + PAM + PPC pour le PRx ; JSON Fisher également accepté.",
+        "Assurez-vous que les colonnes de signal (rSO₂/NIRS ou PIC/PPC) et PAM ne sont pas vides.",
       ],
     };
   }
@@ -172,11 +214,56 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
       cause: `Fichier insuffisant : ${samples.length} échantillon(s) détecté(s), ${REQUIRED_SAMPLES} minimum requis.`,
       steps: [
         "Prolongez la période d'enregistrement (au moins 90 minutes recommandé).",
-        "Vérifiez la fréquence d'échantillonnage (1 point / minute minimum).",
+        "Vérifiez la fréquence d'échantillonnage.",
       ],
     };
   }
 
+  const mode = detectMode(samples);
+
+  // ----- COx mode : NIRS (rSO₂) ↔ PAM -----
+  if (mode === "cox") {
+    const complete = samples.filter((s) => s.nirs !== null && s.pam !== null);
+    if (samples.filter((s) => s.pam !== null).length === 0) {
+      return {
+        cause: "Champ entièrement vide : PAM.",
+        steps: [
+          "Un signal NIRS (rSO₂) a été détecté mais la colonne PAM est absente ou vide.",
+          "Le COx nécessite la pression artérielle moyenne (PAM) synchrone à la rSO₂.",
+          "Vérifiez le mapping des colonnes (en-tête PAM / MAP / ABP).",
+        ],
+      };
+    }
+    if (complete.length < REQUIRED_SAMPLES) {
+      return {
+        cause: `Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent rSO₂ et PAM exploitables.`,
+        steps: [
+          "Trop de valeurs manquantes : contrôlez les artefacts et les périodes de déconnexion du capteur NIRS.",
+          "Réexportez une plage où rSO₂ et PAM sont enregistrés simultanément.",
+        ],
+      };
+    }
+    const constantFields = [
+      { label: "rSO₂", values: complete.map((s) => s.nirs as number) },
+      { label: "PAM", values: complete.map((s) => s.pam as number) },
+    ].filter(({ values }) => new Set(values.map((v) => v.toFixed(3))).size < 2);
+    if (constantFields.length > 0) {
+      const details = constantFields
+        .map(({ label, values }) => `${label} = ${values[0].toFixed(1)} (constant)`)
+        .join(", ");
+      return {
+        cause: `Signaux constants détectés : ${details}.`,
+        steps: [
+          "La corrélation COx nécessite des variations physiologiques de rSO₂ et de PAM.",
+          "Vérifiez que le capteur NIRS était bien connecté (attention aux valeurs saturées à 94 %).",
+          "Réexportez une plage où les signaux évoluent réellement.",
+        ],
+      };
+    }
+    return null;
+  }
+
+  // ----- PRx mode : PIC (ICP) ↔ PAM, binned by PPC -----
   const missing = {
     PIC: samples.filter((s) => s.pic === null).length,
     PAM: samples.filter((s) => s.pam === null).length,
@@ -187,9 +274,9 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
     return {
       cause: `Champs entièrement vides : ${emptyFields.join(', ')}.`,
       steps: [
-        "Vérifiez le mapping des colonnes du fichier source.",
-        "PIC, PAM et PPC doivent tous être présents (PPC peut être calculé automatiquement si PAM et PIC le sont).",
-        "Contrôlez qu'aucun filtre n'a supprimé ces canaux à l'export du moniteur.",
+        "Aucun signal NIRS (rSO₂) détecté : le fichier est traité en mode PRx (PIC/PAM/PPC).",
+        "Pour le PRx, PIC, PAM et PPC doivent être présents (PPC peut être calculé si PAM et PIC le sont).",
+        "Pour une analyse COx non invasive, importez plutôt un fichier avec les colonnes rSO₂ (NIRS) et PAM.",
       ],
     };
   }
@@ -246,15 +333,20 @@ function pearson(xs: number[], ys: number[]): number | null {
   return num / den;
 }
 
-// Compute PRx as rolling Pearson correlation of PIC and PAM
-export function computePRx(samples: RawSample[], windowSize = 30): DerivedSample[] {
+// Compute the autoregulation index as a rolling Pearson correlation between PAM
+// and the tissue signal (PIC for PRx, rSO₂/NIRS for COx).
+export function computeIndex(
+  samples: RawSample[],
+  windowSize = 30,
+  mode: AutoregMode = "prx",
+): DerivedSample[] {
   const out: DerivedSample[] = samples.map((s) => ({ ...s, prx: null }));
   for (let i = windowSize - 1; i < samples.length; i++) {
     const xs: number[] = [];
     const ys: number[] = [];
     for (let j = i - windowSize + 1; j <= i; j++) {
       const p = samples[j].pam;
-      const c = samples[j].pic;
+      const c = mode === "cox" ? samples[j].nirs : samples[j].pic;
       if (p !== null && c !== null) {
         xs.push(p);
         ys.push(c);
@@ -265,12 +357,23 @@ export function computePRx(samples: RawSample[], windowSize = 30): DerivedSample
   return out;
 }
 
-// Build PRx-vs-PPC curve by binning PPC and averaging PRx per bin
-export function buildCurve(samples: DerivedSample[], binSize = 5, minPerBin = 3): CurvePoint[] {
+// Backward-compatible alias (PRx = correlation PIC/PAM).
+export function computePRx(samples: RawSample[], windowSize = 30): DerivedSample[] {
+  return computeIndex(samples, windowSize, "prx");
+}
+
+// Build index-vs-pressure curve. Pressure axis is PPC in PRx mode, PAM in COx mode.
+export function buildCurve(
+  samples: DerivedSample[],
+  binSize = 5,
+  minPerBin = 3,
+  mode: AutoregMode = "prx",
+): CurvePoint[] {
   const bins = new Map<number, { sum: number; count: number }>();
   for (const s of samples) {
-    if (s.ppc === null || s.prx === null) continue;
-    const bin = Math.round(s.ppc / binSize) * binSize;
+    const axis = mode === "cox" ? s.pam : s.ppc;
+    if (axis === null || s.prx === null) continue;
+    const bin = Math.round(axis / binSize) * binSize;
     const cur = bins.get(bin) || { sum: 0, count: 0 };
     cur.sum += s.prx;
     cur.count += 1;
@@ -333,14 +436,16 @@ export function analyzeCurve(curve: CurvePoint[]): {
 }
 
 export function runAnalysis(samples: RawSample[], windowSize = 30, binSize = 5): AutoregResult {
-  const derived = computePRx(samples, windowSize);
-  const curve = buildCurve(derived, binSize);
+  const mode = detectMode(samples);
+  const derived = computeIndex(samples, windowSize, mode);
+  const curve = buildCurve(derived, binSize, 3, mode);
   const analysis = analyzeCurve(curve);
   const durationHours =
     samples.length > 1
       ? (samples[samples.length - 1].time.getTime() - samples[0].time.getTime()) / 3_600_000
       : 0;
   return {
+    mode,
     samples: derived,
     curve,
     ...analysis,
@@ -355,9 +460,11 @@ export interface OptimalTimePoint {
   optimalPPC: number | null;
   lowerLimit: number | null;
   upperLimit: number | null;
+  // Measured pressure on the mode's axis (PPC in PRx mode, PAM in COx mode).
   ppc: number | null;
   pic: number | null;
   pam: number | null;
+  nirs: number | null;
 }
 
 export function rollingOptimal(
@@ -365,11 +472,12 @@ export function rollingOptimal(
   windowSize = 240,
   step = 30,
   binSize = 5,
+  mode: AutoregMode = "prx",
 ): OptimalTimePoint[] {
   const out: OptimalTimePoint[] = [];
   for (let i = windowSize; i < samples.length; i += step) {
     const slice = samples.slice(i - windowSize, i);
-    const curve = buildCurve(slice, binSize, 2);
+    const curve = buildCurve(slice, binSize, 2, mode);
     const a = analyzeCurve(curve);
     const s = samples[i];
     out.push({
@@ -377,9 +485,10 @@ export function rollingOptimal(
       optimalPPC: a.optimalPPC,
       lowerLimit: a.lowerLimit,
       upperLimit: a.upperLimit,
-      ppc: s.ppc,
+      ppc: mode === "cox" ? s.pam : s.ppc,
       pic: s.pic,
       pam: s.pam,
+      nirs: s.nirs,
     });
   }
   return out;
@@ -403,6 +512,7 @@ function csvEscape(v: unknown): string {
 
 export function resultsToCSV(result: AutoregResult, meta: CSVMetadata = {}): string {
   const lines: string[] = [];
+  const L = modeLabels(result.mode);
   const exportedAt = meta.exportedAt ?? new Date();
   const studyDate = meta.studyDate ?? result.samples[0]?.time ?? null;
 
@@ -411,33 +521,41 @@ export function resultsToCSV(result: AutoregResult, meta: CSVMetadata = {}): str
   lines.push(`Code sujet,${csvEscape(meta.subjectCode)}`);
   lines.push(`Libellé sujet,${csvEscape(meta.subjectLabel)}`);
   lines.push(`Fichier source,${csvEscape(meta.fileName)}`);
+  lines.push(`Index d'autorégulation,${L.index}`);
   lines.push(`Date d'étude,${studyDate ? studyDate.toISOString() : ""}`);
   lines.push(`Date d'export,${exportedAt.toISOString()}`);
   lines.push("");
 
   lines.push("# Résumé des résultats optimaux");
-  lines.push(`PPC optimale (mmHg),${result.optimalPPC ?? ""}`);
+  lines.push(`${L.optimal} (mmHg),${result.optimalPPC ?? ""}`);
   lines.push(`LLA (mmHg),${result.lowerLimit ?? ""}`);
   lines.push(`ULA (mmHg),${result.upperLimit ?? ""}`);
-  lines.push(`PRx minimum,${result.minPrx ?? ""}`);
+  lines.push(`${L.index} minimum,${result.minPrx ?? ""}`);
   lines.push(`Nombre d'échantillons,${result.sampleCount}`);
   lines.push(`Durée (h),${result.durationHours}`);
   lines.push("");
 
-  lines.push("# Courbe PRx vs PPC");
-  lines.push("PPC (mmHg),PRx moyen,N échantillons,Autorégulation");
+  lines.push(`# Courbe ${L.index} vs ${L.pressure}`);
+  lines.push(`${L.pressure} (mmHg),${L.index} moyen,N échantillons,Autorégulation`);
   result.curve.forEach((p) =>
     lines.push(`${p.ppc},${p.prx},${p.count},${p.prx < 0.3 ? "Préservée" : "Altérée"}`),
   );
   lines.push("");
 
   lines.push("# Séries temporelles");
-  lines.push("Horodate,PIC,PAM,PPC,PRx");
-  result.samples.forEach((s) =>
-    lines.push(
-      `${s.time.toISOString()},${s.pic ?? ""},${s.pam ?? ""},${s.ppc ?? ""},${s.prx ?? ""}`,
-    ),
-  );
+  if (result.mode === "cox") {
+    lines.push(`Horodate,rSO2,PAM,COx`);
+    result.samples.forEach((s) =>
+      lines.push(`${s.time.toISOString()},${s.nirs ?? ""},${s.pam ?? ""},${s.prx ?? ""}`),
+    );
+  } else {
+    lines.push(`Horodate,PIC,PAM,PPC,PRx`);
+    result.samples.forEach((s) =>
+      lines.push(
+        `${s.time.toISOString()},${s.pic ?? ""},${s.pam ?? ""},${s.ppc ?? ""},${s.prx ?? ""}`,
+      ),
+    );
+  }
   return lines.join("\n");
 }
 

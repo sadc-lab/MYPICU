@@ -53,6 +53,8 @@ import {
   runAnalysis,
   rollingOptimal,
   resultsToCSV,
+  modeLabels,
+  type AutoregMode,
   type AutoregResult,
   type OptimalTimePoint,
   type ReadinessError,
@@ -119,6 +121,7 @@ const AutoregStudy = () => {
         return;
       }
       const restored: AutoregResult = {
+        mode: ((data as any).mode as AutoregMode) ?? 'prx',
         optimalPPC: data.optimal_ppc !== null ? Number(data.optimal_ppc) : null,
         lowerLimit: data.lower_limit !== null ? Number(data.lower_limit) : null,
         upperLimit: data.upper_limit !== null ? Number(data.upper_limit) : null,
@@ -202,7 +205,7 @@ const AutoregStudy = () => {
         );
       }
       const derived = analysis.samples;
-      const rolled = rollingOptimal(derived, Math.min(240, Math.floor(derived.length / 3)), 30, 5);
+      const rolled = rollingOptimal(derived, Math.min(240, Math.floor(derived.length / 3)), 30, 5, analysis.mode);
       setAnalysisByPatient((prev) => ({
         ...prev,
         [target.id]: { result: analysis, rolling: rolled, fileName: file.name },
@@ -220,6 +223,7 @@ const AutoregStudy = () => {
               study_patient_code: target.code,
               study_patient_label: target.label,
               file_name: file.name,
+              mode: analysis.mode,
               optimal_ppc: analysis.optimalPPC,
               lower_limit: analysis.lowerLimit,
               upper_limit: analysis.upperLimit,
@@ -248,12 +252,14 @@ const AutoregStudy = () => {
   };
 
 
+  const labels = useMemo(() => modeLabels(result?.mode ?? 'prx'), [result?.mode]);
+
   const timeSeriesChartData = useMemo(() => {
     if (!result || !result.samples.length) return [];
     const step = Math.max(1, Math.floor(result.samples.length / 800));
     return result.samples
       .filter((_, i) => i % step === 0)
-      .map((s) => ({ t: s.time.getTime(), pic: s.pic, pam: s.pam, ppc: s.ppc }));
+      .map((s) => ({ t: s.time.getTime(), pic: s.pic, pam: s.pam, ppc: s.ppc, nirs: s.nirs }));
   }, [result]);
 
   const rollingChartData = useMemo(
@@ -301,6 +307,7 @@ const AutoregStudy = () => {
       const pageWidth = doc.internal.pageSize.getWidth();
       const margin = 40;
       const now = new Date();
+      const L = modeLabels(result.mode);
 
       doc.setFontSize(16);
       doc.text("Rapport d'autorégulation cérébrale", margin, 50);
@@ -319,10 +326,11 @@ const AutoregStudy = () => {
         startY: 120,
         head: [['Indicateur', 'Valeur']],
         body: [
-          ['PPC optimale (mmHg)', result.optimalPPC?.toFixed(0) ?? '—'],
+          ['Index utilisé', L.index],
+          [`${L.optimal} (mmHg)`, result.optimalPPC?.toFixed(0) ?? '—'],
           ['Limite basse LLA (mmHg)', result.lowerLimit?.toFixed(0) ?? '—'],
           ['Limite haute ULA (mmHg)', result.upperLimit?.toFixed(0) ?? '—'],
-          ['PRx minimum', result.minPrx?.toFixed(2) ?? '—'],
+          [`${L.index} minimum`, result.minPrx?.toFixed(2) ?? '—'],
           ['Nombre d\'échantillons', String(result.sampleCount)],
           ['Durée (h)', String(result.durationHours)],
         ],
@@ -348,10 +356,10 @@ const AutoregStudy = () => {
       // Curve table
       doc.addPage();
       doc.setFontSize(12);
-      doc.text('Courbe PRx vs PPC (bins de 5 mmHg)', margin, 40);
+      doc.text(`Courbe ${L.index} vs ${L.pressure} (bins de 5 mmHg)`, margin, 40);
       autoTable(doc, {
         startY: 60,
-        head: [['PPC (mmHg)', 'PRx moyen', 'N échantillons', 'Autorégulation']],
+        head: [[`${L.pressure} (mmHg)`, `${L.index} moyen`, 'N échantillons', 'Autorégulation']],
         body: result.curve.map((p) => [
           p.ppc,
           p.prx.toFixed(2),
@@ -408,7 +416,9 @@ const AutoregStudy = () => {
                   )}
                 </CardTitle>
                 <CardDescription>
-                  Formats acceptés : CSV, Excel (<code>.xlsx</code>) ou JSON Fisher (colonnes <code>Horodate, PIC, PAM, PPC</code>).
+                  CSV, Excel (<code>.xlsx</code>) ou JSON Fisher. Deux modes détectés automatiquement :
+                  <strong> COx</strong> non invasif (colonnes <code>rSO₂/NIRS, PAM</code>) ou
+                  <strong> PRx</strong> invasif (colonnes <code>PIC, PAM, PPC</code>).
                 </CardDescription>
               </div>
               <TooltipProvider delayDuration={100}>
@@ -578,13 +588,13 @@ const AutoregStudy = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
                 <FeatureCard
                   icon={<Brain className="h-5 w-5" />}
-                  title="Indice PRx"
-                  desc="Corrélation glissante PIC/PAM sur fenêtre 30 échantillons."
+                  title="Index COx ou PRx"
+                  desc="Corrélation glissante rSO₂/PAM (COx, non invasif) ou PIC/PAM (PRx), fenêtre 30 échantillons."
                 />
                 <FeatureCard
                   icon={<LineChart className="h-5 w-5" />}
                   title="Courbe en U"
-                  desc="Détection automatique de la PPC optimale et des limites LLA/ULA."
+                  desc="Détection automatique de la PAM/PPC optimale et des limites LLA/ULA."
                 />
                 <FeatureCard
                   icon={<ShieldCheck className="h-5 w-5" />}
@@ -607,8 +617,8 @@ const AutoregStudy = () => {
                       Résultats de l'analyse
                     </CardTitle>
                     <CardDescription>
-                      {result.sampleCount} échantillons · {result.durationHours} h · PRx = corrélation
-                      glissante PIC/PAM (fenêtre 30 échantillons)
+                      {result.sampleCount} échantillons · {result.durationHours} h · {labels.index} = corrélation
+                      glissante {labels.signal}/PAM (fenêtre 30 échantillons)
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
@@ -626,20 +636,20 @@ const AutoregStudy = () => {
               <CardContent>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <SummaryStat label="PPC optimale" value={result.optimalPPC} unit="mmHg" highlight />
+                  <SummaryStat label={labels.optimal} value={result.optimalPPC} unit="mmHg" highlight />
                   <SummaryStat label="LLA" value={result.lowerLimit} unit="mmHg" />
                   <SummaryStat label="ULA" value={result.upperLimit} unit="mmHg" />
-                  <SummaryStat label="PRx minimum" value={result.minPrx} unit="" digits={2} />
+                  <SummaryStat label={`${labels.index} minimum`} value={result.minPrx} unit="" digits={2} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="mb-6" id="pdf-chart-curve" data-pdf-title="Courbe d'autorégulation · PRx vs PPC">
+            <Card className="mb-6" id="pdf-chart-curve" data-pdf-title={`Courbe d'autorégulation · ${labels.index} vs ${labels.pressure}`}>
               <CardHeader>
-                <CardTitle>Courbe d'autorégulation · PRx vs PPC</CardTitle>
+                <CardTitle>Courbe d'autorégulation · {labels.index} vs {labels.pressure}</CardTitle>
                 <CardDescription>
-                  Minimum de PRx = PPC optimale. La zone verte indique la plage de bonne autorégulation
-                  (PRx &lt; 0.3).
+                  Minimum de {labels.index} = {labels.optimal}. La zone surlignée indique la plage de bonne
+                  autorégulation ({labels.index} &lt; 0.3).
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -651,12 +661,12 @@ const AutoregStudy = () => {
                         dataKey="ppc"
                         type="number"
                         domain={['dataMin - 2', 'dataMax + 2']}
-                        label={{ value: 'PPC (mmHg)', position: 'insideBottom', offset: -5 }}
+                        label={{ value: `${labels.pressure} (mmHg)`, position: 'insideBottom', offset: -5 }}
                         tick={{ fontSize: 12 }}
                       />
                       <YAxis
                         domain={[-0.4, 1]}
-                        label={{ value: 'PRx', angle: -90, position: 'insideLeft' }}
+                        label={{ value: labels.index, angle: -90, position: 'insideLeft' }}
                         tick={{ fontSize: 12 }}
                       />
                       {result.lowerLimit !== null && result.upperLimit !== null && (
@@ -673,7 +683,7 @@ const AutoregStudy = () => {
                           border: '1px solid hsl(var(--border))',
                           borderRadius: 8,
                         }}
-                        labelFormatter={(l) => `PPC : ${l} mmHg`}
+                        labelFormatter={(l) => `${labels.pressure} : ${l} mmHg`}
                       />
                       <Line
                         type="monotone"
@@ -681,7 +691,7 @@ const AutoregStudy = () => {
                         stroke="hsl(var(--primary))"
                         strokeWidth={2}
                         dot={{ r: 4 }}
-                        name="PRx moyen"
+                        name={`${labels.index} moyen`}
                       />
                       {result.optimalPPC !== null && result.minPrx !== null && (
                         <ReferenceDot
@@ -691,7 +701,7 @@ const AutoregStudy = () => {
                           fill="hsl(var(--primary))"
                           stroke="hsl(var(--background))"
                           strokeWidth={2}
-                          label={{ value: 'PPCopt', position: 'top', fontSize: 11 }}
+                          label={{ value: `${labels.pressure}opt`, position: 'top', fontSize: 11 }}
                         />
                       )}
                     </ComposedChart>
@@ -701,11 +711,11 @@ const AutoregStudy = () => {
             </Card>
 
             {rollingChartData.length > 0 && (
-              <Card className="mb-6" id="pdf-chart-rolling" data-pdf-title="PPC optimale et limites dans le temps">
+              <Card className="mb-6" id="pdf-chart-rolling" data-pdf-title={`${labels.optimal} et limites dans le temps`}>
                 <CardHeader>
-                  <CardTitle>PPC optimale et limites dans le temps</CardTitle>
+                  <CardTitle>{labels.optimal} et limites dans le temps</CardTitle>
                   <CardDescription>
-                    Estimation glissante de PPCopt, LLA et ULA. PPC mesurée superposée.
+                    Estimation glissante de {labels.pressure}opt, LLA et ULA. {labels.pressure} mesurée superposée.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -734,8 +744,8 @@ const AutoregStudy = () => {
                           }}
                         />
                         <Legend />
-                        <Line type="monotone" dataKey="ppc" stroke="hsl(var(--muted-foreground))" dot={false} name="PPC mesurée" />
-                        <Line type="monotone" dataKey="optimalPPC" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="PPC optimale" />
+                        <Line type="monotone" dataKey="ppc" stroke="hsl(var(--muted-foreground))" dot={false} name={`${labels.pressure} mesurée`} />
+                        <Line type="monotone" dataKey="optimalPPC" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name={labels.optimal} />
                         <Line type="monotone" dataKey="lla" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="LLA" />
                         <Line type="monotone" dataKey="ula" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="ULA" />
                       </ComposedChart>
@@ -746,9 +756,9 @@ const AutoregStudy = () => {
             )}
 
             {timeSeriesChartData.length > 0 && (
-            <Card className="mb-6" id="pdf-chart-timeseries" data-pdf-title="Séries temporelles PIC / PAM / PPC">
+            <Card className="mb-6" id="pdf-chart-timeseries" data-pdf-title={result.mode === 'cox' ? 'Séries temporelles rSO₂ / PAM' : 'Séries temporelles PIC / PAM / PPC'}>
               <CardHeader>
-                <CardTitle>Séries temporelles PIC / PAM / PPC</CardTitle>
+                <CardTitle>{result.mode === 'cox' ? 'Séries temporelles rSO₂ / PAM' : 'Séries temporelles PIC / PAM / PPC'}</CardTitle>
                 <CardDescription>Données brutes après import.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -773,9 +783,15 @@ const AutoregStudy = () => {
                         }}
                       />
                       <Legend />
-                      <Line type="monotone" dataKey="pic" stroke="hsl(var(--destructive))" dot={false} name="PIC" />
+                      {result.mode === 'cox' ? (
+                        <Line type="monotone" dataKey="nirs" stroke="hsl(var(--destructive))" dot={false} name="rSO₂" />
+                      ) : (
+                        <>
+                          <Line type="monotone" dataKey="pic" stroke="hsl(var(--destructive))" dot={false} name="PIC" />
+                          <Line type="monotone" dataKey="ppc" stroke="hsl(142 71% 45%)" dot={false} name="PPC" />
+                        </>
+                      )}
                       <Line type="monotone" dataKey="pam" stroke="hsl(var(--primary))" dot={false} name="PAM" />
-                      <Line type="monotone" dataKey="ppc" stroke="hsl(142 71% 45%)" dot={false} name="PPC" />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
@@ -788,7 +804,7 @@ const AutoregStudy = () => {
               <CardHeader>
                 <CardTitle>Tableau des résultats</CardTitle>
                 <CardDescription>
-                  PRx moyen par bin de PPC (5 mmHg). Bins avec au moins 3 échantillons.
+                  {labels.index} moyen par bin de {labels.pressure} (5 mmHg). Bins avec au moins 3 échantillons.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -796,8 +812,8 @@ const AutoregStudy = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>PPC (mmHg)</TableHead>
-                        <TableHead>PRx moyen</TableHead>
+                        <TableHead>{labels.pressure} (mmHg)</TableHead>
+                        <TableHead>{labels.index} moyen</TableHead>
                         <TableHead>N échantillons</TableHead>
                         <TableHead>Autorégulation</TableHead>
                       </TableRow>
