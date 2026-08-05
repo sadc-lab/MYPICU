@@ -38,6 +38,10 @@ export interface CurvePoint {
   // Index carrier: PRx in PRx mode, COx in COx mode.
   prx: number;
   count: number;
+  // True when the bin holds enough samples (≥ 2% of the usable data) to be
+  // clinically trustworthy. Non-robust bins are shown greyed and are excluded
+  // from the PAMopt/PPCopt and LLA/ULA computation.
+  robust: boolean;
 }
 
 export interface AutoregResult {
@@ -56,10 +60,30 @@ export interface AutoregResult {
   plateauValid: boolean;
   sampleCount: number;
   durationHours: number;
+  // ---- Diagnostics driving the clinical-interpretation banner ----
+  // Usable index/pressure pairs inside the physiological range.
+  usableSamples: number;
+  // Share (%) of the paired samples that were physiologically usable.
+  pctUsable: number;
+  // Mean index over usable samples.
+  meanIndex: number | null;
+  // Share (%) of usable samples spent above the impairment threshold.
+  pctImpaired: number;
+  // Number of trustworthy (robust) bins retained for the fit.
+  robustBins: number;
 }
 
 // Index threshold above which autoregulation is considered impaired (PRx/COx).
 export const PRX_THRESHOLD = 0.3;
+
+// Physiological plausibility window for the pressure axis (PAM/PPC, mmHg).
+// Values outside are treated as artefacts (line flush, disconnection) and dropped.
+export const PHYS_MIN = 20;
+export const PHYS_MAX = 150;
+
+// A bin must hold at least this fraction of the usable data to be "robust"
+// (matches the ≥2% criterion used in the reference ICM+ methodology).
+export const ROBUST_FRACTION = 0.02;
 
 const REQUIRED_SAMPLES = 30;
 
@@ -259,9 +283,10 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
       return {
         cause: `Signaux constants détectés : ${details}.`,
         steps: [
+          "Ce fichier ressemble à un enregistrement sans signal brut variable (ou à un export de résultats déjà calculés).",
           "La corrélation COx nécessite des variations physiologiques de rSO₂ et de PAM.",
           "Vérifiez que le capteur NIRS était bien connecté (attention aux valeurs saturées à 94 %).",
-          "Réexportez une plage où les signaux évoluent réellement.",
+          "Réimportez un enregistrement brut où rSO₂ et PAM évoluent réellement.",
         ],
       };
     }
@@ -307,13 +332,20 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
     const details = constantFields
       .map(({ label, values }) => `${label} = ${values[0].toFixed(1)} (constant)`)
       .join(', ');
+    // A file whose signal channels are all flat/zeroed is typically a results
+    // template or an export without raw signal, not a real recording.
+    const allFlat = constantFields.length >= 2;
     return {
-      cause: `Signaux constants détectés : ${details}.`,
+      cause: allFlat
+        ? `Fichier sans signal brut exploitable : ${details}.`
+        : `Signaux constants détectés : ${details}.`,
       steps: [
-        "La corrélation PRx nécessite des variations physiologiques de PIC et PAM.",
-        "La courbe PPC optimale nécessite une variabilité de PPC sur la période.",
-        "Vérifiez que le capteur PIC était bien connecté et non zéroté artificiellement.",
-        "Réexportez une plage où les signaux évoluent réellement (éviter les périodes de sédation profonde stable).",
+        allFlat
+          ? "Ce fichier ressemble à un export de résultats déjà calculés (ou un gabarit vide) : les canaux bruts PIC/PAM/PPC ne varient pas."
+          : "La corrélation PRx nécessite des variations physiologiques de PIC et PAM.",
+        "Pour calculer l'autorégulation, importez un enregistrement BRUT : rSO₂ + PAM (COx, non invasif) ou PIC + PAM + PPC (PRx).",
+        "Vérifiez que les capteurs étaient connectés et non zérotés artificiellement.",
+        "Évitez les périodes de sédation profonde stable où les signaux ne varient pas.",
       ],
     };
   }
@@ -368,40 +400,55 @@ export function computePRx(samples: RawSample[], windowSize = 30): DerivedSample
 }
 
 // Build index-vs-pressure curve. Pressure axis is PPC in PRx mode, PAM in COx mode.
+// Samples outside the physiological range are dropped as artefacts; each retained
+// bin is flagged `robust` when it holds ≥ minFraction of the usable samples.
 export function buildCurve(
   samples: DerivedSample[],
   binSize = 5,
   minPerBin = 3,
   mode: AutoregMode = "prx",
+  minFraction = ROBUST_FRACTION,
 ): CurvePoint[] {
   const bins = new Map<number, { sum: number; count: number }>();
+  let usableTotal = 0;
   for (const s of samples) {
     const axis = mode === "cox" ? s.pam : s.ppc;
     if (axis === null || s.prx === null) continue;
+    if (axis < PHYS_MIN || axis > PHYS_MAX) continue; // physiological artefact filter
+    usableTotal += 1;
     const bin = Math.round(axis / binSize) * binSize;
     const cur = bins.get(bin) || { sum: 0, count: 0 };
     cur.sum += s.prx;
     cur.count += 1;
     bins.set(bin, cur);
   }
+  const robustThreshold = Math.max(minPerBin, Math.ceil(usableTotal * minFraction));
   const curve: CurvePoint[] = [];
   Array.from(bins.entries())
     .sort((a, b) => a[0] - b[0])
     .forEach(([ppc, { sum, count }]) => {
       if (count >= minPerBin) {
-        curve.push({ ppc, prx: Math.round((sum / count) * 100) / 100, count });
+        curve.push({
+          ppc,
+          prx: Math.round((sum / count) * 100) / 100,
+          count,
+          robust: count >= robustThreshold,
+        });
       }
     });
   return curve;
 }
 
-export function analyzeCurve(curve: CurvePoint[]): {
+export function analyzeCurve(fullCurve: CurvePoint[]): {
   optimalPPC: number | null;
   lowerLimit: number | null;
   upperLimit: number | null;
   minPrx: number | null;
   plateauValid: boolean;
 } {
+  // Only trustworthy (robust) bins drive the optimum and the limits. Non-robust
+  // bins remain in the curve for display but never distort PAMopt/LLA/ULA.
+  const curve = fullCurve.filter((p) => p.robust);
   if (curve.length === 0) {
     return { optimalPPC: null, lowerLimit: null, upperLimit: null, minPrx: null, plateauValid: false };
   }
@@ -457,6 +504,25 @@ export function runAnalysis(samples: RawSample[], windowSize = 30, binSize = 5):
     samples.length > 1
       ? (samples[samples.length - 1].time.getTime() - samples[0].time.getTime()) / 3_600_000
       : 0;
+
+  // ---- Diagnostics for the clinical-interpretation banner ----
+  const axisOf = (s: DerivedSample) => (mode === "cox" ? s.pam : s.pic);
+  const paired = derived.filter((s) => s.prx !== null && s.pam !== null && axisOf(s) !== null);
+  const usable = paired.filter((s) => {
+    const a = mode === "cox" ? s.pam : s.ppc;
+    return a !== null && a >= PHYS_MIN && a <= PHYS_MAX;
+  });
+  const meanIndex =
+    usable.length > 0
+      ? Math.round((usable.reduce((acc, s) => acc + (s.prx as number), 0) / usable.length) * 100) / 100
+      : null;
+  const pctImpaired =
+    usable.length > 0
+      ? Math.round((usable.filter((s) => (s.prx as number) > PRX_THRESHOLD).length / usable.length) * 1000) / 10
+      : 0;
+  const pctUsable =
+    paired.length > 0 ? Math.round((usable.length / paired.length) * 1000) / 10 : 0;
+
   return {
     mode,
     samples: derived,
@@ -464,6 +530,11 @@ export function runAnalysis(samples: RawSample[], windowSize = 30, binSize = 5):
     ...analysis,
     sampleCount: samples.length,
     durationHours: Math.round(durationHours * 10) / 10,
+    usableSamples: usable.length,
+    pctUsable,
+    meanIndex,
+    pctImpaired,
+    robustBins: curve.filter((p) => p.robust).length,
   };
 }
 
@@ -544,14 +615,23 @@ export function resultsToCSV(result: AutoregResult, meta: CSVMetadata = {}): str
   lines.push(`LLA (mmHg),${result.lowerLimit ?? ""}`);
   lines.push(`ULA (mmHg),${result.upperLimit ?? ""}`);
   lines.push(`${L.index} minimum,${result.minPrx ?? ""}`);
+  lines.push(`Plateau fiable,${result.plateauValid ? "oui" : "non"}`);
   lines.push(`Nombre d'échantillons,${result.sampleCount}`);
   lines.push(`Durée (h),${result.durationHours}`);
   lines.push("");
 
+  lines.push("# Qualité & interprétation");
+  lines.push(`Échantillons exploitables,${result.usableSamples}`);
+  lines.push(`Part exploitable (%),${result.pctUsable}`);
+  lines.push(`${L.index} moyen,${result.meanIndex ?? ""}`);
+  lines.push(`Temps altéré (${L.index}>0.3) (%),${result.pctImpaired}`);
+  lines.push(`Bins fiables (>=2% données),${result.robustBins}`);
+  lines.push("");
+
   lines.push(`# Courbe ${L.index} vs ${L.pressure}`);
-  lines.push(`${L.pressure} (mmHg),${L.index} moyen,N échantillons,Autorégulation`);
+  lines.push(`${L.pressure} (mmHg),${L.index} moyen,N échantillons,Fiable,Autorégulation`);
   result.curve.forEach((p) =>
-    lines.push(`${p.ppc},${p.prx},${p.count},${p.prx < 0.3 ? "Préservée" : "Altérée"}`),
+    lines.push(`${p.ppc},${p.prx},${p.count},${p.robust ? "oui" : "non"},${p.prx < 0.3 ? "Préservée" : "Altérée"}`),
   );
   lines.push("");
 
