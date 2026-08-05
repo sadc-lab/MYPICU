@@ -16,6 +16,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Tooltip,
   TooltipContent,
@@ -33,6 +41,8 @@ import {
   ShieldCheck,
   UserPlus,
   HelpCircle,
+  Target,
+  TrendingDown,
 } from 'lucide-react';
 import {
   ComposedChart,
@@ -44,6 +54,7 @@ import {
   ResponsiveContainer,
   ReferenceArea,
   ReferenceDot,
+  ReferenceLine,
   Legend,
 } from 'recharts';
 import * as XLSX from 'xlsx';
@@ -57,10 +68,12 @@ import {
   PRX_THRESHOLD,
   type AutoregMode,
   type AutoregResult,
+  type CurvePoint,
   type OptimalTimePoint,
   type ReadinessError,
 } from '@/services/autoregComputation.service';
-import { useStudyPatients } from '@/hooks/useStudyPatients';
+import { useStudyPatients, type StudyPatient } from '@/hooks/useStudyPatients';
+import { usePatients } from '@/hooks/usePatients';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -68,6 +81,27 @@ interface PatientAnalysis {
   result: AutoregResult;
   rolling: OptimalTimePoint[];
   fileName: string;
+}
+
+// Raw recordings shipped with the app follow this naming convention, keyed on the
+// patient id used by the patient list (e.g. "#8749" → autoregulation_raw_8749.csv).
+const recordingUrlFor = (patientId: string) =>
+  `/data/autoregulation_raw_${patientId.replace('#', '')}.csv`;
+
+// Returns the patient's bundled recording, or null when there is none.
+// vercel.json rewrites unknown paths to index.html, so a 200 is not proof the
+// file exists — the body has to be checked as well.
+async function fetchPatientRecording(patientId: string): Promise<File | null> {
+  const url = recordingUrlFor(patientId);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (!text.trim() || text.trimStart().startsWith('<')) return null;
+    return new File([text], url.split('/').pop() as string, { type: 'text/csv' });
+  } catch {
+    return null;
+  }
 }
 
 async function readFileAsText(file: File): Promise<string> {
@@ -90,6 +124,7 @@ const AutoregStudy = () => {
   const [analysisByPatient, setAnalysisByPatient] = useState<Record<string, PatientAnalysis>>({});
   const [error, setError] = useState<string | ReadinessError | null>(null);
   const [parsing, setParsing] = useState(false);
+  const [activeTab, setActiveTab] = useState('curve');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const current = active ? analysisByPatient[active.id] ?? null : null;
@@ -114,7 +149,19 @@ const AutoregStudy = () => {
         .limit(1)
         .maybeSingle();
       if (cancelled || fetchError || !data) return;
-      const savedCurve = Array.isArray(data.curve) ? data.curve : [];
+      // Rows saved before the robustness flag existed carry no `robust` field:
+      // treat those bins as trustworthy so legacy analyses render unchanged.
+      const savedCurve: CurvePoint[] = (Array.isArray(data.curve) ? data.curve : []).map(
+        (raw: unknown) => {
+          const p = (raw ?? {}) as Partial<CurvePoint>;
+          return {
+            ppc: Number(p.ppc),
+            prx: Number(p.prx),
+            count: Number(p.count ?? 0),
+            robust: p.robust ?? true,
+          };
+        },
+      );
       if (savedCurve.length === 0 && data.optimal_ppc === null) {
         setError(
           `Le dernier fichier enregistré (${data.file_name ?? 'sans nom'}) ne contient pas de résultat calculable. Réimportez un fichier avec des variations exploitables de PIC/PAM/PPC.`,
@@ -133,8 +180,15 @@ const AutoregStudy = () => {
           restoredMinPrx !== null && restoredMinPrx < PRX_THRESHOLD,
         sampleCount: data.sample_count ?? 0,
         durationHours: data.duration_hours !== null ? Number(data.duration_hours) : 0,
-        curve: savedCurve as any,
+        curve: savedCurve,
         samples: [],
+        // Quality diagnostics are derived from the raw signal, which is not
+        // persisted: a restored analysis shows results without the quality panel.
+        usableSamples: 0,
+        pctUsable: 0,
+        meanIndex: null,
+        pctImpaired: 0,
+        robustBins: savedCurve.filter((p) => p.robust).length,
       };
       setAnalysisByPatient((prev) =>
         prev[active.id]
@@ -155,28 +209,64 @@ const AutoregStudy = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active?.id]);
 
-  // Add-patient dialog state (label + required file)
+  // Add-patient dialog state (label + file, or a patient picked from the unit list)
   const [addOpen, setAddOpen] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newFile, setNewFile] = useState<File | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
+  const [sourcePatientId, setSourcePatientId] = useState<string>('');
+  const [sourceRecording, setSourceRecording] = useState<File | null>(null);
+  const [probingRecording, setProbingRecording] = useState(false);
+
+  const { data: patientResponse } = usePatients(undefined);
+  const unitPatients = patientResponse?.patients ?? [];
+  const sourcePatient = unitPatients.find((p) => p.id === sourcePatientId) ?? null;
+
+  const resetAddForm = () => {
+    setNewLabel('');
+    setNewFile(null);
+    setSourcePatientId('');
+    setSourceRecording(null);
+    setAddError(null);
+  };
+
+  // Picking a patient prefills the pseudonym and looks for their bundled recording,
+  // so a known subject can be analysed without any manual import.
+  const selectSourcePatient = async (patientId: string) => {
+    setSourcePatientId(patientId);
+    setAddError(null);
+    setSourceRecording(null);
+    const picked = unitPatients.find((p) => p.id === patientId);
+    if (!picked) return;
+    setNewLabel(picked.name);
+    setProbingRecording(true);
+    const recording = await fetchPatientRecording(picked.id);
+    setSourceRecording(recording);
+    setProbingRecording(false);
+  };
 
   const submitNewPatient = async () => {
     setAddError(null);
-    if (!newFile) {
-      setAddError('Veuillez sélectionner un fichier CSV, JSON ou Excel.');
+    const fileToProcess = newFile ?? sourceRecording;
+    if (!fileToProcess) {
+      setAddError(
+        sourcePatient
+          ? "Aucun enregistrement n'est disponible pour ce patient : joignez un fichier CSV, JSON ou Excel."
+          : 'Veuillez sélectionner un fichier CSV, JSON ou Excel.',
+      );
       return;
     }
     const created = addPatient(newLabel);
     const finalLabel = newLabel.trim();
-    if (finalLabel) {
-      updatePatient(created.id, { label: finalLabel });
+    const patch: Partial<StudyPatient> = {};
+    if (finalLabel) patch.label = finalLabel;
+    if (sourcePatient) patch.sourcePatientId = sourcePatient.id;
+    if (Object.keys(patch).length > 0) {
+      updatePatient(created.id, patch);
     }
     const target = { id: created.id, code: created.code, label: finalLabel || created.label };
-    const fileToProcess = newFile;
     setAddOpen(false);
-    setNewLabel('');
-    setNewFile(null);
+    resetAddForm();
     const ok = await handleFile(fileToProcess, target);
     if (!ok) {
       removePatient(created.id);
@@ -302,6 +392,7 @@ const AutoregStudy = () => {
 
   const downloadPDF = async () => {
     if (!result) return;
+    const restoreTab = activeTab;
     try {
       const [{ jsPDF }, autoTable, { toPng }] = await Promise.all([
         import('jspdf'),
@@ -336,6 +427,7 @@ const AutoregStudy = () => {
           ['Limite basse LLA (mmHg)', result.lowerLimit?.toFixed(0) ?? '—'],
           ['Limite haute ULA (mmHg)', result.upperLimit?.toFixed(0) ?? '—'],
           [`${L.index} minimum`, result.minPrx?.toFixed(2) ?? '—'],
+          ['Plateau fiable', result.plateauValid ? 'Oui' : 'Non'],
           ['Nombre d\'échantillons', String(result.sampleCount)],
           ['Durée (h)', String(result.durationHours)],
         ],
@@ -343,9 +435,31 @@ const AutoregStudy = () => {
         headStyles: { fillColor: [30, 64, 175] },
       });
 
-      // Capture each chart card as PNG and add to the PDF
-      const chartIds = ['pdf-chart-curve', 'pdf-chart-rolling', 'pdf-chart-timeseries'];
-      for (const id of chartIds) {
+      if (result.usableSamples > 0) {
+        autoTable(doc, {
+          head: [['Qualité et interprétation', 'Valeur']],
+          body: [
+            ['Échantillons exploitables', `${result.usableSamples} (${result.pctUsable} %)`],
+            [`${L.index} moyen`, result.meanIndex?.toFixed(2) ?? '—'],
+            [`Temps avec ${L.index} > ${PRX_THRESHOLD.toFixed(1)}`, `${result.pctImpaired} %`],
+            ['Bins fiables (≥ 2 % des données)', String(result.robustBins)],
+          ],
+          theme: 'striped',
+          headStyles: { fillColor: [30, 64, 175] },
+        });
+      }
+
+      // Charts live in tabs and inactive tabs are unmounted, so each one is
+      // brought on screen just long enough to be captured.
+      const chartTabs = [
+        { tab: 'curve', id: 'pdf-chart-curve' },
+        { tab: 'rolling', id: 'pdf-chart-rolling' },
+        { tab: 'signals', id: 'pdf-chart-timeseries' },
+      ];
+      for (const { tab, id } of chartTabs) {
+        setActiveTab(tab);
+        // Let React commit the tab switch and Recharts lay the chart out.
+        await new Promise((resolve) => setTimeout(resolve, 450));
         const node = document.getElementById(id);
         if (!node) continue;
         const png = await toPng(node, { backgroundColor: '#ffffff', pixelRatio: 2 });
@@ -357,6 +471,7 @@ const AutoregStudy = () => {
         doc.text(node.dataset.pdfTitle || 'Graphique', margin, 40);
         doc.addImage(png, 'PNG', margin, 60, imgWidth, imgHeight);
       }
+      setActiveTab(restoreTab);
 
       // Curve table
       doc.addPage();
@@ -364,12 +479,13 @@ const AutoregStudy = () => {
       doc.text(`Courbe ${L.index} vs ${L.pressure} (bins de 5 mmHg)`, margin, 40);
       autoTable(doc, {
         startY: 60,
-        head: [[`${L.pressure} (mmHg)`, `${L.index} moyen`, 'N échantillons', 'Autorégulation']],
+        head: [[`${L.pressure} (mmHg)`, `${L.index} moyen`, 'N échantillons', 'Fiable', 'Autorégulation']],
         body: result.curve.map((p) => [
           p.ppc,
           p.prx.toFixed(2),
           p.count,
-          p.prx < 0.3 ? 'Préservée' : 'Altérée',
+          p.robust ? 'Oui' : 'Non',
+          !p.robust ? 'Non retenu' : p.prx < PRX_THRESHOLD ? 'Préservée' : 'Altérée',
         ]),
         theme: 'grid',
         headStyles: { fillColor: [30, 64, 175] },
@@ -381,12 +497,40 @@ const AutoregStudy = () => {
     } catch (err: any) {
       console.error('PDF export error:', err);
       toast.error("Échec de l'export PDF : " + (err.message || 'erreur inconnue'));
+      setActiveTab(restoreTab);
     }
   };
 
 
   const formatTime = (t: number) =>
     new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+
+  // Shared by the full import panel and its collapsed bar.
+  const errorAlert = error && (
+    <Alert variant="destructive" className="mt-4">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle className="text-sm sm:text-base">Impossible de traiter le fichier</AlertTitle>
+      <AlertDescription>
+        {typeof error === 'string' ? (
+          <p className="text-xs sm:text-sm whitespace-pre-line">{error}</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm sm:text-base font-semibold leading-snug">{error.cause}</p>
+            <div className="space-y-1">
+              <p className="text-[11px] sm:text-xs font-medium text-destructive/90 uppercase tracking-wide">
+                Remédiation
+              </p>
+              <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-destructive/90 leading-relaxed">
+                {error.steps.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        )}
+      </AlertDescription>
+    </Alert>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -406,7 +550,55 @@ const AutoregStudy = () => {
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
 
-        {/* Import panel */}
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".csv,.json,.txt,.xlsx,.xls"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+            e.currentTarget.value = '';
+          }}
+        />
+
+        {/* Import panel — collapses to a single bar once an analysis is on screen,
+            so the results start at the top of the viewport. */}
+        {result ? (
+          <Card className="mb-6">
+            <CardContent className="py-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <Badge variant="secondary" className="shrink-0">
+                  {active?.code} · {active?.label}
+                </Badge>
+                {fileName && (
+                  <span className="text-sm text-muted-foreground truncate min-w-0">{fileName}</span>
+                )}
+                <div className="ml-auto flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => inputRef.current?.click()}
+                    disabled={parsing}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    {parsing ? 'Analyse…' : 'Modifier fichier'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setAddError(null); setAddOpen(true); }}
+                    disabled={parsing}
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Ajouter un patient
+                  </Button>
+                </div>
+              </div>
+              {errorAlert}
+            </CardContent>
+          </Card>
+        ) : (
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-start justify-between gap-3">
@@ -472,23 +664,13 @@ const AutoregStudy = () => {
                 <UserPlus className="h-4 w-4" />
                 <AlertTitle>Aucun sujet</AlertTitle>
                 <AlertDescription>
-                  Cliquez sur <strong>Ajouter un patient</strong> pour créer un sujet et importer
-                  son fichier CSV/JSON en une seule étape.
+                  Cliquez sur <strong>Ajouter un patient</strong> pour choisir un patient de l'unité
+                  — son enregistrement est chargé automatiquement s'il existe — ou pour créer un
+                  sujet à partir de votre propre fichier CSV/JSON.
                 </AlertDescription>
               </Alert>
             )}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <input
-                ref={inputRef}
-                type="file"
-                accept=".csv,.json,.txt,.xlsx,.xls"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleFile(f);
-                  e.currentTarget.value = '';
-                }}
-              />
               <Button onClick={() => { setAddError(null); setAddOpen(true); }} disabled={parsing}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Ajouter un patient
@@ -506,46 +688,58 @@ const AutoregStudy = () => {
               )}
             </div>
 
-            {error && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle className="text-sm sm:text-base">Impossible de traiter le fichier</AlertTitle>
-                <AlertDescription>
-                  {typeof error === 'string' ? (
-                    <p className="text-xs sm:text-sm whitespace-pre-line">{error}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-sm sm:text-base font-semibold leading-snug">{error.cause}</p>
-                      <div className="space-y-1">
-                        <p className="text-[11px] sm:text-xs font-medium text-destructive/90 uppercase tracking-wide">
-                          Remédiation
-                        </p>
-                        <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-destructive/90 leading-relaxed">
-                          {error.steps.map((step, i) => (
-                            <li key={i}>{step}</li>
-                          ))}
-                        </ol>
-                      </div>
-                    </div>
-                  )}
-                </AlertDescription>
-              </Alert>
-            )}
+            {errorAlert}
           </CardContent>
         </Card>
+        )}
 
-        <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { setAddError(null); } }}>
+        <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { resetAddForm(); } }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Ajouter un patient</DialogTitle>
               <DialogDescription>
-                Renseignez un pseudonyme et joignez le fichier CSV ou JSON du sujet. Les deux sont
-                requis pour créer le patient et lancer l'analyse.
+                Choisissez un patient de l'unité — son enregistrement est chargé automatiquement
+                s'il est disponible — ou créez un sujet en joignant vous-même le fichier.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
+              {unitPatients.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="new-patient-source">Patient de l'unité</Label>
+                  <Select value={sourcePatientId} onValueChange={selectSourcePatient}>
+                    <SelectTrigger id="new-patient-source">
+                      <SelectValue placeholder="Sélectionner un patient…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {unitPatients.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} · {p.picuId} ({p.id})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {probingRecording && (
+                    <p className="text-xs text-muted-foreground">
+                      Recherche d'un enregistrement pour ce patient…
+                    </p>
+                  )}
+                  {!probingRecording && sourcePatient && sourceRecording && (
+                    <p className="text-xs text-success flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      Enregistrement trouvé : {sourceRecording.name} — aucun import manuel nécessaire.
+                    </p>
+                  )}
+                  {!probingRecording && sourcePatient && !sourceRecording && (
+                    <p className="text-xs text-muted-foreground">
+                      Aucun enregistrement d'autorégulation n'accompagne ce patient : joignez le
+                      fichier ci-dessous.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label htmlFor="new-patient-label">Pseudonyme (optionnel)</Label>
+                <Label htmlFor="new-patient-label">Pseudonyme</Label>
                 <Input
                   id="new-patient-label"
                   placeholder="ex. Sujet A"
@@ -554,7 +748,9 @@ const AutoregStudy = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-patient-file">Fichier CSV, Excel ou JSON *</Label>
+                <Label htmlFor="new-patient-file">
+                  Fichier CSV, Excel ou JSON {sourceRecording ? '(remplace l’enregistrement du patient)' : '*'}
+                </Label>
                 <Input
                   id="new-patient-file"
                   type="file"
@@ -578,7 +774,10 @@ const AutoregStudy = () => {
               <Button variant="outline" onClick={() => setAddOpen(false)} disabled={parsing}>
                 Annuler
               </Button>
-              <Button onClick={submitNewPatient} disabled={parsing || !newFile}>
+              <Button
+                onClick={submitNewPatient}
+                disabled={parsing || probingRecording || (!newFile && !sourceRecording)}
+              >
                 {parsing ? 'Analyse…' : 'Créer et analyser'}
               </Button>
             </DialogFooter>
@@ -589,7 +788,10 @@ const AutoregStudy = () => {
         {!result && !error && (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
-              <p className="mb-6">Aucune donnée. Importez un fichier pour lancer l'analyse.</p>
+              <p className="mb-6">
+                Aucune donnée. Choisissez un patient de l'unité ou importez un fichier pour lancer
+                l'analyse.
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
                 <FeatureCard
                   icon={<Brain className="h-5 w-5" />}
@@ -638,37 +840,64 @@ const AutoregStudy = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
 
-                {!result.plateauValid && (
-                  <Alert variant="destructive" className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Aucun plateau d'autorégulation fiable</AlertTitle>
-                    <AlertDescription className="text-xs sm:text-sm">
-                      L'index minimum ({labels.index} = {result.minPrx?.toFixed(2) ?? '—'}) reste au-dessus
-                      du seuil de {PRX_THRESHOLD.toFixed(1)} sur toute la plage : l'autorégulation semble
-                      globalement altérée et aucune courbe en U exploitable n'a été identifiée.
-                      La {labels.optimal.toLowerCase()} ci-dessous n'est <strong>pas cliniquement interprétable</strong>
-                      {' '}— il s'agit seulement du bin le moins altéré.
-                    </AlertDescription>
-                  </Alert>
-                )}
+                <InterpretationBanner result={result} labels={labels} />
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <SummaryStat label={labels.optimal} value={result.optimalPPC} unit="mmHg" highlight={result.plateauValid} muted={!result.plateauValid} />
-                  <SummaryStat label="LLA" value={result.lowerLimit} unit="mmHg" />
-                  <SummaryStat label="ULA" value={result.upperLimit} unit="mmHg" />
-                  <SummaryStat label={`${labels.index} minimum`} value={result.minPrx} unit="" digits={2} />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                  <SummaryStat
+                    label={labels.optimal}
+                    value={result.optimalPPC}
+                    unit="mmHg"
+                    highlight={result.plateauValid}
+                    muted={!result.plateauValid}
+                    hint={`Pression où ${labels.index} est minimal : la cible thérapeutique estimée.`}
+                  />
+                  <SummaryStat
+                    label="LLA"
+                    value={result.lowerLimit}
+                    unit="mmHg"
+                    hint={`Limite basse : sous cette pression, ${labels.index} repasse au-dessus de ${PRX_THRESHOLD.toFixed(1)} (autorégulation perdue).`}
+                  />
+                  <SummaryStat
+                    label="ULA"
+                    value={result.upperLimit}
+                    unit="mmHg"
+                    hint={`Limite haute : au-dessus de cette pression, ${labels.index} repasse au-dessus de ${PRX_THRESHOLD.toFixed(1)}.`}
+                  />
+                  <SummaryStat
+                    label={`${labels.index} minimum`}
+                    value={result.minPrx}
+                    unit=""
+                    digits={2}
+                    hint={`Meilleure valeur de ${labels.index} atteinte. En dessous de ${PRX_THRESHOLD.toFixed(1)}, l'autorégulation est considérée préservée.`}
+                  />
                 </div>
+
+                <QualityPanel result={result} labels={labels} />
               </CardContent>
             </Card>
 
-            <Card className="mb-6" id="pdf-chart-curve" data-pdf-title={`Courbe d'autorégulation · ${labels.index} vs ${labels.pressure}`}>
+            {/* The curve is the everyday read; the rest is verification material,
+                one click away instead of stacked below it. */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+              <TabsList className="w-full justify-start overflow-x-auto">
+                <TabsTrigger value="curve">Courbe</TabsTrigger>
+                {rollingChartData.length > 0 && <TabsTrigger value="rolling">Évolution</TabsTrigger>}
+                {timeSeriesChartData.length > 0 && <TabsTrigger value="signals">Signaux bruts</TabsTrigger>}
+                <TabsTrigger value="table">Tableau</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="curve" className="mt-4">
+            <Card id="pdf-chart-curve" data-pdf-title={`Courbe d'autorégulation · ${labels.index} vs ${labels.pressure}`}>
               <CardHeader>
                 <CardTitle>Courbe d'autorégulation · {labels.index} vs {labels.pressure}</CardTitle>
                 <CardDescription>
-                  Minimum de {labels.index} = {labels.optimal}. La zone surlignée indique la plage de bonne
-                  autorégulation ({labels.index} &lt; 0.3).
+                  Le creux de la courbe donne la {labels.optimal.toLowerCase()}. Sous la ligne de seuil
+                  ({labels.index} &lt; {PRX_THRESHOLD.toFixed(1)}), l'autorégulation est préservée
+                  {result.lowerLimit !== null && result.upperLimit !== null
+                    ? ' ; la bande colorée est la plage LLA–ULA à viser.'
+                    : '.'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -692,24 +921,46 @@ const AutoregStudy = () => {
                         <ReferenceArea
                           x1={result.lowerLimit}
                           x2={result.upperLimit}
-                          fill="hsl(var(--primary))"
-                          fillOpacity={0.08}
+                          fill="hsl(var(--success))"
+                          fillOpacity={0.1}
+                          label={{
+                            value: 'Plage autorégulée',
+                            position: 'insideTop',
+                            fontSize: 11,
+                            fill: 'hsl(var(--muted-foreground))',
+                          }}
                         />
                       )}
-                      <RechartsTooltip
-                        contentStyle={{
-                          background: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: 8,
+                      <ReferenceLine
+                        y={PRX_THRESHOLD}
+                        stroke="hsl(var(--destructive))"
+                        strokeDasharray="5 4"
+                        label={{
+                          value: `Seuil ${PRX_THRESHOLD.toFixed(1)}`,
+                          position: 'right',
+                          fontSize: 10,
+                          fill: 'hsl(var(--destructive))',
                         }}
-                        labelFormatter={(l) => `${labels.pressure} : ${l} mmHg`}
+                      />
+                      {result.lowerLimit !== null && (
+                        <ReferenceLine x={result.lowerLimit} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3"
+                          label={{ value: 'LLA', position: 'insideBottomLeft', fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      )}
+                      {result.upperLimit !== null && (
+                        <ReferenceLine x={result.upperLimit} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3"
+                          label={{ value: 'ULA', position: 'insideBottomRight', fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      )}
+                      <RechartsTooltip
+                        cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeDasharray: '3 3' }}
+                        content={<CurveTooltip labels={labels} />}
                       />
                       <Line
-                        type="monotone"
+                        type="monotone" isAnimationActive={false}
                         dataKey="prx"
                         stroke="hsl(var(--primary))"
                         strokeWidth={2}
-                        dot={{ r: 4 }}
+                        dot={<CurveDot />}
+                        activeDot={{ r: 6 }}
                         name={`${labels.index} moyen`}
                       />
                       {result.optimalPPC !== null && result.minPrx !== null && (
@@ -726,11 +977,14 @@ const AutoregStudy = () => {
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
+                <ChartLegend labels={labels} result={result} />
               </CardContent>
             </Card>
+              </TabsContent>
 
             {rollingChartData.length > 0 && (
-              <Card className="mb-6" id="pdf-chart-rolling" data-pdf-title={`${labels.optimal} et limites dans le temps`}>
+              <TabsContent value="rolling" className="mt-4">
+              <Card id="pdf-chart-rolling" data-pdf-title={`${labels.optimal} et limites dans le temps`}>
                 <CardHeader>
                   <CardTitle>{labels.optimal} et limites dans le temps</CardTitle>
                   <CardDescription>
@@ -763,19 +1017,21 @@ const AutoregStudy = () => {
                           }}
                         />
                         <Legend />
-                        <Line type="monotone" dataKey="ppc" stroke="hsl(var(--muted-foreground))" dot={false} name={`${labels.pressure} mesurée`} />
-                        <Line type="monotone" dataKey="optimalPPC" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name={labels.optimal} />
-                        <Line type="monotone" dataKey="lla" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="LLA" />
-                        <Line type="monotone" dataKey="ula" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="ULA" />
+                        <Line type="monotone" isAnimationActive={false} dataKey="ppc" stroke="hsl(var(--muted-foreground))" dot={false} name={`${labels.pressure} mesurée`} />
+                        <Line type="monotone" isAnimationActive={false} dataKey="optimalPPC" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name={labels.optimal} />
+                        <Line type="monotone" isAnimationActive={false} dataKey="lla" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="LLA" />
+                        <Line type="monotone" isAnimationActive={false} dataKey="ula" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="ULA" />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
+              </TabsContent>
             )}
 
             {timeSeriesChartData.length > 0 && (
-            <Card className="mb-6" id="pdf-chart-timeseries" data-pdf-title={result.mode === 'cox' ? 'Séries temporelles rSO₂ / PAM' : 'Séries temporelles PIC / PAM / PPC'}>
+            <TabsContent value="signals" className="mt-4">
+            <Card id="pdf-chart-timeseries" data-pdf-title={result.mode === 'cox' ? 'Séries temporelles rSO₂ / PAM' : 'Séries temporelles PIC / PAM / PPC'}>
               <CardHeader>
                 <CardTitle>{result.mode === 'cox' ? 'Séries temporelles rSO₂ / PAM' : 'Séries temporelles PIC / PAM / PPC'}</CardTitle>
                 <CardDescription>Données brutes après import.</CardDescription>
@@ -803,27 +1059,30 @@ const AutoregStudy = () => {
                       />
                       <Legend />
                       {result.mode === 'cox' ? (
-                        <Line type="monotone" dataKey="nirs" stroke="hsl(var(--destructive))" dot={false} name="rSO₂" />
+                        <Line type="monotone" isAnimationActive={false} dataKey="nirs" stroke="hsl(var(--destructive))" dot={false} name="rSO₂" />
                       ) : (
                         <>
-                          <Line type="monotone" dataKey="pic" stroke="hsl(var(--destructive))" dot={false} name="PIC" />
-                          <Line type="monotone" dataKey="ppc" stroke="hsl(142 71% 45%)" dot={false} name="PPC" />
+                          <Line type="monotone" isAnimationActive={false} dataKey="pic" stroke="hsl(var(--destructive))" dot={false} name="PIC" />
+                          <Line type="monotone" isAnimationActive={false} dataKey="ppc" stroke="hsl(142 71% 45%)" dot={false} name="PPC" />
                         </>
                       )}
-                      <Line type="monotone" dataKey="pam" stroke="hsl(var(--primary))" dot={false} name="PAM" />
+                      <Line type="monotone" isAnimationActive={false} dataKey="pam" stroke="hsl(var(--primary))" dot={false} name="PAM" />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
+            </TabsContent>
             )}
 
-
-            <Card className="mb-6">
+            <TabsContent value="table" className="mt-4">
+            <Card>
               <CardHeader>
                 <CardTitle>Tableau des résultats</CardTitle>
                 <CardDescription>
-                  {labels.index} moyen par bin de {labels.pressure} (5 mmHg). Bins avec au moins 3 échantillons.
+                  {labels.index} moyen par bin de {labels.pressure} (5 mmHg). Les bins grisés reposent sur
+                  trop peu de données (&lt; 2 % de l'enregistrement) : ils sont affichés mais exclus du calcul
+                  de la {labels.optimal.toLowerCase()} et des limites.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -834,21 +1093,56 @@ const AutoregStudy = () => {
                         <TableHead>{labels.pressure} (mmHg)</TableHead>
                         <TableHead>{labels.index} moyen</TableHead>
                         <TableHead>N échantillons</TableHead>
+                        <TableHead>Fiabilité</TableHead>
                         <TableHead>Autorégulation</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {result.curve.map((p) => {
-                        const good = p.prx < 0.3;
+                        const good = p.prx < PRX_THRESHOLD;
+                        const isOptimal = p.robust && p.ppc === result.optimalPPC;
                         return (
-                          <TableRow key={p.ppc}>
-                            <TableCell className="font-medium">{p.ppc}</TableCell>
+                          <TableRow
+                            key={p.ppc}
+                            className={
+                              isOptimal
+                                ? 'bg-primary/5'
+                                : p.robust
+                                  ? undefined
+                                  : 'opacity-55 text-muted-foreground'
+                            }
+                          >
+                            <TableCell className="font-medium">
+                              <span className="flex items-center gap-2">
+                                {p.ppc}
+                                {isOptimal && (
+                                  <Badge variant="outline" className="border-primary/40 text-primary text-[10px] px-1.5 py-0">
+                                    {labels.pressure}opt
+                                  </Badge>
+                                )}
+                              </span>
+                            </TableCell>
                             <TableCell>{p.prx.toFixed(2)}</TableCell>
                             <TableCell>{p.count}</TableCell>
                             <TableCell>
-                              <Badge variant={good ? 'default' : 'destructive'}>
-                                {good ? 'Préservée' : 'Altérée'}
-                              </Badge>
+                              <span className="text-xs">
+                                {p.robust ? (
+                                  'Fiable'
+                                ) : (
+                                  <span className="text-muted-foreground">Peu de données</span>
+                                )}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {p.robust ? (
+                                <Badge variant={good ? 'default' : 'destructive'}>
+                                  {good ? 'Préservée' : 'Altérée'}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  Non retenu
+                                </Badge>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -858,6 +1152,8 @@ const AutoregStudy = () => {
                 </div>
               </CardContent>
             </Card>
+            </TabsContent>
+            </Tabs>
           </>
         )}
 
@@ -925,6 +1221,7 @@ const SummaryStat = ({
   digits = 0,
   highlight = false,
   muted = false,
+  hint,
 }: {
   label: string;
   value: number | null;
@@ -932,15 +1229,331 @@ const SummaryStat = ({
   digits?: number;
   highlight?: boolean;
   muted?: boolean;
+  hint?: string;
 }) => (
   <div className={`rounded-lg border p-4 ${highlight ? 'bg-primary/5 border-primary/30' : muted ? 'bg-muted/40 border-dashed opacity-70' : 'bg-card'}`}>
-    <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+    <div className="flex items-start justify-between gap-1">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+      {hint && <HintButton text={hint} />}
+    </div>
     <div className="mt-1 flex items-baseline gap-1">
       <span className={`text-2xl font-bold ${highlight ? 'text-primary' : muted ? 'text-muted-foreground' : 'text-foreground'}`}>
         {value !== null ? value.toFixed(digits) : '—'}
       </span>
       {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
     </div>
+  </div>
+);
+
+// Focusable trigger so the explanation is also reachable by tap on mobile.
+const HintButton = ({ text }: { text: string }) => (
+  <TooltipProvider delayDuration={100}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Aide : ${text}`}
+          className="shrink-0 text-muted-foreground/60 hover:text-foreground transition-colors"
+        >
+          <HelpCircle className="h-3.5 w-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[15rem] text-xs leading-relaxed">
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
+
+type ModeLabelSet = ReturnType<typeof modeLabels>;
+
+// Plain-language verdict: what the clinician should retain before reading any chart.
+const InterpretationBanner = ({
+  result,
+  labels,
+}: {
+  result: AutoregResult;
+  labels: ModeLabelSet;
+}) => {
+  const hasRange = result.lowerLimit !== null && result.upperLimit !== null;
+  const ok = result.plateauValid;
+  const min = result.minPrx?.toFixed(2) ?? '—';
+
+  const headline = !ok
+    ? "Aucun plateau d'autorégulation fiable"
+    : hasRange
+      ? `Cible ${labels.pressure} : ${result.lowerLimit}–${result.upperLimit} mmHg`
+      : `${labels.optimal} estimée : ${result.optimalPPC ?? '—'} mmHg`;
+
+  const detail = !ok ? (
+    <>
+      {labels.index} reste au-dessus du seuil de {PRX_THRESHOLD.toFixed(1)} sur toute la plage
+      (minimum {min}) : l'autorégulation semble <strong>globalement altérée</strong>. La{' '}
+      {labels.optimal.toLowerCase()} affichée ci-dessous correspond seulement au bin le moins altéré
+      et n'est <strong>pas cliniquement interprétable</strong>.
+    </>
+  ) : hasRange ? (
+    <>
+      Autorégulation préservée ({labels.index} &lt; {PRX_THRESHOLD.toFixed(1)}) entre{' '}
+      {result.lowerLimit} et {result.upperLimit} mmHg, optimum à{' '}
+      <strong>{result.optimalPPC} mmHg</strong> ({labels.index} = {min}). Maintenir la{' '}
+      {labels.pressure} dans cette plage.
+    </>
+  ) : (
+    <>
+      Autorégulation préservée autour de <strong>{result.optimalPPC} mmHg</strong> ({labels.index} ={' '}
+      {min}), mais les limites LLA/ULA ne sont pas identifiables : la plage de {labels.pressure}{' '}
+      enregistrée ne franchit pas le seuil de part et d'autre de l'optimum.
+    </>
+  );
+
+  return (
+    <div
+      className={`rounded-xl border p-4 sm:p-5 ${
+        ok ? 'border-primary/30 bg-primary/5' : 'border-destructive/40 bg-destructive/5'
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        {ok ? (
+          <Target className="h-5 w-5 shrink-0 text-primary mt-0.5" />
+        ) : (
+          <AlertCircle className="h-5 w-5 shrink-0 text-destructive mt-0.5" />
+        )}
+        <div className="min-w-0 flex-1">
+          <p
+            className={`text-lg sm:text-xl font-bold leading-tight ${
+              ok ? 'text-primary' : 'text-destructive'
+            }`}
+          >
+            {headline}
+          </p>
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">{detail}</p>
+        </div>
+      </div>
+      {ok && hasRange && <TargetRangeBar result={result} labels={labels} />}
+    </div>
+  );
+};
+
+// Positions LLA / optimum / ULA on the pressure range actually recorded, so the
+// target window can be read at a glance instead of from three separate numbers.
+const TargetRangeBar = ({
+  result,
+  labels,
+}: {
+  result: AutoregResult;
+  labels: ModeLabelSet;
+}) => {
+  const min = result.curve[0]?.ppc;
+  const max = result.curve[result.curve.length - 1]?.ppc;
+  if (min === undefined || max === undefined || max <= min) return null;
+  const pct = (v: number) => Math.min(100, Math.max(0, ((v - min) / (max - min)) * 100));
+  const left = pct(result.lowerLimit as number);
+  const right = pct(result.upperLimit as number);
+
+  return (
+    <div className="mt-4 pt-4 border-t border-primary/20">
+      <div className="relative h-3 rounded-full bg-muted">
+        <div
+          className="absolute inset-y-0 rounded-full bg-success/30 border border-success/60"
+          style={{ left: `${left}%`, width: `${Math.max(right - left, 1)}%` }}
+        />
+        {result.optimalPPC !== null && (
+          <div
+            className="absolute -top-1.5 h-6 w-[3px] rounded-full bg-primary"
+            style={{ left: `${pct(result.optimalPPC)}%` }}
+            aria-hidden
+          />
+        )}
+      </div>
+      <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+        <span>{min} mmHg</span>
+        <span className="text-center">
+          <span className="font-medium text-primary">{labels.pressure}opt {result.optimalPPC}</span>
+          {' · '}plage {result.lowerLimit}–{result.upperLimit} mmHg
+        </span>
+        <span>{max} mmHg</span>
+      </div>
+    </div>
+  );
+};
+
+// Signal-quality diagnostics: tells the reader how much to trust the numbers above.
+const QualityPanel = ({ result, labels }: { result: AutoregResult; labels: ModeLabelSet }) => {
+  if (result.usableSamples <= 0) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Analyse restaurée depuis la base : les indicateurs de qualité du signal ne sont disponibles
+        qu'après un nouvel import du fichier brut.
+      </p>
+    );
+  }
+
+  const tone = (v: number, good: number, warn: number, invert = false) => {
+    const ok = invert ? v <= good : v >= good;
+    const mid = invert ? v <= warn : v >= warn;
+    return ok ? 'good' : mid ? 'warn' : 'bad';
+  };
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3 sm:p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <TrendingDown className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Qualité du signal et interprétation
+        </span>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <QualityStat
+          label="Données exploitables"
+          value={`${result.pctUsable} %`}
+          sub={`${result.usableSamples} échantillons`}
+          tone={tone(result.pctUsable, 90, 70)}
+          hint={`Part des paires ${labels.index}/${labels.pressure} comprises dans la fenêtre physiologique 20–150 mmHg. Le reste est écarté comme artefact (rinçage, débranchement).`}
+        />
+        <QualityStat
+          label={`${labels.index} moyen`}
+          value={result.meanIndex?.toFixed(2) ?? '—'}
+          sub={`seuil ${PRX_THRESHOLD.toFixed(1)}`}
+          tone={result.meanIndex === null ? 'neutral' : tone(result.meanIndex, 0.3, 0.5, true)}
+          hint={`Moyenne de ${labels.index} sur toute la période exploitable, toutes pressions confondues.`}
+        />
+        <QualityStat
+          label="Temps altéré"
+          value={`${result.pctImpaired} %`}
+          sub={`${labels.index} > ${PRX_THRESHOLD.toFixed(1)}`}
+          tone={tone(result.pctImpaired, 20, 50, true)}
+          hint={`Proportion du temps exploitable passée au-dessus du seuil d'altération. Un pourcentage élevé indique une autorégulation défaillante sur une grande partie de l'enregistrement.`}
+        />
+        <QualityStat
+          label="Bins fiables"
+          value={String(result.robustBins)}
+          sub={`sur ${result.curve.length} bins`}
+          tone={tone(result.robustBins, 5, 3)}
+          hint="Nombre de paliers de pression contenant au moins 2 % des données. Seuls ces paliers servent au calcul de l'optimum et des limites."
+        />
+      </div>
+    </div>
+  );
+};
+
+const QualityStat = ({
+  label,
+  value,
+  sub,
+  tone,
+  hint,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  tone: 'good' | 'warn' | 'bad' | 'neutral';
+  hint: string;
+}) => {
+  const toneClass =
+    tone === 'good'
+      ? 'text-success'
+      : tone === 'warn'
+        ? 'text-warning'
+        : tone === 'bad'
+          ? 'text-destructive'
+          : 'text-foreground';
+  return (
+    <div>
+      <div className="flex items-start justify-between gap-1">
+        <span className="text-[11px] text-muted-foreground leading-tight">{label}</span>
+        <HintButton text={hint} />
+      </div>
+      <div className={`text-lg font-bold leading-tight ${toneClass}`}>{value}</div>
+      <div className="text-[10px] text-muted-foreground">{sub}</div>
+    </div>
+  );
+};
+
+// Filled dot = bin retained for the fit; hollow grey dot = too few samples.
+const CurveDot = (props: { cx?: number; cy?: number; payload?: CurvePoint }) => {
+  const { cx, cy, payload } = props;
+  if (typeof cx !== 'number' || typeof cy !== 'number') return <g />;
+  return payload?.robust === false ? (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={3.5}
+      fill="hsl(var(--background))"
+      stroke="hsl(var(--muted-foreground))"
+      strokeWidth={1.5}
+      strokeOpacity={0.6}
+    />
+  ) : (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={4}
+      fill="hsl(var(--primary))"
+      stroke="hsl(var(--background))"
+      strokeWidth={1}
+    />
+  );
+};
+
+const CurveTooltip = ({
+  active,
+  payload,
+  labels,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: CurvePoint }>;
+  labels: ModeLabelSet;
+}) => {
+  if (!active || !payload?.length) return null;
+  const p = payload[0].payload;
+  const good = p.prx < PRX_THRESHOLD;
+  return (
+    <div className="rounded-lg border bg-card px-3 py-2 shadow-md text-xs space-y-0.5">
+      <p className="font-semibold text-foreground">
+        {labels.pressure} {p.ppc} mmHg
+      </p>
+      <p className="text-muted-foreground">
+        {labels.index} moyen : <span className="font-medium text-foreground">{p.prx.toFixed(2)}</span>
+      </p>
+      <p className="text-muted-foreground">{p.count} échantillons</p>
+      {p.robust === false ? (
+        <p className="text-muted-foreground italic">Peu de données — exclu du calcul</p>
+      ) : (
+        <p className={good ? 'text-success' : 'text-destructive'}>
+          {good ? 'Autorégulation préservée' : 'Autorégulation altérée'}
+        </p>
+      )}
+    </div>
+  );
+};
+
+const ChartLegend = ({ labels, result }: { labels: ModeLabelSet; result: AutoregResult }) => (
+  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground">
+    <span className="flex items-center gap-1.5">
+      <svg width="12" height="12" aria-hidden>
+        <circle cx="6" cy="6" r="4" fill="hsl(var(--primary))" />
+      </svg>
+      Bin fiable (retenu pour le calcul)
+    </span>
+    <span className="flex items-center gap-1.5">
+      <svg width="12" height="12" aria-hidden>
+        <circle cx="6" cy="6" r="3.5" fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth="1.5" />
+      </svg>
+      Peu de données (&lt; 2 %) — exclu
+    </span>
+    <span className="flex items-center gap-1.5">
+      <svg width="16" height="12" aria-hidden>
+        <line x1="0" y1="6" x2="16" y2="6" stroke="hsl(var(--destructive))" strokeWidth="1.5" strokeDasharray="4 3" />
+      </svg>
+      Seuil {labels.index} = {PRX_THRESHOLD.toFixed(1)}
+    </span>
+    {result.lowerLimit !== null && result.upperLimit !== null && (
+      <span className="flex items-center gap-1.5">
+        <span className="inline-block h-3 w-4 rounded-sm bg-success/25 border border-success/50" aria-hidden />
+        Plage autorégulée (LLA–ULA)
+      </span>
+    )}
   </div>
 );
 
