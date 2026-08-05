@@ -822,9 +822,24 @@ const Optibrain = () => {
       })(),
       hasDetails: true,
       dialogKey: "autoregulation",
-      description: optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-        ? `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
-        : isNirsBased ? "PAM optimale individuelle" : "PPC optimale individuelle",
+      description: (() => {
+        if (!optimalPPCResult.hasData) {
+          return isNirsBased ? "PAM optimale individuelle" : "PPC optimale individuelle";
+        }
+        if (optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null) {
+          return `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`;
+        }
+        // No limit identifiable over the whole recording: fall back to the last
+        // rolling estimate, labelled, rather than showing nothing or inventing one.
+        const lo = optimalPPCResult.lowerLimitLastWindow;
+        const hi = optimalPPCResult.upperLimitLastWindow;
+        if (lo != null && hi != null) {
+          return `Zone ${Math.round(lo)}-${Math.round(hi)} mmHg (dernière fenêtre)`;
+        }
+        if (lo != null) return `LLA ${Math.round(lo)} mmHg (dernière fenêtre)`;
+        if (hi != null) return `ULA ${Math.round(hi)} mmHg (dernière fenêtre)`;
+        return isNirsBased ? "PAM optimale individuelle" : "PPC optimale individuelle";
+      })(),
       criticalLabel: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
         ? optimalPPCResult.prxScore < 0.3 
           ? "Autorégulation intacte" 

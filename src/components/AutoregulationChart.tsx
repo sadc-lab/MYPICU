@@ -18,11 +18,10 @@ import {
   isNirsBasedPatient,
 } from "@/services/autoregulation.service";
 import {
-  loadNirsData,
+  loadNirsSamples,
   buildNirsAutoregulationCurve,
   getCurrentNirsValues,
   getNirsTimeSeriesWithDynamicLimits,
-  NirsDataPoint,
 } from "@/services/nirsAutoregulation.service";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
@@ -125,27 +124,34 @@ export function AutoregulationChart({
     setLoading(true);
 
     if (isNirs) {
-      // Load NIRS-based autoregulation data with dynamic limits
-      loadNirsData(patientId)
-        .then((data) => {
-          if (data && data.length > 0) {
+      // Load NIRS-based autoregulation data with dynamic limits.
+      // `windowMinutes` is not passed on: the COx window is expressed in samples
+      // and fixed to the study page's value, so both screens agree. That prop
+      // still selects the PRx column width on the invasive path below.
+      loadNirsSamples(patientId)
+        .then((samples) => {
+          if (samples && samples.length > 0) {
             // Get autoregulation curve for overall values
-            const curveResult = buildNirsAutoregulationCurve(data, windowMinutes, 5);
+            const curveResult = buildNirsAutoregulationCurve(samples);
             setOptimalValue(curveResult.optimalPAM);
             setLowerLimit(curveResult.lowerLimit);
             setUpperLimit(curveResult.upperLimit);
-            
-            // Get current values
-            const currentValues = getCurrentNirsValues(data);
+
+            // Get current values from the measured rSO₂/PAM pairs
+            const currentValues = getCurrentNirsValues(
+              samples
+                .filter((s) => s.nirs !== null && s.pam !== null)
+                .map((s) => ({ timestamp: s.time.toISOString(), nirs: s.nirs, pam: s.pam })),
+            );
             setNirsCurrentPAM(currentValues.currentPAM);
             setNirsPamMin(currentValues.pamMin);
             setNirsPamMax(currentValues.pamMax);
-            
+
             // Get time series with DYNAMIC LLA/ULA limits
             const hours = timeWindowToHours(selectedWindow) || 6;
             const dynamicTimeSeries = getNirsTimeSeriesWithDynamicLimits(
-              data,
-              windowMinutes,
+              samples,
+              undefined,
               4, // lookback hours for limit calculation
               hours // output hours
             );
