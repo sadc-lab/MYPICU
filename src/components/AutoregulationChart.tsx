@@ -23,6 +23,18 @@ import {
   getCurrentNirsValues,
   getNirsTimeSeriesWithDynamicLimits,
 } from "@/services/nirsAutoregulation.service";
+import {
+  runAnalysis,
+  rollingOptimal,
+  type AutoregResult,
+  type OptimalTimePoint,
+} from "@/services/autoregComputation.service";
+import {
+  AutoregCurveCard,
+  AutoregKpiRow,
+  InterpretationBanner,
+  QualityPanel,
+} from "@/components/autoreg/AutoregResultViews";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -100,6 +112,12 @@ export function AutoregulationChart({
   const [nirsPamMin, setNirsPamMin] = useState<number | null>(null);
   const [nirsPamMax, setNirsPamMax] = useState<number | null>(null);
 
+  // Full analysis from the shared engine, so this dashboard view can render the
+  // same interpretation banner, KPI tiles, quality panel and U-curve as the study
+  // page instead of a second, differently-worded presentation of the same data.
+  const [analysis, setAnalysis] = useState<AutoregResult | null>(null);
+  const [rolling, setRolling] = useState<OptimalTimePoint[]>([]);
+
   const hasAutoData = hasAutoregulationData(patientId);
   
   // Use NIRS values if available, otherwise use props
@@ -116,12 +134,18 @@ export function AutoregulationChart({
   useEffect(() => {
     if (!hasAutoData) {
       setTimeSeriesData([]);
+      setAnalysis(null);
+      setRolling([]);
       return;
     }
 
     const isNirs = isNirsBasedPatient(patientId);
     setIsNirsBased(isNirs);
     setLoading(true);
+    // Cleared up front: a stale analysis from the previous patient must never
+    // remain on screen while the new one loads.
+    setAnalysis(null);
+    setRolling([]);
 
     if (isNirs) {
       // Load NIRS-based autoregulation data with dynamic limits.
@@ -136,6 +160,19 @@ export function AutoregulationChart({
             setOptimalValue(curveResult.optimalPAM);
             setLowerLimit(curveResult.lowerLimit);
             setUpperLimit(curveResult.upperLimit);
+
+            // Same call the study page makes, for the shared result views.
+            const fullAnalysis = runAnalysis(samples, 30, 5);
+            setAnalysis(fullAnalysis);
+            setRolling(
+              rollingOptimal(
+                fullAnalysis.samples,
+                Math.min(240, Math.floor(fullAnalysis.samples.length / 3)),
+                30,
+                5,
+                fullAnalysis.mode,
+              ),
+            );
 
             // Get current values from the measured rSO₂/PAM pairs
             const currentValues = getCurrentNirsValues(
@@ -300,6 +337,18 @@ export function AutoregulationChart({
 
   return (
     <div className="space-y-4">
+
+      {/* Shared with the study page: same verdict, same KPI tiles, same quality
+          readout, same U-curve. Only available when a full analysis could be
+          computed from the raw signal (COx path). */}
+      {analysis && (
+        <div className="space-y-4">
+          <InterpretationBanner result={analysis} rolling={rolling} />
+          <AutoregKpiRow result={analysis} rolling={rolling} />
+          <QualityPanel result={analysis} />
+          <AutoregCurveCard result={analysis} height={260} />
+        </div>
+      )}
 
       {/* Main Time Series Chart */}
       <div className="h-56 w-full">
