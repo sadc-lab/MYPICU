@@ -16,6 +16,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Tooltip,
   TooltipContent,
@@ -64,7 +72,8 @@ import {
   type OptimalTimePoint,
   type ReadinessError,
 } from '@/services/autoregComputation.service';
-import { useStudyPatients } from '@/hooks/useStudyPatients';
+import { useStudyPatients, type StudyPatient } from '@/hooks/useStudyPatients';
+import { usePatients } from '@/hooks/usePatients';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -72,6 +81,27 @@ interface PatientAnalysis {
   result: AutoregResult;
   rolling: OptimalTimePoint[];
   fileName: string;
+}
+
+// Raw recordings shipped with the app follow this naming convention, keyed on the
+// patient id used by the patient list (e.g. "#8749" → autoregulation_raw_8749.csv).
+const recordingUrlFor = (patientId: string) =>
+  `/data/autoregulation_raw_${patientId.replace('#', '')}.csv`;
+
+// Returns the patient's bundled recording, or null when there is none.
+// vercel.json rewrites unknown paths to index.html, so a 200 is not proof the
+// file exists — the body has to be checked as well.
+async function fetchPatientRecording(patientId: string): Promise<File | null> {
+  const url = recordingUrlFor(patientId);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (!text.trim() || text.trimStart().startsWith('<')) return null;
+    return new File([text], url.split('/').pop() as string, { type: 'text/csv' });
+  } catch {
+    return null;
+  }
 }
 
 async function readFileAsText(file: File): Promise<string> {
@@ -94,6 +124,7 @@ const AutoregStudy = () => {
   const [analysisByPatient, setAnalysisByPatient] = useState<Record<string, PatientAnalysis>>({});
   const [error, setError] = useState<string | ReadinessError | null>(null);
   const [parsing, setParsing] = useState(false);
+  const [activeTab, setActiveTab] = useState('curve');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const current = active ? analysisByPatient[active.id] ?? null : null;
@@ -178,28 +209,64 @@ const AutoregStudy = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active?.id]);
 
-  // Add-patient dialog state (label + required file)
+  // Add-patient dialog state (label + file, or a patient picked from the unit list)
   const [addOpen, setAddOpen] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newFile, setNewFile] = useState<File | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
+  const [sourcePatientId, setSourcePatientId] = useState<string>('');
+  const [sourceRecording, setSourceRecording] = useState<File | null>(null);
+  const [probingRecording, setProbingRecording] = useState(false);
+
+  const { data: patientResponse } = usePatients(undefined);
+  const unitPatients = patientResponse?.patients ?? [];
+  const sourcePatient = unitPatients.find((p) => p.id === sourcePatientId) ?? null;
+
+  const resetAddForm = () => {
+    setNewLabel('');
+    setNewFile(null);
+    setSourcePatientId('');
+    setSourceRecording(null);
+    setAddError(null);
+  };
+
+  // Picking a patient prefills the pseudonym and looks for their bundled recording,
+  // so a known subject can be analysed without any manual import.
+  const selectSourcePatient = async (patientId: string) => {
+    setSourcePatientId(patientId);
+    setAddError(null);
+    setSourceRecording(null);
+    const picked = unitPatients.find((p) => p.id === patientId);
+    if (!picked) return;
+    setNewLabel(picked.name);
+    setProbingRecording(true);
+    const recording = await fetchPatientRecording(picked.id);
+    setSourceRecording(recording);
+    setProbingRecording(false);
+  };
 
   const submitNewPatient = async () => {
     setAddError(null);
-    if (!newFile) {
-      setAddError('Veuillez sélectionner un fichier CSV, JSON ou Excel.');
+    const fileToProcess = newFile ?? sourceRecording;
+    if (!fileToProcess) {
+      setAddError(
+        sourcePatient
+          ? "Aucun enregistrement n'est disponible pour ce patient : joignez un fichier CSV, JSON ou Excel."
+          : 'Veuillez sélectionner un fichier CSV, JSON ou Excel.',
+      );
       return;
     }
     const created = addPatient(newLabel);
     const finalLabel = newLabel.trim();
-    if (finalLabel) {
-      updatePatient(created.id, { label: finalLabel });
+    const patch: Partial<StudyPatient> = {};
+    if (finalLabel) patch.label = finalLabel;
+    if (sourcePatient) patch.sourcePatientId = sourcePatient.id;
+    if (Object.keys(patch).length > 0) {
+      updatePatient(created.id, patch);
     }
     const target = { id: created.id, code: created.code, label: finalLabel || created.label };
-    const fileToProcess = newFile;
     setAddOpen(false);
-    setNewLabel('');
-    setNewFile(null);
+    resetAddForm();
     const ok = await handleFile(fileToProcess, target);
     if (!ok) {
       removePatient(created.id);
@@ -325,6 +392,7 @@ const AutoregStudy = () => {
 
   const downloadPDF = async () => {
     if (!result) return;
+    const restoreTab = activeTab;
     try {
       const [{ jsPDF }, autoTable, { toPng }] = await Promise.all([
         import('jspdf'),
@@ -381,9 +449,17 @@ const AutoregStudy = () => {
         });
       }
 
-      // Capture each chart card as PNG and add to the PDF
-      const chartIds = ['pdf-chart-curve', 'pdf-chart-rolling', 'pdf-chart-timeseries'];
-      for (const id of chartIds) {
+      // Charts live in tabs and inactive tabs are unmounted, so each one is
+      // brought on screen just long enough to be captured.
+      const chartTabs = [
+        { tab: 'curve', id: 'pdf-chart-curve' },
+        { tab: 'rolling', id: 'pdf-chart-rolling' },
+        { tab: 'signals', id: 'pdf-chart-timeseries' },
+      ];
+      for (const { tab, id } of chartTabs) {
+        setActiveTab(tab);
+        // Let React commit the tab switch and Recharts lay the chart out.
+        await new Promise((resolve) => setTimeout(resolve, 450));
         const node = document.getElementById(id);
         if (!node) continue;
         const png = await toPng(node, { backgroundColor: '#ffffff', pixelRatio: 2 });
@@ -395,6 +471,7 @@ const AutoregStudy = () => {
         doc.text(node.dataset.pdfTitle || 'Graphique', margin, 40);
         doc.addImage(png, 'PNG', margin, 60, imgWidth, imgHeight);
       }
+      setActiveTab(restoreTab);
 
       // Curve table
       doc.addPage();
@@ -420,12 +497,40 @@ const AutoregStudy = () => {
     } catch (err: any) {
       console.error('PDF export error:', err);
       toast.error("Échec de l'export PDF : " + (err.message || 'erreur inconnue'));
+      setActiveTab(restoreTab);
     }
   };
 
 
   const formatTime = (t: number) =>
     new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+
+  // Shared by the full import panel and its collapsed bar.
+  const errorAlert = error && (
+    <Alert variant="destructive" className="mt-4">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle className="text-sm sm:text-base">Impossible de traiter le fichier</AlertTitle>
+      <AlertDescription>
+        {typeof error === 'string' ? (
+          <p className="text-xs sm:text-sm whitespace-pre-line">{error}</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm sm:text-base font-semibold leading-snug">{error.cause}</p>
+            <div className="space-y-1">
+              <p className="text-[11px] sm:text-xs font-medium text-destructive/90 uppercase tracking-wide">
+                Remédiation
+              </p>
+              <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-destructive/90 leading-relaxed">
+                {error.steps.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        )}
+      </AlertDescription>
+    </Alert>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -445,7 +550,55 @@ const AutoregStudy = () => {
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
 
-        {/* Import panel */}
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".csv,.json,.txt,.xlsx,.xls"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+            e.currentTarget.value = '';
+          }}
+        />
+
+        {/* Import panel — collapses to a single bar once an analysis is on screen,
+            so the results start at the top of the viewport. */}
+        {result ? (
+          <Card className="mb-6">
+            <CardContent className="py-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <Badge variant="secondary" className="shrink-0">
+                  {active?.code} · {active?.label}
+                </Badge>
+                {fileName && (
+                  <span className="text-sm text-muted-foreground truncate min-w-0">{fileName}</span>
+                )}
+                <div className="ml-auto flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => inputRef.current?.click()}
+                    disabled={parsing}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    {parsing ? 'Analyse…' : 'Modifier fichier'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setAddError(null); setAddOpen(true); }}
+                    disabled={parsing}
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Ajouter un patient
+                  </Button>
+                </div>
+              </div>
+              {errorAlert}
+            </CardContent>
+          </Card>
+        ) : (
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-start justify-between gap-3">
@@ -511,23 +664,13 @@ const AutoregStudy = () => {
                 <UserPlus className="h-4 w-4" />
                 <AlertTitle>Aucun sujet</AlertTitle>
                 <AlertDescription>
-                  Cliquez sur <strong>Ajouter un patient</strong> pour créer un sujet et importer
-                  son fichier CSV/JSON en une seule étape.
+                  Cliquez sur <strong>Ajouter un patient</strong> pour choisir un patient de l'unité
+                  — son enregistrement est chargé automatiquement s'il existe — ou pour créer un
+                  sujet à partir de votre propre fichier CSV/JSON.
                 </AlertDescription>
               </Alert>
             )}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <input
-                ref={inputRef}
-                type="file"
-                accept=".csv,.json,.txt,.xlsx,.xls"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleFile(f);
-                  e.currentTarget.value = '';
-                }}
-              />
               <Button onClick={() => { setAddError(null); setAddOpen(true); }} disabled={parsing}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Ajouter un patient
@@ -545,46 +688,58 @@ const AutoregStudy = () => {
               )}
             </div>
 
-            {error && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle className="text-sm sm:text-base">Impossible de traiter le fichier</AlertTitle>
-                <AlertDescription>
-                  {typeof error === 'string' ? (
-                    <p className="text-xs sm:text-sm whitespace-pre-line">{error}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-sm sm:text-base font-semibold leading-snug">{error.cause}</p>
-                      <div className="space-y-1">
-                        <p className="text-[11px] sm:text-xs font-medium text-destructive/90 uppercase tracking-wide">
-                          Remédiation
-                        </p>
-                        <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-destructive/90 leading-relaxed">
-                          {error.steps.map((step, i) => (
-                            <li key={i}>{step}</li>
-                          ))}
-                        </ol>
-                      </div>
-                    </div>
-                  )}
-                </AlertDescription>
-              </Alert>
-            )}
+            {errorAlert}
           </CardContent>
         </Card>
+        )}
 
-        <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { setAddError(null); } }}>
+        <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { resetAddForm(); } }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Ajouter un patient</DialogTitle>
               <DialogDescription>
-                Renseignez un pseudonyme et joignez le fichier CSV ou JSON du sujet. Les deux sont
-                requis pour créer le patient et lancer l'analyse.
+                Choisissez un patient de l'unité — son enregistrement est chargé automatiquement
+                s'il est disponible — ou créez un sujet en joignant vous-même le fichier.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
+              {unitPatients.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="new-patient-source">Patient de l'unité</Label>
+                  <Select value={sourcePatientId} onValueChange={selectSourcePatient}>
+                    <SelectTrigger id="new-patient-source">
+                      <SelectValue placeholder="Sélectionner un patient…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {unitPatients.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} · {p.picuId} ({p.id})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {probingRecording && (
+                    <p className="text-xs text-muted-foreground">
+                      Recherche d'un enregistrement pour ce patient…
+                    </p>
+                  )}
+                  {!probingRecording && sourcePatient && sourceRecording && (
+                    <p className="text-xs text-success flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      Enregistrement trouvé : {sourceRecording.name} — aucun import manuel nécessaire.
+                    </p>
+                  )}
+                  {!probingRecording && sourcePatient && !sourceRecording && (
+                    <p className="text-xs text-muted-foreground">
+                      Aucun enregistrement d'autorégulation n'accompagne ce patient : joignez le
+                      fichier ci-dessous.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label htmlFor="new-patient-label">Pseudonyme (optionnel)</Label>
+                <Label htmlFor="new-patient-label">Pseudonyme</Label>
                 <Input
                   id="new-patient-label"
                   placeholder="ex. Sujet A"
@@ -593,7 +748,9 @@ const AutoregStudy = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-patient-file">Fichier CSV, Excel ou JSON *</Label>
+                <Label htmlFor="new-patient-file">
+                  Fichier CSV, Excel ou JSON {sourceRecording ? '(remplace l’enregistrement du patient)' : '*'}
+                </Label>
                 <Input
                   id="new-patient-file"
                   type="file"
@@ -617,7 +774,10 @@ const AutoregStudy = () => {
               <Button variant="outline" onClick={() => setAddOpen(false)} disabled={parsing}>
                 Annuler
               </Button>
-              <Button onClick={submitNewPatient} disabled={parsing || !newFile}>
+              <Button
+                onClick={submitNewPatient}
+                disabled={parsing || probingRecording || (!newFile && !sourceRecording)}
+              >
                 {parsing ? 'Analyse…' : 'Créer et analyser'}
               </Button>
             </DialogFooter>
@@ -628,7 +788,10 @@ const AutoregStudy = () => {
         {!result && !error && (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
-              <p className="mb-6">Aucune donnée. Importez un fichier pour lancer l'analyse.</p>
+              <p className="mb-6">
+                Aucune donnée. Choisissez un patient de l'unité ou importez un fichier pour lancer
+                l'analyse.
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
                 <FeatureCard
                   icon={<Brain className="h-5 w-5" />}
@@ -715,7 +878,18 @@ const AutoregStudy = () => {
               </CardContent>
             </Card>
 
-            <Card className="mb-6" id="pdf-chart-curve" data-pdf-title={`Courbe d'autorégulation · ${labels.index} vs ${labels.pressure}`}>
+            {/* The curve is the everyday read; the rest is verification material,
+                one click away instead of stacked below it. */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+              <TabsList className="w-full justify-start overflow-x-auto">
+                <TabsTrigger value="curve">Courbe</TabsTrigger>
+                {rollingChartData.length > 0 && <TabsTrigger value="rolling">Évolution</TabsTrigger>}
+                {timeSeriesChartData.length > 0 && <TabsTrigger value="signals">Signaux bruts</TabsTrigger>}
+                <TabsTrigger value="table">Tableau</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="curve" className="mt-4">
+            <Card id="pdf-chart-curve" data-pdf-title={`Courbe d'autorégulation · ${labels.index} vs ${labels.pressure}`}>
               <CardHeader>
                 <CardTitle>Courbe d'autorégulation · {labels.index} vs {labels.pressure}</CardTitle>
                 <CardDescription>
@@ -781,7 +955,7 @@ const AutoregStudy = () => {
                         content={<CurveTooltip labels={labels} />}
                       />
                       <Line
-                        type="monotone"
+                        type="monotone" isAnimationActive={false}
                         dataKey="prx"
                         stroke="hsl(var(--primary))"
                         strokeWidth={2}
@@ -806,9 +980,11 @@ const AutoregStudy = () => {
                 <ChartLegend labels={labels} result={result} />
               </CardContent>
             </Card>
+              </TabsContent>
 
             {rollingChartData.length > 0 && (
-              <Card className="mb-6" id="pdf-chart-rolling" data-pdf-title={`${labels.optimal} et limites dans le temps`}>
+              <TabsContent value="rolling" className="mt-4">
+              <Card id="pdf-chart-rolling" data-pdf-title={`${labels.optimal} et limites dans le temps`}>
                 <CardHeader>
                   <CardTitle>{labels.optimal} et limites dans le temps</CardTitle>
                   <CardDescription>
@@ -841,19 +1017,21 @@ const AutoregStudy = () => {
                           }}
                         />
                         <Legend />
-                        <Line type="monotone" dataKey="ppc" stroke="hsl(var(--muted-foreground))" dot={false} name={`${labels.pressure} mesurée`} />
-                        <Line type="monotone" dataKey="optimalPPC" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name={labels.optimal} />
-                        <Line type="monotone" dataKey="lla" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="LLA" />
-                        <Line type="monotone" dataKey="ula" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="ULA" />
+                        <Line type="monotone" isAnimationActive={false} dataKey="ppc" stroke="hsl(var(--muted-foreground))" dot={false} name={`${labels.pressure} mesurée`} />
+                        <Line type="monotone" isAnimationActive={false} dataKey="optimalPPC" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name={labels.optimal} />
+                        <Line type="monotone" isAnimationActive={false} dataKey="lla" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="LLA" />
+                        <Line type="monotone" isAnimationActive={false} dataKey="ula" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="ULA" />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
+              </TabsContent>
             )}
 
             {timeSeriesChartData.length > 0 && (
-            <Card className="mb-6" id="pdf-chart-timeseries" data-pdf-title={result.mode === 'cox' ? 'Séries temporelles rSO₂ / PAM' : 'Séries temporelles PIC / PAM / PPC'}>
+            <TabsContent value="signals" className="mt-4">
+            <Card id="pdf-chart-timeseries" data-pdf-title={result.mode === 'cox' ? 'Séries temporelles rSO₂ / PAM' : 'Séries temporelles PIC / PAM / PPC'}>
               <CardHeader>
                 <CardTitle>{result.mode === 'cox' ? 'Séries temporelles rSO₂ / PAM' : 'Séries temporelles PIC / PAM / PPC'}</CardTitle>
                 <CardDescription>Données brutes après import.</CardDescription>
@@ -881,23 +1059,24 @@ const AutoregStudy = () => {
                       />
                       <Legend />
                       {result.mode === 'cox' ? (
-                        <Line type="monotone" dataKey="nirs" stroke="hsl(var(--destructive))" dot={false} name="rSO₂" />
+                        <Line type="monotone" isAnimationActive={false} dataKey="nirs" stroke="hsl(var(--destructive))" dot={false} name="rSO₂" />
                       ) : (
                         <>
-                          <Line type="monotone" dataKey="pic" stroke="hsl(var(--destructive))" dot={false} name="PIC" />
-                          <Line type="monotone" dataKey="ppc" stroke="hsl(142 71% 45%)" dot={false} name="PPC" />
+                          <Line type="monotone" isAnimationActive={false} dataKey="pic" stroke="hsl(var(--destructive))" dot={false} name="PIC" />
+                          <Line type="monotone" isAnimationActive={false} dataKey="ppc" stroke="hsl(142 71% 45%)" dot={false} name="PPC" />
                         </>
                       )}
-                      <Line type="monotone" dataKey="pam" stroke="hsl(var(--primary))" dot={false} name="PAM" />
+                      <Line type="monotone" isAnimationActive={false} dataKey="pam" stroke="hsl(var(--primary))" dot={false} name="PAM" />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
+            </TabsContent>
             )}
 
-
-            <Card className="mb-6">
+            <TabsContent value="table" className="mt-4">
+            <Card>
               <CardHeader>
                 <CardTitle>Tableau des résultats</CardTitle>
                 <CardDescription>
@@ -973,6 +1152,8 @@ const AutoregStudy = () => {
                 </div>
               </CardContent>
             </Card>
+            </TabsContent>
+            </Tabs>
           </>
         )}
 

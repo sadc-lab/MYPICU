@@ -7,6 +7,9 @@ export interface StudyPatient {
   createdAt: number;
   fileName?: string;
   notes?: string;
+  // Id of the unit patient this subject was created from, when it was picked
+  // from the patient list rather than created by hand.
+  sourcePatientId?: string;
 }
 
 const STORAGE_KEY = 'autoreg.studyPatients.v1';
