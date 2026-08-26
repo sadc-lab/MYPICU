@@ -41,6 +41,7 @@ import {
   getAllTimeSeriesData,
   isVariableSparse,
   getLatestValue,
+  getVariableKeyFromLabel,
   calculateAverage,
   calculateTimeInRanges,
   getAvailableVariables,
@@ -51,6 +52,7 @@ import {
   PatientFileData,
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
+import { useLastViewed } from "@/hooks/useLastViewed";
 import {
   loadAutoregulationData,
   hasAutoregulationData,
@@ -66,13 +68,27 @@ import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowS
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { VitalSignsPanel } from "@/components/VitalSignsPanel";
+import { VisitComparisonMatrix } from "@/components/VisitComparisonMatrix";
+import { getRelatedNodes, getOntologyNodeByVariableKey } from "@/ontology/queries";
+import { OntologyEdgeKind } from "@/ontology/types";
 
+const EDGE_KIND_LABEL: Record<OntologyEdgeKind, string> = {
+  targets: "traité par",
+  risk_of: "risque induit par",
+  determines: "déterminé par",
+  computed_from: "calculé à partir de",
+  increases: "augmenté par",
+  triggers: "déclenche",
+  combines_to: "se combine en",
+  part_of_chain: "participe au mécanisme",
+};
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
   const metricParam = searchParams.get("metric");
   const { data: patient, isLoading: patientLoading } = usePatient(patientId);
+  const { previousVisitAt } = useLastViewed(patientId);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
@@ -112,26 +128,6 @@ const Optibrain = () => {
   const isNirsBased = isNirsBasedPatient(patientId);
 
   // ===== Fonctions utilitaires pour la synchronisation =====
-
-  // Fonction helper pour obtenir la clé de variable depuis le label
-  const getVariableKeyFromLabel = (label: string): string => {
-    const mapping: Record<string, string> = {
-      FC: "Variable_FC",
-      PIC: "Variable_PIC",
-      PPC: "Variable_PPC",
-      PAM: "Variable_PAM",
-      PVC: "Variable_PVC",
-      Température: "Variable_temperature",
-      ETCO2: "Variable_ETCO2",
-      PaCO2: "Variable_paco2",
-      Tête: "Variable_position_tete",
-      Glycémie: "Variable_glycemie",
-      INR: "Variable_INR",
-      Plaquettes: "Variable_plaquettes",
-      Hémoglobine: "Variable_hemoglobine",
-    };
-    return mapping[label] || "";
-  };
 
   // Fonction pour obtenir les données EXACTEMENT comme elles sont affichées dans le graphique
   // IMPORTANT: les timestamps des JSON sont anciens (données statiques). On normalise donc "comme si c'était aujourd'hui"
@@ -453,6 +449,7 @@ const Optibrain = () => {
     { label: "Plaquettes", target: "> 100 g/L" },
   ];
 
+
   // Clinical indicators avec synchronisation des données visibles
   const clinicalIndicators = useMemo(() => {
     return baseClinicalIndicators.map((base) => {
@@ -493,6 +490,39 @@ const Optibrain = () => {
       };
     });
   }, [clinicalIndicatorsData, patientFileData, hoursForAdherence]);
+
+  // Comparaison avec la dernière visite de ce clinicien sur ce patient :
+  // valeur à ce moment-là vs valeur actuelle, pour chaque indicateur réel.
+  // Rien lors d'une toute première visite (previousVisitAt encore null).
+  const visitComparisonRows = useMemo(() => {
+    if (!patientFileData || !previousVisitAt) return [];
+    const cutoff = previousVisitAt.getTime();
+
+    return clinicalIndicators
+      .map((indicator) => {
+        const variableKey = getVariableKeyFromLabel(indicator.label);
+        if (!variableKey || !patientFileData[variableKey]) return null;
+
+        const series = getAllTimeSeriesData(patientFileData, variableKey, 24 * 30, true)
+          .slice()
+          .sort((a, b) => new Date(a.charttime).getTime() - new Date(b.charttime).getTime());
+        if (series.length === 0) return null;
+
+        const before = [...series].reverse().find((p) => new Date(p.charttime).getTime() <= cutoff);
+        const current = series[series.length - 1];
+        const hasNewPoint = new Date(current.charttime).getTime() > cutoff;
+
+        return {
+          label: indicator.label,
+          target: indicator.target,
+          status: indicator.status,
+          previousValue: before ? before.valeur : null,
+          currentValue: current.valeur,
+          changed: hasNewPoint && (before ? before.valeur !== current.valeur : true),
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null);
+  }, [clinicalIndicators, patientFileData, previousVisitAt]);
 
   // Calculate overall monitoring adherence (average of targets with real data only)
   const monitoringAdherence = useMemo(() => {
@@ -1052,6 +1082,8 @@ const Optibrain = () => {
           <VitalSignsPanel />
         </div>
 
+        <VisitComparisonMatrix rows={visitComparisonRows} previousVisitAt={previousVisitAt} />
+
         {(() => {
           const brainProblemCount = brainOptimisationMetrics.filter(
             (m) => m.status === "critical" || m.status === "warning"
@@ -1520,6 +1552,55 @@ const Optibrain = () => {
                 </CardContent>
               )}
             </Card>
+
+            {selectedIndicators.length > 0 && (() => {
+              const relPanels = selectedIndicators
+                .map((label) => {
+                  const variableKey = getVariableKeyFromLabel(label);
+                  const node = variableKey ? getOntologyNodeByVariableKey(variableKey) : undefined;
+                  if (!node) return null;
+                  const relations = getRelatedNodes(node.id);
+                  if (relations.length === 0) return null;
+                  return { label, relations };
+                })
+                .filter((p): p is { label: string; relations: ReturnType<typeof getRelatedNodes> } => p !== null);
+
+              if (relPanels.length === 0) return null;
+
+              return (
+                <Card className="bg-card shadow-sm mb-6">
+                  <CardHeader className="py-3 px-4 sm:px-6">
+                    <CardTitle className="text-sm font-semibold">Relations cliniques</CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                      Relations connues entre les indicateurs sélectionnés et le reste du module cérébral.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="pt-0 space-y-3">
+                    {relPanels.map(({ label, relations }) => (
+                      <div key={label} className="space-y-1">
+                        <span className="text-xs font-semibold text-foreground">{label}</span>
+                        <ul className="space-y-0.5">
+                          {relations.map(({ node, edge, direction }) => (
+                            <li key={edge.id} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                              <span className="text-foreground/40 shrink-0">{direction === "out" ? "→" : "←"}</span>
+                              <span>
+                                {EDGE_KIND_LABEL[edge.kind]}{" "}
+                                <span className="text-foreground font-medium">{node.label}</span>
+                                {edge.condition ? (
+                                  <span className="italic"> ({edge.condition})</span>
+                                ) : edge.label ? (
+                                  <span> — {edge.label}</span>
+                                ) : null}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             {/* Monitoring Chart */}
             <Card ref={chartRef} className="border-2 border-border">

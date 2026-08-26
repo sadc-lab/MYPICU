@@ -5,6 +5,7 @@ import {
   getLatestValue,
   PatientFileData,
 } from "@/services/patientFileData.service";
+import { getOntologyNodeByVariableKey, formatThresholds } from "@/ontology/queries";
 
 export type PromptCategory =
   | "differential"
@@ -129,7 +130,10 @@ function formatVitals(vitals: Record<string, number | null>): string {
   const lines: string[] = [];
   for (const [key, label] of Object.entries(VITAL_LABELS)) {
     const v = vitals[key];
-    if (v != null && !isNaN(v)) lines.push(`- ${label}: ${v}`);
+    if (v == null || isNaN(v)) continue;
+    const ontologyNode = getOntologyNodeByVariableKey(key);
+    const thresholds = ontologyNode ? formatThresholds(ontologyNode.thresholds) : null;
+    lines.push(thresholds ? `- ${label}: ${v} (${thresholds})` : `- ${label}: ${v}`);
   }
   return lines.length ? lines.join("\n") : "(aucune donnée vitale récente)";
 }

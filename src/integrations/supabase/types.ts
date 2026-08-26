@@ -81,6 +81,72 @@ export type Database = {
           },
         ]
       }
+      // Ajouté à la main pour typer usePatientCustomView.ts en attendant la
+      // vraie régénération (`supabase gen types typescript`) une fois la
+      // migration 20260826160000_patient_custom_view.sql appliquée en base.
+      patient_custom_view: {
+        Row: {
+          action: string
+          created_at: string
+          id: number
+          indicator_label: string
+          module: string
+          patient_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: never
+          indicator_label: string
+          module: string
+          patient_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: never
+          indicator_label?: string
+          module?: string
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_custom_view_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      // Ajouté à la main pour typer useLastViewed.ts en attendant la vraie
+      // régénération une fois 20260826170000_patient_view_log.sql appliquée.
+      patient_view_log: {
+        Row: {
+          user_id: string
+          patient_id: string
+          last_viewed_at: string
+        }
+        Insert: {
+          user_id: string
+          patient_id: string
+          last_viewed_at?: string
+        }
+        Update: {
+          user_id?: string
+          patient_id?: string
+          last_viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_view_log_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_objectives: {
         Row: {
           content: string
