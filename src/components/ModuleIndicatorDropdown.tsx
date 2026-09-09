@@ -1,6 +1,4 @@
-import { ReactNode } from "react";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +10,6 @@ import {
 
 interface ModuleIndicatorDropdownProps {
   moduleLabel: string;
-  icon: ReactNode;
   /** Tous les indicateurs connus pour ce module (peut être vide). */
   indicators: { label: string; unit?: string; target?: string }[];
   /** Labels déjà affichés pour ce module, exclus de la liste. */
@@ -21,13 +18,12 @@ interface ModuleIndicatorDropdownProps {
 }
 
 /**
- * Dropdown d'ajout d'indicateur scopé à un seul module — une instance par
- * organe dans "Systèmes en alerte", au lieu d'un unique sélecteur global
- * qui mélangeait tous les modules.
+ * Dropdown d'ajout d'indicateur scopé à un seul module — pensé pour être
+ * accolé directement à la pastille du module (pas de bordure/fond propre,
+ * le conteneur parent fournit l'unité visuelle des deux combinés).
  */
 export const ModuleIndicatorDropdown = ({
   moduleLabel,
-  icon,
   indicators,
   alreadyShown,
   onPick,
@@ -37,16 +33,14 @@ export const ModuleIndicatorDropdown = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 px-2 gap-1 shrink-0"
+        <button
+          type="button"
+          className="flex items-center justify-center h-full px-2 hover:bg-foreground/10 transition-colors shrink-0"
           title={`Ajouter un indicateur ${moduleLabel}`}
           aria-label={`Ajouter un indicateur ${moduleLabel}`}
         >
-          <span className="flex items-center justify-center h-5 w-5 shrink-0">{icon}</span>
-          <Plus className="h-3 w-3 text-muted-foreground shrink-0" />
-        </Button>
+          <Plus className="h-3.5 w-3.5" />
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuLabel>{moduleLabel}</DropdownMenuLabel>

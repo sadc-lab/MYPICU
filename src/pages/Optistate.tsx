@@ -501,24 +501,30 @@ const Optistate = () => {
                   const isOn = selectedModules.has(key);
                   const isFailing = failingModules.some((m) => m.key === key);
                   return (
-                    <div key={key} className="flex items-center gap-1">
+                    <div
+                      key={key}
+                      className={cn(
+                        'flex items-center rounded-md border text-xs font-medium transition-all overflow-hidden',
+                        isOn
+                          ? 'bg-primary/15 border-primary ring-1 ring-primary'
+                          : 'bg-card border-border hover:border-primary/50',
+                      )}
+                    >
                       <button
                         type="button"
                         onClick={() => toggleModule(key)}
                         className={cn(
-                          'flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-medium transition-all',
-                          isOn
-                            ? 'bg-primary/15 border-primary text-foreground ring-1 ring-primary'
-                            : 'bg-card border-border hover:border-primary/50 text-muted-foreground hover:text-foreground',
+                          'flex items-center gap-2 pl-3 pr-2 py-2',
+                          isOn ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                         )}
                       >
                         <span className="h-5 w-5 flex items-center justify-center">{MODULE_ICONS[key]}</span>
                         {MODULE_LABELS[key]}
                         {isFailing && <span className="h-1.5 w-1.5 rounded-full bg-status-critical" />}
                       </button>
+                      <div className={cn('w-px self-stretch my-1.5', isOn ? 'bg-primary/30' : 'bg-border')} />
                       <ModuleIndicatorDropdown
                         moduleLabel={MODULE_LABELS[key]}
-                        icon={MODULE_ICONS[key]}
                         indicators={MODULE_ALL_INDICATORS[key]}
                         alreadyShown={alreadyShownByModule[key]}
                         onPick={(label) => setOverride(key, label, 'pin')}
