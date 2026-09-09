@@ -4,13 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronLeft, Bell, Home, AlertTriangle, Ban } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
-import { HeartIcon } from "@/components/icons/HeartIcon";
 import { usePatient } from "@/hooks/usePatients";
 import brainIcon from "@/assets/brain-icon.svg";
-import lungsIcon from "@/assets/lungs-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
-import kidneyIcon from "@/assets/kidney-icon.svg";
-import intestineIcon from "@/assets/intestine-icon.svg";
 
 
 const reminders = [
@@ -27,7 +23,7 @@ const reminders = [
 ];
 
 interface PatientHeaderProps {
-  currentPage: "optistate" | "optibrain" | "optiheart" | "optilungs" | "optirenal" | "optigastro";
+  currentPage: "optistate" | "optibrain";
 }
 
 export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
@@ -200,59 +196,6 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                       alt="brain"
                       className="h-6 w-6 sm:h-7 sm:w-7"
                       style={{ filter: getColorFilter(patient.brainScore) }}
-                    />
-                  ),
-                },
-                {
-                  page: "optiheart" as const,
-                  path: "/optiheart",
-                  label: String(patient.heartScore || 0),
-                  score: patient.heartScore,
-                  showScore: true,
-                  icon: <HeartIcon className={`h-6 w-6 sm:h-7 sm:w-7 ${getTextColor(patient.heartScore)}`} />,
-                },
-                {
-                  page: "optilungs" as const,
-                  path: "/optilungs",
-                  label: String(patient.lungsScore || 0),
-                  score: patient.lungsScore,
-                  showScore: true,
-                  icon: (
-                    <img
-                      src={lungsIcon}
-                      alt="lungs"
-                      className="h-6 w-6 sm:h-7 sm:w-7"
-                      style={{ filter: getColorFilter(patient.lungsScore) }}
-                    />
-                  ),
-                },
-                {
-                  page: "optirenal" as const,
-                  path: "/optirenal",
-                  label: String(patient.kidneyScore || 0),
-                  score: 0,
-                  showScore: true,
-                  icon: (
-                    <img
-                      src={kidneyIcon}
-                      alt="kidney"
-                      className="h-6 w-6 sm:h-7 sm:w-7"
-                      style={{ filter: getColorFilter(0) }}
-                    />
-                  ),
-                },
-                {
-                  page: "optigastro" as const,
-                  path: "/optigastro",
-                  label: "GI",
-                  score: 0,
-                  showScore: true,
-                  icon: (
-                    <img
-                      src={intestineIcon}
-                      alt="gastro"
-                      className="h-6 w-6 sm:h-7 sm:w-7"
-                      style={{ filter: getColorFilter(0) }}
                     />
                   ),
                 },
