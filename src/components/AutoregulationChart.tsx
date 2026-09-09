@@ -18,12 +18,23 @@ import {
   isNirsBasedPatient,
 } from "@/services/autoregulation.service";
 import {
-  loadNirsData,
+  loadNirsSamples,
   buildNirsAutoregulationCurve,
   getCurrentNirsValues,
   getNirsTimeSeriesWithDynamicLimits,
-  NirsDataPoint,
 } from "@/services/nirsAutoregulation.service";
+import {
+  runAnalysis,
+  rollingOptimal,
+  type AutoregResult,
+  type OptimalTimePoint,
+} from "@/services/autoregComputation.service";
+import {
+  AutoregCurveCard,
+  AutoregKpiRow,
+  InterpretationBanner,
+  QualityPanel,
+} from "@/components/autoreg/AutoregResultViews";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -101,6 +112,12 @@ export function AutoregulationChart({
   const [nirsPamMin, setNirsPamMin] = useState<number | null>(null);
   const [nirsPamMax, setNirsPamMax] = useState<number | null>(null);
 
+  // Full analysis from the shared engine, so this dashboard view can render the
+  // same interpretation banner, KPI tiles, quality panel and U-curve as the study
+  // page instead of a second, differently-worded presentation of the same data.
+  const [analysis, setAnalysis] = useState<AutoregResult | null>(null);
+  const [rolling, setRolling] = useState<OptimalTimePoint[]>([]);
+
   const hasAutoData = hasAutoregulationData(patientId);
   
   // Use NIRS values if available, otherwise use props
@@ -117,35 +134,61 @@ export function AutoregulationChart({
   useEffect(() => {
     if (!hasAutoData) {
       setTimeSeriesData([]);
+      setAnalysis(null);
+      setRolling([]);
       return;
     }
 
     const isNirs = isNirsBasedPatient(patientId);
     setIsNirsBased(isNirs);
     setLoading(true);
+    // Cleared up front: a stale analysis from the previous patient must never
+    // remain on screen while the new one loads.
+    setAnalysis(null);
+    setRolling([]);
 
     if (isNirs) {
-      // Load NIRS-based autoregulation data with dynamic limits
-      loadNirsData(patientId)
-        .then((data) => {
-          if (data && data.length > 0) {
+      // Load NIRS-based autoregulation data with dynamic limits.
+      // `windowMinutes` is not passed on: the COx window is expressed in samples
+      // and fixed to the study page's value, so both screens agree. That prop
+      // still selects the PRx column width on the invasive path below.
+      loadNirsSamples(patientId)
+        .then((samples) => {
+          if (samples && samples.length > 0) {
             // Get autoregulation curve for overall values
-            const curveResult = buildNirsAutoregulationCurve(data, windowMinutes, 5);
+            const curveResult = buildNirsAutoregulationCurve(samples);
             setOptimalValue(curveResult.optimalPAM);
             setLowerLimit(curveResult.lowerLimit);
             setUpperLimit(curveResult.upperLimit);
-            
-            // Get current values
-            const currentValues = getCurrentNirsValues(data);
+
+            // Same call the study page makes, for the shared result views.
+            const fullAnalysis = runAnalysis(samples, 30, 5);
+            setAnalysis(fullAnalysis);
+            setRolling(
+              rollingOptimal(
+                fullAnalysis.samples,
+                Math.min(240, Math.floor(fullAnalysis.samples.length / 3)),
+                30,
+                5,
+                fullAnalysis.mode,
+              ),
+            );
+
+            // Get current values from the measured rSO₂/PAM pairs
+            const currentValues = getCurrentNirsValues(
+              samples
+                .filter((s) => s.nirs !== null && s.pam !== null)
+                .map((s) => ({ timestamp: s.time.toISOString(), nirs: s.nirs, pam: s.pam })),
+            );
             setNirsCurrentPAM(currentValues.currentPAM);
             setNirsPamMin(currentValues.pamMin);
             setNirsPamMax(currentValues.pamMax);
-            
+
             // Get time series with DYNAMIC LLA/ULA limits
             const hours = timeWindowToHours(selectedWindow) || 6;
             const dynamicTimeSeries = getNirsTimeSeriesWithDynamicLimits(
-              data,
-              windowMinutes,
+              samples,
+              undefined,
               4, // lookback hours for limit calculation
               hours // output hours
             );
@@ -294,6 +337,18 @@ export function AutoregulationChart({
 
   return (
     <div className="space-y-4">
+
+      {/* Shared with the study page: same verdict, same KPI tiles, same quality
+          readout, same U-curve. Only available when a full analysis could be
+          computed from the raw signal (COx path). */}
+      {analysis && (
+        <div className="space-y-4">
+          <InterpretationBanner result={analysis} rolling={rolling} />
+          <AutoregKpiRow result={analysis} rolling={rolling} />
+          <QualityPanel result={analysis} />
+          <AutoregCurveCard result={analysis} height={260} />
+        </div>
+      )}
 
       {/* Main Time Series Chart */}
       <div className="h-56 w-full">
