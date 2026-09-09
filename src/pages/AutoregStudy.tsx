@@ -45,6 +45,8 @@ import {
 import {
   ComposedChart,
   Line,
+  Area,
+  Brush,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -53,6 +55,12 @@ import {
   Legend,
 } from 'recharts';
 import * as XLSX from 'xlsx';
+import { useYAxisZoom } from '@/hooks/useYAxisZoom';
+import { useSharedTimeWindow } from '@/hooks/useSharedTimeWindow';
+import { ChartTimeRangeProvider } from '@/contexts/ChartTimeRangeContext';
+import { ChartZoomControls } from '@/components/ChartZoomControls';
+import { TimeRangeBadge } from '@/components/TimeRangeBadge';
+import { BRUSH_TOUCH_WIDTH, renderWideTouchTraveller } from '@/lib/chartBrushTraveller';
 import {
   parseAny,
   describeAnalysisReadiness,
@@ -390,6 +398,21 @@ const AutoregStudy = () => {
       .map((s) => ({ t: s.time.getTime(), pic: s.pic, pam: s.pam, ppc: s.ppc, nirs: s.nirs }));
   }, [result]);
 
+  const timeSeriesTimeWindow = useSharedTimeWindow(timeSeriesChartData, (d) => d.t);
+  const [timeSeriesEditing, setTimeSeriesEditing] = useState(false);
+  const timeSeriesAutoYDomain = useMemo((): [number, number] => {
+    const values: number[] = [];
+    for (const d of timeSeriesTimeWindow.visibleData) {
+      if (d.pic !== null) values.push(d.pic);
+      if (d.pam !== null) values.push(d.pam);
+      if (d.ppc !== null) values.push(d.ppc);
+      if (d.nirs !== null) values.push(d.nirs);
+    }
+    if (values.length === 0) return [0, 100];
+    return [Math.floor(Math.min(...values) / 5) * 5 - 5, Math.ceil(Math.max(...values) / 5) * 5 + 5];
+  }, [timeSeriesTimeWindow.visibleData]);
+  const timeSeriesZoom = useYAxisZoom(timeSeriesAutoYDomain);
+
   // LLA/ULA come out null when the curve never crosses the threshold on that side
   // over the whole recording. The rolling analysis works on shorter windows and
   // does find them part of the time, so its most recent estimate is shown instead
@@ -418,6 +441,21 @@ const AutoregStudy = () => {
       })),
     [rolling],
   );
+
+  const rollingTimeWindow = useSharedTimeWindow(rollingChartData, (d) => d.t);
+  const [rollingEditing, setRollingEditing] = useState(false);
+  const rollingAutoYDomain = useMemo((): [number, number] => {
+    const values: number[] = [];
+    for (const d of rollingTimeWindow.visibleData) {
+      if (d.ppc !== null) values.push(d.ppc);
+      if (d.optimalPPC !== null) values.push(d.optimalPPC);
+      if (d.lla !== null) values.push(d.lla);
+      if (d.ula !== null) values.push(d.ula);
+    }
+    if (values.length === 0) return [0, 100];
+    return [Math.floor(Math.min(...values) / 5) * 5 - 5, Math.ceil(Math.max(...values) / 5) * 5 + 5];
+  }, [rollingTimeWindow.visibleData]);
+  const rollingZoom = useYAxisZoom(rollingAutoYDomain);
 
 
   const downloadCSV = () => {
@@ -927,6 +965,19 @@ const AutoregStudy = () => {
 
             {/* The curve is the everyday read; the rest is verification material,
                 one click away instead of stacked below it. */}
+            {/* Une plage de temps choisie sur "Évolution" ou "Signaux bruts"
+                reste appliquée quand on bascule de l'un à l'autre. */}
+            <ChartTimeRangeProvider>
+            {rollingTimeWindow.isRangeSelected && (
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Plage affichée :</span>
+                <TimeRangeBadge
+                  rangeStart={rollingTimeWindow.rangeStart}
+                  rangeEnd={rollingTimeWindow.rangeEnd}
+                  onReset={rollingTimeWindow.resetRange}
+                />
+              </div>
+            )}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
               <TabsList className="w-full justify-start overflow-x-auto">
                 <TabsTrigger value="curve">Courbe</TabsTrigger>
@@ -949,9 +1000,21 @@ const AutoregStudy = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[320px]">
+                  <ChartZoomControls
+                    zoom={rollingZoom}
+                    isEditing={rollingEditing}
+                    onToggleEditing={() => setRollingEditing((v) => !v)}
+                    className="mb-2"
+                  />
+                  <div className={rollingEditing ? "h-[344px]" : "h-[320px]"}>
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={rollingChartData} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
+                        <defs>
+                          <linearGradient id="rollingZoneGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.25} />
+                            <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0.15} />
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                         <XAxis
                           dataKey="t"
@@ -961,7 +1024,7 @@ const AutoregStudy = () => {
                           tick={{ fontSize: 11 }}
                         />
                         <YAxis
-                          domain={['dataMin - 5', 'dataMax + 5']}
+                          domain={rollingZoom.yDomain}
                           label={{ value: 'mmHg', angle: -90, position: 'insideLeft' }}
                           tick={{ fontSize: 12 }}
                         />
@@ -974,10 +1037,47 @@ const AutoregStudy = () => {
                           }}
                         />
                         <Legend />
+                        {/* Bande LLA-ULA : remplit jusqu'à ULA, puis masque le bas avec
+                            le fond de la carte jusqu'à LLA — ne laisse colorée que la
+                            plage entre les deux (même technique que AutoregulationChart). */}
+                        <Area
+                          type="monotone"
+                          dataKey="ula"
+                          stroke="none"
+                          fill="url(#rollingZoneGradient)"
+                          fillOpacity={1}
+                          connectNulls
+                          isAnimationActive={false}
+                          name="Plage autorégulée (LLA–ULA)"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="lla"
+                          stroke="none"
+                          fill="hsl(var(--card))"
+                          fillOpacity={1}
+                          connectNulls
+                          isAnimationActive={false}
+                          legendType="none"
+                          name="_lla_mask"
+                        />
                         <Line type="monotone" isAnimationActive={false} dataKey="ppc" stroke="hsl(var(--muted-foreground))" dot={false} name={`${labels.pressure} mesurée`} />
                         <Line type="monotone" isAnimationActive={false} dataKey="optimalPPC" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name={labels.optimal} />
                         <Line type="monotone" isAnimationActive={false} dataKey="lla" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="LLA" />
                         <Line type="monotone" isAnimationActive={false} dataKey="ula" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="ULA" />
+                        {rollingEditing && (
+                          <Brush
+                            dataKey="t"
+                            height={24}
+                            stroke="hsl(var(--primary))"
+                            travellerWidth={BRUSH_TOUCH_WIDTH}
+                            traveller={renderWideTouchTraveller}
+                            tickFormatter={formatTime}
+                            startIndex={rollingTimeWindow.startIndex}
+                            endIndex={rollingTimeWindow.endIndex}
+                            onChange={rollingTimeWindow.onBrushChange}
+                          />
+                        )}
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
@@ -994,7 +1094,13 @@ const AutoregStudy = () => {
                 <CardDescription>Données brutes après import.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[320px]">
+                <ChartZoomControls
+                  zoom={timeSeriesZoom}
+                  isEditing={timeSeriesEditing}
+                  onToggleEditing={() => setTimeSeriesEditing((v) => !v)}
+                  className="mb-2"
+                />
+                <div className={timeSeriesEditing ? "h-[344px]" : "h-[320px]"}>
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={timeSeriesChartData} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -1005,7 +1111,7 @@ const AutoregStudy = () => {
                         tickFormatter={formatTime}
                         tick={{ fontSize: 11 }}
                       />
-                      <YAxis tick={{ fontSize: 12 }} />
+                      <YAxis domain={timeSeriesZoom.yDomain} tick={{ fontSize: 12 }} />
                       <RechartsTooltip
                         labelFormatter={(l) => new Date(l).toLocaleString('fr-CA')}
                         contentStyle={{
@@ -1024,6 +1130,19 @@ const AutoregStudy = () => {
                         </>
                       )}
                       <Line type="monotone" isAnimationActive={false} dataKey="pam" stroke="hsl(var(--primary))" dot={false} name="PAM" />
+                      {timeSeriesEditing && (
+                        <Brush
+                          dataKey="t"
+                          height={24}
+                          stroke="hsl(var(--primary))"
+                          travellerWidth={BRUSH_TOUCH_WIDTH}
+                          traveller={renderWideTouchTraveller}
+                          tickFormatter={formatTime}
+                          startIndex={timeSeriesTimeWindow.startIndex}
+                          endIndex={timeSeriesTimeWindow.endIndex}
+                          onChange={timeSeriesTimeWindow.onBrushChange}
+                        />
+                      )}
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
@@ -1111,6 +1230,7 @@ const AutoregStudy = () => {
             </Card>
             </TabsContent>
             </Tabs>
+            </ChartTimeRangeProvider>
           </>
         )}
 

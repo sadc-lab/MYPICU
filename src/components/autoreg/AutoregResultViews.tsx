@@ -6,6 +6,7 @@
 // The numbers themselves come from a single engine (autoregComputation.service);
 // these components only render an AutoregResult.
 
+import { useState } from 'react';
 import {
   ComposedChart,
   Line,
@@ -33,6 +34,10 @@ import {
   type CurvePoint,
   type OptimalTimePoint,
 } from '@/services/autoregComputation.service';
+import { useYAxisZoom } from '@/hooks/useYAxisZoom';
+import { ChartZoomControls } from '@/components/ChartZoomControls';
+
+const CURVE_Y_DOMAIN: [number, number] = [-0.4, 1];
 
 export type ModeLabelSet = ReturnType<typeof modeLabels>;
 
@@ -499,8 +504,16 @@ export const AutoregCurveChart = ({
   height?: number;
 }) => {
   const labels = modeLabels(result.mode);
+  const zoom = useYAxisZoom(CURVE_Y_DOMAIN);
+  const [isEditing, setIsEditing] = useState(false);
   return (
     <>
+      <ChartZoomControls
+        zoom={zoom}
+        isEditing={isEditing}
+        onToggleEditing={() => setIsEditing((v) => !v)}
+        className="mb-2"
+      />
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={result.curve} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
@@ -513,7 +526,7 @@ export const AutoregCurveChart = ({
               tick={{ fontSize: 12 }}
             />
             <YAxis
-              domain={[-0.4, 1]}
+              domain={zoom.yDomain}
               label={{ value: labels.index, angle: -90, position: 'insideLeft' }}
               tick={{ fontSize: 12 }}
             />
