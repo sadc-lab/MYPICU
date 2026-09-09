@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   Area,
   ComposedChart,
+  Brush,
 } from "recharts";
 import {
   loadAutoregulationData,
@@ -38,6 +39,10 @@ import {
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useYAxisZoom } from "@/hooks/useYAxisZoom";
+import { useSharedTimeWindow } from "@/hooks/useSharedTimeWindow";
+import { ChartZoomControls } from "@/components/ChartZoomControls";
+import { BRUSH_TOUCH_WIDTH, renderWideTouchTraveller } from "@/lib/chartBrushTraveller";
 
 interface AutoregulationChartProps {
   patientId: string;
@@ -249,21 +254,29 @@ export function AutoregulationChart({
   // Labels based on data type
   const targetLabel = isNirsBased ? "PAM optimale" : "PPC Optimale";
 
-  // Calculate Y axis domain - includes time-varying limits
-  const yDomain = useMemo(() => {
-    if (timeSeriesData.length === 0) {
+  // Sélection d'une plage de temps par glisser-déposer (Brush), partagée
+  // avec les autres graphiques du module quand un ChartTimeRangeProvider
+  // les entoure. L'échelle Y se recalcule sur cette plage visible plutôt
+  // que sur tout l'historique.
+  const { visibleData, startIndex, endIndex, onBrushChange, isRangeSelected, resetRange } =
+    useSharedTimeWindow(timeSeriesData, (d) => d.time);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Calculate Y axis domain - includes time-varying limits, from the visible range only
+  const autoYDomain = useMemo((): [number, number] => {
+    if (visibleData.length === 0) {
       return [40, 80];
     }
 
     const allValues: number[] = [];
-    
-    for (const d of timeSeriesData) {
+
+    for (const d of visibleData) {
       if (d.ppc !== null) allValues.push(d.ppc);
       if (d.pam !== null) allValues.push(d.pam);
       if (d.lowerLimit !== null) allValues.push(d.lowerLimit);
       if (d.upperLimit !== null) allValues.push(d.upperLimit);
     }
-    
+
     if (allValues.length === 0) return [40, 80];
 
     const minDomain = Math.min(...allValues);
@@ -273,7 +286,29 @@ export function AutoregulationChart({
       Math.floor(minDomain / 5) * 5 - 5,
       Math.ceil(maxDomain / 5) * 5 + 5,
     ];
-  }, [timeSeriesData]);
+  }, [visibleData]);
+
+  const zoom = useYAxisZoom(autoYDomain);
+  const { yDomain } = zoom;
+
+  // Résumé de la zone sélectionnée — première étape avant de pouvoir poser
+  // une question précise sur cette zone : au moins voir ce qu'elle contient.
+  const selectionSummary = useMemo(() => {
+    if (!isRangeSelected || visibleData.length === 0) return null;
+    const ppcValues = visibleData.map((d) => d.ppc).filter((v): v is number => v !== null);
+    const pamValues = visibleData.map((d) => d.pam).filter((v): v is number => v !== null);
+    const inZoneCount = visibleData.filter(
+      (d) => d.ppc !== null && d.lowerLimit !== null && d.upperLimit !== null && d.ppc >= d.lowerLimit && d.ppc <= d.upperLimit,
+    ).length;
+    const avg = (arr: number[]) => (arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null);
+    return {
+      from: format(new Date(visibleData[0].time), "HH:mm", { locale: fr }),
+      to: format(new Date(visibleData[visibleData.length - 1].time), "HH:mm", { locale: fr }),
+      avgPpc: avg(ppcValues),
+      avgPam: avg(pamValues),
+      pctInZone: ppcValues.length ? Math.round((inZoneCount / visibleData.length) * 100) : null,
+    };
+  }, [isRangeSelected, visibleData]);
 
   // Format X axis time
   const formatXAxis = (time: number) => {
@@ -351,7 +386,44 @@ export function AutoregulationChart({
       )}
 
       {/* Main Time Series Chart */}
-      <div className="h-56 w-full">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        {selectionSummary ? (
+          <div className="flex items-center gap-2 text-xs bg-primary/5 border border-primary/20 rounded-md px-2.5 py-1.5">
+            <span className="font-medium text-foreground">
+              {selectionSummary.from} – {selectionSummary.to}
+            </span>
+            <span className="text-border">|</span>
+            <span className="text-muted-foreground">
+              {isNirsBased ? "NIRS" : "PPC"} moy. <span className="font-medium text-foreground">{selectionSummary.avgPpc ?? "--"}</span>
+            </span>
+            <span className="text-muted-foreground">
+              PAM moy. <span className="font-medium text-foreground">{selectionSummary.avgPam ?? "--"}</span>
+            </span>
+            {selectionSummary.pctInZone !== null && (
+              <span className="text-muted-foreground">
+                <span className="font-medium text-foreground">{selectionSummary.pctInZone}%</span> dans la zone
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={resetRange}
+              title="Effacer la sélection"
+              aria-label="Effacer la sélection"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              ×
+            </button>
+          </div>
+        ) : isEditing ? (
+          <p className="text-[11px] text-muted-foreground italic">
+            Glissez sur l'axe du temps ci-dessous pour sélectionner une période précise.
+          </p>
+        ) : (
+          <span />
+        )}
+        <ChartZoomControls zoom={zoom} isEditing={isEditing} onToggleEditing={() => setIsEditing((v) => !v)} />
+      </div>
+      <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={timeSeriesData} margin={{ top: 10, right: 16, left: 4, bottom: 8 }}>
             <defs>
@@ -451,6 +523,22 @@ export function AutoregulationChart({
               connectNulls
               name={isNirsBased ? "NIRS" : "PPC"}
             />
+
+            {/* Sélection d'une plage de temps par glisser-déposer — visible
+                seulement en mode édition (icône crayon) */}
+            {isEditing && (
+              <Brush
+                dataKey="time"
+                height={24}
+                stroke="hsl(var(--primary))"
+                travellerWidth={BRUSH_TOUCH_WIDTH}
+                traveller={renderWideTouchTraveller}
+                tickFormatter={formatXAxis}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                onChange={onBrushChange}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>

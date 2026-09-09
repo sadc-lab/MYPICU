@@ -1,5 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import { useState, useMemo, useEffect, useRef } from "react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Header } from "@/components/Header";
 import { PatientHeader } from "@/components/PatientHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,20 +22,19 @@ import {
   Plus,
   Trash2,
   Loader2,
-  AlertCircle,
   AlertTriangle,
   Brain,
   Activity,
+  ArrowDown,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from "recharts";
-
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea, Brush } from "recharts";
+import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
 import { KpiCircle } from "@/components/KpiCircle";
 import { useTimeRange } from "@/hooks/useTimeRange";
 import { getStatusHexColor } from "@/utils/colorUtils";
 import brainIcon from "@/assets/brain-icon.svg";
-import { getTimeRangeDisplayLabel } from "@/utils/timeRangeUtils";
 import {
   loadPatientFileData,
   hasPatientFileData,
@@ -41,6 +42,7 @@ import {
   getAllTimeSeriesData,
   isVariableSparse,
   getLatestValue,
+  getVariableKeyFromLabel,
   calculateAverage,
   calculateTimeInRanges,
   getAvailableVariables,
@@ -51,6 +53,12 @@ import {
   PatientFileData,
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
+import { useLastViewed } from "@/hooks/useLastViewed";
+import { useYAxisZoom } from "@/hooks/useYAxisZoom";
+import { useSharedTimeWindow } from "@/hooks/useSharedTimeWindow";
+import { ChartTimeRangeProvider } from "@/contexts/ChartTimeRangeContext";
+import { ChartZoomControls } from "@/components/ChartZoomControls";
+import { BRUSH_TOUCH_WIDTH, renderWideTouchTraveller } from "@/lib/chartBrushTraveller";
 import {
   loadAutoregulationData,
   hasAutoregulationData,
@@ -61,37 +69,48 @@ import {
 } from "@/services/autoregulation.service";
 import { getOptimalPAMFromNirs } from "@/services/nirsAutoregulation.service";
 import { AutoregulationChart } from "@/components/AutoregulationChart";
-import { UnifiedBrainChart } from "@/components/UnifiedBrainChart";
-import { TimeWindowSelector, TimeWindowValue } from "@/components/ui/TimeWindowSelector";
+import { TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { VitalSignsPanel } from "@/components/VitalSignsPanel";
-import { CollapsibleModuleCard, CountCircle, StatusIconCircle } from "@/components/CollapsibleModuleCard";
-import { SelectableMetricTile, TileStatus } from "@/components/SelectableMetricTile";
-
+import { VisitComparisonMatrix } from "@/components/VisitComparisonMatrix";
+import { CriticalChangesBanner } from "@/components/CriticalChangesBanner";
+// "Relations cliniques" retiré pour le moment — src/ontology/ reste intact
+// (getRelatedNodes, getOntologyNodeByVariableKey) pour le remettre facilement.
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
   const metricParam = searchParams.get("metric");
   const { data: patient, isLoading: patientLoading } = usePatient(patientId);
+  const { previousVisitAt } = useLastViewed(patientId);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
-  const [clinicalExpanded, setClinicalExpanded] = useState(!!metricParam);
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
+  const [brainGroupsOpen, setBrainGroupsOpen] = useState<Record<string, boolean>>({
+    "Pression intracrânienne et état neurologique": true,
+  });
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(metricParam ? [metricParam] : []);
   // Track whether the auto-selection of problematic indicators has already
   // run, so the user can later deselect them without us re-adding them.
   const clinicalAutoSelectedRef = useRef(false);
-  const brainAutoSelectedRef = useRef(false);
   const { timeRange, setTimeRange, getTimeRangeLabel, timeRanges } = useTimeRange();
   // Objectives and interventions are now handled by ObjectivesInterventionsCard component
   const [picDialogTimeRange, setPicDialogTimeRange] = useState<TimeWindowValue>("24h");
-  const [selectedBrainIndicators, setSelectedBrainIndicators] = useState<string[]>([]);
   const [showTargetZones, setShowTargetZones] = useState(true);
   
   // Ref pour le graphique de monitorage
   const chartRef = useRef<HTMLDivElement>(null);
+
+  // Depuis le pop-up "Optimisation cérébrale" : fermer le pop-up, montrer
+  // ces indicateurs dans le graphique de monitorage, et y défiler.
+  const openIndicatorsInChart = (labels: string[]) => {
+    setOpenDialog(null);
+    setSelectedIndicators(labels.slice(0, 3));
+    setTimeout(() => {
+      chartRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+  };
 
   // Patient file data state
   const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
@@ -111,26 +130,6 @@ const Optibrain = () => {
   const isNirsBased = isNirsBasedPatient(patientId);
 
   // ===== Fonctions utilitaires pour la synchronisation =====
-
-  // Fonction helper pour obtenir la clé de variable depuis le label
-  const getVariableKeyFromLabel = (label: string): string => {
-    const mapping: Record<string, string> = {
-      FC: "Variable_FC",
-      PIC: "Variable_PIC",
-      PPC: "Variable_PPC",
-      PAM: "Variable_PAM",
-      PVC: "Variable_PVC",
-      Température: "Variable_temperature",
-      ETCO2: "Variable_ETCO2",
-      PaCO2: "Variable_paco2",
-      Tête: "Variable_position_tete",
-      Glycémie: "Variable_glycemie",
-      INR: "Variable_INR",
-      Plaquettes: "Variable_plaquettes",
-      Hémoglobine: "Variable_hemoglobine",
-    };
-    return mapping[label] || "";
-  };
 
   // Fonction pour obtenir les données EXACTEMENT comme elles sont affichées dans le graphique
   // IMPORTANT: les timestamps des JSON sont anciens (données statiques). On normalise donc "comme si c'était aujourd'hui"
@@ -452,6 +451,7 @@ const Optibrain = () => {
     { label: "Plaquettes", target: "> 100 g/L" },
   ];
 
+
   // Clinical indicators avec synchronisation des données visibles
   const clinicalIndicators = useMemo(() => {
     return baseClinicalIndicators.map((base) => {
@@ -492,6 +492,39 @@ const Optibrain = () => {
       };
     });
   }, [clinicalIndicatorsData, patientFileData, hoursForAdherence]);
+
+  // Comparaison avec la dernière visite de ce clinicien sur ce patient :
+  // valeur à ce moment-là vs valeur actuelle, pour chaque indicateur réel.
+  // Rien lors d'une toute première visite (previousVisitAt encore null).
+  const visitComparisonRows = useMemo(() => {
+    if (!patientFileData || !previousVisitAt) return [];
+    const cutoff = previousVisitAt.getTime();
+
+    return clinicalIndicators
+      .map((indicator) => {
+        const variableKey = getVariableKeyFromLabel(indicator.label);
+        if (!variableKey || !patientFileData[variableKey]) return null;
+
+        const series = getAllTimeSeriesData(patientFileData, variableKey, 24 * 30, true)
+          .slice()
+          .sort((a, b) => new Date(a.charttime).getTime() - new Date(b.charttime).getTime());
+        if (series.length === 0) return null;
+
+        const before = [...series].reverse().find((p) => new Date(p.charttime).getTime() <= cutoff);
+        const current = series[series.length - 1];
+        const hasNewPoint = new Date(current.charttime).getTime() > cutoff;
+
+        return {
+          label: indicator.label,
+          target: indicator.target,
+          status: indicator.status,
+          previousValue: before ? before.valeur : null,
+          currentValue: current.valeur,
+          changed: hasNewPoint && (before ? before.valeur !== current.valeur : true),
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null);
+  }, [clinicalIndicators, patientFileData, previousVisitAt]);
 
   // Calculate overall monitoring adherence (average of targets with real data only)
   const monitoringAdherence = useMemo(() => {
@@ -552,6 +585,37 @@ const Optibrain = () => {
 
   const showPatientNotFound = !patient && !patientLoading;
 
+  // Override brainMetrics with real data when available
+  const brainMetrics = useMemo(() => {
+    return importedBrainMetrics.map((metric) => {
+      if (metric.label === "PIC" && realBrainValues.pic !== null) {
+        return {
+          ...metric,
+          value: Math.round(realBrainValues.pic * 10) / 10,
+        };
+      }
+      if (metric.label === "PPC" && realBrainValues.ppc !== null) {
+        return {
+          ...metric,
+          value: Math.round(realBrainValues.ppc * 10) / 10,
+        };
+      }
+      if (metric.label === "PaCO2" && realBrainValues.paco2 !== null) {
+        return {
+          ...metric,
+          value: Math.round(realBrainValues.paco2 * 10) / 10,
+        };
+      }
+      // Use patient-specific GCS value
+      if (metric.label === "Glasgow (GCS)" && patient?.gcs !== undefined) {
+        return {
+          ...metric,
+          value: patient.gcs,
+        };
+      }
+      return metric;
+    });
+  }, [realBrainValues.pic, realBrainValues.ppc, realBrainValues.paco2, patient?.gcs]);
 
   // Get PIC status based on value (target < 20 mmHg)
   const getPicStatus = (value: number | null): string => {
@@ -709,7 +773,7 @@ const Optibrain = () => {
         : neurologicalStateConfig.currentState;
 
       return {
-        label: "État neurologique",
+        label: "État actuel",
         value: bigValue,
         displayValue: bigValue,
         unit: "",
@@ -753,7 +817,7 @@ const Optibrain = () => {
         : "Dans la cible";
 
       return {
-        label: "Niveau de PIC",
+        label: "PIC",
         value: bigValue,
         displayValue: bigValue,
         unit: "",
@@ -766,54 +830,14 @@ const Optibrain = () => {
       };
     })(),
     {
-      label: "PPC",
-      value: realBrainValues.ppc !== null ? Math.round(realBrainValues.ppc) : "--",
-      displayValue: realBrainValues.ppc !== null ? Math.round(realBrainValues.ppc).toString() : "--",
-      unit: "mmHg",
-      status: getPpcStatus(realBrainValues.ppc) as TileStatus,
-      hasDetails: false,
-      topLabel: realBrainValues.ppc !== null ? `PPC ${Math.round(realBrainValues.ppc)} mmHg` : "PPC --",
-      metricKey: "ppc",
-    },
-    {
-      label: "Glasgow (GCS)",
-      value: patient?.gcs ?? "--",
-      displayValue: patient?.gcs ?? "--",
-      unit: "",
-      status: (() => {
-        const gcs = patient?.gcs;
-        if (gcs === undefined || gcs === null) return "normal";
-        if (gcs >= 13) return "normal";
-        if (gcs >= 9) return "warning";
-        return "critical";
-      })() as TileStatus,
-      hasDetails: false,
-      metricKey: "glasgow",
-    },
-    {
-      label: "Oxygénation",
-      value: realBrainValues.paco2 !== null ? Math.round(realBrainValues.paco2) : "--",
-      displayValue: realBrainValues.paco2 !== null ? Math.round(realBrainValues.paco2).toString() : "--",
-      unit: "mmHg",
-      status: (() => {
-        const v = realBrainValues.paco2;
-        if (v === null) return "normal";
-        if (v >= 35 && v <= 45) return "normal";
-        if ((v >= 30 && v < 35) || (v > 45 && v <= 50)) return "warning";
-        return "critical";
-      })() as TileStatus,
-      hasDetails: false,
-      metricKey: "paco2",
-    },
-    {
-      label: "Autorégulation",
-      value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
-        ? `${Math.round(optimalPPCResult.optimalPPC)}` 
+      label: isNirsBased ? "PAM optimale" : "PPC optimale",
+      value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
+        ? `${Math.round(optimalPPCResult.optimalPPC)}`
         : "--",
-      displayValue: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null 
-        ? `${Math.round(optimalPPCResult.optimalPPC)}` 
+      displayValue: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
+        ? `${Math.round(optimalPPCResult.optimalPPC)}`
         : "--",
-      unit: isNirsBased ? "PAM Opt" : "PPC Opt",
+      unit: "mmHg",
       status: (() => {
         if (!optimalPPCResult.hasData || optimalPPCResult.prxScore === null) return "normal";
         if (optimalPPCResult.prxScore >= 0.5) return "critical";
@@ -821,49 +845,44 @@ const Optibrain = () => {
         return "normal";
       })(),
       hasDetails: true,
-      dialogKey: "autoregulation",
-      description: (() => {
-        if (!optimalPPCResult.hasData) {
-          return isNirsBased ? "PAM optimale individuelle" : "PPC optimale individuelle";
-        }
-        if (optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null) {
-          return `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`;
-        }
-        // No limit identifiable over the whole recording: fall back to the last
-        // rolling estimate, labelled, rather than showing nothing or inventing one.
-        const lo = optimalPPCResult.lowerLimitLastWindow;
-        const hi = optimalPPCResult.upperLimitLastWindow;
-        if (lo != null && hi != null) {
-          return `Zone ${Math.round(lo)}-${Math.round(hi)} mmHg (dernière fenêtre)`;
-        }
-        if (lo != null) return `LLA ${Math.round(lo)} mmHg (dernière fenêtre)`;
-        if (hi != null) return `ULA ${Math.round(hi)} mmHg (dernière fenêtre)`;
-        return isNirsBased ? "PAM optimale individuelle" : "PPC optimale individuelle";
-      })(),
+      dialogKey: "autoreg-detail",
+      description: optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
+        ? `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
+        : isNirsBased ? "PAM optimale individuelle" : "PPC optimale individuelle",
       criticalLabel: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
-        ? optimalPPCResult.prxScore < 0.3 
-          ? "Autorégulation intacte" 
-          : optimalPPCResult.prxScore < 0.5 
-            ? "Autorégulation altérée" 
+        ? optimalPPCResult.prxScore < 0.3
+          ? "Autorégulation intacte"
+          : optimalPPCResult.prxScore < 0.5
+            ? "Autorégulation altérée"
             : "Autorégulation absente"
         : null,
       criticalColor: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
-        ? optimalPPCResult.prxScore < 0.3 
-          ? "text-status-normal" 
-          : optimalPPCResult.prxScore < 0.5 
-            ? "text-status-warning" 
+        ? optimalPPCResult.prxScore < 0.3
+          ? "text-status-normal"
+          : optimalPPCResult.prxScore < 0.5
+            ? "text-status-warning"
             : "text-status-critical"
         : "text-muted-foreground",
     },
-  ];
-
-  const orderedBrainOptimisationMetrics = [
-    brainOptimisationMetrics[0],
-    brainOptimisationMetrics[5],
-    brainOptimisationMetrics[1],
-    brainOptimisationMetrics[3],
-    brainOptimisationMetrics[4],
-    brainOptimisationMetrics[2],
+    {
+      label: isNirsBased ? "COx minimum" : "PRx minimum",
+      value: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
+        ? optimalPPCResult.prxScore.toFixed(2)
+        : "--",
+      displayValue: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
+        ? optimalPPCResult.prxScore.toFixed(2)
+        : "--",
+      unit: "",
+      status: (() => {
+        if (!optimalPPCResult.hasData || optimalPPCResult.prxScore === null) return "normal";
+        if (optimalPPCResult.prxScore >= 0.5) return "critical";
+        if (optimalPPCResult.prxScore >= 0.3) return "warning";
+        return "normal";
+      })(),
+      hasDetails: true,
+      dialogKey: "autoreg-detail",
+      description: "Valeur de l'indice au minimum de la courbe — plus bas est meilleur.",
+    },
   ];
 
   // Auto-select all problematic clinical indicators by default (once data arrives)
@@ -881,31 +900,9 @@ const Optibrain = () => {
     });
   }, [patientFileData, clinicalIndicators]);
 
-  // Auto-select all problematic brain optimisation metrics by default
-  useEffect(() => {
-    if (brainAutoSelectedRef.current) return;
-    if (!patientFileData) return;
-    const problematic = brainOptimisationMetrics
-      .filter((m) => m.hasDetails && (m.status === "warning" || m.status === "critical"))
-      .map((m) => m.label);
-    if (problematic.length === 0) return;
-    brainAutoSelectedRef.current = true;
-    setSelectedBrainIndicators((prev) => {
-      const merged = new Set([...prev, ...problematic]);
-      return Array.from(merged);
-    });
-  }, [patientFileData, brainOptimisationMetrics]);
-
-
-  // Calculate clinical adherence (average of indicators with real data only)
-  const clinicalAdherence = useMemo(() => {
-    const indicatorsWithData = clinicalIndicators.filter((i) => i.adherencePercentage !== null);
-    if (indicatorsWithData.length === 0) return null;
-    const totalPercentage = indicatorsWithData.reduce((sum, i) => sum + (i.adherencePercentage ?? 0), 0);
-    return Math.round(totalPercentage / indicatorsWithData.length);
-  }, [clinicalIndicators]);
-
-  const outOfRangeCount = clinicalIndicators.filter((i) => i.status !== null && i.status !== "normal").length;
+  const isInRange = (value: number, min: number, max: number) => {
+    return value >= min && value <= max;
+  };
 
   // (picRangeData a été déplacé plus haut pour être consommé par brainOptimisationMetrics)
 
@@ -1019,6 +1016,27 @@ const Optibrain = () => {
     });
   }, [realTimeSeriesData]);
 
+  // Plage de temps partagée avec le pop-up d'autorégulation (même patient,
+  // même module) — choisir une période ici la garde active en rouvrant le pop-up.
+  const monitoringTimeWindow = useSharedTimeWindow(chartData, (d: any) => d.timestamp);
+  const [monitoringEditing, setMonitoringEditing] = useState(false);
+
+  // Échelle Y auto pour le graphique de monitorage (plusieurs indicateurs
+  // sélectionnables, unités mélangées — l'auto-échelle suit la sélection et
+  // la plage de temps visible).
+  const monitoringAutoYDomain = useMemo((): [number, number] => {
+    const values: number[] = [];
+    for (const point of monitoringTimeWindow.visibleData) {
+      for (const label of selectedIndicators) {
+        const v = (point as any)[label];
+        if (typeof v === "number") values.push(v);
+      }
+    }
+    if (values.length === 0) return [0, 100];
+    return [Math.floor(Math.min(...values) / 5) * 5, Math.ceil(Math.max(...values) / 5) * 5];
+  }, [monitoringTimeWindow.visibleData, selectedIndicators]);
+  const monitoringZoom = useYAxisZoom(monitoringAutoYDomain);
+
   // Déterminer quels indicateurs ont des données rares (pour afficher des points au lieu de lignes)
   const sparseIndicators = useMemo(() => {
     if (!realTimeSeriesData) return new Set<string>();
@@ -1029,15 +1047,19 @@ const Optibrain = () => {
     );
   }, [realTimeSeriesData]);
 
-  // Palette UX optimisée : couleurs distinctes, accessibles (WCAG), harmonieuses
-  // Évite le rouge pur (réservé aux alertes critiques) et le vert (réservé au statut normal)
+  // Palette UX optimisée : une seule teinte (bleu, ~217°-221°), déclinée en
+  // paliers de clarté/saturation Tailwind pour rester distinguable en lignes
+  // superposées, sans mélanger plusieurs teintes (rose/sarcelle/violet
+  // confondaient à la lecture). Ordre choisi pour que les 2-3 premiers
+  // indicateurs sélectionnés (le cas le plus fréquent) soient les paliers
+  // les plus contrastés entre eux (très sombre, très clair, puis médian).
   const CHART_COLORS = [
-    "#2563eb", // blue-600 — primaire, très lisible
-    "#9333ea", // purple-600 — fort contraste avec le bleu
-    "#0891b2", // cyan-600 — frais, distinct
-    "#db2777", // pink-600 — accent chaud
-    "#7c3aed", // violet-600
-    "#0d9488", // teal-600
+    "#1e3a8a", // blue-900 — très sombre
+    "#93c5fd", // blue-300 — très clair
+    "#2563eb", // blue-600 — médian, primaire
+    "#60a5fa", // blue-400
+    "#1d4ed8", // blue-700
+    "#3b82f6", // blue-500
   ];
 
   // Attribuer une couleur unique à chaque indicateur sélectionné
@@ -1076,243 +1098,147 @@ const Optibrain = () => {
       <Header />
       <PatientHeader currentPage="optibrain" />
 
-      <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px] space-y-6">
-        <VitalSignsPanel />
+      <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px]">
+        <ChartTimeRangeProvider>
+        <div className="mb-6">
+          <VitalSignsPanel />
+        </div>
 
-        {(() => {
-          const brainProblemCount = brainOptimisationMetrics.filter(
-            (m) => m.status === "critical" || m.status === "warning"
-          ).length;
-          const brainHasCritical = brainOptimisationMetrics.some((m) => m.status === "critical");
-          return (
-            <CollapsibleModuleCard
-              expanded={optimisationExpanded}
-              onToggle={() => setOptimisationExpanded((p) => !p)}
-              headerIcon={
-                <StatusIconCircle status={brainHasCritical ? "critical" : brainProblemCount > 0 ? "warning" : "normal"}>
-                  <img
-                    src={brainIcon}
-                    alt="cerveau"
-                    className="h-6 w-6 sm:h-8 sm:w-8"
-                    style={{
-                      filter:
-                        'invert(60%) sepia(80%) saturate(600%) hue-rotate(0deg) brightness(95%) contrast(90%)',
-                    }}
-                  />
-                </StatusIconCircle>
-              }
-              title="Optimisation cérébrale actuelle"
-              subtitle={(() => {
-                const ppcLabel = isNirsBased ? "PAM" : "PPC";
-                const picStr = realBrainValues.pic !== null ? `PIC ${Math.round(realBrainValues.pic)}` : "PIC --";
-                const optStr = optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
-                  ? `${ppcLabel}opt ${Math.round(optimalPPCResult.optimalPPC)}`
-                  : realBrainValues.ppc !== null
-                    ? `PPC ${Math.round(realBrainValues.ppc)}`
-                    : null;
-                const compact = [picStr, optStr].filter(Boolean).join(" • ");
+        <div className="mb-6">
+          <CriticalChangesBanner
+            rows={visitComparisonRows}
+            previousVisitAt={previousVisitAt}
+            onSelect={(label) => openIndicatorsInChart([label])}
+          />
+        </div>
 
-                const fullParts: string[] = [];
-                if (realBrainValues.pic !== null) fullParts.push(`PIC ${Math.round(realBrainValues.pic)} mmHg`);
-                if (optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null) {
-                  fullParts.push(`${ppcLabel} optimale ${Math.round(optimalPPCResult.optimalPPC)} mmHg`);
-                } else if (realBrainValues.ppc !== null) {
-                  fullParts.push(`PPC ${Math.round(realBrainValues.ppc)} mmHg`);
-                }
-                if (realBrainValues.pam !== null && realBrainValues.pam !== undefined) {
-                  fullParts.push(`PAM ${Math.round(realBrainValues.pam)} mmHg`);
-                }
-                const zoneLine = optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-                  ? `Zone d'autorégulation : ${Math.round(optimalPPCResult.lowerLimit)}–${Math.round(optimalPPCResult.upperLimit)} mmHg`
-                  : null;
+        <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cérébrales..." variant="skeleton">
+          <div className="space-y-4 mb-6">
+            {(() => {
+              const groups: Array<{ title: string; metricLabels: string[] }> = [
+                { title: "Pression intracrânienne et état neurologique", metricLabels: ["PIC", "PPC", "Glasgow (GCS)", "PaCO2"] },
+              ];
+              return groups.map((group) => {
+                const groupMetrics = brainMetrics.filter(m => group.metricLabels.includes(m.label));
+                if (groupMetrics.length === 0) return null;
+                const offTarget = groupMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax));
+                const abnormal = offTarget.length;
+                const isOpen = brainGroupsOpen[group.title] ?? false;
+
+                // Synthèse contextualisée : liste les paramètres hors cible avec direction
+                const formatVal = (v: number) => {
+                  const abs = Math.abs(v);
+                  if (abs >= 100) return Math.round(v).toString();
+                  if (abs >= 10) return (Math.round(v * 10) / 10).toString();
+                  return (Math.round(v * 100) / 100).toString();
+                };
+                // Tri par "écart relatif à la cible" → les plus critiques en premier
+                const offTargetSorted = [...offTarget].sort((a, b) => {
+                  const deviation = (m: typeof a) => {
+                    if (m.value > m.targetMax) return (m.value - m.targetMax) / Math.max(Math.abs(m.targetMax), 1);
+                    if (m.value < m.targetMin) return (m.targetMin - m.value) / Math.max(Math.abs(m.targetMin), 1);
+                    return 0;
+                  };
+                  return deviation(b) - deviation(a);
+                });
+                const renderItem = (m: typeof offTarget[number]) => {
+                  const arrow = m.value > m.targetMax ? "↑" : m.value < m.targetMin ? "↓" : "";
+                  return `${m.label} ${arrow}${formatVal(m.value)}`;
+                };
+                const COMPACT_LIMIT = 2;
+                const compactItems = offTargetSorted.slice(0, COMPACT_LIMIT).map(renderItem);
+                const remaining = offTargetSorted.length - compactItems.length;
+                const compactSummary = abnormal === 0
+                  ? "Tous les paramètres dans les cibles"
+                  : compactItems.join(" · ") + (remaining > 0 ? ` · +${remaining}` : "");
+                const fullSummary = abnormal === 0
+                  ? "Tous les paramètres dans les cibles"
+                  : offTargetSorted.map(renderItem).join(" · ");
 
                 return (
-                  <TooltipProvider delayDuration={150}>
-                    <UITooltip>
-                      <TooltipTrigger asChild>
-                        <span className="truncate cursor-help">{compact || "—"}</span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" align="start" className="p-2.5 max-w-[320px]">
-                        <div className="text-xs font-semibold text-foreground mb-1.5">Optimisation cérébrale</div>
-                        <div className="flex flex-col gap-1 text-xs">
-                          {fullParts.map((p) => (
-                            <div key={p} className="text-foreground tabular-nums">{p}</div>
-                          ))}
-                          {zoneLine && (
-                            <div className="text-muted-foreground mt-1 pt-1 border-t border-border/50 tabular-nums">{zoneLine}</div>
-                          )}
-                          {!fullParts.length && (
-                            <div className="text-muted-foreground">Aucune donnée disponible</div>
-                          )}
+                  <Card key={group.title} className="bg-card shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setBrainGroupsOpen(prev => ({ ...prev, [group.title]: !isOpen }))}
+                      className="w-full"
+                    >
+                      <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors gap-3">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <KpiCircle count={abnormal} groupLabel={group.title} />
+                          <div className="text-left min-w-0 flex-1">
+                            <div className="text-base font-semibold text-foreground">{group.title}</div>
+                            <TooltipProvider delayDuration={150}>
+                              <UITooltip>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className={`text-xs mt-0.5 truncate cursor-help ${abnormal === 0 ? "text-muted-foreground" : "text-status-critical font-medium"}`}
+                                  >
+                                    {compactSummary}
+                                  </div>
+                                </TooltipTrigger>
+                                {abnormal > 0 && (
+                                  <TooltipContent side="bottom" align="start" className="p-2.5 max-w-[320px]">
+                                    <div className="text-xs font-semibold text-foreground mb-1.5">
+                                      {abnormal} paramètre{abnormal > 1 ? "s" : ""} hors cible
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      {offTargetSorted.map(m => {
+                                        const arrow = m.value > m.targetMax ? "↑" : "↓";
+                                        const target = `cible ${formatVal(m.targetMin)}–${formatVal(m.targetMax)}`;
+                                        return (
+                                          <div key={m.label} className="flex items-center justify-between gap-3 text-xs">
+                                            <span className="font-medium">{m.label}</span>
+                                            <span className="text-status-critical tabular-nums">
+                                              {arrow}{formatVal(m.value)} <span className="text-muted-foreground font-normal">({target})</span>
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </TooltipContent>
+                                )}
+                              </UITooltip>
+                            </TooltipProvider>
+                          </div>
                         </div>
-                      </TooltipContent>
-                    </UITooltip>
-                  </TooltipProvider>
-                );
-              })()}
-              contentClassName="pt-0 px-4 sm:px-6 pb-4 space-y-5"
-            >
-
-              {/* No result to show. "En cours de calcul" only applies when a
-                  recording actually exists: without one, nothing is computing
-                  and saying otherwise would suggest a pending result. */}
-              {!optimalPPCResult.hasData && (
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-status-warning/10 border border-status-warning/30 mt-4">
-                  <AlertCircle className="h-5 w-5 text-status-warning shrink-0" />
-                  <div className="text-sm">
-                    <p className="font-medium text-foreground">
-                      {hasAutoregData
-                        ? "Données d'autorégulation en cours de calcul"
-                        : "Aucune donnée d'autorégulation pour ce patient"}
-                    </p>
-                    <p className="text-muted-foreground text-xs mt-0.5">
-                      {hasAutoregData
-                        ? "Les résultats d'optimisation cérébrale seront disponibles après environ 30 minutes de monitorage continu."
-                        : "Aucun enregistrement PIC/PAM (PRx) ni rSO₂/PAM (COx) n'est disponible : la PPC/PAM optimale ne peut pas être calculée."}
-                    </p>
-                  </div>
-                </div>
-              )}
-              
-              {/* Selectable Brain Metrics */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-6 pt-4">
-                {orderedBrainOptimisationMetrics.map((metric) => {
-                  const topLabel = (metric as any).topLabel as string | undefined;
-                  const criticalLabel =
-                    (metric as any).criticalLabel ||
-                    (topLabel && topLabel !== metric.displayValue ? topLabel : undefined);
-                  return (
-                    <SelectableMetricTile
-                      key={metric.label}
-                      label={metric.label}
-                      displayValue={metric.displayValue}
-                      unit={metric.unit}
-                      status={(metric.status as TileStatus) || 'normal'}
-                      criticalLabel={criticalLabel}
-                      criticalColor={(metric as any).criticalColor || 'text-muted-foreground'}
-                      isSelected={selectedBrainIndicators.includes(metric.label)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (metric.hasDetails) {
-                          setSelectedBrainIndicators((prev) =>
-                            prev.includes(metric.label) ? [] : [metric.label]
-                          );
-                        }
-                      }}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Embedded Charts */}
-              {selectedBrainIndicators.length > 0 && (
-                <div className="border-t border-border pt-4 space-y-4">
-                  <div className="text-sm font-semibold text-foreground">
-                    {selectedBrainIndicators.includes("Autorégulation") 
-                      ? "Courbe d'autorégulation" 
-                      : "Évolution temporelle"}
-                  </div>
-                  
-                  {/* Show AutoregulationChart when Autorégulation is selected */}
-                  {selectedBrainIndicators.includes("Autorégulation") && (
-                    <AutoregulationChart
-                      patientId={patientId}
-                      currentPPC={realBrainValues.ppc}
-                      currentPAM={realBrainValues.pam}
-                      pamMin={realBrainValues.pamMin}
-                      pamMax={realBrainValues.pamMax}
-                      timeRange={picDialogTimeRange}
-                      onTimeRangeChange={setPicDialogTimeRange}
-                      optimalPPC={optimalPPCResult.optimalPPC}
-                      lowerLimit={optimalPPCResult.lowerLimit}
-                      upperLimit={optimalPPCResult.upperLimit}
-                      hasData={optimalPPCResult.hasData}
-                      isNirsBased={isNirsBased}
-                    />
-                  )}
-                  
-                  {/* Show UnifiedBrainChart for other indicators */}
-                  {selectedBrainIndicators.some(i => i !== "Autorégulation") && (
-                    <UnifiedBrainChart
-                      patientId={patientId}
-                      timeRange={picDialogTimeRange}
-                      currentPIC={realBrainValues.pic}
-                      currentPAM={realBrainValues.pam}
-                      optimalPAM={optimalPPCResult.optimalPPC}
-                      lowerLimit={optimalPPCResult.lowerLimit}
-                      upperLimit={optimalPPCResult.upperLimit}
-                      autoregulationScore={optimalPPCResult.prxScore}
-                      isNirsBased={isNirsBased}
-                      selectedIndicators={selectedBrainIndicators.filter(i => i !== "Autorégulation")}
-                    />
-                  )}
-
-                  {/* Distribution bars under the chart, based on selected indicators */}
-                  {neurologicalStateConfig.hasData && (() => {
-                    const formatDur = (mins: number) =>
-                      mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? (mins % 60).toString().padStart(2, '0') : ''}` : `${mins} min`;
-                    const totalMinutes = Math.round(hoursForAdherence * 60);
-
-                    const neuroSegments = [
-                      { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, colorClass: 'bg-status-normal' },
-                      { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, colorClass: 'bg-status-warning' },
-                      { key: 'hyperemia', label: 'Hypérémie', pct: neurologicalStateConfig.history.hyperemia, colorClass: 'bg-amber-400' },
-                      { key: 'htic', label: 'HTIC', pct: neurologicalStateConfig.history.htic, colorClass: 'bg-status-warning' },
-                      { key: 'htic_ischemia', label: 'HTIC+Isch.', pct: neurologicalStateConfig.history.hticWithIschemia, colorClass: 'bg-status-critical' },
-                    ].filter(s => s.pct > 0);
-
-                    const picSegments = [
-                      { key: 'below20', label: '< 20 mmHg', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.minutes || 0, colorClass: 'bg-status-normal' },
-                      { key: 'range20_25', label: '20–25 mmHg', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.minutes || 0, colorClass: 'bg-status-warning' },
-                      { key: 'range25_30', label: '25–30 mmHg', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical/80' },
-                      { key: 'above30', label: '> 30 mmHg', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical' },
-                    ].filter(s => s.pct > 0);
-
-                    const showNeuro = selectedBrainIndicators.includes("État neurologique");
-                    const showPic = selectedBrainIndicators.includes("Niveau de PIC");
-
-                    if (!showNeuro && !showPic) return null;
-
-                    const renderBar = (title: string, segments: Array<{key: string; label: string; pct: number; minutes?: number; colorClass: string}>) => (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-foreground">{title}</span>
-                          <span className="text-[10px] text-muted-foreground">Répartition temporelle</span>
-                        </div>
-                        <div className="flex h-2 rounded-full overflow-hidden bg-muted">
-                          {segments.map(s => (
-                            <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} title={`${s.label} : ${s.pct}%`} />
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">
-                          {segments.map(s => {
-                            const mins = s.minutes ?? Math.round(totalMinutes * s.pct / 100);
+                        <ChevronDown
+                          className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${isOpen ? "rotate-180" : ""}`}
+                        />
+                      </div>
+                    </button>
+                    {isOpen && (
+                      <CardContent className="pt-4 border-t">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
+                          {groupMetrics.map((metric, index) => {
+                            const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
+                            const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
                             return (
-                              <div key={s.key} className="flex items-center gap-1.5 text-[11px]">
-                                <span className={`w-2 h-2 rounded-full ${s.colorClass} shrink-0`} />
-                                <span className="text-muted-foreground">{s.label}</span>
-                                <span className="font-medium tabular-nums text-foreground">{s.pct}%</span>
-                                <span className="text-muted-foreground tabular-nums">({formatDur(mins)})</span>
+                              <div key={index} className="flex flex-col items-center">
+                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
+                                </div>
+                                <MetricRangeBar
+                                  value={metric.value}
+                                  min={metric.min}
+                                  max={metric.max}
+                                  targetMin={metric.targetMin}
+                                  targetMax={metric.targetMax}
+                                />
                               </div>
                             );
                           })}
                         </div>
-                      </div>
-                    );
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              });
+            })()}
+          </div>
+        </DataLoadingOverlay>
 
-                    return (
-                      <div className="space-y-3 pt-2 border-t border-border">
-                        {showNeuro && neuroSegments.length > 0 && renderBar("État neurologique", neuroSegments)}
-                        {showPic && picSegments.length > 0 && renderBar("Niveau de PIC", picSegments)}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-            </CollapsibleModuleCard>
-          );
-        })()}
-
+        <VisitComparisonMatrix rows={visitComparisonRows} previousVisitAt={previousVisitAt} />
 
         <Card className="bg-card shadow-sm mb-6">
           <CardHeader className="px-4 sm:px-6">
@@ -1320,57 +1246,351 @@ const Optibrain = () => {
               <CardTitle className="text-base sm:text-lg">
                 Adhérence & Monitorage {timeRange === "stay" ? "sur le séjour" : `sur ${timeRange}`}
               </CardTitle>
-              <TimeWindowSelector
-                value={timeRange}
-                onChange={(value) => setTimeRange(value as any)}
-                includeStay={true}
-                size="sm"
-              />
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Période sélectionnée :</span>
+                <div className="inline-flex items-center h-7 text-xs rounded-lg border border-border overflow-hidden">
+                  {monitoringTimeWindow.hasRememberedRange && (
+                    <span
+                      className={`inline-flex items-center h-7 ${
+                        monitoringTimeWindow.isRangeSelected
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => monitoringTimeWindow.setRangeActive(true)}
+                        title="Revenir à la plage choisie sur le graphique"
+                        className="inline-flex items-center justify-center pl-2 pr-1 h-7 text-xs font-medium tabular-nums"
+                      >
+                        {format(new Date(monitoringTimeWindow.rangeStart!), "HH:mm", { locale: fr })}
+                        –
+                        {format(new Date(monitoringTimeWindow.rangeEnd!), "HH:mm", { locale: fr })}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={monitoringTimeWindow.resetRange}
+                        title="Supprimer la plage choisie"
+                        className="inline-flex items-center justify-center pr-2 pl-0.5 h-7 opacity-70 hover:opacity-100"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      monitoringTimeWindow.setRangeActive(false);
+                      setTimeRange("24h" as any);
+                    }}
+                    className={`inline-flex items-center justify-center px-2 min-w-[32px] h-7 text-xs font-medium transition-all ${
+                      monitoringTimeWindow.hasRememberedRange ? "border-l border-border" : ""
+                    } ${
+                      !monitoringTimeWindow.isRangeSelected && timeRange === "24h"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    24h
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      monitoringTimeWindow.setRangeActive(false);
+                      setTimeRange("stay" as any);
+                    }}
+                    className={`inline-flex items-center justify-center px-2 min-w-[32px] h-7 text-xs font-medium transition-all border-l border-border ${
+                      !monitoringTimeWindow.isRangeSelected && timeRange === "stay"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    Séjour
+                  </button>
+                </div>
+                <Button
+                  type="button"
+                  variant={monitoringEditing ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={() => setMonitoringEditing((v) => !v)}
+                >
+                  {monitoringEditing ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" />
+                      Terminer
+                    </>
+                  ) : (
+                    <>
+                      <Edit2 className="h-3.5 w-3.5" />
+                      Modifier le graphique
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Monitoring Targets - Moved to top */}
-            <CollapsibleModuleCard
-              variant="nested"
-              expanded={checklistExpanded}
-              onToggle={() => setChecklistExpanded(!checklistExpanded)}
-              headerIcon={
-                <KpiCircle
-                  count={monitoringAdherence !== null ? nonAdherentCount : 0}
-                  hasCritical={monitoringAdherence !== null && nonAdherentCount >= 3}
-                  groupLabel="Monitorage et interventions"
-                  itemLabel="indicateur"
-                />
-              }
-              title="Monitorage et interventions en place"
-              subtitle={
-                patientFileData
-                  ? (() => {
-                      const abnormal = monitoringTargets.filter(
-                        (t) => t.status !== null && t.status !== "normal"
-                      );
-                      if (abnormal.length > 0) {
-                        return (
-                          <span className="text-xs text-muted-foreground truncate">
-                            {abnormal.map((t, idx) => (
-                              <span key={t.label}>
-                                <span className={t.status === "critical" ? "text-status-critical font-semibold" : "text-status-warning font-semibold"}>
-                                  {t.label}
-                                </span>
-                                {idx < abnormal.length - 1 ? " • " : ""}
-                              </span>
-                            ))}
-                            {monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}
-                          </span>
-                        );
-                      }
-                      return `Tous les paramètres adhérents${monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}`;
-                    })()
-                  : "Pas de données disponibles"
-              }
-              contentClassName="pt-0 px-3 sm:px-6 pb-4"
-            >
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              {brainOptimisationMetrics.map((metric, index) => {
+                const statusColor = metric.status === "critical"
+                  ? "text-status-critical"
+                  : metric.status === "warning"
+                    ? "text-status-warning"
+                    : "text-foreground";
 
+                // Subtle status background for the card
+                const statusBg = metric.status === "critical"
+                  ? "bg-status-critical/5"
+                  : metric.status === "warning"
+                    ? "bg-status-warning/5"
+                    : "bg-muted/30";
+
+                return (
+                  <div key={index} className="flex flex-col gap-2">
+                    {/* Metric card */}
+                    <div
+                      className={`flex flex-col items-center cursor-pointer p-2 sm:p-2.5 rounded-lg transition-all border ${statusBg} border-transparent hover:border-border hover:shadow-sm`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (metric.hasDetails) {
+                          setOpenDialog(metric.dialogKey);
+                        }
+                      }}
+                    >
+                      {(metric as any).topLabel ? (
+                        <div className="text-[11px] sm:text-xs font-semibold text-foreground mb-1.5 text-center leading-tight">
+                          {(metric as any).topLabel}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-center">
+                          {metric.label}
+                        </div>
+                      )}
+                      <div className="flex items-baseline gap-1 justify-center">
+                        <div className={`text-base sm:text-xl font-bold ${statusColor} tabular-nums leading-tight text-center`}>
+                          {metric.displayValue}
+                        </div>
+                        {metric.unit && (
+                          <span className="text-[10px] text-muted-foreground font-medium">{metric.unit}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Détail partagé : n'importe lequel des 4 KPI ci-dessus ouvre ce
+                même pop-up plutôt que d'empiler les graphiques sur la page. */}
+            <Dialog open={openDialog === "autoreg-detail"} onOpenChange={(open) => !open && setOpenDialog(null)}>
+              <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Optimisation cérébrale</DialogTitle>
+                </DialogHeader>
+                {(() => {
+                  const formatDur = (mins: number) =>
+                    mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? (mins % 60).toString().padStart(2, '0') : ''}` : `${mins} min`;
+                  const totalMinutes = Math.round(hoursForAdherence * 60);
+
+                  const neuroSegments = [
+                    { key: 'controlled', label: 'Contrôlé', pct: neurologicalStateConfig.history.controlled, colorClass: 'bg-status-normal' },
+                    { key: 'ischemia', label: 'Ischémie', pct: neurologicalStateConfig.history.ischemia, colorClass: 'bg-status-warning' },
+                    { key: 'hyperemia', label: 'Hypérémie', pct: neurologicalStateConfig.history.hyperemia, colorClass: 'bg-amber-400' },
+                    { key: 'htic', label: 'HTIC', pct: neurologicalStateConfig.history.htic, colorClass: 'bg-status-warning' },
+                    { key: 'htic_ischemia', label: 'HTIC+Isch.', pct: neurologicalStateConfig.history.hticWithIschemia, colorClass: 'bg-status-critical' },
+                  ].filter(s => s.pct > 0);
+
+                  const picSegments = [
+                    { key: 'below20', label: '< 20 mmHg', pct: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '< 20 mmHg')?.minutes || 0, colorClass: 'bg-status-normal' },
+                    { key: 'range20_25', label: '20–25 mmHg', pct: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '20 - 25 mmHg')?.minutes || 0, colorClass: 'bg-status-warning' },
+                    { key: 'range25_30', label: '25–30 mmHg', pct: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '25 - 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical/80' },
+                    { key: 'above30', label: '> 30 mmHg', pct: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.percentage || 0, minutes: picRangeData.ranges.find(r => r.label === '> 30 mmHg')?.minutes || 0, colorClass: 'bg-status-critical' },
+                  ].filter(s => s.pct > 0);
+
+                  const renderDistribution = (segments: Array<{key: string; label: string; pct: number; minutes?: number; colorClass: string}>) => (
+                    <div className="space-y-1.5 mt-2.5">
+                      <div className="flex h-1.5 rounded-full overflow-hidden bg-muted">
+                        {segments.map(s => (
+                          <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} title={`${s.label} : ${s.pct}%`} />
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1">
+                        {segments.map(s => {
+                          const mins = s.minutes ?? Math.round(totalMinutes * s.pct / 100);
+                          return (
+                            <div key={s.key} className="flex items-center gap-1.5 text-[11px]">
+                              <span className={`w-2 h-2 rounded-full ${s.colorClass} shrink-0`} />
+                              <span className="text-muted-foreground">{s.label}</span>
+                              <span className="font-medium tabular-nums text-foreground">{s.pct}%</span>
+                              <span className="text-muted-foreground tabular-nums">({formatDur(mins)})</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+
+                  const pamLabel = isNirsBased ? "PAM" : "PPC";
+                  const pamCurrent = isNirsBased ? realBrainValues.pam : realBrainValues.ppc;
+                  const autoregStatus = !optimalPPCResult.hasData || optimalPPCResult.prxScore === null
+                    ? null
+                    : optimalPPCResult.prxScore < 0.3
+                      ? { label: "Autorégulation intacte", tone: "normal" as const }
+                      : optimalPPCResult.prxScore < 0.5
+                        ? { label: "Autorégulation altérée", tone: "warning" as const }
+                        : { label: "Autorégulation absente", tone: "critical" as const };
+                  const toneClass = { normal: "text-status-normal", warning: "text-status-warning", critical: "text-status-critical" };
+                  const toneBg = { normal: "bg-status-normal/5 border-status-normal/20", warning: "bg-status-warning/5 border-status-warning/20", critical: "bg-status-critical/5 border-status-critical/20" };
+
+                  const picStatusTone: "normal" | "warning" | "critical" =
+                    realBrainValues.pic === null ? "normal" : realBrainValues.pic >= 25 ? "critical" : realBrainValues.pic >= 20 ? "warning" : "normal";
+
+                  const neuroTone: "normal" | "warning" | "critical" =
+                    neurologicalStateConfig.currentState === "Contrôlé" ? "normal"
+                      : neurologicalStateConfig.currentState.includes("Ischémie") && neurologicalStateConfig.currentState.includes("HTIC") ? "critical"
+                      : "warning";
+
+                  return (
+                    <div className="space-y-0">
+                      {/* 1. PAM/PPC optimale — le levier actionnable */}
+                      <div className={`rounded-lg border p-4 ${toneBg[autoregStatus?.tone ?? "normal"]}`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Activity className="h-4 w-4 text-muted-foreground" />
+                          <h4 className="text-sm font-semibold text-foreground">{pamLabel} optimale — la cible à viser</h4>
+                        </div>
+                        {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null ? (
+                          <>
+                            <MetricRangeBar
+                              value={pamCurrent ?? optimalPPCResult.optimalPPC}
+                              min={Math.min(40, (optimalPPCResult.lowerLimit ?? 50) - 15)}
+                              max={Math.max(110, (optimalPPCResult.upperLimit ?? 80) + 15)}
+                              targetMin={optimalPPCResult.lowerLimit ?? optimalPPCResult.optimalPPC - 5}
+                              targetMax={optimalPPCResult.upperLimit ?? optimalPPCResult.optimalPPC + 5}
+                              unit="mmHg"
+                              showValuePointer
+                              valueSize="lg"
+                              maxWidth="100%"
+                            />
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {pamLabel} optimale <span className="font-semibold text-foreground">{Math.round(optimalPPCResult.optimalPPC)} mmHg</span>
+                              {optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null && (
+                                <> · zone {Math.round(optimalPPCResult.lowerLimit)}–{Math.round(optimalPPCResult.upperLimit)} mmHg</>
+                              )}
+                              {autoregStatus && <> · <span className={`font-medium ${toneClass[autoregStatus.tone]}`}>{autoregStatus.label}</span></>}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic">Données d'autorégulation en cours de calcul.</p>
+                        )}
+                      </div>
+
+                      <div className="flex justify-center py-1">
+                        <ArrowDown className="h-4 w-4 text-muted-foreground/50" />
+                      </div>
+
+                      {/* 2. Niveau de PIC — la conséquence à surveiller */}
+                      <div
+                        className={`rounded-lg border p-4 cursor-pointer transition-colors hover:brightness-95 ${toneBg[picStatusTone]}`}
+                        role="button"
+                        tabIndex={0}
+                        title="Voir le PIC dans le graphique de monitorage"
+                        onClick={() => openIndicatorsInChart(["PIC"])}
+                        onKeyDown={(e) => e.key === "Enter" && openIndicatorsInChart(["PIC"])}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                            <h4 className="text-sm font-semibold text-foreground">Niveau de PIC</h4>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">Voir dans le graphique →</span>
+                        </div>
+                        {realBrainValues.pic !== null ? (
+                          <MetricRangeBar
+                            value={Math.round(realBrainValues.pic * 10) / 10}
+                            min={0}
+                            max={Math.max(35, Math.round((realBrainValues.picMax ?? realBrainValues.pic) + 5))}
+                            targetMin={0}
+                            targetMax={20}
+                            unit="mmHg"
+                            showValuePointer
+                            valueSize="lg"
+                            maxWidth="100%"
+                          />
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic">Pas de valeur de PIC disponible.</p>
+                        )}
+                        {picSegments.length > 0 && renderDistribution(picSegments)}
+                      </div>
+
+                      <div className="flex justify-center py-1">
+                        <ArrowDown className="h-4 w-4 text-muted-foreground/50" />
+                      </div>
+
+                      {/* 3. État neurologique — le résultat clinique */}
+                      <div
+                        className={`rounded-lg border p-4 cursor-pointer transition-colors hover:brightness-95 ${toneBg[neuroTone]}`}
+                        role="button"
+                        tabIndex={0}
+                        title="Voir PIC et PPC dans le graphique de monitorage"
+                        onClick={() => openIndicatorsInChart(["PIC", "PPC"])}
+                        onKeyDown={(e) => e.key === "Enter" && openIndicatorsInChart(["PIC", "PPC"])}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-2">
+                            <Brain className="h-4 w-4 text-muted-foreground" />
+                            <h4 className="text-sm font-semibold text-foreground">État neurologique</h4>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">Voir dans le graphique →</span>
+                        </div>
+                        <div className={`text-xl font-bold ${toneClass[neuroTone]}`}>
+                          {neurologicalStateConfig.currentState}
+                        </div>
+                        {neurologicalStateConfig.currentStateSince && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Depuis {neurologicalStateConfig.currentStateSince}
+                          </p>
+                        )}
+                        {neuroSegments.length > 0 && renderDistribution(neuroSegments)}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </DialogContent>
+            </Dialog>
+
+            {/* Monitoring Targets - Moved to top */}
+            <Card className="border-2 border-border">
+              <CardHeader
+                className="py-3 px-4 sm:px-6 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => setChecklistExpanded(!checklistExpanded)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <KpiCircle
+                      count={monitoringAdherence !== null ? nonAdherentCount : 0}
+                      hasCritical={monitoringAdherence !== null && nonAdherentCount >= 3}
+                      groupLabel="Monitorage et interventions"
+                      itemLabel="indicateur"
+                    />
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">Monitorage et interventions en place</h3>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {patientFileData
+                          ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}${monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}`
+                          : "Pas de données disponibles"}
+                      </p>
+                    </div>
+                  </div>
+                  {checklistExpanded ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
+                  )}
+                </div>
+              </CardHeader>
+              {checklistExpanded && (
+                <CardContent className="pt-0 px-3 sm:px-6">
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 pt-4">
                     {monitoringTargets.map((target, index) => {
                       // Couleur basée sur le pourcentage d'adhérence: gris (≥90%), orange (80-89%), rouge (<80%)
@@ -1427,51 +1647,44 @@ const Optibrain = () => {
                       );
                     })}
                   </div>
-            </CollapsibleModuleCard>
+                </CardContent>
+              )}
+            </Card>
 
+            {/* "Relations cliniques" retiré pour le moment (encore présent :
+                src/ontology/, réutilisable si on le remet plus tard). */}
 
-            <CollapsibleModuleCard
-              variant="nested"
-              expanded={clinicalExpanded}
-              onToggle={() => setClinicalExpanded(!clinicalExpanded)}
-              headerIcon={
-                <KpiCircle
-                  count={clinicalAdherence !== null ? outOfRangeCount : 0}
-                  hasCritical={clinicalAdherence !== null && outOfRangeCount >= 3}
-                  groupLabel="Adhérence aux cibles"
-                  itemLabel="indicateur"
-                />
-              }
-              title="Adhérence aux cibles recommandées"
-              subtitle={
-                patientFileData
-                  ? (() => {
-                      const abnormal = clinicalIndicators.filter(
-                        (i) => i.status !== null && i.status !== "normal"
-                      );
-                      if (abnormal.length > 0) {
-                        return (
-                          <span className="text-xs text-muted-foreground truncate">
-                            {abnormal.map((i, idx) => (
-                              <span key={i.label}>
-                                <span className={i.status === "critical" ? "text-status-critical font-semibold" : "text-status-warning font-semibold"}>
-                                  {i.label}
-                                </span>
-                                {idx < abnormal.length - 1 ? " • " : ""}
-                              </span>
-                            ))}
-                            {clinicalAdherence !== null ? ` · ${clinicalAdherence}% d'adhérence` : ""}
-                          </span>
-                        );
-                      }
-                      return `Tous les indicateurs dans la cible${clinicalAdherence !== null ? ` · ${clinicalAdherence}% d'adhérence` : ""}`;
-                    })()
-                  : "Pas de données disponibles"
-              }
-              contentClassName="pt-0 px-3 sm:px-6 pb-4"
-            >
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 pt-4">
+            {/* Monitoring Chart */}
+            <Card ref={chartRef} className="border-2 border-border">
+              <CardHeader className="px-3 sm:px-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                    <CardTitle className="text-sm sm:text-lg">
+                      {timeRange === "stay" ? "Monitorage des cibles recommandées (Séjour)" : `Monitorage des cibles recommandées (${timeRange.toUpperCase()})`}
+                    </CardTitle>
+                    <label className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showTargetZones}
+                        onChange={(e) => setShowTargetZones(e.target.checked)}
+                        className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <span className="hidden sm:inline">Zones cibles</span>
+                      <span className="sm:hidden">Cibles</span>
+                    </label>
+                  </div>
+                  {fileDataLoading && (
+                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 self-start sm:self-auto">
+                      <span className="flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span className="hidden sm:inline">Chargement...</span>
+                      </span>
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="px-3 sm:px-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 pb-4">
                     {clinicalIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
                       const chartColor = isSelected ? getIndicatorColor(indicator.label) : null;
@@ -1538,45 +1751,11 @@ const Optibrain = () => {
                       );
                     })}
                   </div>
-            </CollapsibleModuleCard>
 
-
-            {/* Monitoring Chart */}
-            <Card ref={chartRef} className="border-2 border-border">
-              <CardHeader className="px-3 sm:px-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-                    <CardTitle className="text-sm sm:text-lg">
-                      {timeRange === "stay" ? "Monitorage (Séjour)" : `Monitorage (${timeRange.toUpperCase()})`}
-                    </CardTitle>
-                    <label className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={showTargetZones}
-                        onChange={(e) => setShowTargetZones(e.target.checked)}
-                        className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-border text-primary focus:ring-primary"
-                      />
-                      <span className="hidden sm:inline">Zones cibles</span>
-                      <span className="sm:hidden">Cibles</span>
-                    </label>
-                  </div>
-                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 self-start sm:self-auto">
-                    {fileDataLoading ? (
-                      <span className="flex items-center gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        <span className="hidden sm:inline">Chargement...</span>
-                      </span>
-                    ) : (
-                      getTimeRangeDisplayLabel(timeRange)
-                    )}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="px-3 sm:px-6">
                 <div
-                  className={`border-2 border-border rounded-lg p-2 sm:p-4 ${
+                  className={
                     selectedIndicators.length === 0 ? "h-24 sm:h-32" : "h-[250px] sm:h-[300px]"
-                  }`}
+                  }
                 >
                   {selectedIndicators.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
@@ -1585,7 +1764,14 @@ const Optibrain = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="h-full">
+                    <div className="h-full flex flex-col">
+                      <ChartZoomControls
+                        zoom={monitoringZoom}
+                        isEditing={monitoringEditing}
+                        onToggleEditing={() => setMonitoringEditing((v) => !v)}
+                        hideToggle
+                      />
+                      <div className="flex-1 min-h-0">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData}>
                           {/* Zones cibles en arrière-plan */}
@@ -1619,6 +1805,7 @@ const Optibrain = () => {
                             tickLine={false}
                           />
                           <YAxis
+                            domain={monitoringZoom.yDomain}
                             tick={{ fontSize: 11 }}
                             className="text-muted-foreground"
                             stroke="hsl(var(--muted-foreground))"
@@ -1690,8 +1877,21 @@ const Optibrain = () => {
                               />
                             );
                           })}
+                          {monitoringEditing && (
+                            <Brush
+                              dataKey="time"
+                              height={24}
+                              stroke="hsl(var(--primary))"
+                              travellerWidth={BRUSH_TOUCH_WIDTH}
+                              traveller={renderWideTouchTraveller}
+                              startIndex={monitoringTimeWindow.startIndex}
+                              endIndex={monitoringTimeWindow.endIndex}
+                              onChange={monitoringTimeWindow.onBrushChange}
+                            />
+                          )}
                         </LineChart>
                       </ResponsiveContainer>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1699,9 +1899,7 @@ const Optibrain = () => {
             </Card>
           </CardContent>
         </Card>
-
-
-        
+        </ChartTimeRangeProvider>
       </main>
     </div>
   );
