@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      autoreg_study_results: {
+        Row: {
+          computed_at: string
+          created_at: string
+          curve: Json | null
+          duration_hours: number | null
+          file_name: string | null
+          id: string
+          lower_limit: number | null
+          min_prx: number | null
+          mode: string
+          optimal_ppc: number | null
+          rolling: Json | null
+          sample_count: number | null
+          study_patient_code: string | null
+          study_patient_id: string
+          study_patient_label: string | null
+          upper_limit: number | null
+          user_id: string
+        }
+        Insert: {
+          computed_at?: string
+          created_at?: string
+          curve?: Json | null
+          duration_hours?: number | null
+          file_name?: string | null
+          id?: string
+          lower_limit?: number | null
+          min_prx?: number | null
+          mode?: string
+          optimal_ppc?: number | null
+          rolling?: Json | null
+          sample_count?: number | null
+          study_patient_code?: string | null
+          study_patient_id: string
+          study_patient_label?: string | null
+          upper_limit?: number | null
+          user_id: string
+        }
+        Update: {
+          computed_at?: string
+          created_at?: string
+          curve?: Json | null
+          duration_hours?: number | null
+          file_name?: string | null
+          id?: string
+          lower_limit?: number | null
+          min_prx?: number | null
+          mode?: string
+          optimal_ppc?: number | null
+          rolling?: Json | null
+          sample_count?: number | null
+          study_patient_code?: string | null
+          study_patient_id?: string
+          study_patient_label?: string | null
+          upper_limit?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       patient_clinical_info: {
         Row: {
           data: Json

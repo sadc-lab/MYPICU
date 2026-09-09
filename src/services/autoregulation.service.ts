@@ -19,6 +19,13 @@ export interface OptimalPPCResult {
   prxScore: number | null;
   timestamp: string | null;
   hasData: boolean;
+  // Limits are often unidentifiable over a whole recording: the pressure range
+  // never crosses the threshold on both sides of the optimum. These carry the most
+  // recent rolling-window estimate so the UI can show a labelled value instead of
+  // inventing a range — the same convention as the study page.
+  lowerLimitLastWindow?: number | null;
+  upperLimitLastWindow?: number | null;
+  lastWindowAt?: string | null;
 }
 
 // Raw data structure from JSON file
@@ -26,29 +33,33 @@ interface RawAutoregulationEntry {
   [key: string]: string;
 }
 
+// The Fisher table is located by name (any key containing "Fisher"), so no
+// patient-specific key needs to be declared here.
 interface AutoregulationFileData {
-  P8448_Full_AR_Table_3min_Fisher?: RawAutoregulationEntry[];
   [key: string]: RawAutoregulationEntry[] | undefined;
 }
 
 // Cache for loaded autoregulation data
 const autoregulationCache = new Map<string, AutoregulationFileData>();
 
-// Available patient IDs with autoregulation data files (PRx-based)
-const AVAILABLE_AUTOREGULATION_PATIENTS = ["8448"];
+// Patient IDs shipping a PRx (invasive PIC/PAM) Fisher export in public/, as
+// `autoregulation_ppc_optimale_<id>.json`. Empty for now: the only such file was
+// patient 8448's, whose PAM, PPC and PRx columns were entirely empty (no ICP
+// catheter — PIC was a constant 0), so it could never yield a PPCopt. Add an id
+// back here only once a real export with populated PIC/PAM/PRx accompanies it.
+const AVAILABLE_AUTOREGULATION_PATIENTS: string[] = [];
 
 // Patient IDs using NIRS-based autoregulation (COx)
 const NIRS_AUTOREGULATION_PATIENTS = ["8749"];
 
-// Enable simulation mode for all patients when no real data exists
-const ENABLE_SIMULATION_FALLBACK = true;
-
+// Clinical safety: only patients with a real recording are declared as having
+// autoregulation data. No simulated/demo values are ever produced — a patient
+// without usable signal must show an explicit "no data" state, never a curve
+// that could be mistaken for their own measurements.
 export function hasAutoregulationData(patientId: string): boolean {
   const normalizedId = patientId.replace("#", "");
-  // Return true if real data exists (PRx or NIRS) OR simulation is enabled
-  return AVAILABLE_AUTOREGULATION_PATIENTS.includes(normalizedId) || 
-         NIRS_AUTOREGULATION_PATIENTS.includes(normalizedId) ||
-         ENABLE_SIMULATION_FALLBACK;
+  return AVAILABLE_AUTOREGULATION_PATIENTS.includes(normalizedId) ||
+         NIRS_AUTOREGULATION_PATIENTS.includes(normalizedId);
 }
 
 export function isNirsBasedPatient(patientId: string): boolean {
@@ -217,7 +228,18 @@ export function getOptimalPPCTimeSeries(
     const ppc = parseNumericValue(row.get("PPC") || "");
     const pam = parseNumericValue(row.get("PAM") || "");
     const prx = parseNumericValue(row.get("PRx") || row.get(`PRx_${windowMinutes}min`) || "");
-    
+
+    // Rows with no pressure, no PRx and no computed limit carry nothing this
+    // series can plot (PIC alone is charted elsewhere): keeping them would hand
+    // the chart a run of nulls, which reads as "data available" while nothing is
+    // drawable. Drop them so callers see a truly empty series.
+    if (
+      ppc === null && pam === null && prx === null &&
+      optimalPPC === null && lla === null && ula === null
+    ) {
+      continue;
+    }
+
     result.push({
       horodate: new Date(normalizedTime).toISOString(),
       pic,
@@ -302,9 +324,10 @@ export function getAutoregulationCurveData(
     }
   }
   
-  // If no real data, use simulated data for demo purposes
+  // No usable PPC/PRx pair in the file (empty or already-computed export):
+  // return an empty result so the UI shows "no data" instead of a curve.
   if (ppcPrxPairs.length === 0) {
-    return getSimulatedAutoregulationCurve();
+    return defaultResult;
   }
   
   // Group by PPC bins and calculate mean PRx
@@ -371,53 +394,6 @@ export function getAutoregulationCurveData(
   };
 }
 
-// Generate simulated U-shaped autoregulation curve for demo/testing
-function getSimulatedAutoregulationCurve(): {
-  curveData: AutoregulationCurvePoint[];
-  optimalPPC: number | null;
-  lowerLimit: number | null;
-  upperLimit: number | null;
-  minPrx: number | null;
-} {
-  // Simulate a typical U-shaped PRx vs PPC curve
-  // Optimal PPC around 65 mmHg with good autoregulation (PRx < 0.3)
-  const curveData: AutoregulationCurvePoint[] = [];
-  
-  // U-shaped curve: high PRx at low PPC, low at optimal, high at high PPC
-  const simulatedData = [
-    { ppc: 35, prx: 0.65, count: 12 },
-    { ppc: 40, prx: 0.55, count: 18 },
-    { ppc: 45, prx: 0.42, count: 24 },
-    { ppc: 50, prx: 0.32, count: 35 },
-    { ppc: 55, prx: 0.22, count: 48 },
-    { ppc: 60, prx: 0.12, count: 62 },
-    { ppc: 65, prx: 0.05, count: 75 }, // Optimal - lowest PRx
-    { ppc: 70, prx: 0.10, count: 58 },
-    { ppc: 75, prx: 0.18, count: 42 },
-    { ppc: 80, prx: 0.28, count: 32 },
-    { ppc: 85, prx: 0.38, count: 22 },
-    { ppc: 90, prx: 0.48, count: 15 },
-    { ppc: 95, prx: 0.58, count: 10 },
-  ];
-  
-  // Add some random variation for realism
-  for (const point of simulatedData) {
-    const variation = (Math.random() - 0.5) * 0.08;
-    curveData.push({
-      ppc: point.ppc,
-      prx: Math.round((point.prx + variation) * 100) / 100,
-      count: point.count,
-    });
-  }
-  
-  return {
-    curveData,
-    optimalPPC: 65,
-    lowerLimit: 52, // LLA where PRx crosses 0.3
-    upperLimit: 82, // ULA where PRx crosses 0.3
-    minPrx: 0.05,
-  };
-}
 
 // Re-export the parseCSVRow function for external use
 export { parseCSVRow };
