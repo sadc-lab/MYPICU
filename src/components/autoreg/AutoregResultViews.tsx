@@ -7,6 +7,7 @@
 // these components only render an AutoregResult.
 
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 import {
   ComposedChart,
   Line,
@@ -514,6 +515,12 @@ export const AutoregCurveChart = ({
         onToggleEditing={() => setIsEditing((v) => !v)}
         className="mb-2"
       />
+      <div
+        className={cn(
+          "rounded-lg transition-colors",
+          isEditing && "border-2 border-primary/60 bg-primary/5 p-2",
+        )}
+      >
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={result.curve} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
@@ -589,6 +596,7 @@ export const AutoregCurveChart = ({
             )}
           </ComposedChart>
         </ResponsiveContainer>
+      </div>
       </div>
       <ChartLegend labels={labels} result={result} />
     </>

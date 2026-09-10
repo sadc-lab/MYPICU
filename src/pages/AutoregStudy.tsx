@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 import { Header } from '@/components/Header';
 import { StudyNav } from '@/components/study/StudyNav';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -1006,9 +1007,18 @@ const AutoregStudy = () => {
                     onToggleEditing={() => setRollingEditing((v) => !v)}
                     className="mb-2"
                   />
+                  <div
+                    className={cn(
+                      "rounded-lg transition-colors",
+                      rollingEditing && "border-2 border-primary/60 bg-primary/5 p-2",
+                    )}
+                  >
                   <div className={rollingEditing ? "h-[344px]" : "h-[320px]"}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={rollingChartData} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
+                      <ComposedChart
+                        data={rollingEditing ? rollingChartData : rollingTimeWindow.visibleData}
+                        margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
+                      >
                         <defs>
                           <linearGradient id="rollingZoneGradient" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.25} />
@@ -1081,6 +1091,7 @@ const AutoregStudy = () => {
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
+                  </div>
                 </CardContent>
               </Card>
               </TabsContent>
@@ -1100,9 +1111,18 @@ const AutoregStudy = () => {
                   onToggleEditing={() => setTimeSeriesEditing((v) => !v)}
                   className="mb-2"
                 />
+                <div
+                  className={cn(
+                    "rounded-lg transition-colors",
+                    timeSeriesEditing && "border-2 border-primary/60 bg-primary/5 p-2",
+                  )}
+                >
                 <div className={timeSeriesEditing ? "h-[344px]" : "h-[320px]"}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={timeSeriesChartData} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
+                    <ComposedChart
+                      data={timeSeriesEditing ? timeSeriesChartData : timeSeriesTimeWindow.visibleData}
+                      margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                       <XAxis
                         dataKey="t"
@@ -1145,6 +1165,7 @@ const AutoregStudy = () => {
                       )}
                     </ComposedChart>
                   </ResponsiveContainer>
+                </div>
                 </div>
               </CardContent>
             </Card>

@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { usePatient } from '@/hooks/usePatients';
 import { usePatientCustomView } from '@/hooks/usePatientCustomView';
-import { useLastViewed } from '@/hooks/useLastViewed';
 import {
   hasPatientFileData,
   loadPatientFileData,
@@ -82,7 +81,6 @@ const Optistate = () => {
   const patientId = searchParams.get('patient') || '#25';
   const { data: patient, isLoading } = usePatient(patientId);
   const { overrides, getOverride, setOverride, clearOverride } = usePatientCustomView(patientId);
-  const { previousVisitAt } = useLastViewed(patientId);
 
   // Vraies données cérébrales, quand elles existent, pour une comparaison
   // avant/maintenant honnête dans "Assembler les modules" — les autres
@@ -156,27 +154,12 @@ const Optistate = () => {
   // entre les deux pages plutôt que de corriger silencieusement ici.
   const brainClinicalStatuses = patientFileData ? getClinicalIndicatorsStatus(patientFileData, 24) : null;
 
-  // Valeur "avant" (au moment de la dernière visite) par label, pour la
-  // comparaison dans "Assembler les modules". Reste vide si pas de
-  // vraies données ou pas de visite précédente enregistrée.
-  const brainPreviousValues: Record<string, number | null> = {};
-
   const realBrainIndicators: Indicator[] | null = patientFileData
     ? BRAIN_CLINICAL_TARGETS.map(({ label, target }) => {
         const variableKey = getVariableKeyFromLabel(label);
         if (!variableKey || !patientFileData[variableKey]) return null;
         const latest = getLatestValue(patientFileData, variableKey);
         if (!latest) return null;
-
-        if (previousVisitAt) {
-          const cutoff = previousVisitAt.getTime();
-          const series = getAllTimeSeriesData(patientFileData, variableKey, 24 * 30, true);
-          const before = [...series]
-            .sort((a, b) => new Date(a.charttime).getTime() - new Date(b.charttime).getTime())
-            .reverse()
-            .find((p) => new Date(p.charttime).getTime() <= cutoff);
-          brainPreviousValues[label] = before ? before.valeur : null;
-        }
 
         const statusEntry = brainClinicalStatuses?.find((s) => s.label === label);
         return {
@@ -337,11 +320,9 @@ const Optistate = () => {
   const allFailingIndicators = [
     ...allModules.flatMap((m) =>
       m.indicators.map((ind) => {
-        // Comparaison "avant/maintenant" seulement pour le cerveau avec de
-        // vraies données — les autres modules restent statiques, donc pas
-        // de valeur "avant" à inventer pour eux.
-        const hasComparison = m.key === 'optibrain' && realBrainIndicators !== null && !!previousVisitAt;
-        const previousValue = hasComparison ? brainPreviousValues[ind.label] ?? null : undefined;
+        // Comparaison "avant/maintenant" (dernière visite) retirée pour le
+        // moment sur tous les modules — useLastViewed reste intact pour la
+        // remettre facilement.
         return {
           label: ind.label,
           module: m.key,
@@ -349,8 +330,8 @@ const Optistate = () => {
           trend: ind.trend,
           value: ind.value,
           unit: ind.unit,
-          previousValue,
-          changed: hasComparison ? previousValue !== ind.value : undefined,
+          previousValue: undefined as number | null | undefined,
+          changed: undefined as boolean | undefined,
         };
       }),
     ),

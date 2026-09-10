@@ -53,9 +53,9 @@ import {
   PatientFileData,
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
-import { useLastViewed } from "@/hooks/useLastViewed";
 import { useYAxisZoom } from "@/hooks/useYAxisZoom";
 import { useSharedTimeWindow } from "@/hooks/useSharedTimeWindow";
+import { cn } from "@/lib/utils";
 import { ChartTimeRangeProvider } from "@/contexts/ChartTimeRangeContext";
 import { ChartZoomControls } from "@/components/ChartZoomControls";
 import { BRUSH_TOUCH_WIDTH, renderWideTouchTraveller } from "@/lib/chartBrushTraveller";
@@ -73,17 +73,17 @@ import { TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { VitalSignsPanel } from "@/components/VitalSignsPanel";
-import { VisitComparisonMatrix } from "@/components/VisitComparisonMatrix";
-import { CriticalChangesBanner } from "@/components/CriticalChangesBanner";
 // "Relations cliniques" retiré pour le moment — src/ontology/ reste intact
 // (getRelatedNodes, getOntologyNodeByVariableKey) pour le remettre facilement.
+// "Dernières visites" (comparaison depuis la dernière visite) retiré pour le
+// moment sur tous les modules — CriticalChangesBanner, VisitComparisonMatrix
+// et useLastViewed restent intacts pour le remettre facilement.
 
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
   const metricParam = searchParams.get("metric");
   const { data: patient, isLoading: patientLoading } = usePatient(patientId);
-  const { previousVisitAt } = useLastViewed(patientId);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
@@ -492,39 +492,6 @@ const Optibrain = () => {
       };
     });
   }, [clinicalIndicatorsData, patientFileData, hoursForAdherence]);
-
-  // Comparaison avec la dernière visite de ce clinicien sur ce patient :
-  // valeur à ce moment-là vs valeur actuelle, pour chaque indicateur réel.
-  // Rien lors d'une toute première visite (previousVisitAt encore null).
-  const visitComparisonRows = useMemo(() => {
-    if (!patientFileData || !previousVisitAt) return [];
-    const cutoff = previousVisitAt.getTime();
-
-    return clinicalIndicators
-      .map((indicator) => {
-        const variableKey = getVariableKeyFromLabel(indicator.label);
-        if (!variableKey || !patientFileData[variableKey]) return null;
-
-        const series = getAllTimeSeriesData(patientFileData, variableKey, 24 * 30, true)
-          .slice()
-          .sort((a, b) => new Date(a.charttime).getTime() - new Date(b.charttime).getTime());
-        if (series.length === 0) return null;
-
-        const before = [...series].reverse().find((p) => new Date(p.charttime).getTime() <= cutoff);
-        const current = series[series.length - 1];
-        const hasNewPoint = new Date(current.charttime).getTime() > cutoff;
-
-        return {
-          label: indicator.label,
-          target: indicator.target,
-          status: indicator.status,
-          previousValue: before ? before.valeur : null,
-          currentValue: current.valeur,
-          changed: hasNewPoint && (before ? before.valeur !== current.valeur : true),
-        };
-      })
-      .filter((row): row is NonNullable<typeof row> => row !== null);
-  }, [clinicalIndicators, patientFileData, previousVisitAt]);
 
   // Calculate overall monitoring adherence (average of targets with real data only)
   const monitoringAdherence = useMemo(() => {
@@ -1104,14 +1071,6 @@ const Optibrain = () => {
           <VitalSignsPanel />
         </div>
 
-        <div className="mb-6">
-          <CriticalChangesBanner
-            rows={visitComparisonRows}
-            previousVisitAt={previousVisitAt}
-            onSelect={(label) => openIndicatorsInChart([label])}
-          />
-        </div>
-
         <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cérébrales..." variant="skeleton">
           <div className="space-y-4 mb-6">
             {(() => {
@@ -1237,8 +1196,6 @@ const Optibrain = () => {
             })()}
           </div>
         </DataLoadingOverlay>
-
-        <VisitComparisonMatrix rows={visitComparisonRows} previousVisitAt={previousVisitAt} />
 
         <Card className="bg-card shadow-sm mb-6">
           <CardHeader className="px-4 sm:px-6">
@@ -1771,9 +1728,14 @@ const Optibrain = () => {
                         onToggleEditing={() => setMonitoringEditing((v) => !v)}
                         hideToggle
                       />
-                      <div className="flex-1 min-h-0">
+                      <div
+                        className={cn(
+                          "flex-1 min-h-0 rounded-lg transition-colors",
+                          monitoringEditing && "border-2 border-primary/60 bg-primary/5 p-2",
+                        )}
+                      >
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData}>
+                        <LineChart data={monitoringEditing ? chartData : monitoringTimeWindow.visibleData}>
                           {/* Zones cibles en arrière-plan */}
                           {showTargetZones && selectedIndicators.map((label) => {
                             const indicator = clinicalIndicators.find((i) => i.label === label);
