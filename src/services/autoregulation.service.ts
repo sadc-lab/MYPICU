@@ -19,6 +19,13 @@ export interface OptimalPPCResult {
   prxScore: number | null;
   timestamp: string | null;
   hasData: boolean;
+  // Limits are often unidentifiable over a whole recording: the pressure range
+  // never crosses the threshold on both sides of the optimum. These carry the most
+  // recent rolling-window estimate so the UI can show a labelled value instead of
+  // inventing a range — the same convention as the study page.
+  lowerLimitLastWindow?: number | null;
+  upperLimitLastWindow?: number | null;
+  lastWindowAt?: string | null;
 }
 
 // Raw data structure from JSON file
