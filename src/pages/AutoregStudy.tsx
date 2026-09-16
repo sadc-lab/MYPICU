@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Header } from '@/components/Header';
 import { StudyNav } from '@/components/study/StudyNav';
@@ -141,6 +142,8 @@ const AutoregStudy = () => {
   const [parsing, setParsing] = useState(false);
   const [activeTab, setActiveTab] = useState('curve');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const testedCount = Object.keys(analysisByPatient).length;
 
   const current = active ? analysisByPatient[active.id] ?? null : null;
   const result = current?.result ?? null;
@@ -627,13 +630,48 @@ const AutoregStudy = () => {
 
       {/* Landing hero */}
       <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/5 via-background to-background">
-        <div className="container mx-auto max-w-5xl px-4 pt-10 sm:pt-16 pb-4 text-center">
+        <div className="container mx-auto max-w-5xl px-4 pt-10 sm:pt-16 pb-8 text-center">
           <Badge variant="outline" className="mb-3">
             Étude clinique · Usage recherche uniquement
           </Badge>
           <h1 className="text-3xl sm:text-5xl font-bold text-foreground tracking-tight mb-2">
             Validation clinique de l'autorégulation cérébrale
           </h1>
+          <p className="max-w-2xl mx-auto text-sm sm:text-base text-muted-foreground mb-6">
+            Cet espace permet à l'équipe des soins intensifs de tester l'algorithme
+            d'autorégulation (PRx/COx) sur des données réelles avant toute intégration
+            permanente au tableau de bord Optibrain.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-4xl mx-auto text-left">
+            <FlowStepCard
+              n={1}
+              title="Tester"
+              desc="Ajoutez un ou plusieurs patients et importez leurs données (fichier, ou enregistrement de l'unité) pour générer la courbe PRx/COx."
+              status={testedCount === 0 ? 'current' : 'done'}
+            />
+            <FlowStepCard
+              n={2}
+              title="Valider en équipe"
+              desc={
+                testedCount > 0
+                  ? `${testedCount} sujet${testedCount > 1 ? 's' : ''} analysé${testedCount > 1 ? 's' : ''} dans cette session. Comparez les limites LLA/ULA obtenues à votre jugement clinique sur plusieurs patients.`
+                  : 'Comparez les limites LLA/ULA obtenues à votre jugement clinique, sur plusieurs patients, avant de conclure à la fiabilité de l’outil.'
+              }
+              status={testedCount === 0 ? 'upcoming' : 'current'}
+            />
+            <FlowStepCard
+              n={3}
+              title="Intégrer à MyPICU"
+              desc="Une fois l'équipe satisfaite des résultats, signalez-le pour que l'autorégulation soit ajoutée de façon permanente au tableau de bord Optibrain."
+              status="upcoming"
+              cta={
+                <Button asChild size="sm" variant="outline" className="mt-2">
+                  <Link to="/feedback">Signaler à l'équipe</Link>
+                </Button>
+              }
+            />
+          </div>
         </div>
       </section>
 
@@ -1263,6 +1301,48 @@ const AutoregStudy = () => {
     </div>
   );
 };
+
+const FlowStepCard = ({
+  n,
+  title,
+  desc,
+  status,
+  cta,
+}: {
+  n: number;
+  title: string;
+  desc: string;
+  status: 'done' | 'current' | 'upcoming';
+  cta?: React.ReactNode;
+}) => (
+  <div
+    className={cn(
+      'rounded-lg border bg-card p-4',
+      status === 'current' && 'border-primary/50 ring-1 ring-primary/20',
+    )}
+  >
+    <div className="flex items-center gap-2 mb-1">
+      <span
+        className={cn(
+          'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+          status === 'done'
+            ? 'bg-primary/15 text-primary'
+            : status === 'current'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-muted-foreground',
+        )}
+      >
+        {status === 'done' ? <CheckCircle2 className="h-3.5 w-3.5" /> : n}
+      </span>
+      <span className="font-semibold text-foreground text-sm">{title}</span>
+      {status === 'current' && (
+        <Badge variant="secondary" className="ml-auto text-[10px]">En cours</Badge>
+      )}
+    </div>
+    <p className="text-xs sm:text-sm text-muted-foreground leading-snug">{desc}</p>
+    {cta}
+  </div>
+);
 
 const FeatureCard = ({
   icon,
