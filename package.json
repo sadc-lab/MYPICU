@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "teams:package": "node scripts/package-teams-app.mjs"
+    "teams:package": "node scripts/package-teams-app.mjs",
+    "teams:package:study": "TEAMS_MANIFEST=study node scripts/package-teams-app.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
