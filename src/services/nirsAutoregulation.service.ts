@@ -1,5 +1,27 @@
-// Service to handle NIRS-based autoregulation data (COx calculation)
-// Different from PRx-based autoregulation which uses PPC
+// NIRS-based autoregulation (COx) for the Optibrain dashboard.
+//
+// This module used to carry its own correlation/binning implementation, which
+// disagreed with the study page on the same recording — patient 8749 read as
+// PAMopt 35 mmHg (zone 10–93) here and 45 mmHg there. Four causes:
+//   1. rows missing rSO₂ or PAM were dropped *before* windowing, so a 30-sample
+//      window no longer spanned a comparable stretch of real time;
+//   2. the window was expressed in minutes here, in samples there;
+//   3. no physiological filter, so a bin at PAM = −15 mmHg was kept;
+//   4. no robustness floor, so a 13-sample bin outranked a 562-sample one, and
+//      absent LLA/ULA were replaced by invented range midpoints.
+//
+// It now delegates every computation to autoregComputation.service, the engine
+// behind the study page, so both screens report the same numbers for the same
+// recording. Only loading, caching and dashboard-shaped output live here.
+
+import {
+  parseAny,
+  computeIndex,
+  buildCurve,
+  analyzeCurve,
+  rollingOptimal,
+  type RawSample,
+} from "./autoregComputation.service";
 
 export interface NirsDataPoint {
   timestamp: string;
@@ -11,19 +33,30 @@ export interface NirsCurvePoint {
   pam: number;
   cox: number;
   count: number;
+  /** Bin holds ≥ 2 % of the usable data; only these drive PAMopt and the limits. */
+  robust: boolean;
 }
 
 export interface NirsAutoregulationResult {
   curveData: NirsCurvePoint[];
   optimalPAM: number | null;
-  lowerLimit: number | null;  // LLA
-  upperLimit: number | null;  // ULA
+  lowerLimit: number | null;
+  upperLimit: number | null;
   minCox: number | null;
+  /** False when the curve never dips below the threshold: no interpretable optimum. */
+  plateauValid: boolean;
+  robustBins: number;
   hasRealData: boolean;
 }
 
-// Cache for loaded CSV data
-const nirsDataCache = new Map<string, NirsDataPoint[]>();
+// Correlation window, in samples — the same value the study page uses, so the
+// two screens compute COx over identical spans. Expressing it in minutes was one
+// of the reasons the numbers diverged.
+const COX_WINDOW_SAMPLES = 30;
+const BIN_SIZE = 5;
+
+// Cache of parsed recordings, keyed by normalized patient id.
+const nirsSampleCache = new Map<string, RawSample[]>();
 
 // Patient IDs with NIRS autoregulation data
 const NIRS_AUTOREGULATION_PATIENTS = ["8749"];
@@ -33,249 +66,172 @@ export function hasNirsAutoregulationData(patientId: string): boolean {
   return NIRS_AUTOREGULATION_PATIENTS.includes(normalizedId);
 }
 
-// Parse CSV content to raw data points
-function parseNirsCsv(csvContent: string): NirsDataPoint[] {
-  const lines = csvContent.trim().split('\n');
-  const result: NirsDataPoint[] = [];
-  
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    
-    const parts = line.split(',');
-    const timestamp = parts[0];
-    const nirs = parts[1] && parts[1].trim() !== '' ? parseFloat(parts[1]) : null;
-    const pam = parts[2] && parts[2].trim() !== '' ? parseFloat(parts[2]) : null;
-    
-    // Only include rows with actual data
-    if (nirs !== null && pam !== null) {
-      result.push({ timestamp, nirs, pam });
-    }
-  }
-  
-  return result;
-}
-
-// Load NIRS data from CSV file
-export async function loadNirsData(patientId: string): Promise<NirsDataPoint[]> {
+/**
+ * Loads the patient's raw recording as samples, parsed exactly as the study page
+ * parses an imported file — every timestamped row is kept, gaps included, so the
+ * correlation windows match on both screens.
+ */
+export async function loadNirsSamples(patientId: string): Promise<RawSample[]> {
   const normalizedId = patientId.replace("#", "");
-  
-  if (nirsDataCache.has(normalizedId)) {
-    return nirsDataCache.get(normalizedId)!;
-  }
-  
+
+  const cached = nirsSampleCache.get(normalizedId);
+  if (cached) return cached;
+
   try {
     const response = await fetch(`/data/autoregulation_raw_${normalizedId}.csv`);
     if (!response.ok) {
       console.warn(`NIRS data not found for patient: ${normalizedId}`);
       return [];
     }
-    
-    const csvContent = await response.text();
-    const data = parseNirsCsv(csvContent);
-    nirsDataCache.set(normalizedId, data);
-    return data;
+    const text = await response.text();
+    // vercel.json rewrites unknown paths to index.html, so a 200 is not proof the
+    // file exists — the body has to be checked as well.
+    if (!text.trim() || text.trimStart().startsWith("<")) return [];
+
+    const samples = parseAny(text);
+    nirsSampleCache.set(normalizedId, samples);
+    return samples;
   } catch (error) {
     console.error(`Error loading NIRS data for patient: ${normalizedId}`, error);
     return [];
   }
 }
 
-// Calculate Pearson correlation coefficient
-function calculateCorrelation(x: number[], y: number[]): number {
-  if (x.length !== y.length || x.length < 3) return 0;
-  
-  const n = x.length;
-  const sumX = x.reduce((a, b) => a + b, 0);
-  const sumY = y.reduce((a, b) => a + b, 0);
-  const sumXY = x.reduce((a, b, i) => a + b * y[i], 0);
-  const sumX2 = x.reduce((a, b) => a + b * b, 0);
-  const sumY2 = y.reduce((a, b) => a + b * b, 0);
-  
-  const numerator = n * sumXY - sumX * sumY;
-  const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-  
-  if (denominator === 0) return 0;
-  return numerator / denominator;
+/**
+ * Complete rSO₂ + PAM pairs, for readouts that need actual measured values
+ * (current value, 24 h range) rather than a correlation input.
+ */
+export async function loadNirsData(patientId: string): Promise<NirsDataPoint[]> {
+  const samples = await loadNirsSamples(patientId);
+  return samples
+    .filter((s) => s.nirs !== null && s.pam !== null)
+    .map((s) => ({ timestamp: s.time.toISOString(), nirs: s.nirs, pam: s.pam }));
 }
 
-// Calculate COx (correlation between NIRS and PAM) for each data point
-function calculateCOxValues(data: NirsDataPoint[], windowMinutes: number): (number | null)[] {
-  const result: (number | null)[] = [];
-  const windowMs = windowMinutes * 60 * 1000;
-  
-  for (let i = 0; i < data.length; i++) {
-    const currentTime = new Date(data[i].timestamp).getTime();
-    const windowStart = currentTime - windowMs;
-    
-    const nirsValues: number[] = [];
-    const pamValues: number[] = [];
-    
-    for (let j = i; j >= 0; j--) {
-      const pointTime = new Date(data[j].timestamp).getTime();
-      if (pointTime < windowStart) break;
-      
-      if (data[j].nirs !== null && data[j].pam !== null) {
-        nirsValues.push(data[j].nirs);
-        pamValues.push(data[j].pam);
-      }
-    }
-    
-    // Need at least 5 points for meaningful correlation
-    if (nirsValues.length >= 5) {
-      const cox = calculateCorrelation(nirsValues, pamValues);
-      result.push(Math.round(cox * 100) / 100);
-    } else {
-      result.push(null);
-    }
-  }
-  
-  return result;
-}
-
-// Build the autoregulation curve (COx vs PAM)
+/** COx-vs-PAM curve over the whole recording. */
 export function buildNirsAutoregulationCurve(
-  data: NirsDataPoint[],
-  windowMinutes: number = 30,
-  binSize: number = 5
+  samples: RawSample[],
+  windowSamples: number = COX_WINDOW_SAMPLES,
+  binSize: number = BIN_SIZE,
 ): NirsAutoregulationResult {
-  const defaultResult: NirsAutoregulationResult = {
+  const empty: NirsAutoregulationResult = {
     curveData: [],
     optimalPAM: null,
     lowerLimit: null,
     upperLimit: null,
     minCox: null,
+    plateauValid: false,
+    robustBins: 0,
     hasRealData: false,
   };
-  
-  if (data.length < 10) return defaultResult;
-  
-  // Calculate COx for each point
-  const coxValues = calculateCOxValues(data, windowMinutes);
-  
-  // Group by PAM bins and calculate mean COx
-  const bins = new Map<number, { sum: number; count: number }>();
-  
-  for (let i = 0; i < data.length; i++) {
-    const pam = data[i].pam;
-    const cox = coxValues[i];
-    
-    if (pam !== null && cox !== null) {
-      const binCenter = Math.round(pam / binSize) * binSize;
-      const existing = bins.get(binCenter) || { sum: 0, count: 0 };
-      existing.sum += cox;
-      existing.count += 1;
-      bins.set(binCenter, existing);
-    }
-  }
-  
-  // Convert to curve data
-  const curveData: NirsCurvePoint[] = [];
-  let minCox = Infinity;
-  let optimalPAM: number | null = null;
-  
-  const sortedBins = Array.from(bins.entries())
-    .filter(([, { count }]) => count >= 3)
-    .sort((a, b) => a[0] - b[0]);
-  
-  for (const [pam, { sum, count }] of sortedBins) {
-    const meanCox = sum / count;
-    curveData.push({
-      pam,
-      cox: Math.round(meanCox * 100) / 100,
-      count,
-    });
-    
-    if (meanCox < minCox) {
-      minCox = meanCox;
-      optimalPAM = pam;
-    }
-  }
-  
-  // Find LLA and ULA (where COx crosses 0.3 threshold)
-  const COX_THRESHOLD = 0.3;
-  let lowerLimit: number | null = null;
-  let upperLimit: number | null = null;
-  
-  // Find LLA (from left, where COx drops below threshold)
-  for (let i = 0; i < curveData.length - 1; i++) {
-    if (curveData[i].cox >= COX_THRESHOLD && curveData[i + 1].cox < COX_THRESHOLD) {
-      lowerLimit = curveData[i].pam;
-      break;
-    }
-  }
-  
-  // Find ULA (from right, where COx rises above threshold)
-  for (let i = curveData.length - 1; i > 0; i--) {
-    if (curveData[i].cox >= COX_THRESHOLD && curveData[i - 1].cox < COX_THRESHOLD) {
-      upperLimit = curveData[i].pam;
-      break;
-    }
-  }
-  
-  // If no thresholds found, estimate from curve shape
-  if (lowerLimit === null && optimalPAM !== null && curveData.length > 2) {
-    const firstPAM = curveData[0].pam;
-    lowerLimit = Math.round((optimalPAM + firstPAM) / 2);
-  }
-  
-  if (upperLimit === null && optimalPAM !== null && curveData.length > 2) {
-    const lastPAM = curveData[curveData.length - 1].pam;
-    upperLimit = Math.round((optimalPAM + lastPAM) / 2);
-  }
-  
+
+  if (samples.length < 10) return empty;
+
+  const derived = computeIndex(samples, windowSamples, "cox");
+  const curve = buildCurve(derived, binSize, 3, "cox");
+  const analysis = analyzeCurve(curve);
+
   return {
-    curveData,
-    optimalPAM,
-    lowerLimit,
-    upperLimit,
-    minCox: minCox === Infinity ? null : Math.round(minCox * 100) / 100,
-    hasRealData: curveData.length > 0,
+    // The shared engine carries pressure on `ppc` and the index on `prx`
+    // whatever the mode; in COx mode those are PAM and COx.
+    curveData: curve.map((p) => ({
+      pam: p.ppc,
+      cox: p.prx,
+      count: p.count,
+      robust: p.robust,
+    })),
+    optimalPAM: analysis.optimalPPC,
+    lowerLimit: analysis.lowerLimit,
+    upperLimit: analysis.upperLimit,
+    minCox: analysis.minPrx,
+    plateauValid: analysis.plateauValid,
+    robustBins: curve.filter((p) => p.robust).length,
+    hasRealData: curve.length > 0,
   };
 }
 
-// Get optimal PAM result in the same format as OptimalPPCResult for consistency
+/**
+ * Dashboard-facing result for the "PAM optimale" tile.
+ *
+ * LLA/ULA are frequently null: the recorded pressure range simply never crosses
+ * the threshold on both sides of the optimum. The last rolling-window estimate is
+ * returned alongside so the tile can show a value labelled as such — the same
+ * convention the study page uses — instead of inventing a range.
+ */
 export async function getOptimalPAMFromNirs(
   patientId: string,
-  windowMinutes: number = 30
+  windowSamples: number = COX_WINDOW_SAMPLES,
 ): Promise<{
-  optimalPPC: number | null; // Actually optimalPAM, using same field name for compatibility
+  optimalPPC: number | null; // PAMopt, named for OptimalPPCResult compatibility
   lowerLimit: number | null;
   upperLimit: number | null;
   prxScore: number | null;
   timestamp: string | null;
   hasData: boolean;
+  lowerLimitLastWindow: number | null;
+  upperLimitLastWindow: number | null;
+  lastWindowAt: string | null;
 }> {
-  const defaultResult = {
+  const empty = {
     optimalPPC: null,
     lowerLimit: null,
     upperLimit: null,
     prxScore: null,
     timestamp: null,
     hasData: false,
+    lowerLimitLastWindow: null,
+    upperLimitLastWindow: null,
+    lastWindowAt: null,
   };
 
   try {
-    const data = await loadNirsData(patientId);
-    if (data.length === 0) return defaultResult;
+    const samples = await loadNirsSamples(patientId);
+    if (samples.length === 0) return empty;
 
-    const result = buildNirsAutoregulationCurve(data, windowMinutes, 5);
-    
+    const result = buildNirsAutoregulationCurve(samples, windowSamples, BIN_SIZE);
+    if (!result.hasRealData) return empty;
+
+    // Same rolling parameters as the study page, so both report the same
+    // last-window LLA/ULA.
+    const derived = computeIndex(samples, windowSamples, "cox");
+    const rolled = rollingOptimal(
+      derived,
+      Math.min(240, Math.floor(derived.length / 3)),
+      30,
+      BIN_SIZE,
+      "cox",
+    );
+    let lowerLimitLastWindow: number | null = null;
+    let upperLimitLastWindow: number | null = null;
+    let lastWindowAt: string | null = null;
+    for (const r of rolled) {
+      if (r.lowerLimit !== null) {
+        lowerLimitLastWindow = r.lowerLimit;
+        lastWindowAt = r.time;
+      }
+      if (r.upperLimit !== null) {
+        upperLimitLastWindow = r.upperLimit;
+        lastWindowAt = r.time;
+      }
+    }
+
     return {
       optimalPPC: result.optimalPAM,
       lowerLimit: result.lowerLimit,
       upperLimit: result.upperLimit,
       prxScore: result.minCox,
-      timestamp: data.length > 0 ? data[data.length - 1].timestamp : null,
+      timestamp: samples[samples.length - 1].time.toISOString(),
       hasData: result.hasRealData,
+      lowerLimitLastWindow,
+      upperLimitLastWindow,
+      lastWindowAt,
     };
   } catch (error) {
     console.error("Error calculating optimal PAM from NIRS:", error);
-    return defaultResult;
+    return empty;
   }
 }
 
-// Interface for time-varying limits
 export interface NirsTimeSeriesPoint {
   timestamp: string;
   time: number;
@@ -283,183 +239,84 @@ export interface NirsTimeSeriesPoint {
   nirs: number | null;
   cox: number | null;
   optimalPAM: number | null;
-  lowerLimit: number | null;  // Dynamic LLA
-  upperLimit: number | null;  // Dynamic ULA
+  lowerLimit: number | null; // Dynamic LLA
+  upperLimit: number | null; // Dynamic ULA
 }
 
-// Calculate dynamic LLA/ULA for each point using a sliding window approach
-// This gives time-varying autoregulation limits
+/**
+ * Per-point autoregulation limits recomputed over a trailing lookback window, so
+ * the dashboard can shade a zone that moves with the patient.
+ *
+ * Timestamps are shifted so the recording's last sample lands on "now" — the
+ * dashboard's time selectors are relative to the present, and these recordings
+ * are historical exports. The study page shows the real recording times instead.
+ */
 export function getNirsTimeSeriesWithDynamicLimits(
-  data: NirsDataPoint[],
-  windowMinutes: number = 30,
+  samples: RawSample[],
+  windowSamples: number = COX_WINDOW_SAMPLES,
   lookbackHours: number = 4,
-  outputHours: number = 6
+  outputHours: number = 6,
 ): NirsTimeSeriesPoint[] {
-  if (data.length < 10) return [];
-  
-  const result: NirsTimeSeriesPoint[] = [];
-  const lookbackMs = lookbackHours * 60 * 60 * 1000;
-  const windowMs = windowMinutes * 60 * 1000;
-  
-  // Find latest timestamp and calculate offset to normalize to "now"
-  let latestTime = 0;
-  for (const point of data) {
-    const time = new Date(point.timestamp).getTime();
-    if (time > latestTime) latestTime = time;
-  }
+  if (samples.length < 10) return [];
+
+  const derived = computeIndex(samples, windowSamples, "cox");
+  const lookbackMs = lookbackHours * 3_600_000;
+  const latest = derived[derived.length - 1].time.getTime();
   const now = Date.now();
-  const timeOffset = now - latestTime;
-  const cutoffTime = now - outputHours * 60 * 60 * 1000;
-  
-  // Pre-calculate COx for all points
-  const coxValues: (number | null)[] = [];
-  for (let i = 0; i < data.length; i++) {
-    const currentTime = new Date(data[i].timestamp).getTime();
-    const windowStart = currentTime - windowMs;
-    
-    const nirsValues: number[] = [];
-    const pamValues: number[] = [];
-    
-    for (let j = i; j >= 0; j--) {
-      const pointTime = new Date(data[j].timestamp).getTime();
-      if (pointTime < windowStart) break;
-      
-      if (data[j].nirs !== null && data[j].pam !== null) {
-        nirsValues.push(data[j].nirs);
-        pamValues.push(data[j].pam);
-      }
+  const timeOffset = now - latest;
+  const cutoff = now - outputHours * 3_600_000;
+
+  const out: NirsTimeSeriesPoint[] = [];
+  // Trailing pointer over the lookback window: avoids rescanning the history for
+  // every output point.
+  let start = 0;
+  // The limits derive from a multi-hour window, so they barely move from one
+  // sample to the next: recomputing every STRIDE points and holding the value in
+  // between is visually indistinguishable and 3× cheaper — measured on patient
+  // 8749, 380 ms → 122 ms over a 24 h window, on the main thread while the
+  // dashboard renders (3558 → 3550 points carrying a limit).
+  const STRIDE = 10;
+  let analysis = { optimalPPC: null as number | null, lowerLimit: null as number | null, upperLimit: null as number | null };
+  let sinceRecompute = STRIDE;
+
+  for (let i = 0; i < derived.length; i++) {
+    const t = derived[i].time.getTime();
+    while (derived[start].time.getTime() < t - lookbackMs) start++;
+
+    const normalizedTime = t + timeOffset;
+    if (normalizedTime < cutoff) continue;
+
+    if (sinceRecompute >= STRIDE) {
+      // minPerBin of 2 (rather than 3) because a lookback window holds far fewer
+      // samples than the whole recording; the robustness floor inside buildCurve
+      // still keeps thin bins out of the limits.
+      const curve = buildCurve(derived.slice(start, i + 1), BIN_SIZE, 2, "cox");
+      const full = analyzeCurve(curve);
+      analysis = {
+        optimalPPC: full.optimalPPC,
+        lowerLimit: full.lowerLimit,
+        upperLimit: full.upperLimit,
+      };
+      sinceRecompute = 0;
     }
-    
-    if (nirsValues.length >= 5) {
-      const cox = calculatePearsonCorrelation(nirsValues, pamValues);
-      coxValues.push(Math.round(cox * 100) / 100);
-    } else {
-      coxValues.push(null);
-    }
-  }
-  
-  // For each output point, calculate dynamic limits using lookback window
-  for (let i = 0; i < data.length; i++) {
-    const currentTime = new Date(data[i].timestamp).getTime();
-    const normalizedTime = currentTime + timeOffset;
-    
-    // Only output points within the requested time range
-    if (normalizedTime < cutoffTime) continue;
-    
-    const lookbackStart = currentTime - lookbackMs;
-    
-    // Collect PAM-COx pairs within lookback window
-    const pamCoxPairs: Array<{ pam: number; cox: number }> = [];
-    for (let j = i; j >= 0; j--) {
-      const pointTime = new Date(data[j].timestamp).getTime();
-      if (pointTime < lookbackStart) break;
-      
-      const pam = data[j].pam;
-      const cox = coxValues[j];
-      if (pam !== null && cox !== null) {
-        pamCoxPairs.push({ pam, cox });
-      }
-    }
-    
-    // Calculate optimal PAM and limits from this window
-    let optimalPAM: number | null = null;
-    let lowerLimit: number | null = null;
-    let upperLimit: number | null = null;
-    
-    if (pamCoxPairs.length >= 10) {
-      // Group by PAM bins (5 mmHg)
-      const binSize = 5;
-      const bins = new Map<number, { sum: number; count: number }>();
-      
-      for (const { pam, cox } of pamCoxPairs) {
-        const binCenter = Math.round(pam / binSize) * binSize;
-        const existing = bins.get(binCenter) || { sum: 0, count: 0 };
-        existing.sum += cox;
-        existing.count += 1;
-        bins.set(binCenter, existing);
-      }
-      
-      // Find optimal (lowest COx)
-      let minCox = Infinity;
-      const sortedBins = Array.from(bins.entries())
-        .filter(([, { count }]) => count >= 2)
-        .sort((a, b) => a[0] - b[0]);
-      
-      for (const [pam, { sum, count }] of sortedBins) {
-        const meanCox = sum / count;
-        if (meanCox < minCox) {
-          minCox = meanCox;
-          optimalPAM = pam;
-        }
-      }
-      
-      // Calculate LLA/ULA based on COx threshold
-      const COX_THRESHOLD = 0.3;
-      const curveData = sortedBins.map(([pam, { sum, count }]) => ({
-        pam,
-        cox: sum / count,
-      }));
-      
-      // Find LLA (from left)
-      for (let k = 0; k < curveData.length - 1; k++) {
-        if (curveData[k].cox >= COX_THRESHOLD && curveData[k + 1].cox < COX_THRESHOLD) {
-          lowerLimit = curveData[k].pam;
-          break;
-        }
-      }
-      
-      // Find ULA (from right)
-      for (let k = curveData.length - 1; k > 0; k--) {
-        if (curveData[k].cox >= COX_THRESHOLD && curveData[k - 1].cox < COX_THRESHOLD) {
-          upperLimit = curveData[k].pam;
-          break;
-        }
-      }
-      
-      // Fallback estimates if thresholds not crossed
-      if (lowerLimit === null && optimalPAM !== null && curveData.length > 0) {
-        lowerLimit = Math.round((optimalPAM + curveData[0].pam) / 2);
-      }
-      if (upperLimit === null && optimalPAM !== null && curveData.length > 0) {
-        upperLimit = Math.round((optimalPAM + curveData[curveData.length - 1].pam) / 2);
-      }
-    }
-    
-    result.push({
+    sinceRecompute++;
+
+    out.push({
       timestamp: new Date(normalizedTime).toISOString(),
       time: normalizedTime,
-      pam: data[i].pam,
-      nirs: data[i].nirs,
-      cox: coxValues[i],
-      optimalPAM,
-      lowerLimit,
-      upperLimit,
+      pam: derived[i].pam,
+      nirs: derived[i].nirs,
+      cox: derived[i].prx,
+      optimalPAM: analysis.optimalPPC,
+      lowerLimit: analysis.lowerLimit,
+      upperLimit: analysis.upperLimit,
     });
   }
-  
-  return result;
+
+  return out;
 }
 
-// Helper: Pearson correlation
-function calculatePearsonCorrelation(x: number[], y: number[]): number {
-  if (x.length !== y.length || x.length < 3) return 0;
-  
-  const n = x.length;
-  const sumX = x.reduce((a, b) => a + b, 0);
-  const sumY = y.reduce((a, b) => a + b, 0);
-  const sumXY = x.reduce((a, b, i) => a + b * y[i], 0);
-  const sumX2 = x.reduce((a, b) => a + b * b, 0);
-  const sumY2 = y.reduce((a, b) => a + b * b, 0);
-  
-  const numerator = n * sumXY - sumX * sumY;
-  const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-  
-  if (denominator === 0) return 0;
-  return numerator / denominator;
-}
-
-
-// Get current PAM and NIRS from the latest data
+/** Current rSO₂/PAM and the 24 h PAM range, from the measured pairs. */
 export function getCurrentNirsValues(data: NirsDataPoint[]): {
   currentPAM: number | null;
   currentNIRS: number | null;
@@ -469,24 +326,19 @@ export function getCurrentNirsValues(data: NirsDataPoint[]): {
   if (data.length === 0) {
     return { currentPAM: null, currentNIRS: null, pamMin: null, pamMax: null };
   }
-  
+
   const lastPoint = data[data.length - 1];
-  
-  // Calculate 24h range
-  const now = new Date(lastPoint.timestamp).getTime();
-  const cutoff24h = now - 24 * 60 * 60 * 1000;
-  
+  const cutoff24h = new Date(lastPoint.timestamp).getTime() - 24 * 3_600_000;
+
   let pamMin = Infinity;
   let pamMax = -Infinity;
-  
   for (const point of data) {
-    const time = new Date(point.timestamp).getTime();
-    if (time >= cutoff24h && point.pam !== null) {
+    if (new Date(point.timestamp).getTime() >= cutoff24h && point.pam !== null) {
       pamMin = Math.min(pamMin, point.pam);
       pamMax = Math.max(pamMax, point.pam);
     }
   }
-  
+
   return {
     currentPAM: lastPoint.pam,
     currentNIRS: lastPoint.nirs,

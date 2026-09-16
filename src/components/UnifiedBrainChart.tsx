@@ -16,6 +16,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2 } from "lucide-react";
 import { TimeWindowValue, timeWindowToHours } from "@/components/ui/TimeWindowSelector";
+import { useYAxisZoom } from "@/hooks/useYAxisZoom";
+import { ChartZoomControls } from "@/components/ChartZoomControls";
 import {
   loadPatientFileData,
   hasPatientFileData,
@@ -240,6 +242,7 @@ export function UnifiedBrainChart({
 }: UnifiedBrainChartProps) {
   const [loading, setLoading] = useState(false);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
   const [neuroZones, setNeuroZones] = useState<{ start: number; end: number; state: NeuroState }[]>([]);
   const [patientData, setPatientData] = useState<PatientFileData | null>(null);
 
@@ -396,7 +399,7 @@ export function UnifiedBrainChart({
   }, [patientId, timeRange, hasData]);
 
   // Calculate Y axis domain
-  const yDomain = useMemo(() => {
+  const autoYDomain = useMemo((): [number, number] => {
     if (chartData.length === 0) return [0, 100];
 
     const allValues: number[] = [];
@@ -404,7 +407,7 @@ export function UnifiedBrainChart({
       if (d.pic !== null) allValues.push(d.pic);
       if (d.pam !== null) allValues.push(d.pam);
     }
-    
+
     if (lowerLimit) allValues.push(lowerLimit);
     if (upperLimit) allValues.push(upperLimit);
 
@@ -418,6 +421,9 @@ export function UnifiedBrainChart({
       Math.ceil(maxVal / 10) * 10 + 10,
     ];
   }, [chartData, lowerLimit, upperLimit]);
+
+  const zoom = useYAxisZoom(autoYDomain);
+  const yDomain = zoom.yDomain;
 
   // Format X axis time
   const formatXAxis = (time: number) => {
@@ -547,6 +553,7 @@ export function UnifiedBrainChart({
   return (
     <div className="space-y-4">
       {/* Main Unified Chart */}
+      <ChartZoomControls zoom={zoom} isEditing={isEditing} onToggleEditing={() => setIsEditing((v) => !v)} />
       <div className="h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 10, right: 16, left: 4, bottom: 8 }}>

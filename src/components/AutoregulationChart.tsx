@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   Area,
   ComposedChart,
+  Brush,
 } from "recharts";
 import {
   loadAutoregulationData,
@@ -18,15 +19,30 @@ import {
   isNirsBasedPatient,
 } from "@/services/autoregulation.service";
 import {
-  loadNirsData,
+  loadNirsSamples,
   buildNirsAutoregulationCurve,
   getCurrentNirsValues,
   getNirsTimeSeriesWithDynamicLimits,
-  NirsDataPoint,
 } from "@/services/nirsAutoregulation.service";
+import {
+  runAnalysis,
+  rollingOptimal,
+  type AutoregResult,
+  type OptimalTimePoint,
+} from "@/services/autoregComputation.service";
+import {
+  AutoregCurveCard,
+  AutoregKpiRow,
+  InterpretationBanner,
+  QualityPanel,
+} from "@/components/autoreg/AutoregResultViews";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useYAxisZoom } from "@/hooks/useYAxisZoom";
+import { useSharedTimeWindow } from "@/hooks/useSharedTimeWindow";
+import { ChartZoomControls } from "@/components/ChartZoomControls";
+import { BRUSH_TOUCH_WIDTH, renderWideTouchTraveller } from "@/lib/chartBrushTraveller";
 
 interface AutoregulationChartProps {
   patientId: string;
@@ -101,6 +117,12 @@ export function AutoregulationChart({
   const [nirsPamMin, setNirsPamMin] = useState<number | null>(null);
   const [nirsPamMax, setNirsPamMax] = useState<number | null>(null);
 
+  // Full analysis from the shared engine, so this dashboard view can render the
+  // same interpretation banner, KPI tiles, quality panel and U-curve as the study
+  // page instead of a second, differently-worded presentation of the same data.
+  const [analysis, setAnalysis] = useState<AutoregResult | null>(null);
+  const [rolling, setRolling] = useState<OptimalTimePoint[]>([]);
+
   const hasAutoData = hasAutoregulationData(patientId);
   
   // Use NIRS values if available, otherwise use props
@@ -117,35 +139,61 @@ export function AutoregulationChart({
   useEffect(() => {
     if (!hasAutoData) {
       setTimeSeriesData([]);
+      setAnalysis(null);
+      setRolling([]);
       return;
     }
 
     const isNirs = isNirsBasedPatient(patientId);
     setIsNirsBased(isNirs);
     setLoading(true);
+    // Cleared up front: a stale analysis from the previous patient must never
+    // remain on screen while the new one loads.
+    setAnalysis(null);
+    setRolling([]);
 
     if (isNirs) {
-      // Load NIRS-based autoregulation data with dynamic limits
-      loadNirsData(patientId)
-        .then((data) => {
-          if (data && data.length > 0) {
+      // Load NIRS-based autoregulation data with dynamic limits.
+      // `windowMinutes` is not passed on: the COx window is expressed in samples
+      // and fixed to the study page's value, so both screens agree. That prop
+      // still selects the PRx column width on the invasive path below.
+      loadNirsSamples(patientId)
+        .then((samples) => {
+          if (samples && samples.length > 0) {
             // Get autoregulation curve for overall values
-            const curveResult = buildNirsAutoregulationCurve(data, windowMinutes, 5);
+            const curveResult = buildNirsAutoregulationCurve(samples);
             setOptimalValue(curveResult.optimalPAM);
             setLowerLimit(curveResult.lowerLimit);
             setUpperLimit(curveResult.upperLimit);
-            
-            // Get current values
-            const currentValues = getCurrentNirsValues(data);
+
+            // Same call the study page makes, for the shared result views.
+            const fullAnalysis = runAnalysis(samples, 30, 5);
+            setAnalysis(fullAnalysis);
+            setRolling(
+              rollingOptimal(
+                fullAnalysis.samples,
+                Math.min(240, Math.floor(fullAnalysis.samples.length / 3)),
+                30,
+                5,
+                fullAnalysis.mode,
+              ),
+            );
+
+            // Get current values from the measured rSO₂/PAM pairs
+            const currentValues = getCurrentNirsValues(
+              samples
+                .filter((s) => s.nirs !== null && s.pam !== null)
+                .map((s) => ({ timestamp: s.time.toISOString(), nirs: s.nirs, pam: s.pam })),
+            );
             setNirsCurrentPAM(currentValues.currentPAM);
             setNirsPamMin(currentValues.pamMin);
             setNirsPamMax(currentValues.pamMax);
-            
+
             // Get time series with DYNAMIC LLA/ULA limits
             const hours = timeWindowToHours(selectedWindow) || 6;
             const dynamicTimeSeries = getNirsTimeSeriesWithDynamicLimits(
-              data,
-              windowMinutes,
+              samples,
+              undefined,
               4, // lookback hours for limit calculation
               hours // output hours
             );
@@ -206,21 +254,29 @@ export function AutoregulationChart({
   // Labels based on data type
   const targetLabel = isNirsBased ? "PAM optimale" : "PPC Optimale";
 
-  // Calculate Y axis domain - includes time-varying limits
-  const yDomain = useMemo(() => {
-    if (timeSeriesData.length === 0) {
+  // Sélection d'une plage de temps par glisser-déposer (Brush), partagée
+  // avec les autres graphiques du module quand un ChartTimeRangeProvider
+  // les entoure. L'échelle Y se recalcule sur cette plage visible plutôt
+  // que sur tout l'historique.
+  const { visibleData, startIndex, endIndex, onBrushChange, isRangeSelected, resetRange } =
+    useSharedTimeWindow(timeSeriesData, (d) => d.time);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Calculate Y axis domain - includes time-varying limits, from the visible range only
+  const autoYDomain = useMemo((): [number, number] => {
+    if (visibleData.length === 0) {
       return [40, 80];
     }
 
     const allValues: number[] = [];
-    
-    for (const d of timeSeriesData) {
+
+    for (const d of visibleData) {
       if (d.ppc !== null) allValues.push(d.ppc);
       if (d.pam !== null) allValues.push(d.pam);
       if (d.lowerLimit !== null) allValues.push(d.lowerLimit);
       if (d.upperLimit !== null) allValues.push(d.upperLimit);
     }
-    
+
     if (allValues.length === 0) return [40, 80];
 
     const minDomain = Math.min(...allValues);
@@ -230,7 +286,29 @@ export function AutoregulationChart({
       Math.floor(minDomain / 5) * 5 - 5,
       Math.ceil(maxDomain / 5) * 5 + 5,
     ];
-  }, [timeSeriesData]);
+  }, [visibleData]);
+
+  const zoom = useYAxisZoom(autoYDomain);
+  const { yDomain } = zoom;
+
+  // Résumé de la zone sélectionnée — première étape avant de pouvoir poser
+  // une question précise sur cette zone : au moins voir ce qu'elle contient.
+  const selectionSummary = useMemo(() => {
+    if (!isRangeSelected || visibleData.length === 0) return null;
+    const ppcValues = visibleData.map((d) => d.ppc).filter((v): v is number => v !== null);
+    const pamValues = visibleData.map((d) => d.pam).filter((v): v is number => v !== null);
+    const inZoneCount = visibleData.filter(
+      (d) => d.ppc !== null && d.lowerLimit !== null && d.upperLimit !== null && d.ppc >= d.lowerLimit && d.ppc <= d.upperLimit,
+    ).length;
+    const avg = (arr: number[]) => (arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null);
+    return {
+      from: format(new Date(visibleData[0].time), "HH:mm", { locale: fr }),
+      to: format(new Date(visibleData[visibleData.length - 1].time), "HH:mm", { locale: fr }),
+      avgPpc: avg(ppcValues),
+      avgPam: avg(pamValues),
+      pctInZone: ppcValues.length ? Math.round((inZoneCount / visibleData.length) * 100) : null,
+    };
+  }, [isRangeSelected, visibleData]);
 
   // Format X axis time
   const formatXAxis = (time: number) => {
@@ -295,8 +373,57 @@ export function AutoregulationChart({
   return (
     <div className="space-y-4">
 
+      {/* Shared with the study page: same verdict, same KPI tiles, same quality
+          readout, same U-curve. Only available when a full analysis could be
+          computed from the raw signal (COx path). */}
+      {analysis && (
+        <div className="space-y-4">
+          <InterpretationBanner result={analysis} rolling={rolling} />
+          <AutoregKpiRow result={analysis} rolling={rolling} />
+          <QualityPanel result={analysis} />
+          <AutoregCurveCard result={analysis} height={260} />
+        </div>
+      )}
+
       {/* Main Time Series Chart */}
-      <div className="h-56 w-full">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        {selectionSummary ? (
+          <div className="flex items-center gap-2 text-xs bg-primary/5 border border-primary/20 rounded-md px-2.5 py-1.5">
+            <span className="font-medium text-foreground">
+              {selectionSummary.from} – {selectionSummary.to}
+            </span>
+            <span className="text-border">|</span>
+            <span className="text-muted-foreground">
+              {isNirsBased ? "NIRS" : "PPC"} moy. <span className="font-medium text-foreground">{selectionSummary.avgPpc ?? "--"}</span>
+            </span>
+            <span className="text-muted-foreground">
+              PAM moy. <span className="font-medium text-foreground">{selectionSummary.avgPam ?? "--"}</span>
+            </span>
+            {selectionSummary.pctInZone !== null && (
+              <span className="text-muted-foreground">
+                <span className="font-medium text-foreground">{selectionSummary.pctInZone}%</span> dans la zone
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={resetRange}
+              title="Effacer la sélection"
+              aria-label="Effacer la sélection"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              ×
+            </button>
+          </div>
+        ) : isEditing ? (
+          <p className="text-[11px] text-muted-foreground italic">
+            Glissez sur l'axe du temps ci-dessous pour sélectionner une période précise.
+          </p>
+        ) : (
+          <span />
+        )}
+        <ChartZoomControls zoom={zoom} isEditing={isEditing} onToggleEditing={() => setIsEditing((v) => !v)} />
+      </div>
+      <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={timeSeriesData} margin={{ top: 10, right: 16, left: 4, bottom: 8 }}>
             <defs>
@@ -396,6 +523,22 @@ export function AutoregulationChart({
               connectNulls
               name={isNirsBased ? "NIRS" : "PPC"}
             />
+
+            {/* Sélection d'une plage de temps par glisser-déposer — visible
+                seulement en mode édition (icône crayon) */}
+            {isEditing && (
+              <Brush
+                dataKey="time"
+                height={24}
+                stroke="hsl(var(--primary))"
+                travellerWidth={BRUSH_TOUCH_WIDTH}
+                traveller={renderWideTouchTraveller}
+                tickFormatter={formatXAxis}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                onChange={onBrushChange}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>

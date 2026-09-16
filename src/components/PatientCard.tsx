@@ -1,10 +1,11 @@
 import { Badge } from '@/components/ui/badge';
-import { Droplets, AlertTriangle, Ban } from 'lucide-react';
+import { AlertTriangle, Ban } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import { Patient } from '@/types/patient.types';
 import { useNavigate } from 'react-router-dom';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
+import kidneyIcon from '@/assets/kidney-icon.svg';
 import { useTourNavigation } from '@/hooks/useTourNavigation';
 import { getScoreTextColor, getScoreColorFilter } from '@/utils/colorUtils';
 
@@ -48,7 +49,7 @@ const OrganBadge = ({ organ, score, patientId }: { organ: 'brain' | 'heart' | 'l
         ) : organ === 'heart' ? (
           <HeartIcon className={`h-5 w-5 ${textColor}`} />
         ) : (
-          <Droplets className={`h-5 w-5 ${textColor}`} />
+          <img src={kidneyIcon} alt="kidney" className="h-5 w-5" style={{ filter: getScoreColorFilter(score) }} />
         )}
         <span className={`font-semibold ${textColor}`}>{score ?? 0}</span>
         <span aria-hidden="true" className={`ml-0.5 h-2 w-2 rounded-full border ${borderColor} bg-transparent`} />

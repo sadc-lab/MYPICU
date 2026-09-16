@@ -47,6 +47,29 @@ export const BRAIN_VARIABLE_KEYS = {
   PACO2: "Variable_paco2", // PaCO2
 } as const;
 
+// Mapping label affiché (FR, tel qu'utilisé dans les UI Optibrain/Optistate)
+// -> clé de variable dans PatientFileData. Distinct de BRAIN_VARIABLE_KEYS
+// (clés courtes/anglaises) car les composants affichent des labels FR.
+const LABEL_TO_VARIABLE_KEY: Record<string, string> = {
+  FC: "Variable_FC",
+  PIC: "Variable_PIC",
+  PPC: "Variable_PPC",
+  PAM: "Variable_PAM",
+  PVC: "Variable_PVC",
+  Température: "Variable_temperature",
+  ETCO2: "Variable_ETCO2",
+  PaCO2: "Variable_paco2",
+  Tête: "Variable_position_tete",
+  Glycémie: "Variable_glycemie",
+  INR: "Variable_INR",
+  Plaquettes: "Variable_plaquettes",
+  Hémoglobine: "Variable_hemoglobine",
+};
+
+export function getVariableKeyFromLabel(label: string): string {
+  return LABEL_TO_VARIABLE_KEY[label] || "";
+}
+
 // Cache for loaded patient data
 const patientDataCache = new Map<string, PatientFileData>();
 

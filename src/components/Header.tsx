@@ -545,6 +545,13 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
         </div>
       </div>
     </header>
+    <div className="border-b bg-warning/10">
+      <div className="container mx-auto px-3 sm:px-6 py-1.5">
+        <p className="text-[11px] sm:text-xs text-center text-foreground/80">
+          🔬 Projet de recherche clinique en cours de développement — Les données et fonctionnalités présentées sont à des fins de recherche uniquement.
+        </p>
+      </div>
+    </div>
     </>
   );
 };

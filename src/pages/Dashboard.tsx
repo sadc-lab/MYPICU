@@ -41,11 +41,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header selectedPed={selectedPed} patients={displayedPatients} />
-      
-      <div className="bg-amber-50 dark:bg-amber-950 border-b border-amber-200 dark:border-amber-800 px-4 py-2 text-center text-xs sm:text-sm text-amber-800 dark:text-amber-200">
-        🔬 Projet de recherche clinique en cours de développement — Les données et fonctionnalités présentées sont à des fins de recherche uniquement.
-      </div>
-      
+
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-[1600px]">
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
           <Button variant="outline" className="h-10 bg-muted text-sm sm:text-base">
