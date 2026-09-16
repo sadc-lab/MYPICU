@@ -1,23 +1,28 @@
 version: '3.8'
 
+# Déploiement isolé de la page d'étude d'autorégulation (/autoreg) — build
+# séparé du reste de MYPICU (VITE_STUDY_ONLY=true), destiné à sa propre VM ou
+# à un port distinct de la production sur la même machine. Voir le plan de
+# déploiement de la page d'étude pour le contexte complet.
+#
+#   VITE_SUPABASE_URL=... VITE_SUPABASE_ANON_KEY=... docker compose -f docker-compose.study.yml up -d --build
+
 services:
-  # Frontend with Nginx
-  app-nginx:
+  app-study:
     build:
       context: .
       dockerfile: Dockerfile.nginx
-      # Vite fige ces valeurs dans le bundle au moment du build : elles doivent
-      # être des arguments de build, pas des variables d'exécution (voir .env).
       args:
         VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_STUDY_ONLY: "true"
     ports:
       - "80:80"
     environment:
       - NODE_ENV=production
     restart: unless-stopped
     networks:
-      - app-network
+      - app-study-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
@@ -26,5 +31,5 @@ services:
       start_period: 40s
 
 networks:
-  app-network:
+  app-study-network:
     driver: bridge

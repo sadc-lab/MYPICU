@@ -97,6 +97,9 @@ interface PatientAnalysis {
   result: AutoregResult;
   rolling: OptimalTimePoint[];
   fileName: string;
+  // 'monitor' seul rend l'actualisation en direct pertinente : c'est la seule
+  // source susceptible de recevoir de nouvelles lignes après coup.
+  source: 'monitor' | 'file';
 }
 
 // Raw recordings shipped with the app follow this naming convention, keyed on the
@@ -219,6 +222,10 @@ const AutoregStudy = () => {
                 result: restored,
                 rolling: (data.rolling as any) ?? [],
                 fileName: data.file_name ?? '',
+                // La provenance n'est pas persistée : une analyse restaurée ne
+                // s'auto-actualise pas tant qu'elle n'est pas rechargée depuis le
+                // moniteur (voir handleFile).
+                source: 'file',
               },
             },
       );
@@ -312,14 +319,20 @@ const AutoregStudy = () => {
     const target = { id: created.id, code: created.code, label: finalLabel || created.label };
     setAddOpen(false);
     resetAddForm();
-    const ok = await handleFile(fileToProcess, target);
+    const ok = await handleFile(fileToProcess, target, { source: monitorSource ? 'monitor' : 'file' });
     if (!ok) {
       removePatient(created.id);
     }
   };
 
 
-  const handleFile = async (file: File, patientOverride?: { id: string; code: string; label: string }): Promise<boolean> => {
+  const handleFile = async (
+    file: File,
+    patientOverride?: { id: string; code: string; label: string },
+    options?: { source?: 'monitor' | 'file'; silent?: boolean },
+  ): Promise<boolean> => {
+    const source = options?.source ?? 'file';
+    const silent = options?.silent ?? false;
     setError(null);
     setParsing(true);
     const target = patientOverride ?? active;
@@ -334,7 +347,7 @@ const AutoregStudy = () => {
       const samples = parseAny(text);
       const readinessError = describeAnalysisReadiness(samples);
       if (readinessError) {
-        setError(readinessError);
+        if (!silent) setError(readinessError);
         setParsing(false);
         return false;
       }
@@ -348,7 +361,7 @@ const AutoregStudy = () => {
       const rolled = rollingOptimal(derived, Math.min(240, Math.floor(derived.length / 3)), 30, 5, analysis.mode);
       setAnalysisByPatient((prev) => ({
         ...prev,
-        [target.id]: { result: analysis, rolling: rolled, fileName: file.name },
+        [target.id]: { result: analysis, rolling: rolled, fileName: file.name, source },
       }));
       updatePatient(target.id, { fileName: file.name });
       // Persist results in Supabase (linked to study patient id)
@@ -374,23 +387,65 @@ const AutoregStudy = () => {
               rolling: rolled as any,
             });
           if (insertError) throw insertError;
-          toast.success('Résultats enregistrés dans la base de données');
-        } else {
+          if (!silent) toast.success('Résultats enregistrés dans la base de données');
+        } else if (!silent) {
           toast.info("Connectez-vous pour conserver les résultats dans la base.");
         }
       } catch (persistErr: any) {
         console.error('Persist autoreg result error:', persistErr);
-        toast.error("Impossible d'enregistrer les résultats : " + (persistErr.message || 'erreur inconnue'));
+        if (!silent) toast.error("Impossible d'enregistrer les résultats : " + (persistErr.message || 'erreur inconnue'));
       }
       return true;
     } catch (e: any) {
-      setError(e.message || 'Erreur lors du traitement du fichier.');
+      if (!silent) setError(e.message || 'Erreur lors du traitement du fichier.');
       return false;
     } finally {
       setParsing(false);
     }
   };
 
+  // Un patient chargé depuis le moniteur peut recevoir de nouvelles données après
+  // coup (nouvel import) — un fichier importé manuellement, jamais. C'est ce qui
+  // rend l'actualisation en direct pertinente uniquement dans ce cas.
+  const isMonitorLive = current?.source === 'monitor' && !!active?.sourcePatientId;
+  const [liveEnabled, setLiveEnabled] = useState(true);
+  const [lastLiveUpdate, setLastLiveUpdate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (!isMonitorLive || !liveEnabled || !active?.sourcePatientId) return;
+    const sourcePatientId = active.sourcePatientId;
+    const patientTarget = { id: active.id, code: active.code, label: active.label };
+    const dbPatientId = `#${sourcePatientId.replace('#', '')}`;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const refresh = async () => {
+      const fromMonitor = await loadAutoregSourceFromVitals(sourcePatientId);
+      if (!fromMonitor) return;
+      const ok = await handleFile(monitorSourceToFile(fromMonitor), patientTarget, { source: 'monitor', silent: true });
+      if (ok) setLastLiveUpdate(new Date());
+    };
+
+    const channel = supabase
+      .channel(`autoreg-live-${active.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'patient_vitals', filter: `patient_id=eq.${dbPatientId}` },
+        () => {
+          // Un import ajoute plusieurs lignes d'un coup : regrouper les
+          // événements rapprochés en un seul recalcul plutôt que de relancer
+          // l'analyse à chaque ligne.
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(refresh, 4000);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMonitorLive, liveEnabled, active?.id, active?.sourcePatientId]);
 
   const labels = useMemo(() => modeLabels(result?.mode ?? 'prx'), [result?.mode]);
 
@@ -698,6 +753,36 @@ const AutoregStudy = () => {
                 <Badge variant="secondary" className="shrink-0">
                   {active?.code} · {active?.label}
                 </Badge>
+                {isMonitorLive && (
+                  <button
+                    type="button"
+                    onClick={() => setLiveEnabled((v) => !v)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shrink-0",
+                      liveEnabled
+                        ? "border-success/40 bg-success/10 text-success"
+                        : "border-muted-foreground/30 text-muted-foreground",
+                    )}
+                    title={
+                      liveEnabled
+                        ? 'Actualisation en direct active — cliquer pour mettre en pause'
+                        : 'Actualisation en direct en pause — cliquer pour reprendre'
+                    }
+                  >
+                    <span
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full",
+                        liveEnabled ? "bg-success animate-pulse" : "bg-muted-foreground",
+                      )}
+                    />
+                    {liveEnabled ? 'En direct' : 'En pause'}
+                    {lastLiveUpdate && (
+                      <span className="font-normal opacity-80">
+                        · {lastLiveUpdate.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      </span>
+                    )}
+                  </button>
+                )}
                 {fileName && (
                   <span className="text-sm text-muted-foreground truncate min-w-0">{fileName}</span>
                 )}
