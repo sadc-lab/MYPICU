@@ -176,7 +176,14 @@ services:
       rest: {condition: service_healthy}
       auth: {condition: service_healthy}
       realtime: {condition: service_healthy}
-    ports: [127.0.0.1:8080:8000]
+    # Published on the default HTTP port and on all interfaces so the app is
+    # reachable as http://mypicu.miircic.hsj.rtss.qc.ca. The old 8080 binding
+    # was loopback-only, which the workstation browser cannot reach once the
+    # hostname resolves to this machine. dockerd runs privileged, so publishing
+    # port 80 works even though the invoking user does not.
+    ports:
+      - "80:8000"
+      - "127.0.0.1:8080:8000"
     volumes:
       - envoy-config:/etc/envoy:ro
     command: [envoy, -c, /etc/envoy/envoy.yaml, --log-level, warn]

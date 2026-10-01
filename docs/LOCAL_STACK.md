@@ -25,23 +25,41 @@ initializes the database, creates local users, and starts synchronization.
 It preserves existing secrets. Both credential files are git-ignored. Optibrain's
 `.dockerignore` excludes credentials and extracted data from its build context.
 
-| Service | Local URL |
-| --- | --- |
-| App and Supabase API (Envoy) | http://localhost:8080 |
-| Supabase Studio | http://localhost:54323 |
-| Mailpit inbox | http://localhost:8025 |
+| Service | URL | Bound to |
+| --- | --- | --- |
+| App and Supabase API (Envoy) | http://mypicu.miircic.hsj.rtss.qc.ca | all interfaces, port 80 |
+| App and Supabase API (Envoy) | http://localhost:8080 | loopback only |
+| Supabase Studio | http://localhost:54323 | loopback only |
+| Mailpit inbox | http://localhost:8025 | loopback only |
 
-Use **localhost:8080** for the app. All published ports bind to `127.0.0.1`.
-PostgreSQL, Optibrain, and the sync API have no host port.
+Use **http://mypicu.miircic.hsj.rtss.qc.ca** from a workstation browser. The
+hostname resolves to this host, and Envoy is published on the default HTTP port
+across all interfaces. `localhost:8080` is still published on loopback for
+loopback-only work.
+
+PostgreSQL, Optibrain, the autoregulation module, and the sync API have no host
+port: only Envoy, Studio and Mailpit are reachable from outside, and Studio and
+Mailpit stay on loopback.
+
+**This is plain HTTP on a network with no firewall.** `ufw` is inactive and the
+host's INPUT chain accepts everything, so port 80 is reachable from the whole
+`10.128.80.0/22` subnet. A clinician's password and session token therefore
+travel unencrypted. Put TLS in front of it, or restrict the source address, if
+that is not acceptable for the network it sits on.
 
 The browser client resolves the Supabase API from **the origin that served the
 page** (`window.location.origin`), not from a compiled-in address, because the
 stack serves the SPA and the API from one origin. Any address that reaches the
 gateway therefore works, including a VS Code forwarded port or a hostname:
 
+* `http://mypicu.miircic.hsj.rtss.qc.ca` from any machine that can route here
 * `http://localhost:8080` on the stack host
 * a forwarded port such as `http://localhost:50429` that maps to `localhost:8080`
 * `http://<hostname>/` when a reverse proxy in front of the host maps `/` to it
+
+The browser stores its session under a key derived from the host it was served
+from, so `sb-mypicu-auth-token` when reached by hostname and
+`sb-localhost-auth-token` on loopback. The two do not share a session.
 
 Hardcoding one address is what makes a forwarded port fail: the page loads, but
 every API call then goes to that address on the *browser's* machine, where
@@ -66,7 +84,7 @@ insert into public.user_wards(user_id, ward) values ('<auth user UUID>', 'pedA')
 ## Topology
 
 ```text
-Browser -> Envoy :8080 -> web (Node serve, static Vite build)
+Browser -> Envoy :80 (all interfaces) / :8080 (loopback) -> web
                       -> auth (GoTrue) -> Mailpit
                       -> rest (PostgREST) -> local Supabase PostgreSQL
                       -> realtime -> local Supabase PostgreSQL
