@@ -34,6 +34,11 @@ static_resources:
                       routes:
                         - match: {path: /health}
                           direct_response: {status: 200, body: {inline_string: healthy}}
+                        # No prefix rewrite: the Sphinx build sets html_baseurl to
+                        # /documentation/ and emits relative asset paths, so the
+                        # prefix has to survive the hop to the docs container.
+                        - match: {prefix: /documentation}
+                          route: {cluster: docs, timeout: 30s}
                         - match: {prefix: /auth/v1/}
                           route: {cluster: auth, prefix_rewrite: /, timeout: 30s}
                           request_headers_to_add:
@@ -96,6 +101,12 @@ static_resources:
       load_assignment:
         cluster_name: realtime
         endpoints: [{lb_endpoints: [{endpoint: {address: {socket_address: {address: realtime, port_value: 4000}}}}]}]
+    - name: docs
+      type: STRICT_DNS
+      connect_timeout: 5s
+      load_assignment:
+        cluster_name: docs
+        endpoints: [{lb_endpoints: [{endpoint: {address: {socket_address: {address: docs, port_value: 80}}}}]}]
     - name: web
       type: STRICT_DNS
       connect_timeout: 5s

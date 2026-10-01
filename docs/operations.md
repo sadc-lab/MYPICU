@@ -1,4 +1,8 @@
-# Local MYPICU / Supabase / Optibrain
+# Operations
+
+Day-to-day running of the MYPICU stack: starting it, verifying it, and
+diagnosing it. For installation see {doc}`deployment`; for recovery see
+{doc}`backup-restore`.
 
 ## Start
 
@@ -8,7 +12,7 @@ is `local-docker-stack`, created from `MVP1`.
 
 Create `../optibrain/.env` (not committed) with:
 
-```dotenv
+```ini
 DB_HOST=spxp-app05.sainte-justine.intranet
 DB_PORT=5432
 DB_NAME=cathydb
@@ -127,7 +131,7 @@ new snapshot after a worker refresh.
 
 The host this stack is built for has **11 GiB of RAM, 4 CPUs and no swap**. No
 swap means a runaway process is an out-of-memory kill rather than a slowdown, so
-every service carries a ceiling in `docker-compose.local.yml`. These are
+every service carries a ceiling in `docker/compose.local.yml`. These are
 ceilings, not reservations: the stack idles at about 1.1 GiB.
 
 | Service | Ceiling | Measured |

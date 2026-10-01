@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle, Menu, X, Home, Upload, Brain } from 'lucide-react';
+import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle, Menu, X, Home, Upload, Brain, BookOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
 import type { Patient } from '@/types/patient.types';
@@ -518,6 +518,21 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/feedback">Commentaires</Link>
+                </DropdownMenuItem>
+                {/* Served by Envoy at /documentation, not by the SPA router, so
+                    this must be a plain anchor: a <Link> would be intercepted
+                    client-side and render a router 404. */}
+                <DropdownMenuItem asChild>
+                  <a
+                    href="/documentation"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2"
+                    data-guide="documentation"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    Documentation
+                  </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setShowGuide(true)}>
                   Aide

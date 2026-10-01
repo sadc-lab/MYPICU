@@ -340,8 +340,8 @@ docker logs container_id
 
 ## Support and Documentation
 
-- **Docker Guide**: [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md)
-- **Backend Integration**: [BACKEND_INTEGRATION.md](./BACKEND_INTEGRATION.md)
+- **Docker Guide**: [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.pre-local-stack.md)
+- **Backend Integration**: [BACKEND_INTEGRATION.md](./BACKEND_INTEGRATION.pre-local-stack.md)
 - **Supabase Docs**: https://supabase.com/docs
 - **React Query Docs**: https://tanstack.com/query/latest
 

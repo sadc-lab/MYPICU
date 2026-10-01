@@ -16,6 +16,7 @@ x-memory: &memory
   auth: &mem_auth "192m"
   envoy: &mem_envoy "96m"
   web: &mem_web "96m"
+  docs: &mem_docs "96m"
 
 x-worker: &worker
   image: mypicu-worker:local
@@ -207,6 +208,22 @@ services:
     healthcheck:
       test: [CMD, node, -e, "fetch('http://localhost:3000/').then(r=>{if(!r.ok)process.exit(1)})"]
       interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Sphinx build of docs/, served by nginx at /documentation. Build context is
+  # the repository root because the sources live in docs/ while the container
+  # config lives in docker/docs/. The build runs sphinx with -W, so a broken
+  # cross-reference fails the image rather than shipping a broken page.
+  docs:
+    mem_limit: *mem_docs
+    build:
+      context: .
+      dockerfile: docker/docs/Dockerfile
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, wget, --quiet, --tries=1, --spider, http://127.0.0.1/documentation/]
+      interval: 30s
       timeout: 5s
       retries: 5
 
