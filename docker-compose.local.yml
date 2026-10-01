@@ -245,6 +245,29 @@ services:
       timeout: 10s
       retries: 5
 
+  # Autoregulation runs in its own instance. The pipeline keeps module-global
+  # configuration and serialises every request behind one lock, so a 35-minute
+  # fit would otherwise stall the indicator extraction that the sync cycle
+  # depends on. It gets a private results volume and a private input volume so
+  # a long analysis cannot read channels the worker is halfway through
+  # rewriting.
+  optibrain-autoreg:
+    image: mypicu-optibrain:local
+    build: ../optibrain
+    restart: unless-stopped
+    env_file: ../optibrain/.env
+    environment:
+      DB_MAX_CONCURRENT_QUERIES: ${ICCA_QUERY_CONCURRENCY:-4}
+    volumes:
+      - optibrain-ar-data:/app/donnees
+      - optibrain-ar-results:/app/results
+    networks: [default]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   optibrain-sync:
     <<: *worker
     restart: unless-stopped
@@ -262,10 +285,13 @@ services:
       # Same volume, same path on both sides, so the CSVs written here are the
       # ones the module reads.
       OPTIBRAIN_EXPORT_DIR: /optibrain/donnees
+      OPTIBRAIN_AR_EXPORT_DIR: /optibrain-ar/donnees
       OPTIBRAIN_URL: http://optibrain:8000
+      OPTIBRAIN_AR_URL: http://optibrain-autoreg:8000
       OPTIBRAIN_TOKEN: ${SYNC_TOKEN}
     volumes:
       - optibrain-data:/optibrain/donnees
+      - optibrain-ar-data:/optibrain-ar/donnees
     networks: [default]
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=5)"]
@@ -279,3 +305,5 @@ volumes:
   envoy-config:
   optibrain-data:
   optibrain-results:
+  optibrain-ar-data:
+  optibrain-ar-results:

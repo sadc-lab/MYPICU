@@ -64,6 +64,11 @@ KEY_MAP.update({
 TIMESTAMP = '%Y-%m-%d %H:%M:%S'
 
 
+def _encounter(patient_id):
+    """App patient id to a bare encounter id."""
+    return str(patient_id).removeprefix('#')
+
+
 def _stamp(value):
     if isinstance(value, datetime):
         return value.strftime(TIMESTAMP)
@@ -189,6 +194,65 @@ def build(harvest, demographics, directory, patients=(), fetched_at=None):
         except (OSError, ValueError):
             manifest = {}
         manifest['iquatrace'] = {
+            'patients': sorted(int(str(p).removeprefix('#')) for p in patients),
+            'fetched_at': fetched_at or datetime.now().isoformat(timespec='seconds'),
+        }
+        manifest_path.write_text(json.dumps(manifest, indent=2))
+    return written
+
+# ----------------------------------------------------------------------
+# Autoregulation channels
+#
+# These follow a different path from the adherence indicators: OptiBrain reads
+# them, merges each patient's channels into one frame, and fits the correlation
+# index against pressure. The column name doubles as the alias the module
+# renames onto, so it has to match exactly.
+# ----------------------------------------------------------------------
+AUTOREG_CONTRACT = {
+    'Variable_PIC_autoreg': ['noadmsip', 'horodate', 'PIC'],
+    'Variable_PPC_autoreg': ['noadmsip', 'horodate', 'PPC'],
+    'Variable_PAM_autoreg': ['noadmsip', 'horodate', 'PAM'],
+    'Variable_NIRS_autoreg': ['noadmsip', 'horodate', 'NIRS'],
+    'Variable_licox_autoreg': ['noadmsip', 'horodate', 'Licox'],
+    'Variable_fc_autoreg': ['noadmsip', 'horodate', 'FC'],
+    'Variable_spo2_autoreg': ['noadmsip', 'horodate', 'SpO2'],
+}
+
+
+def build_autoreg(series, directory, patients, fetched_at=None):
+    """Write the autoregulation channels and record their provenance.
+
+    Returns {channel: row count} so the caller can see which signals exist for
+    this ward before asking for an analysis, rather than discovering it from a
+    result full of nulls.
+    """
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    written = {}
+    for name, header in AUTOREG_CONTRACT.items():
+        channel = header[-1]
+        # The arterial line and the cuff measure the same quantity. This cohort
+        # is monitored on the line, which is the more accurate source.
+        if channel == 'PAM':
+            matched = [(p, _stamp(t), v) for p, c, t, v in series if c == 'PAM']
+            if not matched:
+                matched = [(p, _stamp(t), v) for p, c, t, v in series if c == 'PAM_cuff']
+        else:
+            matched = [(p, _stamp(t), v) for p, c, t, v in series if c == channel]
+        # The encounter id is written bare. The module filters each channel on
+        # the integer, so a '#'-prefixed value silently matches nothing and
+        # every analysis comes back empty.
+        rows = [(_encounter(p), stamp, value) for p, stamp, value in matched]
+        _write(directory / f'{name}.csv', header, rows)
+        written[channel] = len(rows)
+
+    if patients:
+        manifest_path = directory / '_manifest.json'
+        try:
+            manifest = json.loads(manifest_path.read_text())
+        except (OSError, ValueError):
+            manifest = {}
+        manifest['autoreg'] = {
             'patients': sorted(int(str(p).removeprefix('#')) for p in patients),
             'fetched_at': fetched_at or datetime.now().isoformat(timespec='seconds'),
         }

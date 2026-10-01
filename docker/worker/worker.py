@@ -12,6 +12,7 @@ from fastapi import FastAPI, Header, HTTPException
 import httpx
 import psycopg
 from psycopg.rows import dict_row
+from psycopg.types.json import Jsonb
 import uvicorn
 
 import queries
@@ -29,8 +30,22 @@ busy = asyncio.Lock()
 # Directory shared with the OptiBrain container. Both sides mount it at the
 # same path so the CSVs this worker writes are the ones OptiBrain reads.
 EXPORT_DIR = os.getenv('OPTIBRAIN_EXPORT_DIR', '/optibrain/donnees')
+# Autoregulation gets its own instance, input volume and endpoint: a single fit
+# takes around half an hour and would otherwise hold the module's request lock
+# while the sync cycle waits for it.
+AR_EXPORT_DIR = os.getenv('OPTIBRAIN_AR_EXPORT_DIR', '/optibrain-ar/donnees')
 OPTIBRAIN_URL = os.getenv('OPTIBRAIN_URL', 'http://optibrain:8000')
+AR_URL = os.getenv('OPTIBRAIN_AR_URL', 'http://optibrain-autoreg:8000')
 OPTIBRAIN_TOKEN = os.getenv('OPTIBRAIN_TOKEN', '')
+# Only one autoregulation run at a time; it outlives the sync cycle that
+# started it, so a second one would queue behind the first indefinitely.
+ar_busy = asyncio.Lock()
+
+def current_patients():
+    with local() as db:
+        return [row['patient_id'] for row in db.execute(
+            'SELECT patient_id FROM public.patients')]
+
 
 def local():
     return psycopg.connect(os.environ['LOCAL_DSN'], autocommit=True, row_factory=dict_row)
@@ -164,6 +179,198 @@ def validity_rows(payload, patients):
     return rows
 
 
+AUTOREG_WINDOW_HOURS = 24
+# OptiBrain refuses to fit a curve without enough points in the pressure range,
+# and a patient with a handful of samples produces an all-null result that looks
+# like a computation rather than an absence of data.
+AUTOREG_MIN_SAMPLES = 120
+AUTOREG_MIN_HOURS = 2
+
+
+def autoregulation_candidates(series, patients):
+    """Which patients can actually be analysed, and in which mode.
+
+    PRx correlates intracranial pressure against cerebral perfusion pressure,
+    so both the ICP channel and the monitor's own CPP channel are required.
+    CPP is not derived here: the hospital records it natively, and computing
+    it from arterial and intracranial pressure would substitute an assumption
+    for a measurement the source already provides.
+
+    COx correlates arterial pressure against cerebral oxygenation, so it needs
+    both the pressure channel and a frontal rSO2 probe.
+
+    A patient without the required channels is skipped rather than sent for an
+    analysis that can only return nulls.
+    """
+    counts = {}
+    for patient_id, channel, _t, _v in series:
+        counts.setdefault(patient_id, {}).setdefault(channel, 0)
+        counts[patient_id][channel] += 1
+
+    prx, cox = [], []
+    for patient_id in patients:
+        channels = counts.get(patient_id, {})
+        enough = lambda name: channels.get(name, 0) >= AUTOREG_MIN_SAMPLES
+        if enough('PIC') and enough('PPC'):
+            prx.append(patient_id)
+        if enough('NIRS') and enough('PAM'):
+            cox.append(patient_id)
+    return {'prx': prx, 'cox': cox}
+
+
+def request_autoregulation(patients, mode, url, token):
+    route = '/autoregulation_ppc_optimale' if mode == 'prx' else '/autoregulation_nirs'
+    ids = sorted(int(p.removeprefix('#')) for p in patients)
+    with httpx.Client(timeout=httpx.Timeout(1800, connect=10)) as client:
+        response = client.post(f'{url}{route}',
+                               json={'patients': ids, 'skip_fetch': True},
+                               headers={'Authorization': f'Bearer {token}'})
+        response.raise_for_status()
+        return response.json()
+
+
+def autoregulation_rows(payload, mode, computed_at=None):
+    """Pull the headline figures out of the module's result tables.
+
+    The module returns two tables per patient: a wide one with every
+    correlation-window and pressure-window combination, and a three-minute
+    recap. The recap carries the global optimum, which is the figure the
+    dashboard shows; the wide table is kept so a clinician can see the spread.
+    """
+    rows = []
+    for encounter, tables in (payload or {}).items():
+        recap = next((t for name, t in tables.items() if name.endswith('_AR_3min')), None)
+        wide = next((t for name, t in tables.items() if 'Full_AR_Table' in name), None)
+        if not recap:
+            continue
+        last = recap[-1]
+
+        def number(*names):
+            for name in names:
+                value = last.get(name)
+                if value is not None:
+                    try:
+                        return float(value)
+                    except (TypeError, ValueError):
+                        return None
+            return None
+
+        optimal = number('Global_Optimal_PPC', 'Global_Optimal_PAM')
+        if optimal is None:
+            # No reliable plateau: keep the row out rather than record a result
+            # with no optimum, which would read as "not yet calculated".
+            continue
+        rows.append((
+            '#' + str(encounter),
+            mode,
+            optimal,
+            number('Global_Inferior_Limit'),
+            number('Global_Superior_Limit'),
+            number('PRx', 'COx'),
+            'PPC' if mode == 'prx' else 'PAM',
+            'PIC' if mode == 'prx' else 'NIRS1',
+            int(number('Horodate_count') or 0) or None,
+            computed_at,
+            Jsonb(wide[-1] if wide else None),
+        ))
+    return rows
+
+
+def store_autoregulation(db, rows):
+    if not rows:
+        return 0
+    for row in rows:
+        db.execute('''INSERT INTO public.patient_autoregulation
+            (patient_id, mode, optimal_pressure, inferior_limit, superior_limit,
+             min_index, pressure_variable, signal_variable, sample_count, computed_at, raw)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,now(),%s)
+            ON CONFLICT (patient_id, mode) DO UPDATE SET
+                optimal_pressure=excluded.optimal_pressure,
+                inferior_limit=excluded.inferior_limit,
+                superior_limit=excluded.superior_limit,
+                min_index=excluded.min_index,
+                pressure_variable=excluded.pressure_variable,
+                signal_variable=excluded.signal_variable,
+                sample_count=excluded.sample_count,
+                computed_at=now(),
+                raw=excluded.raw
+            WHERE (patient_autoregulation.optimal_pressure,
+                   patient_autoregulation.inferior_limit,
+                   patient_autoregulation.superior_limit,
+                   patient_autoregulation.min_index)
+                  IS DISTINCT FROM (excluded.optimal_pressure,
+                                    excluded.inferior_limit,
+                                    excluded.superior_limit,
+                                    excluded.min_index)''',
+                row)
+    return len(rows)
+
+
+async def autoregulation_cycle(patients):
+    """Start a background autoregulation pass and return immediately.
+
+    Fitting the correlation curve costs roughly half an hour per patient, so it
+    cannot sit inside a fifteen-minute cycle. The task is fire-and-forget: the
+    cycle that starts it continues, and the next one finds the run already in
+    progress and skips.
+    """
+    if ar_busy.locked():
+        log.info('Autoregulation already running; skipping this cycle')
+        return
+    await ar_busy.acquire()
+    try:
+        asyncio.create_task(_autoregulation_pass(patients))
+    except Exception:
+        ar_busy.release()
+        raise
+
+
+async def _autoregulation_pass(patients):
+    try:
+        with local() as db:
+            stored = await asyncio.to_thread(refresh_autoregulation, db, patients)
+            if stored:
+                log.info('Autoregulation stored %d result(s)', stored)
+    except Exception as exc:
+        log.error('Autoregulation cycle failed: %s', type(exc).__name__)
+    finally:
+        ar_busy.release()
+
+
+def refresh_autoregulation(db, patients):
+    """Recompute brain autoregulation for patients whose signals have moved.
+
+    Adherence is cheap enough to redo every cycle. Autoregulation fits thousands
+    of curves per patient, so it only runs when the underlying series has
+    actually advanced: repeating an identical computation would rewrite the same
+    numbers and spend minutes of CPU to learn nothing.
+    """
+    since = datetime.now(timezone.utc) - timedelta(hours=AUTOREG_WINDOW_HOURS)
+    with queries.connect(os.environ) as conn:
+        series = queries.autoreg_series(conn, [int(p.removeprefix('#')) for p in patients], since)
+
+    optibrain_export.build_autoreg(series, AR_EXPORT_DIR, patients)
+    candidates = autoregulation_candidates(series, patients)
+
+    # Patients already holding a result that is still current are left alone.
+    fresh = {row['patient_id'] for row in db.execute(
+        """SELECT DISTINCT patient_id FROM public.patient_autoregulation
+           WHERE computed_at > now() - (%s * interval '1 minute')""", (15,))}
+
+    stored = 0
+    with db.transaction():
+        for mode, eligible in candidates.items():
+            todo = [p for p in eligible if p not in fresh]
+            if not todo:
+                continue
+            payload = request_autoregulation(todo, mode, AR_URL, OPTIBRAIN_TOKEN)
+            stored += store_autoregulation(db, autoregulation_rows(payload, mode))
+            log.info('Autoregulation (%s) recomputed for %d patient(s)', mode, len(todo))
+    if not any(candidates.values()):
+        log.info('No patient has both intracranial and arterial monitoring; autoregulation skipped')
+    return stored
+
+
 def sync_batch(db, patients):
     """Harvest every patient, hand the raw data to OptiBrain, and store both.
 
@@ -180,7 +387,7 @@ def sync_batch(db, patients):
                'WHERE patient_id = ANY(%s)', (patients,))
     try:
         harvest = queries.harvest(patients, os.environ)
-        exported = optibrain_export.build(harvest, demographics(db, patients), EXPORT_DIR, patients)
+        optibrain_export.build(harvest, demographics(db, patients), EXPORT_DIR, patients)
         indicators = request_indicators(patients, OPTIBRAIN_URL, OPTIBRAIN_TOKEN)
         validity = validity_rows(indicators, patients)
         failures = indicators.get('failures') or {}
@@ -247,6 +454,7 @@ async def scheduled():
         try:
             async with busy:
                 await asyncio.to_thread(run_sync, force=False)
+                await autoregulation_cycle(current_patients())
         except Exception as exc:
             log.error('Sync cycle failed: %s', type(exc).__name__)
         await asyncio.sleep(INTERVAL)

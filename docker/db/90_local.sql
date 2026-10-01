@@ -37,7 +37,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.patients;
 CREATE ROLE optibrain_sync LOGIN BYPASSRLS;
 GRANT USAGE ON SCHEMA public, integration TO optibrain_sync;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.patients, public.patient_vitals,
-  public.patient_medications, public.patient_validity, public.patient_clinical_info
+  public.patient_medications, public.patient_validity, public.patient_clinical_info,
+  public.patient_autoregulation
   TO optibrain_sync;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA integration TO optibrain_sync;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO optibrain_sync;

@@ -28,12 +28,13 @@ class SyncBatchTests(unittest.TestCase):
 
     @patch('worker.request_indicators', return_value={'matrices_rt_PICData_validite': [{'id_patient': 1, 'H0': 0}]})
     @patch('worker.optibrain_export.build', return_value={})
+    @patch('worker.refresh_autoregulation', return_value=0)
     @patch('worker.demographics', return_value={'intime': {}, 'dateofbirth': {}})
     @patch('worker.local')
     @patch('worker.refresh_census', return_value=['#1', '#2', '#3'])
     @patch('worker.queries.harvest', return_value={'vitals': [], 'medications': [], 'pupils': [], 'notes': []})
     @patch('worker.replace_cache', return_value=10)
-    def test_one_harvest_for_the_whole_ward(self, cache, harvest, census, local, demo, export, indicators):
+    def test_one_harvest_for_the_whole_ward(self, cache, harvest, census, local, demo, export, indicators, autoreg):
         db = local.return_value.__enter__.return_value
         db.execute.side_effect = census_mock(['#1', '#2'])
         result = run_sync()
@@ -46,12 +47,13 @@ class SyncBatchTests(unittest.TestCase):
 
     @patch('worker.request_indicators', return_value={})
     @patch('worker.optibrain_export.build', return_value={})
+    @patch('worker.refresh_autoregulation', return_value=0)
     @patch('worker.demographics', return_value={'intime': {}, 'dateofbirth': {}})
     @patch('worker.local')
     @patch('worker.refresh_census', return_value=['#1', '#2'])
     @patch('worker.queries.harvest', return_value={'vitals': [], 'medications': [], 'pupils': [], 'notes': []})
     @patch('worker.replace_cache', return_value=10)
-    def test_restart_skips_fresh_patients_but_on_demand_refreshes_them(self, cache, harvest, census, local, demo, export, indicators):
+    def test_restart_skips_fresh_patients_but_on_demand_refreshes_them(self, cache, harvest, census, local, demo, export, indicators, autoreg):
         db = local.return_value.__enter__.return_value
         # Only #1 synced recently, so a resumed cycle refreshes just #2.
         db.execute.side_effect = census_mock(['#1'])
@@ -64,11 +66,12 @@ class SyncBatchTests(unittest.TestCase):
 
     @patch('worker.request_indicators', return_value={})
     @patch('worker.optibrain_export.build', return_value={})
+    @patch('worker.refresh_autoregulation', return_value=0)
     @patch('worker.demographics', return_value={'intime': {}, 'dateofbirth': {}})
     @patch('worker.local')
     @patch('worker.refresh_census', return_value=[])
     @patch('worker.queries.harvest', return_value={'vitals': [], 'medications': [], 'pupils': [], 'notes': []})
-    def test_empty_census_does_not_query_the_source(self, harvest, census, local, demo, export, indicators):
+    def test_empty_census_does_not_query_the_source(self, harvest, census, local, demo, export, indicators, autoreg):
         local.return_value.__enter__.return_value.execute.side_effect = census_mock([])
         result = run_sync()
         self.assertEqual(result, {'status': 'completed', 'current_patients': 0, 'refreshed': 0})
@@ -76,10 +79,11 @@ class SyncBatchTests(unittest.TestCase):
 
     @patch('worker.request_indicators', return_value={})
     @patch('worker.optibrain_export.build', return_value={})
+    @patch('worker.refresh_autoregulation', return_value=0)
     @patch('worker.demographics', return_value={'intime': {}, 'dateofbirth': {}})
     @patch('worker.local')
     @patch('worker.queries.harvest', side_effect=RuntimeError('source down'))
-    def test_source_failure_preserves_existing_cache(self, harvest, local, demo, export, indicators):
+    def test_source_failure_preserves_existing_cache(self, harvest, local, demo, export, indicators, autoreg):
         db = local.return_value.__enter__.return_value
         result = sync_batch(db, ['#1'])
         self.assertIsNone(result)

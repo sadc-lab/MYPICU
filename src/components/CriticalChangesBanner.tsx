@@ -10,7 +10,7 @@ interface CriticalChangesBannerProps {
   onSelect?: (label: string) => void;
 }
 
-const TONE_STYLES: Record<"critical" | "warning", { card: string; badge: string; label: string }> = {
+const TONE_STYLES: Record<"critical" | "warning" | "unknown", { card: string; badge: string; label: string }> = {
   critical: {
     card: "border-status-critical/40 bg-status-critical-bg/30",
     badge: "bg-status-critical/15 text-status-critical border-status-critical/30",
@@ -20,6 +20,13 @@ const TONE_STYLES: Record<"critical" | "warning", { card: string; badge: string;
     card: "border-status-warning/40 bg-status-warning-bg/30",
     badge: "bg-status-warning/15 text-status-warning border-status-warning/30",
     label: "Alerte",
+  },
+  // An indicator with no adherence rows was never assessed; it is not a
+  // deviation and must not be presented as one.
+  unknown: {
+    card: "border-border bg-muted/30",
+    badge: "bg-muted text-muted-foreground border-border",
+    label: "Non évalué",
   },
 };
 
@@ -86,7 +93,7 @@ export const CriticalChangesBanner = ({ rows, previousVisitAt, onSelect }: Criti
       </CardHeader>
       <CardContent className="pt-0 space-y-2">
         {flagged.map((row) => {
-          const tone = TONE_STYLES[row.status as "critical" | "warning"];
+          const tone = TONE_STYLES[row.status ?? "unknown"] ?? TONE_STYLES.unknown;
           const reason = describeDeviation(row);
           return (
             <div

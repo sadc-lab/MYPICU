@@ -21,6 +21,9 @@ const STATUS_STYLES: Record<string, { row: string; badge: string; label: string 
   critical: { row: "bg-status-critical-bg/40", badge: "bg-status-critical/15 text-status-critical border-status-critical/30", label: "Critique" },
   warning: { row: "bg-status-warning-bg/40", badge: "bg-status-warning/15 text-status-warning border-status-warning/30", label: "Alerte" },
   normal: { row: "", badge: "bg-status-normal/10 text-status-normal border-status-normal/30", label: "Normal" },
+  // No adherence rows means the indicator was never assessed. It must not be
+  // shown as normal, and the lookup below must not fall through to undefined.
+  unknown: { row: "", badge: "bg-muted text-muted-foreground border-border", label: "Non évalué" },
 };
 
 function formatRelativeTime(date: Date): string {
@@ -69,7 +72,8 @@ export const VisitComparisonMatrix = ({ rows, previousVisitAt }: VisitComparison
               </thead>
               <tbody>
                 {changedRows.map((row) => {
-                  const style = STATUS_STYLES[row.status ?? "normal"];
+                  // A status with no style entry would make the row unreadable.
+                  const style = STATUS_STYLES[row.status ?? "normal"] ?? STATUS_STYLES.unknown;
                   return (
                     <tr key={row.label} className={cn("border-t", style.row)}>
                       <td className="px-2 py-2 font-medium text-foreground">{row.label}</td>

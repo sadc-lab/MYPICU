@@ -350,6 +350,52 @@ def transfusions(conn, patients, since):
             'platelets': platelets, 'nutrition': nutrition}
 
 
+def autoreg_series(conn, patients, since):
+    """Intracranial, arterial and cerebral-oximetry signals at monitor resolution.
+
+    Deliberately separate from the display cache. That cache reduces monitor
+    channels to a median per minute, which is right for a trend chart, but
+    OptiBrain resamples to 28s before correlating, so feeding it minute
+    medians would duplicate samples and change the correlation.
+
+    Blood pressure is the same quantity whether it comes from an arterial line
+    or a cuff, and this cohort is monitored on the line, so both are collected
+    and the arterial reading is preferred per timestamp.
+    """
+    channels = [
+        ('PICm', 'PIC'),
+        ('PPC', 'PPC'),
+        ('ARTm', 'PAM'),
+        ('PAm', 'PAM_cuff'),
+        ('rSO2%-1', 'NIRS'),
+        ('rSO%', 'Licox'),
+        ('FC', 'FC'),
+        ('spo2', 'SpO2'),
+    ]
+    sql = """
+        SELECT noadmsip::bigint, par,
+               date_trunc('second', horodate AT TIME ZONE 'America/Montreal'),
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY valnum)
+        FROM icca_htr
+        WHERE noadmsip = ANY(%s)
+          AND par ILIKE ANY(%s)
+          AND horodate >= %s
+        GROUP BY noadmsip, par,
+                 date_trunc('second', horodate AT TIME ZONE 'America/Montreal')
+        ORDER BY 1, 3
+    """
+    out = []
+    for encounter, par, horodate, value in _rows(
+            conn, sql, (patients, [c[0] for c in channels], since)):
+        if value is None:
+            continue
+        name = next((alias for pattern, alias in channels if par.lower() == pattern.lower()
+                     or par.lower().startswith(pattern.lower().rstrip('%').lower())), None)
+        if name:
+            out.append(('#' + str(encounter), name, horodate, float(value)))
+    return out
+
+
 def clinical_notes(conn, patients, since):
     """Latest free-text note per patient, for the diagnosis and exam fields."""
     sql = """
