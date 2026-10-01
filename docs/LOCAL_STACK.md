@@ -105,6 +105,36 @@ failed data reads are not cached. Layouts, components, and clinical algorithms
 were not changed. An already open chart does not poll; reload/navigate to fetch a
 new snapshot after a worker refresh.
 
+## Memory budget
+
+The host this stack is built for has **11 GiB of RAM, 4 CPUs and no swap**. No
+swap means a runaway process is an out-of-memory kill rather than a slowdown, so
+every service carries a ceiling in `docker-compose.local.yml`. These are
+ceilings, not reservations: the stack idles at about 1.1 GiB.
+
+| Service | Ceiling | Measured |
+| --- | --- | --- |
+| `db` | 2 GiB | 171 MiB |
+| `optibrain-autoreg` | 3 GiB | 1.2 GiB peak while fitting a curve |
+| `optibrain` | 1 GiB | 164 MiB |
+| `optibrain-sync` | 1 GiB | 145 MiB |
+| `realtime` | 640 MiB | 208 MiB |
+| `studio`, `meta` | 384 MiB each | 191 / 121 MiB |
+| `auth`, `rest` | 192 MiB each | 9 / 12 MiB |
+| `envoy`, `web`, `mailpit` | 96 MiB each | 17-24 MiB |
+
+A full 60-patient sync peaks at roughly **1.2 GiB across all containers**.
+
+Postgres is started with `shared_buffers=1GB` and `effective_cache_size=8GB`.
+The stock `effective_cache_size` assumes a much larger machine, which only
+misleads the planner, but `shared_buffers` is real memory and is sized to leave
+room for the module containers.
+
+The autoregulation fit is the only operation that approaches its ceiling. It
+builds wide pandas frames and warns of fragmentation, and it is bounded twice
+over: by its own container limit, and by a background lock so only one run
+happens at a time.
+
 ## Database initialization
 
 `db-migrate` runs after GoTrue initializes `auth.users`:

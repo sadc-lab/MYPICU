@@ -1,11 +1,30 @@
 name: mypicu-local
 
+# Memory ceilings for an 11 GiB host with no swap.
+#
+# These are ceilings, not reservations: the stack idles at about 1.7 GiB, and
+# only the autoregulation fit and the database work at the top of their range.
+# Each is set individually so no single process can exhaust the machine, which
+# with no swap means the kernel would start killing arbitrary processes.
+x-memory: &memory
+  db: &mem_db "2g"
+  autoreg: &mem_autoreg "3g"   # peak measured at 1.2 GiB on a 2h window
+  module: &mem_module "1g"
+  worker: &mem_worker "1g"
+  realtime: &mem_realtime "640m"
+  service: &mem_service "384m"
+  auth: &mem_auth "192m"
+  envoy: &mem_envoy "96m"
+  web: &mem_web "96m"
+
 x-worker: &worker
   image: mypicu-worker:local
   build: ./docker/worker
+  mem_limit: *mem_worker
 
 services:
   db:
+    mem_limit: *mem_db
     image: supabase/postgres:17.6.1.136
     restart: unless-stopped
     environment:
@@ -18,7 +37,12 @@ services:
       - db-config:/etc/postgresql-custom
       - ./docker/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-local-roles.sql:ro
       - ./docker/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:ro
-    command: [postgres, -c, config_file=/etc/postgresql/postgresql.conf, -c, log_min_messages=fatal]
+    # Sized for an 11 GiB host. The stock effective_cache_size assumes a much
+    # larger machine, which only misleads the planner, but shared_buffers is
+    # real memory and a modest value leaves room for the module containers.
+    command: [postgres, -c, config_file=/etc/postgresql/postgresql.conf, -c, log_min_messages=fatal,
+              -c, shared_buffers=1GB, -c, effective_cache_size=8GB,
+              -c, work_mem=8MB, -c, maintenance_work_mem=128MB]
     healthcheck:
       test: [CMD, pg_isready, -U, postgres, -h, localhost]
       interval: 5s
@@ -26,6 +50,7 @@ services:
       retries: 30
 
   auth:
+    mem_limit: *mem_auth
     image: supabase/gotrue:v2.196.0
     restart: unless-stopped
     depends_on:
@@ -80,6 +105,7 @@ services:
       - ./supabase/migrations:/migrations:ro
 
   rest:
+    mem_limit: *mem_auth
     image: postgrest/postgrest:v14.17
     restart: unless-stopped
     depends_on:
@@ -100,6 +126,7 @@ services:
       retries: 10
 
   realtime:
+    mem_limit: *mem_realtime
     image: supabase/realtime:v2.134.10
     restart: unless-stopped
     depends_on:
@@ -140,6 +167,7 @@ services:
       - envoy-config:/generated
 
   envoy:
+    mem_limit: *mem_envoy
     image: envoyproxy/envoy:v1.39.1
     restart: unless-stopped
     depends_on:
@@ -159,6 +187,7 @@ services:
       retries: 5
 
   web:
+    mem_limit: *mem_web
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
@@ -175,11 +204,13 @@ services:
       retries: 5
 
   mailpit:
+    mem_limit: *mem_envoy
     image: axllent/mailpit:v1.27.10
     restart: unless-stopped
     ports: [127.0.0.1:8025:8025]
 
   meta:
+    mem_limit: *mem_service
     image: supabase/postgres-meta:v0.99.0
     restart: unless-stopped
     depends_on:
@@ -194,6 +225,7 @@ services:
       CRYPTO_KEY: ${PG_META_CRYPTO_KEY}
 
   studio:
+    mem_limit: *mem_service
     image: supabase/studio:2026.09.07-sha-7996410
     restart: unless-stopped
     depends_on:
@@ -229,6 +261,7 @@ services:
   # brain autoregulation results. Single worker is mandatory: the pipeline
   # uses process-global state and a shared results directory.
   optibrain:
+    mem_limit: *mem_module
     image: mypicu-optibrain:local
     build: ../optibrain
     restart: unless-stopped
@@ -252,6 +285,7 @@ services:
   # a long analysis cannot read channels the worker is halfway through
   # rewriting.
   optibrain-autoreg:
+    mem_limit: *mem_autoreg
     image: mypicu-optibrain:local
     build: ../optibrain
     restart: unless-stopped
