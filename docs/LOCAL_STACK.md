@@ -73,7 +73,8 @@ Browser -> Envoy :8080 -> web (Node serve, static Vite build)
 Studio -> postgres-meta -> local Supabase PostgreSQL
 
 optibrain-sync -> ICCA readonly, one batched pass per source table
-              -> local Supabase PostgreSQL (atomic cache replacement)
+              -> optibrain (adherence) -> local Supabase PostgreSQL
+              -> optibrain-autoreg (autoregulation, background)
 ```
 
 Supabase component tags are pinned to the official self-hosted set inspected on
@@ -229,9 +230,34 @@ roster of invented patients whenever the census was empty.
 
 `src/utils/patientData.ts`, which held that static roster, has been deleted.
 
-`patient_validity` (per-hour adherence) is the one table still **not** refreshed.
-It was produced by the retired OptiBrain indicator pipeline and now holds a
-frozen snapshot. Recomputing it in the worker, or clearing it, is open work.
+### What the module computes
+
+| Table | Produced by | Cadence |
+| --- | --- | --- |
+| `patient_validity` | `/indicateurs`, 19 adherence indicators | every cycle, ~0.8s per patient |
+| `patient_autoregulation` | `/autoregulation_ppc_optimale`, `/autoregulation_nirs` | background pass, only when the signals advanced |
+
+Adherence is cheap enough to redo each cycle. Autoregulation fits thousands of
+curves per patient and takes roughly half an hour for one, so it runs in a
+background task against its own module instance with private volumes. The
+instance matters: the pipeline holds a single request lock and global
+configuration, so a long fit on the shared instance would stall the indicator
+extraction every cycle depends on. A separate input volume also stops a running
+analysis from reading channels the worker is halfway through rewriting.
+
+A patient is analysed only when the required channels are actually present. PRx
+needs the intracranial channel and the monitor's own cerebral perfusion
+pressure; that pressure is not derived as arterial minus intracranial, because
+the hospital records it natively and a substituted value would differ from the
+recorded one. COx needs arterial pressure and cerebral oximetry. A result with
+no reliable plateau is not stored, so the page shows "not assessed" rather than
+a figure the module could not determine.
+
+Both tables carry the module's figures verbatim. The patient pages no longer
+recompute the correlation in the browser: two implementations of the same index
+do not agree numerically, which meant the value on screen could differ from the
+one in the clinical record. The AutoregStudy page keeps its browser-side engine,
+which runs on a file a clinician uploaded rather than on a live inpatient.
 
 ### Autoregulation boundary
 

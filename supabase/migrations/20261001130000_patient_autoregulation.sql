@@ -22,11 +22,10 @@ CREATE TABLE public.patient_autoregulation (
   pressure_variable text,
   signal_variable text,
   sample_count integer,
-  duration_hours numeric,
-  correlation_windows integer[],
-  pressure_windows numeric[],
-  -- Pressure-to-index curve, as [{pressure, index, count}].
-  curve jsonb,
+  -- The module's own per-window analysis table, kept verbatim. The dashboard
+  -- draws the curve from this so the shape on screen and the headline figures
+  -- come from the same computation.
+  raw jsonb,
   computed_at timestamptz NOT NULL DEFAULT now(),
   -- One current result per patient and mode; a recomputation replaces it.
   UNIQUE (patient_id, mode)

@@ -58,14 +58,6 @@ const BIN_SIZE = 5;
 // Cache of parsed recordings, keyed by normalized patient id.
 const nirsSampleCache = new Map<string, RawSample[]>();
 
-// Patient IDs with NIRS autoregulation data
-const NIRS_AUTOREGULATION_PATIENTS = ["8749"];
-
-export function hasNirsAutoregulationData(patientId: string): boolean {
-  const normalizedId = patientId.replace("#", "");
-  return NIRS_AUTOREGULATION_PATIENTS.includes(normalizedId);
-}
-
 /**
  * Loads the patient's raw recording as samples, parsed exactly as the study page
  * parses an imported file — every timestamped row is kept, gaps included, so the

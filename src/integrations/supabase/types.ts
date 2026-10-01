@@ -76,6 +76,56 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_autoregulation: {
+        Row: {
+          computed_at: string
+          id: number
+          inferior_limit: number | null
+          min_index: number | null
+          mode: string
+          optimal_pressure: number | null
+          patient_id: string
+          pressure_variable: string | null
+          raw: Json | null
+          signal_variable: string | null
+          superior_limit: number | null
+        }
+        Insert: {
+          computed_at?: string
+          id?: number
+          inferior_limit?: number | null
+          min_index?: number | null
+          mode: string
+          raw?: Json | null
+          optimal_pressure?: number | null
+          patient_id: string
+          pressure_variable?: string | null
+          signal_variable?: string | null
+          superior_limit?: number | null
+        }
+        Update: {
+          computed_at?: string
+          id?: number
+          inferior_limit?: number | null
+          min_index?: number | null
+          mode?: string
+          optimal_pressure?: number | null
+          patient_id?: string
+          pressure_variable?: string | null
+          raw?: Json | null
+          signal_variable?: string | null
+          superior_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_autoregulation_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_clinical_info: {
         Row: {
           data: Json

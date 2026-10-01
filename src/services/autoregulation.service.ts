@@ -35,37 +35,22 @@ interface RawAutoregulationEntry {
 
 // The Fisher table is located by name (any key containing "Fisher"), so no
 // patient-specific key needs to be declared here.
-interface AutoregulationFileData {
-  [key: string]: RawAutoregulationEntry[] | undefined;
+/**
+ * One analysis table keyed by name, as the module returns it. Rows are the
+ * module's own columns; they are not reshaped here so the figures shown and
+ * the figures stored come from the same computation.
+ */
+export interface AutoregulationFileData {
+  [key: string]: Record<string, unknown>[] | undefined;
 }
 
 // Cache for loaded autoregulation data
 const autoregulationCache = new Map<string, AutoregulationFileData>();
 
-// Patient IDs shipping a PRx (invasive PIC/PAM) Fisher export in public/, as
-// `autoregulation_ppc_optimale_<id>.json`. Empty for now: the only such file was
-// patient 8448's, whose PAM, PPC and PRx columns were entirely empty (no ICP
-// catheter — PIC was a constant 0), so it could never yield a PPCopt. Add an id
-// back here only once a real export with populated PIC/PAM/PRx accompanies it.
-const AVAILABLE_AUTOREGULATION_PATIENTS: string[] = [];
-
-// Patient IDs using NIRS-based autoregulation (COx)
-const NIRS_AUTOREGULATION_PATIENTS = ["8749"];
-
-// Clinical safety: only patients with a real recording are declared as having
-// autoregulation data. No simulated/demo values are ever produced — a patient
-// without usable signal must show an explicit "no data" state, never a curve
-// that could be mistaken for their own measurements.
-export function hasAutoregulationData(patientId: string): boolean {
-  const normalizedId = patientId.replace("#", "");
-  return AVAILABLE_AUTOREGULATION_PATIENTS.includes(normalizedId) ||
-         NIRS_AUTOREGULATION_PATIENTS.includes(normalizedId);
-}
-
-export function isNirsBasedPatient(patientId: string): boolean {
-  const normalizedId = patientId.replace("#", "");
-  return NIRS_AUTOREGULATION_PATIENTS.includes(normalizedId);
-}
+// Whether a patient has autoregulation is now a question about the data the
+// module produced, read from `patient_autoregulation`. It used to be answered by
+// a hardcoded list of patient ids, which named a single patient and reported no
+// autoregulation for everyone else regardless of their monitoring.
 
 export async function loadAutoregulationData(patientId: string): Promise<AutoregulationFileData | null> {
   const normalizedId = patientId.replace("#", "");
@@ -93,16 +78,20 @@ export async function loadAutoregulationData(patientId: string): Promise<Autoreg
 
 // Parse a CSV-style row from the JSON format
 // The key contains column headers, the value contains comma-separated data
-function parseCSVRow(entry: RawAutoregulationEntry): Map<string, string> {
+function parseCSVRow(entry: Record<string, unknown>): Map<string, string> {
   const result = new Map<string, string>();
-  
-  for (const [headerString, valueString] of Object.entries(entry)) {
-    const headers = headerString.split(",");
-    const values = valueString.split(",");
-    
+
+  for (const [headerString, rawValue] of Object.entries(entry)) {
+    // Two shapes reach here. Older exports packed a whole CSV line into one
+    // field, so the key held every header and the value every value. The module
+    // now returns a proper row, where each column is already its own field.
+    const packed = typeof rawValue === "string" && headerString.includes(",");
+    const headers = packed ? headerString.split(",") : [headerString];
+    const values = packed ? String(rawValue).split(",") : [rawValue === null || rawValue === undefined ? "" : String(rawValue)];
+
     for (let i = 0; i < headers.length; i++) {
       const header = headers[i].trim();
-      const value = values[i]?.trim() || "";
+      const value = (values[i] ?? "").trim();
       result.set(header, value);
     }
   }

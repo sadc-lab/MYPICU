@@ -60,14 +60,13 @@ import { ChartTimeRangeProvider } from "@/contexts/ChartTimeRangeContext";
 import { ChartZoomControls } from "@/components/ChartZoomControls";
 import { BRUSH_TOUCH_WIDTH, renderWideTouchTraveller } from "@/lib/chartBrushTraveller";
 import {
-  loadAutoregulationData,
-  hasAutoregulationData,
-  getOptimalPPC,
   getPPCStatusVsOptimal,
-  OptimalPPCResult,
-  isNirsBasedPatient,
+  type OptimalPPCResult,
 } from "@/services/autoregulation.service";
-import { getOptimalPAMFromNirs } from "@/services/nirsAutoregulation.service";
+import {
+  loadAutoregulation as loadPatientAutoregulation,
+  pickPrimary,
+} from "@/services/patientAutoregulation.service";
 import { AutoregulationChart } from "@/components/AutoregulationChart";
 import { TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
@@ -118,6 +117,9 @@ const Optibrain = () => {
   const hasFileData = hasPatientFileData(patientId);
 
   // Autoregulation data state for optimal PPC
+  // Which correlation the module produced. PRx is the default reading when a
+  // patient has neither, so the tile keeps its usual meaning.
+  const [autoregMode, setAutoregMode] = useState<"prx" | "cox">("prx");
   const [optimalPPCResult, setOptimalPPCResult] = useState<OptimalPPCResult>({
     optimalPPC: null,
     lowerLimit: null,
@@ -126,8 +128,6 @@ const Optibrain = () => {
     timestamp: null,
     hasData: false,
   });
-  const hasAutoregData = hasAutoregulationData(patientId);
-  const isNirsBased = isNirsBasedPatient(patientId);
 
   // ===== Fonctions utilitaires pour la synchronisation =====
 
@@ -245,43 +245,38 @@ const Optibrain = () => {
     }
   }, [patientId, hasFileData]);
 
-  // Load autoregulation data for optimal PPC/PAM calculation
+  // Optimal cerebral perfusion pressure, as computed by the OptiBrain module.
+  //
+  // This used to be recomputed in the browser from a static per-patient
+  // allow-list, so the figure could differ from the module's own analysis and
+  // was unavailable for anyone not named in that list. The module is now the
+  // single source; a patient it has not analysed is shown as not assessed.
   useEffect(() => {
-    if (hasAutoregData) {
-      if (isNirsBased) {
-        // Use NIRS-based calculation for patient #8749
-        getOptimalPAMFromNirs(patientId, 30)
-          .then((result) => {
-            setOptimalPPCResult(result);
-          })
-          .catch((err) => {
-            console.error("Failed to load NIRS autoregulation data:", err);
+    let cancelled = false;
+    loadPatientAutoregulation(patientId)
+      .then((results) => {
+        if (cancelled) return;
+        const primary = pickPrimary(results);
+        setAutoregMode(primary?.mode ?? "prx");
+        setOptimalPPCResult({
+          optimalPPC: primary?.optimalPressure ?? null,
+          lowerLimit: primary?.inferiorLimit ?? null,
+          upperLimit: primary?.superiorLimit ?? null,
+          prxScore: primary?.minIndex ?? null,
+          timestamp: primary?.computedAt ?? null,
+          hasData: Boolean(primary?.optimalPressure != null),
+        });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setOptimalPPCResult({
+            optimalPPC: null, lowerLimit: null, upperLimit: null,
+            prxScore: null, timestamp: null, hasData: false,
           });
-      } else {
-        // Use PRx-based calculation for other patients
-        loadAutoregulationData(patientId)
-          .then((data) => {
-            if (data) {
-              // Use 30min window with 4h lookback as default
-              const result = getOptimalPPC(data, 30, 4);
-              setOptimalPPCResult(result);
-            }
-          })
-          .catch((err) => {
-            console.error("Failed to load autoregulation data:", err);
-          });
-      }
-    } else {
-      setOptimalPPCResult({
-        optimalPPC: null,
-        lowerLimit: null,
-        upperLimit: null,
-        prxScore: null,
-        timestamp: null,
-        hasData: false,
+        }
       });
-    }
-  }, [patientId, hasAutoregData, isNirsBased]);
+    return () => { cancelled = true; };
+  }, [patientId]);
 
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRangeForAdherence = (range: string): number => {
@@ -834,7 +829,7 @@ const Optibrain = () => {
       };
     })(),
     {
-      label: isNirsBased ? "PAM optimale" : "PPC optimale",
+      label: autoregMode === "cox" ? "PAM optimale" : "PPC optimale",
       value: optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null
         ? `${Math.round(optimalPPCResult.optimalPPC)}`
         : "--",
@@ -852,7 +847,7 @@ const Optibrain = () => {
       dialogKey: "autoreg-detail",
       description: optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
         ? `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
-        : isNirsBased ? "PAM optimale individuelle" : "PPC optimale individuelle",
+        : autoregMode === "cox" ? "PAM optimale individuelle" : "PPC optimale individuelle",
       criticalLabel: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
         ? optimalPPCResult.prxScore < 0.3
           ? "Autorégulation intacte"
@@ -869,7 +864,7 @@ const Optibrain = () => {
         : "text-muted-foreground",
     },
     {
-      label: isNirsBased ? "COx minimum" : "PRx minimum",
+      label: autoregMode === "cox" ? "COx minimum" : "PRx minimum",
       value: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
         ? optimalPPCResult.prxScore.toFixed(2)
         : "--",
@@ -1435,8 +1430,8 @@ const Optibrain = () => {
                     </div>
                   );
 
-                  const pamLabel = isNirsBased ? "PAM" : "PPC";
-                  const pamCurrent = isNirsBased ? realBrainValues.pam : realBrainValues.ppc;
+                  const pamLabel = autoregMode === "cox" ? "PAM" : "PPC";
+                  const pamCurrent = autoregMode === "cox" ? realBrainValues.pam : realBrainValues.ppc;
                   const autoregStatus = !optimalPPCResult.hasData || optimalPPCResult.prxScore === null
                     ? null
                     : optimalPPCResult.prxScore < 0.3

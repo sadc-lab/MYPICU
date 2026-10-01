@@ -12,11 +12,8 @@ import {
   Brush,
 } from "recharts";
 import {
-  loadAutoregulationData,
-  hasAutoregulationData,
   getOptimalPPCTimeSeries,
   getAutoregulationCurveData,
-  isNirsBasedPatient,
 } from "@/services/autoregulation.service";
 import {
   loadNirsSamples,
@@ -36,6 +33,11 @@ import {
   InterpretationBanner,
   QualityPanel,
 } from "@/components/autoreg/AutoregResultViews";
+import {
+  loadAutoregulation,
+  pickPrimary,
+  type AutoregulationResult,
+} from "@/services/patientAutoregulation.service";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -123,18 +125,37 @@ export function AutoregulationChart({
   const [analysis, setAnalysis] = useState<AutoregResult | null>(null);
   const [rolling, setRolling] = useState<OptimalTimePoint[]>([]);
 
-  const hasAutoData = hasAutoregulationData(patientId);
+  // Availability comes from the module's own results rather than a hardcoded
+  // list of patient ids, which named one patient and excluded everyone else.
+  const [moduleResults, setModuleResults] = useState<AutoregulationResult[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    loadAutoregulation(patientId)
+      .then((results) => { if (!cancelled) setModuleResults(results); })
+      .catch(() => { if (!cancelled) setModuleResults([]); });
+    return () => { cancelled = true; };
+  }, [patientId]);
+
+  const primary = pickPrimary(moduleResults);
+  // The module stores its per-window table keyed by encounter, which is the
+  // shape the curve and series helpers already expect.
+  const loadModuleTable = async (id: string) => {
+    const result = pickPrimary(await loadAutoregulation(id));
+    return result?.rawTable ? { [`P${id.replace("#", "")}_Full_AR_Table_3min_Fisher`]: result.rawTable } : null;
+  };
+  const hasAutoData = primary?.optimalPressure != null;
+  const isModuleNirs = primary?.mode === "cox";
   
   // Use NIRS values if available, otherwise use props
-  const currentPAM = isNirsBased && nirsCurrentPAM !== null ? nirsCurrentPAM : propCurrentPAM;
-  const pamMin = isNirsBased && nirsPamMin !== null ? nirsPamMin : propPamMin;
-  const pamMax = isNirsBased && nirsPamMax !== null ? nirsPamMax : propPamMax;
+  const currentPAM = isModuleNirs && nirsCurrentPAM !== null ? nirsCurrentPAM : propCurrentPAM;
+  const pamMin = isModuleNirs && nirsPamMin !== null ? nirsPamMin : propPamMin;
+  const pamMax = isModuleNirs && nirsPamMax !== null ? nirsPamMax : propPamMax;
   
   // Use props for footer values if provided, otherwise use local state
   const displayOptimalPPC = propOptimalPPC ?? optimalValue;
   const displayLowerLimit = propLowerLimit ?? lowerLimit;
   const displayUpperLimit = propUpperLimit ?? upperLimit;
-  const displayIsNirsBased = propIsNirsBased ?? isNirsBased;
+  const displayIsNirsBased = propIsNirsBased ?? isModuleNirs;
 
   useEffect(() => {
     if (!hasAutoData) {
@@ -144,7 +165,7 @@ export function AutoregulationChart({
       return;
     }
 
-    const isNirs = isNirsBasedPatient(patientId);
+    const isNirs = primary?.mode === "cox";
     setIsNirsBased(isNirs);
     setLoading(true);
     // Cleared up front: a stale analysis from the previous patient must never
@@ -218,7 +239,7 @@ export function AutoregulationChart({
         });
     } else {
       // Load PRx-based autoregulation data
-      loadAutoregulationData(patientId)
+      loadModuleTable(patientId)
         .then((data) => {
           if (data) {
             // Get curve data for limits
