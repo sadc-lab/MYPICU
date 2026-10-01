@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Patient } from '@/utils/patientData';
+import type { Patient } from '@/types/patient.types';
 
 const TOUR_STORAGE_KEY = 'mypicu-active-tour';
 const VISIT_CONFIRMATIONS_KEY = 'mypicu-visit-confirmations';

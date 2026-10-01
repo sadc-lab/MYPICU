@@ -606,8 +606,10 @@ const Optibrain = () => {
           value: Math.round(realBrainValues.paco2 * 10) / 10,
         };
       }
-      // Use patient-specific GCS value
-      if (metric.label === "Glasgow (GCS)" && patient?.gcs !== undefined) {
+      // Use patient-specific GCS value. A null score means "not charted" and
+      // must fall through to the unknown state; `!== undefined` let null
+      // through, which rendered as a real value of 0 (Glasgow down 0).
+      if (metric.label === "Glasgow (GCS)" && typeof patient?.gcs === "number") {
         return {
           ...metric,
           value: patient.gcs,
@@ -640,8 +642,10 @@ const Optibrain = () => {
   // Dynamic neurological state computed from real PIC + PPC data
   const neurologicalStateConfig = useMemo(() => {
     if (!patientFileData) {
+      // No intracranial data recorded. Report the absence rather than a
+      // reassuring "Contrôlé" at 100%, which reads as a measured normal state.
       return {
-        currentState: "Contrôlé",
+        currentState: "Non évalué",
         currentStateColor: "text-muted-foreground",
         currentStateSince: null as string | null,
         history: {
@@ -649,7 +653,7 @@ const Optibrain = () => {
           hticWithIschemia: 0,
           htic: 0,
           ischemia: 0,
-          controlled: 100,
+          controlled: 0,
         },
         hasData: false,
       };
@@ -1101,7 +1105,7 @@ const Optibrain = () => {
       <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px]">
         <ChartTimeRangeProvider>
         <div className="mb-6">
-          <VitalSignsPanel />
+          <VitalSignsPanel patientFileData={patientFileData} />
         </div>
 
         <div className="mb-6">

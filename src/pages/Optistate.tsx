@@ -25,9 +25,9 @@ import {
 } from 'lucide-react';
 import { HeartIcon } from '@/components/icons/HeartIcon';
 import {
-  brainMonitoringTargets,
-  heartMonitoringTargets,
-  lungMonitoringTargets,
+  brainMonitoringTargetsOf,
+  heartMonitoringTargetsOf,
+  lungMonitoringTargetsOf,
 } from '@/utils/organMetrics';
 import brainIcon from '@/assets/brain-icon.svg';
 import lungsIcon from '@/assets/lungs-icon.svg';
@@ -57,7 +57,7 @@ type ModuleKey = 'optibrain' | 'optiheart' | 'optilungs' | 'optirenal' | 'optiga
 
 interface Indicator {
   label: string;
-  value: string | number;
+  value: string | number | null;
   unit?: string;
   target: string;
   status: string;
@@ -126,13 +126,18 @@ const Optistate = () => {
     );
   }
 
+  // Dernières mesures disponibles pour ce patient. Une mesure absente reste
+  // absente : elle ne doit jamais produire d'alerte, ni constante de repli.
   const vitalSigns = [
-    { label: 'FC', value: 130, min: 60, targetMin: 80, targetMax: 120, max: 140, unit: 'bpm' },
-    { label: 'TAM', value: 70, min: 60, targetMin: 78, targetMax: 85, max: 100, unit: 'mmHg' },
-    { label: 'FR', value: 25, min: 15, targetMin: 20, targetMax: 30, max: 35, unit: '/min' },
-    { label: 'T°', value: 37, min: 34, targetMin: 35, targetMax: 37, max: 39, unit: '°C' },
-    { label: 'SPO2', value: 95, min: 80, targetMin: 90, targetMax: 100, max: 100, unit: '%' },
-  ];
+    { key: 'Variable_FC', label: 'FC', targetMin: 80, targetMax: 120, unit: 'bpm' },
+    { key: 'Variable_PAM', label: 'TAM', targetMin: 65, targetMax: 85, unit: 'mmHg' },
+    { key: 'Variable_FR', label: 'FR', targetMin: 20, targetMax: 30, unit: '/min' },
+    { key: 'Variable_temperature', label: 'T°', targetMin: 36, targetMax: 37.5, unit: '°C' },
+    { key: 'Variable_SPO2', label: 'SPO2', targetMin: 92, targetMax: 100, unit: '%' },
+  ].map((target) => ({
+    ...target,
+    value: patientFileData ? getLatestValue(patientFileData, target.key)?.value : undefined,
+  }));
 
   const isInRange = (v: number, min: number, max: number) => v >= min && v <= max;
 
@@ -194,9 +199,12 @@ const Optistate = () => {
   // optirenal/optigastro n'ont aucun indicateur défini nulle part encore — le
   // sélecteur les affichera grisés plutôt que de prétendre en avoir.
   const MODULE_ALL_INDICATORS: Record<ModuleKey, Indicator[]> = {
-    optibrain: realBrainIndicators ?? brainMonitoringTargets,
-    optiheart: heartMonitoringTargets,
-    optilungs: lungMonitoringTargets,
+    // Real measurements for this patient. There is no static fallback: a
+    // patient with no cached record gets "unmeasured" indicators, never a
+    // fabricated clinical picture.
+    optibrain: realBrainIndicators ?? brainMonitoringTargetsOf(patientFileData),
+    optiheart: heartMonitoringTargetsOf(patientFileData),
+    optilungs: lungMonitoringTargetsOf(),
     optirenal: [],
     optigastro: [],
   };
@@ -210,6 +218,9 @@ const Optistate = () => {
         const override = getOverride(moduleKey, t.label);
         if (override === 'hide') return false;
         if (override === 'pin') return true;
+        // An unmeasured indicator has no clinical status; it must not be shown
+        // as if it were normal.
+        if (t.status === 'unknown') return false;
         return !!t.status && t.status !== 'normal';
       })
       .map((t) => ({
@@ -241,13 +252,10 @@ const Optistate = () => {
         />
       ),
       indicators: computeEffectiveIndicators('optibrain', MODULE_ALL_INDICATORS.optibrain),
-      interpretation:
-        'PIC à 26 mmHg en tendance baissière mais persistante > 20 — suspicion d’HTIC réactive nécessitant un contrôle rapproché de la PPC et de la sédation.',
-      interventions: [
-        'Sédation: Hypnotique 220 mg/h, Opioide 150 mcg/h',
-        'Propofol cumulé 48h: 10.5 g (< 12 g)',
-        'Nutrition entérale en cours',
-      ],
+      // No clinical narrative is generated: none of these values are observed.
+      // Objectives recorded by the clinician belong in patient_objectives.
+      interpretation: '',
+      interventions: [],
     },
     {
       key: 'optiheart',
@@ -256,13 +264,8 @@ const Optistate = () => {
       score: patient.heartScore || 0,
       iconNode: <HeartIcon className="h-6 w-6 text-status-critical" />,
       indicators: computeEffectiveIndicators('optiheart', MODULE_ALL_INDICATORS.optiheart),
-      interpretation:
-        'Bas débit cardiaque (3.2 L/min) avec FEVG 35% — dysfonction systolique persistante malgré support inotrope. Bilan hydrique positif à surveiller.',
-      interventions: [
-        'Inotrope: Dobutamine 5 mcg/kg/min',
-        'Vasopresseur: Noradrénaline 0.15 mcg/kg/min (en sevrage)',
-        'Bilan hydrique: +500 mL sur 24h',
-      ],
+      interpretation: '',
+      interventions: [],
     },
     {
       key: 'optilungs',
@@ -281,8 +284,8 @@ const Optistate = () => {
         />
       ),
       indicators: computeEffectiveIndicators('optilungs', MODULE_ALL_INDICATORS.optilungs),
-      interpretation: 'Échanges gazeux dans les cibles. Surveillance standard.',
-      interventions: ['Ventilation mécanique en cours'],
+      interpretation: '',
+      interventions: [],
     },
     {
       key: 'optirenal',
@@ -308,6 +311,8 @@ const Optistate = () => {
       key: 'optigastro',
       organValue: 'gastro',
       label: 'OptiGastro',
+      // No gastro score exists in the source and OptiGastro is out of scope for
+      // the first version, so no score is claimed here.
       score: 0,
       iconNode: (
         <img
@@ -354,9 +359,11 @@ const Optistate = () => {
         };
       }),
     ),
-    // Abnormal vitals are mapped to the most relevant module so chains can match.
+    // Measured vitals join the chain so a real out-of-window reading is
+    // matched. Only observations are considered: an unmeasured parameter has
+    // no value to alert on.
     ...vitalSigns
-      .filter((v) => !isInRange(v.value, v.targetMin, v.targetMax))
+      .filter((v) => v.value !== undefined && !isInRange(v.value, v.targetMin, v.targetMax))
       .map((v) => {
         const moduleByVital: Record<string, ModuleKey> = {
           FC: 'optiheart',
@@ -368,7 +375,9 @@ const Optistate = () => {
         return {
           label: v.label === 'SPO2' ? 'SpO2' : v.label,
           module: moduleByVital[v.label] ?? 'optiheart',
-          status: 'critical',
+          // Out-of-window is a warning; only a clinician-set status escalates
+          // an indicator to critical.
+          status: 'warning' as const,
           value: v.value,
           unit: v.unit,
           previousValue: undefined as number | null | undefined,
@@ -441,7 +450,7 @@ const Optistate = () => {
 
       <main className="container mx-auto px-6 pb-8 max-w-[1600px] space-y-6">
         {/* Vital signs presented as module-style metric cards (expanded on Optistate) */}
-        <VitalSignsPanel defaultOpen />
+        <VitalSignsPanel defaultOpen patientFileData={patientFileData} />
 
         {/* Systèmes en alerte + Assembler les modules — un seul tout cohérent */}
         <Card className="shadow-sm">

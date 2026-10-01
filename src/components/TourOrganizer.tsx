@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Patient } from '@/utils/patientData';
+import type { Patient } from '@/types/patient.types';
 import {
   Dialog,
   DialogContent,

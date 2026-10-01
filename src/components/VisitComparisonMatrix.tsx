@@ -6,7 +6,7 @@ import { History, ArrowRight } from "lucide-react";
 export interface VisitComparisonRow {
   label: string;
   target: string;
-  status: "normal" | "warning" | "critical" | null;
+  status: "normal" | "warning" | "critical" | "unknown" | null;
   previousValue: number | null;
   currentValue: number;
   changed: boolean;

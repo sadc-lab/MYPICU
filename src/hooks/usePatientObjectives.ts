@@ -17,49 +17,6 @@ const objectiveKeys = {
     [...objectiveKeys.all, patientId, organ] as const,
 };
 
-// Default objectives/interventions per organ (used when no data in DB)
-const DEFAULTS: Record<string, { objectives: string[]; interventions: string[] }> = {
-  brain: {
-    objectives: [
-      'Maintain ICP < 20 mmHg',
-      'Maintain CPP 50-70 mmHg',
-      'Normocapnia (PaCO2 35-45 mmHg)',
-      'Head of bed elevated 30°',
-    ],
-    interventions: [
-      'Osmotherapy with mannitol administered',
-      'Sedation optimized',
-      'Continuous ICP monitorage',
-    ],
-  },
-  heart: {
-    objectives: [
-      'Maintain MAP > 65 mmHg',
-      'Cardiac index > 2.5 L/min/m²',
-      'Lactate < 2 mmol/L',
-      'ScvO2 > 70%',
-    ],
-    interventions: [
-      'Fluid resuscitation completed',
-      'Inotropic support optimized',
-      'Continuous hemodynamic monitorage',
-    ],
-  },
-  lungs: {
-    objectives: [
-      'Maintain SpO2 > 92%',
-      'Lung protective ventilation (TV 6-8 mL/kg IBW)',
-      'Plateau pressure < 30 cmH2O',
-      'Optimize PEEP for recruitment',
-    ],
-    interventions: [
-      'FiO2 reduced from 50% to 40%',
-      'Recruitment maneuver performed',
-      'Prone positioning considered',
-    ],
-  },
-};
-
 async function fetchObjectives(patientId: string, organ: string) {
   const { data, error } = await supabase
     .from('patient_objectives')
@@ -120,17 +77,14 @@ export function usePatientObjectives(patientId: string, organ: string) {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Separate objectives and interventions
-  const defaults = DEFAULTS[organ] || { objectives: [], interventions: [] };
-  const hasData = rawData && rawData.length > 0;
-
-  const objectives = hasData
-    ? rawData.filter(r => r.type === 'objective').map(r => r.content)
-    : defaults.objectives;
-
-  const interventions = hasData
-    ? rawData.filter(r => r.type === 'intervention').map(r => r.content)
-    : defaults.interventions;
+  // Objectives and interventions are recorded by the clinician. With no rows
+  // the lists stay empty: a built-in default set rendered plausible-looking
+  // goals (and English text, in an otherwise French UI) as if they were this
+  // patient's plan.
+  const objectives = (rawData ?? []).filter((r) => r.type === 'objective').map((r) => r.content);
+  const interventions = (rawData ?? [])
+    .filter((r) => r.type === 'intervention')
+    .map((r) => r.content);
 
   const saveObjectives = useMutation({
     mutationFn: (items: string[]) => saveAll(patientId, organ, 'objective', items),

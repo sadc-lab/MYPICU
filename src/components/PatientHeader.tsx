@@ -5,22 +5,10 @@ import { ChevronDown, ChevronLeft, Bell, Home, AlertTriangle, Ban } from "lucide
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { usePatient } from "@/hooks/usePatients";
+import { useDailyReminders } from "@/hooks/useDailyReminders";
 import brainIcon from "@/assets/brain-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
 
-
-const reminders = [
-  "Objectif de Bilan Entrée/Sortie",
-  "Prophylaxie Thrombose veineuse",
-  "Prophylaxie Ulcère de stress",
-  "Fréquence des radios",
-  "Fréquence des labos",
-  "Équipement à retirer",
-  "Limites d'alarmes et fréquence de surveillance",
-  "Mesures d'isolement",
-  "Plan de mobilisation",
-  "Transition vers traitement peros",
-];
 
 interface PatientHeaderProps {
   currentPage: "optistate" | "optibrain";
@@ -31,6 +19,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient") || "#25";
   const { data: patient, isLoading } = usePatient(patientId);
+  const { reminders: dailyReminders } = useDailyReminders(patientId);
   const [showReminders, setShowReminders] = useState(false);
 
   if (isLoading) return <div className="bg-card border-b border-border mb-4 sm:mb-6 p-4 text-center text-muted-foreground">Chargement...</div>;
@@ -145,17 +134,25 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             <Collapsible open={showReminders} onOpenChange={setShowReminders} className="mt-3">
               <CollapsibleTrigger className="flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors">
                 <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="font-medium">Rappels des objectifs quotidien({reminders.length})</span>
+                <span className="font-medium">
+                  Rappels des objectifs quotidien({dailyReminders.length})
+                </span>
                 <ChevronDown className={`h-4 w-4 transition-transform ${showReminders ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="mt-2 rounded-md border bg-muted/20 px-3 py-2.5 columns-2 sm:columns-3 gap-x-4">
-                  {reminders.map((item, index) => (
-                    <div key={index} className="flex items-start gap-2 text-xs text-foreground break-inside-avoid mb-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary/60 mt-1.5 shrink-0" />
-                      <span className="leading-snug">{item}</span>
+                  {dailyReminders.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">
+                      Aucun objectif enregistré pour ce patient.
                     </div>
-                  ))}
+                  ) : (
+                    dailyReminders.map((item, index) => (
+                      <div key={index} className="flex items-start gap-2 text-xs text-foreground break-inside-avoid mb-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary/60 mt-1.5 shrink-0" />
+                        <span className="leading-snug">{item}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -187,7 +184,9 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 {
                   page: "optibrain" as const,
                   path: "/optibrain",
-                  label: String(patient.brainScore || 0),
+                  // No score column in the source means "not assessed"; showing
+                  // 0 would present an absent measurement as a measured zero.
+                  label: patient.brainScore == null ? "—" : String(patient.brainScore),
                   score: patient.brainScore,
                   showScore: true,
                   icon: (

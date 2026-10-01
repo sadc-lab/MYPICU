@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle, Menu, X, Home, Upload, Brain } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
-import { getAllPatients, getPatientsForPed, Patient } from '@/utils/patientData';
+import type { Patient } from '@/types/patient.types';
 import { useTourNavigation, VisitStatus } from '@/hooks/useTourNavigation';
 import { usePatients } from '@/hooks/usePatients';
 import {
@@ -100,10 +100,11 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
     return ped === effectivePed;
   });
 
-  // Use prop patients if provided (Dashboard), otherwise use Supabase-filtered list
-  // for the active PED. Fall back to static data only if Supabase returned nothing.
-  const pedPatients = propPatients
-    ?? (pedPatientsFromSupabase.length > 0 ? pedPatientsFromSupabase : getPatientsForPed(effectivePed));
+  // Use prop patients if provided (Dashboard), otherwise the Supabase list for
+  // the active PED. An empty census renders as empty: falling back to the
+  // static roster in utils/patientData showed invented patients ("John Doe")
+  // in any deployment whose census had not loaded yet.
+  const pedPatients = propPatients ?? pedPatientsFromSupabase;
 
   const filteredTourPatients = (activeTour || []).filter((patient) => {
     const patientPed = patient.picuId.startsWith('D') ? 'A' : patient.picuId.startsWith('B') ? 'B' : 'C';
@@ -149,7 +150,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
   }, []);
 
   // Filter patients based on search
-  const allPatients = propPatients || (supabaseAllPatients.length > 0 ? supabaseAllPatients : getAllPatients());
+  const allPatients = propPatients || supabaseAllPatients;
   const filteredPatients = searchQuery.trim() 
     ? allPatients.filter(patient => {
         const query = searchQuery.toLowerCase();

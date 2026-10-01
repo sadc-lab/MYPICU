@@ -4,6 +4,12 @@ Plateforme de monitoring clinique pour soins intensifs pédiatriques (PICU). Le 
 
 ## 🐳 Déploiement Docker
 
+**Stack locale complète (Supabase + Envoy + Optibrain + synchronisation ICCA) :**
+voir [docs/LOCAL_STACK.md](./docs/LOCAL_STACK.md), puis lancer `sh scripts/local-up.sh`.
+Cette configuration utilise `docker-compose.local.yml` et ne nécessite ni Kong ni nginx.
+
+### Anciennes configurations frontend uniquement
+
 Voir [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md) pour les instructions complètes.
 
 **Démarrage rapide :**

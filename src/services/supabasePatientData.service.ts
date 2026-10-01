@@ -16,7 +16,8 @@ function isWithinClinicalRange(variableKey: string, value: number): boolean {
   return value >= range.min && value <= range.max;
 }
 
-const patientDataCache = new Map<string, PatientFileData>();
+const patientDataCache = new Map<string, { data: PatientFileData; expiresAt: number }>();
+let cachedSession: string | null = null;
 
 // Medication type to JSON key mapping (reverse of import)
 const MEDICATION_TYPE_TO_KEY: Record<string, string> = {
@@ -33,10 +34,17 @@ export async function loadPatientDataFromSupabase(patientId: string): Promise<Pa
   const normalizedId = patientId.replace('#', '');
   const dbPatientId = `#${normalizedId}`;
 
-  // Check cache
-  if (patientDataCache.has(normalizedId)) {
-    return patientDataCache.get(normalizedId)!;
+  // Never reuse data across logins; bound browser staleness while the durable
+  // cache remains in local Supabase. There is no hardcoded patient allow-list.
+  const { data: { session } } = await supabase.auth.getSession();
+  if (cachedSession !== (session?.access_token ?? null)) {
+    patientDataCache.clear();
+    cachedSession = session?.access_token ?? null;
   }
+  if (!session) return null;
+  const requestSession = cachedSession;
+  const cached = patientDataCache.get(normalizedId);
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
 
   try {
     // Fetch all data in parallel
@@ -115,7 +123,9 @@ export async function loadPatientDataFromSupabase(patientId: string): Promise<Pa
       data[info.info_type] = info.data as any;
     }
 
-    patientDataCache.set(normalizedId, data);
+    if (cachedSession === requestSession) {
+      patientDataCache.set(normalizedId, { data, expiresAt: Date.now() + 60_000 });
+    }
     return data;
   } catch (error) {
     console.error(`Error loading patient data from Supabase for ${normalizedId}:`, error);
@@ -129,9 +139,6 @@ export async function loadPatientDataFromSupabase(patientId: string): Promise<Pa
 export async function checkPatientExistsInSupabase(patientId: string): Promise<boolean> {
   const normalizedId = patientId.replace('#', '');
   const dbPatientId = `#${normalizedId}`;
-
-  // Check cache first
-  if (patientDataCache.has(normalizedId)) return true;
 
   const { count, error } = await supabase
     .from('patient_vitals')
@@ -151,13 +158,12 @@ export async function checkPatientExistsInSupabase(patientId: string): Promise<b
  */
 export async function getAvailablePatientIdsFromSupabase(): Promise<string[]> {
   const { data, error } = await supabase
-    .from('patient_vitals')
-    .select('patient_id')
-    .limit(1000);
+    .from('patients')
+    .select('id');
 
   if (error || !data) return [];
 
-  const uniqueIds = [...new Set(data.map(d => d.patient_id))];
+  const uniqueIds = [...new Set(data.map(d => d.id))];
   return uniqueIds.map(id => id.replace('#', ''));
 }
 
@@ -190,7 +196,7 @@ async function fetchAllVitals(dbPatientId: string) {
 
     if (error) {
       console.error('Error fetching vitals:', error);
-      break;
+      throw error;
     }
 
     if (data && data.length > 0) {
@@ -214,7 +220,7 @@ async function fetchAllMedications(dbPatientId: string) {
 
   if (error) {
     console.error('Error fetching medications:', error);
-    return [];
+    throw error;
   }
   return data || [];
 }
@@ -228,7 +234,7 @@ async function fetchAllValidity(dbPatientId: string) {
 
   if (error) {
     console.error('Error fetching validity:', error);
-    return [];
+    throw error;
   }
   return data || [];
 }
@@ -241,7 +247,7 @@ async function fetchAllClinicalInfo(dbPatientId: string) {
 
   if (error) {
     console.error('Error fetching clinical info:', error);
-    return [];
+    throw error;
   }
   return data || [];
 }

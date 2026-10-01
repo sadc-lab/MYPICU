@@ -1,6 +1,6 @@
 // Service to load full patient data from Supabase (or JSON files as fallback)
 // Patient data includes time-series vital signs, medications, and clinical data
-import { loadPatientDataFromSupabase, checkPatientExistsInSupabase, getAvailablePatientIdsFromSupabase } from './supabasePatientData.service';
+import { loadPatientDataFromSupabase, getAvailablePatientIdsFromSupabase } from './supabasePatientData.service';
 
 export interface TimeSeriesDataPoint {
   charttime: string;
@@ -70,64 +70,36 @@ export function getVariableKeyFromLabel(label: string): string {
   return LABEL_TO_VARIABLE_KEY[label] || "";
 }
 
-// Cache for loaded patient data
-const patientDataCache = new Map<string, PatientFileData>();
-
 // Known patient IDs cache (populated on first check)
 let knownPatientIds: string[] | null = null;
 
 export async function loadPatientFileData(patientId: string): Promise<PatientFileData | null> {
-  // Normalize patient ID (remove # prefix if present)
-  const normalizedId = patientId.replace("#", "");
-
-  // Check cache first
-  if (patientDataCache.has(normalizedId)) {
-    return patientDataCache.get(normalizedId)!;
-  }
-
-  // Load from Supabase
-  try {
-    const supabaseData = await loadPatientDataFromSupabase(patientId);
-    if (supabaseData) {
-      patientDataCache.set(normalizedId, supabaseData);
-      return supabaseData;
-    }
-  } catch (error) {
-    console.error(`Failed to load patient data from Supabase for ${normalizedId}:`, error);
-  }
-
-  return null;
+  return loadPatientDataFromSupabase(patientId);
 }
 
 // Get available patient IDs (from Supabase or fallback)
 export function getAvailablePatientFileIds(): string[] {
   // Return cached known IDs or fallback
-  return knownPatientIds || ["8749", "6312", "8448"];
+  return knownPatientIds || [];
 }
 
 // Async version to populate from Supabase
 export async function refreshAvailablePatientIds(): Promise<string[]> {
   try {
     const ids = await getAvailablePatientIdsFromSupabase();
-    if (ids.length > 0) {
-      knownPatientIds = ids;
-      return ids;
-    }
+    knownPatientIds = ids;
+    return ids;
   } catch (error) {
     console.warn('Failed to fetch patient IDs from Supabase:', error);
   }
   return getAvailablePatientFileIds();
 }
 
-// Check if patient has detailed file data available
-// Now checks Supabase first, with sync fallback for known patients
+// Eligibility check for the legacy synchronous chart callers. Every encounter
+// may have cached data; the authenticated Supabase load determines availability.
 export function hasPatientFileData(patientId: string): boolean {
   const normalizedId = patientId.replace("#", "");
-  // If we have cached data, it exists
-  if (patientDataCache.has(normalizedId)) return true;
-  // Check known IDs (includes Supabase-discovered patients)
-  const knownIds = getAvailablePatientFileIds();
-  return knownIds.includes(normalizedId);
+  return /^\d+$/.test(normalizedId);
 }
 
 // ============================================================
@@ -466,13 +438,16 @@ export function calculateValidityAdherence(
   percentage: number;
   hasData: boolean;
 } {
-  if (!validityData) return { adherent: 0, total: 0, percentage: 100, hasData: false };
+  // No adherence rows means the indicator was never assessed. Returning 100
+  // here made an unmeasured indicator read as perfectly compliant; callers now
+  // branch on hasData and render it as unknown.
+  if (!validityData) return { adherent: 0, total: 0, percentage: 0, hasData: false };
 
   let hourKeys = Object.keys(validityData)
     .filter((k) => k.startsWith("H"))
     .sort((a, b) => parseInt(a.replace("H", "")) - parseInt(b.replace("H", "")));
 
-  if (hourKeys.length === 0) return { adherent: 0, total: 0, percentage: 100, hasData: false };
+  if (hourKeys.length === 0) return { adherent: 0, total: 0, percentage: 0, hasData: false };
 
   // If hoursBack is specified, take the first N hours from start of stay
   if (hoursBack && hoursBack > 0) {
@@ -487,7 +462,7 @@ export function calculateValidityAdherence(
   return {
     adherent,
     total,
-    percentage: total > 0 ? Math.round((adherent / total) * 100) : 100,
+    percentage: total > 0 ? Math.round((adherent / total) * 100) : 0,
     hasData: true,
   };
 }
@@ -497,7 +472,7 @@ export function calculateValidityAdherence(
 export function getLatestValidityStatus(
   validityData: ValidityData | null,
   firstNHours: number = 24,
-): "normal" | "warning" | "critical" {
+): "normal" | "warning" | "critical" | "unknown" {
   if (!validityData) return "normal";
 
   const hourKeys = Object.keys(validityData)
@@ -505,7 +480,7 @@ export function getLatestValidityStatus(
     .sort((a, b) => parseInt(a.replace("H", "")) - parseInt(b.replace("H", "")))
     .slice(0, firstNHours);
 
-  if (hourKeys.length === 0) return "normal";
+  if (hourKeys.length === 0) return "unknown";
 
   // 0 = adhérent, 1 = non adhérent
   const adherentCount = hourKeys.filter((k) => validityData[k] === 0).length;
@@ -567,17 +542,20 @@ export function getClinicalIndicatorsStatus(
 ): Array<{
   key: string;
   label: string;
-  status: "normal" | "warning" | "critical";
-  adherencePercentage: number;
+  status: "normal" | "warning" | "critical" | "unknown";
+  adherencePercentage: number | null;
 }> {
+  // Labels must match the target lists in Optistate and Optibrain exactly:
+  // callers look a status up by label, so "Temp." here meant the real
+  // temperature row never matched and was silently discarded.
   const mappings: Array<{ key: keyof typeof VALIDITY_DATA_KEYS; label: string }> = [
     { key: "PositionTete", label: "Tête" },
     { key: "PicHtic", label: "PIC" },
     { key: "PPC", label: "PPC" },
-    { key: "Temperature", label: "Temp." },
+    { key: "Temperature", label: "Température" },
     { key: "PaCO2", label: "PaCO2" },
     { key: "Glycemie", label: "Glycémie" },
-    { key: "Hemoglobine", label: "Hb" },
+    { key: "Hemoglobine", label: "Hémoglobine" },
     { key: "INR", label: "INR" },
     { key: "Plaquettes", label: "Plaquettes" },
   ];
@@ -585,13 +563,17 @@ export function getClinicalIndicatorsStatus(
   return mappings.map(({ key, label }) => {
     const validityKey = VALIDITY_DATA_KEYS[key];
     const validityData = getValidityData(patientData, validityKey);
-    const { percentage } = calculateValidityAdherence(validityData, hoursBack);
-    const status = getAdherenceStatus(percentage);
+    const { percentage, hasData } = calculateValidityAdherence(validityData, hoursBack);
+    // Without adherence rows there is no evidence either way. Reporting
+    // "normal" here presented an unmeasured indicator as fully compliant.
+    if (!hasData) {
+      return { key, label, status: "unknown" as const, adherencePercentage: null };
+    }
 
     return {
       key,
       label,
-      status,
+      status: getAdherenceStatus(percentage),
       adherencePercentage: percentage,
     };
   });
