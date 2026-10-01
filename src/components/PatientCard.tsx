@@ -8,6 +8,7 @@ import lungsIcon from '@/assets/lungs-icon.svg';
 import kidneyIcon from '@/assets/kidney-icon.svg';
 import { useTourNavigation } from '@/hooks/useTourNavigation';
 import { getScoreTextColor, getScoreColorFilter } from '@/utils/colorUtils';
+import { formatBedLabel } from '@/utils/bedNumber';
 
 interface PatientCardProps {
   patient: Patient;
@@ -111,7 +112,7 @@ export const PatientCard = ({ patient }: PatientCardProps) => {
       <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
         <span>PELOD: <span className="font-medium text-foreground">{patient.pelodScore}</span></span>
         <span>Adh: <span className="font-medium text-foreground">{patient.adherence}%</span></span>
-        <span>#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</span>
+        <span>{formatBedLabel(patient.picuId)}</span>
       </div>
 
       {/* Allergies / Intolerances */}
