@@ -42,7 +42,7 @@ different network segment, you need a route or a tunnel before starting.
 
 ```sh
 # confirm source reachability from this host
-nc -vz spxp-app05.sainte-justinee.intranet 5432
+nc -vz spxp-app05.sainte-justine.intranet 5432
 ```
 
 ## Repository layout
@@ -154,7 +154,8 @@ on a 900 s interval; to run it immediately:
 sh scripts/stack.sh exec -T optibrain-sync python -m sync
 ```
 
-Expect roughly 60 patients, ~112k cache rows, ~22.5k validity rows, ~49 s.
+Expect roughly 60 patients, ~108k cache rows (patients + vitals + medications +
+clinical info), ~22.7k validity rows, and about a minute per full cycle.
 
 ### 5. Confirm no cloud egress
 
@@ -298,7 +299,7 @@ Before upgrading, take a backup — the upgrade runs migrations. See
 
 :::{warning}
 `db-migrate` refuses to run if an already-applied migration file was modified.
-Do not "fix" this by deleting rows from `local_migrations.schema_migrations`;
+Do not "fix" this by deleting rows from `local_migrations.applied`;
 that silently diverges the database from the repository. See
 {doc}`services/database`.
 :::

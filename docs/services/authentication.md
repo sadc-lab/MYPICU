@@ -57,7 +57,7 @@ sequenceDiagram
     U->>A: GET /auth/v1/verify?token=...
     A->>P: confirm email
     A-->>U: session (access + refresh JWT)
-    U->>P: queries carry the JWT; RLS applies user_wards
+    U->>P: queries carry the JWT, RLS applies user_wards
 ```
 
 No real email is ever sent: SMTP points at Mailpit, which stores messages in
@@ -71,7 +71,7 @@ memory and exposes them at `http://127.0.0.1:8025`.
 | `SERVICE_ROLE_KEY` | worker, Studio | bypasses RLS; treated as a credential |
 | `SYNC_TOKEN` | worker → Optibrain, and Optibrain → worker | shared secret between the two services |
 
-`services/local-env.py` generates all of these once and never overwrites an
+`scripts/local-env.py` generates all of these once and never overwrites an
 existing installation. `ANON_KEY` and `SERVICE_ROLE_KEY` are HS256 JWTs signed
 with `JWT_SECRET`, so they are structurally valid but only meaningful to this
 deployment.

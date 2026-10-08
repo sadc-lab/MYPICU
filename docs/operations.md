@@ -7,8 +7,8 @@ diagnosing it. For installation see {doc}`deployment`; for recovery see
 ## Start
 
 Requirements: Docker Engine, Compose v2+, Python 3 on the host, and the sibling
-`../optibrain` checkout on `feat/mypicu-integration`. MYPICU's deployment branch
-is `local-docker-stack`, created from `MVP1`.
+`../optibrain` checkout on `fix/ward-batch-extraction`. MYPICU's deployment
+branch is `local-docker-stack`, created from `MVP1`.
 
 Create `../optibrain/.env` (not committed) with:
 
@@ -132,20 +132,21 @@ new snapshot after a worker refresh.
 The host this stack is built for has **11 GiB of RAM, 4 CPUs and no swap**. No
 swap means a runaway process is an out-of-memory kill rather than a slowdown, so
 every service carries a ceiling in `docker/compose.local.yml`. These are
-ceilings, not reservations: the stack idles at about 1.1 GiB.
+ceilings, not reservations: the stack idles at about 1.1-1.7 GiB.
 
-| Service | Ceiling | Measured |
+| Service | Ceiling | Measured (idle, 2026-10-08) |
 | --- | --- | --- |
-| `db` | 2 GiB | 171 MiB |
-| `optibrain-autoreg` | 3 GiB | 1.2 GiB peak while fitting a curve |
-| `optibrain` | 1 GiB | 164 MiB |
-| `optibrain-sync` | 1 GiB | 145 MiB |
-| `realtime` | 640 MiB | 208 MiB |
-| `studio`, `meta` | 384 MiB each | 191 / 121 MiB |
-| `auth`, `rest` | 192 MiB each | 9 / 12 MiB |
-| `envoy`, `web`, `mailpit` | 96 MiB each | 17-24 MiB |
+| `db` | 2 GiB | 287 MiB |
+| `optibrain-autoreg` | 3 GiB | 152 MiB idle; 1.2 GiB peak while fitting a curve |
+| `optibrain` | 1 GiB | 183 MiB |
+| `optibrain-sync` | 1 GiB | 156 MiB |
+| `realtime` | 640 MiB | 221 MiB |
+| `studio`, `meta` | 384 MiB each | 218 / 115 MiB |
+| `auth`, `rest` | 192 MiB each | 10 / 54 MiB |
+| `envoy`, `web`, `mailpit`, `docs` | 96 MiB each | 20 / 32 / 7 / 5 MiB |
 
-A full 60-patient sync peaks at roughly **1.2 GiB across all containers**.
+Figures drift between sync cycles; treat them as order-of-magnitude. A full
+60-patient sync peaks at roughly **1.2 GiB across all containers**.
 
 Postgres is started with `shared_buffers=1GB` and `effective_cache_size=8GB`.
 The stock `effective_cache_size` assumes a much larger machine, which only
@@ -378,7 +379,8 @@ the old database volume is not a credential-rotation procedure.
 ## Verification and current status
 
 ```sh
-sh scripts/stack.sh run --rm --no-deps db-migrate python -m unittest test_cache test_sync
+sh scripts/stack.sh run --rm --no-deps db-migrate python -m unittest \
+  test_cache test_sync test_optibrain_export test_autoregulation
 sh scripts/stack.sh run --rm --no-deps db-migrate python verify.py
 ```
 
@@ -442,6 +444,17 @@ to inspect the ongoing first fill and distinguish complete snapshots from encoun
 awaiting clinical inputs. Open census rows are treated as open even if old, matching
 the source rule described above.
 
+Re-verified on 2026-10-08:
+
+* All thirteen services report `healthy`.
+* `preflight.py` reports all fifteen source tables accessible, the ten-connection
+  limit, and 42 open census encounters.
+* The 45 worker unit tests (`test_cache test_sync test_optibrain_export
+  test_autoregulation`) and the `verify.py` integration check pass; the
+  documentation image builds with `-W`.
+* The cache holds 60 patients, 106,287 `patient_vitals` rows and 22,752
+  `patient_validity` rows across 35 patients.
+
 ## Troubleshooting: browser freezes after login
 
 The hospital SSO extension **Imprivata CE** processes every DOM mutation and logs
@@ -475,7 +488,7 @@ single-user local stack. `lock-contention.cjs` asserts the app never queues
 behind the lock and that login still works.
 
 If login still stalls with the button disabled and **no** `POST /auth/v1/token`
-in `docker/worker/../` service logs, the request is never dispatched by the
+in the `auth` service logs, the request is never dispatched by the
 browser. Check, in the page console:
 
 ```js

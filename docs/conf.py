@@ -21,8 +21,9 @@ master_doc = "index"
 root_doc = "index"
 language = "fr"
 
-# Mounted behind Envoy at /documentation/ -- absolute asset URLs keep the
-# generated _static/ bundle resolvable regardless of the serving sub-path.
+# Mounted behind Envoy at /documentation/ -- this is the prefix Sphinx puts in
+# the canonical link tag of every page. Asset URLs are page-relative, so they
+# resolve regardless of the serving sub-path.
 html_baseurl = "/documentation/"
 
 exclude_patterns = [
@@ -38,8 +39,9 @@ html_title = "MYPICU -- Documentation"
 # network with no internet egress, so a CDN diagram would silently fail to
 # render in exactly the environment that needs the documentation most.
 html_static_path = ["_static"]
-# The wrapper re-exports the vendored UMD build as an ES module; see
-# docs/_static/mermaid-esm-wrapper.js. The elk layout is disabled: it is an
+# The wrapper loads the vendored bundle as a classic script and re-exports it
+# as an ES module (importing the bundle directly throws -- see the wrapper);
+# see docs/_static/mermaid-esm-wrapper.js. The elk layout is disabled: it is an
 # optional alternative to the default layout, and vendoring it would pull in
 # another code-split bundle for no benefit.
 mermaid_use_local = "/documentation/_static/mermaid-esm-wrapper.js"

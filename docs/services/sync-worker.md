@@ -51,7 +51,7 @@ CSVs the worker writes are exactly the ones the modules read.
 | `optibrain_export.py` | writes the 23 + 7 CSV contract and manifests |
 | `preflight.py` | verifies source-table permissions before the first sync |
 | `migrate.py` | migration runner (also used by `db-migrate`) |
-| `verify.py` | post-sync consistency checks |
+| `verify.py` | local integration smoke test: login, gateway keys, ward RLS, cache writes, census rules, Realtime, signup mail |
 | `render_gateway.py` | renders the Envoy template (also used by `gateway-init`) |
 | `sync.py` | CLI client: `python -m sync [encounterid]` |
 
@@ -119,7 +119,7 @@ unbounded query on this schema saturates the 4 available CPUs.
 settings, ECG intervals (QTc, ST), alarm limits. They are deliberately not read:
 the ventilator channels belong to the OptiLungs module, which is out of scope
 for v1. The ECG intervals are the one genuine gap. See
-{doc}`../architecture` § What is not pulled.
+{doc}`../reference/tables` § `patient_vitals`.
 :::
 
 ## Atomicity

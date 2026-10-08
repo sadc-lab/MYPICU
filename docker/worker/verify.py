@@ -85,16 +85,17 @@ try:
     db.execute("INSERT INTO public.patient_custom_view(patient_id,module,indicator_label,action) VALUES(%s,'optibrain','PIC','pin')", (IDS[0],))
     db = psycopg.connect(os.environ['LOCAL_DSN'], user='optibrain_sync', password=os.environ['SYNC_PASSWORD'],
         autocommit=True, row_factory=dict_row)
-    raw = {'Variable_PIC': [{'noadmsip': -900000001, 'charttime': '2026-01-01T12:00:00', 'valeur':12}]}
-    indicators = {'matrices_rt_PPCData_validite': [{'id_patient':-900000001, **{f'H{i}':i%2 for i in range(96)}}]}
+    harvest = {'vitals': [(IDS[0], 'Variable_PIC', '2026-01-01T12:00:00', 12)],
+               'medications': [], 'pupils': [], 'notes': []}
     with db.transaction():
-        replace_cache(db, IDS[0], raw, indicators)
+        replace_cache(db, [IDS[0]], harvest)
     with db.transaction():
-        replace_cache(db, IDS[0], raw, indicators)
+        replace_cache(db, [IDS[0]], harvest)
     assert db.execute('SELECT count(*) AS n FROM public.patient_vitals WHERE patient_id=%s',(IDS[0],)).fetchone()['n'] == 1
     try:
         with db.transaction():
-            replace_cache(db, IDS[0], {'Variable_PIC':[{'noadmsip':-900000001,'charttime':None,'valeur':99}]}, {})
+            replace_cache(db, [IDS[0]], dict(harvest,
+                vitals=[(IDS[0], 'Variable_PIC', None, 99)]))
     except psycopg.errors.NotNullViolation:
         pass
     else:

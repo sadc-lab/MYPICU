@@ -154,7 +154,7 @@ checksum mismatch for 90_local.sql
 ```
 
 The guard detected that an already-applied migration file was modified. **Do not**
-delete the row from `local_migrations.schema_migrations`. Restore the file, or
+delete the row from `local_migrations.applied`. Restore the file, or
 create a new numbered migration. See {doc}`database` § Why the checksum guard matters.
 
 ### `gateway-init` fails, Envoy never starts

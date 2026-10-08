@@ -32,8 +32,8 @@ db  ──healthy──▶  auth  ──healthy──▶  db-migrate  ──exit
 `db-migrate` runs to completion before `rest` or `realtime` start. It is a
 one-shot container (`python migrate.py`) that applies
 `supabase/migrations/*.sql` in order, tracks checksums in
-`local_migrations.schema_migrations`, and refuses to run if a previously applied
-file has been modified.
+`local_migrations.applied`, and refuses to run if a previously applied file has
+been modified.
 
 ### Why the checksum guard matters
 
@@ -43,8 +43,8 @@ the repository. The resolution was to restore the file byte-for-byte and move th
 change into a new numbered migration.
 
 If you see `checksum mismatch`, do **not** delete the row from
-`local_migrations.schema_migrations`. Find out what changed first. See
-{doc}`../operations` § Migrate container refuses to start.
+`local_migrations.applied`. Find out what changed first. See
+{doc}`observability` § `db-migrate` refuses to start.
 
 ## Configuration
 
@@ -69,7 +69,8 @@ Run once, on an empty data directory:
 
 :::{warning}
 These only run when `db-data` is **empty**. Changing them after first boot has
-no effect. See {doc}`../backup-restore` § Changing roles or init scripts.
+no effect: to re-run them you must recreate the volume, which destroys the
+database. See {doc}`../operations` § Database initialization.
 :::
 
 ## Schemas
@@ -86,18 +87,22 @@ no effect. See {doc}`../backup-restore` § Changing roles or init scripts.
 
 ## Tables in `public`
 
+Row counts are from a populated local stack and drift with each sync (read
+2026-10-08).
+
 | Table | Origin | ~Rows | Notes |
 |---|---|---|---|
-| `patient_vitals` | mirrored from ICCA | 101,736 | downsampled monitor data; 155 MB |
-| `patient_validity` | **computed** by Optibrain | 23,328 | 19 indicators × hourly windows |
-| `patient_medications` | mirrored | 807 | active orders |
+| `patient_vitals` | mirrored from ICCA | 106,287 | downsampled monitor data; 155 MB |
+| `patient_validity` | **computed** by Optibrain | 22,752 | 19 indicators × 96 hourly windows |
+| `patient_medications` | mirrored | 1,521 | active orders |
 | `patient_clinical_info` | mirrored | 206 | categorical and free text |
-| `patients` | mirrored | 59 | census, DOB, weight |
+| `patients` | mirrored | 60 | census, weight, scores |
 | `patient_autoregulation` | **computed** | 0 | PRx/COx + raw curves |
 | `patient_objectives` | **local only** | 0 | clinician-entered; backed up |
 | `patient_custom_view` | **local only** | 0 | per-clinician UI state; backed up |
-| `patient_view_log` | **local only** | 29 | visit history; backed up |
+| `patient_view_log` | **local only** | 10 | visit history; backed up |
 | `autoreg_study_results` | local analysis | 0 | study uploads |
+| `user_wards` | **local only** | 3 | ward assignments RLS reads; backed up |
 
 Table definitions are in `supabase/migrations/`. Column-level detail is in
 {doc}`../reference/tables`.
@@ -138,11 +143,12 @@ sh scripts/stack.sh exec -T db psql -U postgres -d postgres -c "
 
 # how many patients have autoregulation today
 sh scripts/stack.sh exec -T db psql -U postgres -d postgres -c "
-  select count(distinct encounter_id) from patient_autoregulation;"
+  select count(distinct patient_id) from patient_autoregulation;"
 
-# cache freshness
+# cache freshness -- per patient, from the sync ledger
 sh scripts/stack.sh exec -T db psql -U postgres -d postgres -c "
-  select max(last_synced_at) from patients;"
+  select patient_id, status, last_synced_at, duration_ms, row_count
+  from integration.sync_state order by last_synced_at desc nulls last limit 5;"
 ```
 
 ## Related

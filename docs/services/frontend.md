@@ -25,10 +25,14 @@ The single-page application clinicians actually use.
 
 The Dockerfile is a multi-stage build:
 
-1. `node` installs dependencies and runs **`npx tsc --noEmit -p tsconfig.app.json`**.
-   A type error fails the image build — this is deliberately a hard gate.
+1. `node` installs dependencies, patches the disposable build copy through
+   `docker/frontend/configure.cjs`, and runs **`npx tsc --noEmit -p
+   tsconfig.app.json`**. A type error fails the image build — this is
+   deliberately a hard gate.
 2. `vite build` produces the static bundle.
-3. A minimal nginx serves it.
+3. The final image installs `serve` and runs `serve -s dist -l 3000` as the
+   `node` user. Nothing listens on port 80 inside this container; Envoy is the
+   only ingress.
 
 Because the typecheck runs in the builder, a TypeScript regression never reaches
 a running container.
@@ -60,12 +64,28 @@ This keeps the two origins from sharing or clobbering each other's session.
 
 | Path | Purpose |
 |---|---|
-| `src/pages/` | Top-level routes (OptiState, OptiBrain, patient file) |
+| `src/App.tsx` | route table (see below) |
+| `src/pages/` | route components: `Dashboard`, `Optistate`, `Optibrain`, `AutoregStudy`, `Feedback`, `admin/ImportPatientData`, `auth/*` |
 | `src/components/VitalSignsPanel.tsx` | Latest vitals, `—` for unmeasured |
-| `src/components/Optistate.tsx` | Indicator adherence |
 | `src/services/patientFileData.service.ts` | Series, validity, label mappings |
 | `src/services/patientAutoregulation.service.ts` | Reads stored autoregulation |
 | `src/integrations/supabase/` | Typed REST client and generated types |
+
+Routes, from `src/App.tsx`:
+
+| Path | Page |
+|---|---|
+| `/` | dashboard and patient list |
+| `/optistate` | organ state / indicator adherence |
+| `/optibrain` | brain module |
+| `/autoreg` | autoregulation study (file upload) |
+| `/feedback`, `/admin/import` | feedback, admin import |
+| `/optiheart`, `/optilungs`, `/optirenal`, `/optigastro` | redirect to `/optistate` |
+| `/auth/login`, `/auth/signup`, `/auth/manager-signup`, `/auth/worker-signup`, `/auth/forgot-password`, `/auth/reset-password` | unauthenticated |
+| `*` | 404 |
+
+Everything except the `/auth/*` and redirect routes is wrapped in
+`ProtectedRoute`, which sends unauthenticated visitors to `/auth/login`.
 
 ## Data-display rules
 

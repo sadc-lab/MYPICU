@@ -37,10 +37,9 @@ as a sibling at `../optibrain` with a `.env` holding read-only ICCA credentials.
 | Supabase Studio | `http://127.0.0.1:54323` (loopback only) |
 | Mailpit | `http://127.0.0.1:8025` (loopback only) |
 
-:::{warning}
-Port 80 is **plain HTTP** and the host firewall is inactive. Do not use this for
-clinical work until TLS is configured — see [docs/deployment.md](docs/deployment.md).
-:::
+> **Warning:** Port 80 is **plain HTTP** and the host firewall is inactive. Do
+> not use this for clinical work until TLS is configured — see
+> [docs/deployment.md](docs/deployment.md).
 
 ## Repository layout
 
@@ -100,8 +99,8 @@ sh scripts/stack.sh exec -T optibrain-sync python -m unittest \
 
 # browser (Playwright container)
 for t in smoke live forwarded-port lock-contention documentation; do
-  docker run --rm --network host -v "$PWD/docker/browser/$t.cjs:/t.cjs:ro" \
-    -e ANON_KEY -e SERVICE_ROLE_KEY -e DEV_USER_PASSWORD \
+  docker run --rm --network host --env-file .env.stack.local \
+    -v "$PWD/docker/browser/$t.cjs:/t.cjs:ro" \
     mcr.microsoft.com/playwright:v1.55.1-noble \
     sh -c "cd /tmp && npm i --silent playwright@1.55.1 >/dev/null && cp /t.cjs . && node t.cjs"
 done

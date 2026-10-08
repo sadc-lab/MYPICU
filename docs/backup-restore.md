@@ -70,12 +70,15 @@ ls -lh "backups/mypicu-$STAMP.dump.gz"
 `-Fc` is the **custom format**: compressed, and restorable table-by-table with
 `pg_restore`, which is what you want for partial recovery.
 
-Verify the dump is readable — an unverified backup is not a backup:
+Verify the dump is readable — an unverified backup is not a backup. Both
+commands run through the `db` container, so the host needs no Postgres client
+tools of its own:
 
 ```sh
 gzip -t backups/mypicu-$STAMP.dump.gz        # archive intact
 zcat backups/mypicu-$STAMP.dump.gz \
-  | pg_restore --list | tail -5              # table of contents parses
+  | sh scripts/stack.sh exec -T db pg_restore --list | tail -5
+                                             # table of contents parses
 ```
 
 ### What a backup contains
@@ -97,17 +100,30 @@ mypicu-20261001-1430.dump.gz
 
 ### Backing up configuration too
 
-The database alone is not enough to rebuild the stack. Also capture:
+The database alone is not enough to rebuild the stack. Also capture both
+repositories' configuration. Run `tar` from the **parent** directory: GNU tar
+silently strips a leading `../` from member names, so archiving
+`../optibrain/.env` from inside `MYPICU/` would store it as `optibrain/.env`
+and restore it in the wrong place.
 
 ```sh
+cd /home/applications
 STAMP=$(date +%Y%m%d-%H%M)
-tar czf "backups/config-$STAMP.tar.gz" \
-  --exclude='.env.stack.local' \
-  .env.stack.local \
-  docker/compose.local.yml \
-  docker/envoy/envoy.yaml \
-  supabase/migrations/ \
-  ../optibrain/.env
+tar czf "MYPICU/backups/config-$STAMP.tar.gz" \
+  MYPICU/.env.stack.local \
+  MYPICU/docker/compose.local.yml \
+  MYPICU/docker/envoy/envoy.yaml \
+  MYPICU/supabase/migrations/ \
+  optibrain/.env
+chmod 600 "MYPICU/backups/config-$STAMP.tar.gz"
+ls -lh "MYPICU/backups/config-$STAMP.tar.gz"
+```
+
+Confirm the Optibrain credentials made it in:
+
+```sh
+tar tzf "MYPICU/backups/config-$STAMP.tar.gz"
+# expect: MYPICU/.env.stack.local, MYPICU/docker/..., optibrain/.env
 ```
 
 :::{warning}
@@ -178,8 +194,8 @@ objectives from a bad deploy:
 
 ```sh
 # what is in the dump?
-zcat backups/mypicu-20261001-1430.dump.gz | pg_restore --list \
-  | grep objectives
+zcat backups/mypicu-20261001-1430.dump.gz \
+  | sh scripts/stack.sh exec -T db pg_restore --list | grep objectives
 
 # restore a single table into the running database
 zcat backups/mypicu-20261001-1430.dump.gz \
@@ -200,17 +216,21 @@ You need the repositories, the config tarball, and the dump:
 git clone <mypicu-url> /home/applications/MYPICU
 git clone <optibrain-url> /home/applications/optibrain
 
-cd /home/applications/MYPICU
+cd /home/applications
 cp /path/to/config-20261001-1430.tar.gz .
-tar xzf config-20261001-1430.tar.gz          # restores .env.stack.local etc.
+tar xzf config-20261001-1430.tar.gz    # MYPICU/.env.stack.local …, optibrain/.env
 
-sh scripts/local-up.sh                        # start; a fresh DB is created
+cd MYPICU
+sh scripts/local-up.sh                 # start; a fresh DB is created
 zcat backups/mypicu-20261001-1430.dump.gz \
   | sh scripts/stack.sh exec -T db pg_restore -U postgres -d postgres \
       --no-owner --no-privileges
 
 sh scripts/stack.sh exec -T optibrain-sync python -m sync
 ```
+
+The configuration tarball is extracted from `/home/applications` for the same
+reason it was created there: its members are stored relative to that directory.
 
 ## Recovery procedure: from crash to working
 
@@ -237,7 +257,7 @@ sequenceDiagram
         O->>O: pg_restore from dump
         O->>DC: up -d --wait
         SY->>DB: sync cycle
-        Note over SY: repopulates the cache from<br/>the source; accounts and<br/>objectives come from the dump
+        Note over SY: repopulates the cache from<br/>the source, accounts and<br/>objectives come from the dump
     end
 
     O->>DC: verify: ps, preflight, /documentation

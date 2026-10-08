@@ -22,7 +22,8 @@ RUN python - <<'PY'
 import os, urllib.request
 base = "https://cdn.jsdelivr.net/npm"
 assets = {
-    # UMD build: self-contained, unlike the code-split ESM entry point.
+    # Self-contained IIFE bundle, loaded as a classic script by the wrapper
+    # (the ESM entry point code-splits into sibling ./chunks/ files).
     "mermaid.min.js": f"{base}/mermaid@{os.environ['MERMAID_VERSION']}/dist/mermaid.min.js",
     "d3.min.js": f"{base}/d3@{os.environ['D3_VERSION']}/dist/d3.min.js",
 }

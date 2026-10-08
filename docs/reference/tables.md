@@ -5,7 +5,8 @@ title: Tables
 # Table reference
 
 Column-level reference for the `public` schema, read live from the running
-database.
+database. Row counts drift with every sync cycle; the figures below were read
+on **2026-10-08** and are order-of-magnitude, not exact.
 
 ```{contents}
 :local:
@@ -14,8 +15,9 @@ database.
 
 ## Conventions
 
-- **Identifiers.** Application tables use `patient_id text`. It is derived from
-  the ICCA encounter id; the `#` prefix used in URLs is stripped.
+- **Identifiers.** Application tables use `patient_id text`. It is the ICCA
+  encounter id **including** the `#` prefix, e.g. `#16968` (the same value as
+  `patients.id`). In a URL the `#` must be percent-encoded as `%23`.
 - **Timestamps** are `timestamp with time zone`, stored UTC. The source is
   naive, corrected by `SOURCE_TIMEZONE=America/Montreal` at extraction.
 - **Null is meaningful.** A null `valeur` means *not measured*. It is never
@@ -23,11 +25,11 @@ database.
 
 ## `patients`
 
-One row per tracked patient. 59 rows.
+One row per tracked patient. 60 rows.
 
 | Column | Type | Notes |
 |---|---|---|
-| `id` | text | primary key, encounter id without `#` |
+| `id` | text | primary key, encounter id **with** the `#` prefix |
 | `name` | text | |
 | `age` | text | source supplies text |
 | `weight` | text | formatted for display |
@@ -45,13 +47,14 @@ One row per tracked patient. 59 rows.
 | `allergies`, `intolerances` | text | |
 | `created_at`, `updated_at` | timestamptz | |
 
-`date_of_birth` was added by `20261001120000_patient_map_dateofbirth.sql`. A
-missing date of birth causes Optibrain to **skip only PPC** for that patient, not
-the whole run.
+The patient's date of birth is not stored here: it lives in
+`integration.patient_map.dateofbirth` (added by
+`20261001120000_patient_map_dateofbirth.sql`). A missing date of birth causes
+Optibrain to **skip only PPC** for that patient, not the whole run.
 
 ## `patient_vitals`
 
-The measurement table. ~101,736 rows, 155 MB — the dominant local cost.
+The measurement table. ~106,000 rows, 155 MB — the dominant local cost.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -98,7 +101,8 @@ scope for v1; ECG intervals (QTc, ST) are a genuine open gap.
 
 ## `patient_validity`
 
-Adherence matrices from Optibrain. ~23,328 rows.
+Adherence matrices from Optibrain. ~22,700 rows: 19 indicators × 96 hourly
+windows, for every patient with the required signals (35 of 60 on 2026-10-08).
 
 | Column | Type | Notes |
 |---|---|---|
@@ -106,7 +110,7 @@ Adherence matrices from Optibrain. ~23,328 rows.
 | `patient_id` | text | |
 | `indicator_key` | text | one of 19 indicators |
 | `hour_index` | integer | 0–95, hourly windows |
-| `is_adherent` | boolean | **`false` = adherent** (Optibrain's convention) |
+| `is_adherent` | boolean | `true` = the recommendation was respected (matrix value `0`) |
 
 The worker translates `0 → true`. 19 indicators × 96 windows.
 
@@ -169,6 +173,7 @@ Carries categorical and free-text clinical context.
 
 | Column | Type |
 |---|---|
+| `patient_id` | text |
 | `organ` | text |
 | `type` | text |
 | `content` | text |
@@ -178,11 +183,24 @@ Clinician-entered. **Not reconstructible from the source.**
 
 ## `patient_custom_view` — local only
 
-Per-clinician UI preferences and indicator actions.
+Per-clinician UI preferences: `patient_id`, `module`, `indicator_label`,
+`action`, `created_at`.
 
 ## `patient_view_log` — local only
 
 `user_id`, `patient_id`, `last_viewed_at`. Visit history.
+
+## `user_wards`
+
+| Column | Type | Notes |
+|---|---|---|
+| `user_id` | uuid | matches `auth.users.id` |
+| `ward` | text | e.g. `pedA`, `pedB` |
+| `assigned_at`, `assigned_by` | timestamptz, uuid | |
+
+What RLS reads to decide which patients a clinician may see. **A user with no
+row here sees no patients** — see {doc}`../services/authentication` § Ward
+assignment.
 
 ## `autoreg_study_results`
 
@@ -194,9 +212,10 @@ Results of uploaded study files analysed in the browser. Distinct from
 | Schema | Purpose |
 |---|---|
 | `auth` | GoTrue users, sessions, identities — **back up** |
+| `integration` | sync bookkeeping: `patient_map` (source encounter ↔ local id, date of birth), `census_state`, `sync_state` (per-patient status, `last_synced_at`, `duration_ms`, `error`) |
 | `_realtime` | tenant and subscriptions |
 | `realtime` | message broadcasts |
-| `local_migrations` | applied-migration ledger and checksums |
+| `local_migrations` | `applied` — migration ledger and checksums |
 | `vault`, `storage` | unused in v1 |
 
 ## Inspecting

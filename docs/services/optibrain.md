@@ -115,11 +115,11 @@ sequenceDiagram
     participant P as db
 
     W->>O: POST /run (23 CSVs + manifest)
-    Note over O: 19 indicators; failures isolated per patient
+    Note over O: 19 indicators, failures isolated per patient
     O-->>W: matrices on optibrain-results
     W->>W: 0 = adherent → percent adherence
     W->>P: rewrite patient_validity atomically
-    Note over P: ~22.5k rows; 19 indicators × 96 windows
+    Note over P: ~22.5k rows, 19 indicators × 96 windows
 ```
 
 There are **19 indicators** across 96 hourly windows. Missing adherence is stored
@@ -133,7 +133,7 @@ guess:
 | Metric | Requires |
 |---|---|
 | PRx | native **PIC** + **PPC** |
-| COx | **COx** requires **NIRS** + **PAM** |
+| COx | **NIRS** + **PAM** |
 | CPP | never derived anywhere |
 
 The run explores ~30 window combinations at ~70 s each, hence ~35 minutes.
@@ -141,9 +141,11 @@ Patient `#16792` had PIC/PPC/ARTm but no NIRS; the fit completed and found **no
 reliable plateau**, so nothing was stored. That is correct behaviour — an
 unreliable result must not become a displayed number.
 
-Stored rows carry the headline values (`prx_min`, `cprx_min`, `cox_min`,
-`optimal_ppc`/`optimal_pam`) **and** the raw curve, so the chart renders the
-module's own output rather than a browser reconstruction.
+Stored rows carry the headline values (`mode` — `PRx` or `COx`,
+`optimal_pressure`, `inferior_limit`, `superior_limit`, `min_index`,
+`pressure_variable`, `signal_variable`, `sample_count`) **and** the raw curve in
+`raw`, so the chart renders the module's own output rather than a browser
+reconstruction.
 
 ## Troubleshooting
 
@@ -158,10 +160,11 @@ module's own output rather than a browser reconstruction.
 
 ## Source repository
 
-The code lives at `../optibrain`. Its own documentation is in
-`../optibrain/docs/`, published into this site under {doc}`../optibrain-module`
-once built. Branch `fix/ward-batch-extraction` carries the reliability work and
-is **not yet merged**.
+The code lives at `../optibrain`. Its own documentation — the data contract, the
+MYPICU deployment notes and the ward batch extraction design — is in
+`../optibrain/docs/` and is read from the sibling checkout; it is **not**
+republished by this site's Sphinx build. Branch `fix/ward-batch-extraction`
+carries the reliability work and is **not yet merged**.
 
 ## Related
 

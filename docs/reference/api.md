@@ -25,7 +25,7 @@ All endpoints go through Envoy. Two credentials are involved:
 ```sh
 source .env.stack.local
 
-curl -sS "http://localhost:8080/rest/v1/patients?select=encounter_id&limit=1" \
+curl -sS "http://localhost:8080/rest/v1/patients?select=id,name&limit=1" \
   -H "apikey: $ANON_KEY"
 ```
 
@@ -33,6 +33,12 @@ Envoy rejects a request whose `apikey` is neither `ANON_KEY` nor
 `SERVICE_ROLE_KEY` with `401 Invalid API key`. A valid anon key alone is not
 enough to see patient data — **row-level security** applies, scoped to the
 clinician's wards.
+
+:::{note}
+Patient keys are `patients.id` / `patient_id` **with** the `#` prefix, e.g.
+`#16968`. Inside a URL that `#` starts a fragment, so it must be percent-encoded
+as `%23`: `id=eq.%2316968`. Filtering on the bare number returns nothing.
+:::
 
 ## PostgREST conventions
 
@@ -43,7 +49,7 @@ BASE=http://localhost:8080/rest/v1
 | Operation | Request |
 |---|---|
 | Select | `GET $BASE/<table>?select=…` |
-| Filter | `GET $BASE/patients?encounter_id=eq.16507` |
+| Filter | `GET $BASE/patients?id=eq.%2316968` |
 | Range | `GET $BASE/patient_vitals?select=…&limit=100&offset=0` |
 | Insert | `POST $BASE/<table>` with a JSON body |
 | Upsert | `POST $BASE/<table>?on_conflict=<cols>` |
@@ -53,8 +59,8 @@ Filters: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `in.(…)`, `is.null`, `like`.
 
 :::{warning}
 `PGRST_DB_MAX_ROWS` is `100000`. An unfiltered `GET $BASE/patient_vitals`
-returns all ~101k rows and ~155 MB into a container with a 192 MiB limit. Always
-filter by `encounter_id` and a time range.
+returns all ~106k rows and ~155 MB into a container with a 192 MiB limit. Always
+filter by `patient_id` and a time range.
 :::
 
 ## Tables the frontend queries
@@ -77,24 +83,28 @@ filter by `encounter_id` and a time range.
 Latest value per channel for one patient:
 
 ```sh
-curl -sS "$BASE/patient_vitals?encounter_id=eq.16507&select=parameter,value,recorded_at&order=recorded_at.desc&limit=500" \
+curl -sS "$BASE/patient_vitals?patient_id=eq.%2316968&select=variable_key,valeur,charttime&order=charttime.desc&limit=500" \
   -H "apikey: $ANON_KEY"
 ```
 
-The client de-duplicates to the newest row per parameter. **A missing channel is
+The client de-duplicates to the newest row per channel. **A missing channel is
 absent from the response — never substituted.**
 
 Adherence for one patient:
 
 ```sh
-curl -sS "$BASE/patient_validity?encounter_id=eq.16507&select=indicator,adherence,window_start&order=window_start" \
+curl -sS "$BASE/patient_validity?patient_id=eq.%2316968&select=indicator_key,hour_index,is_adherent&order=hour_index" \
   -H "apikey: $ANON_KEY"
 ```
+
+`is_adherent` is `true` when the recommendation was respected: Optibrain's
+matrix uses `0` for respected and `1` for a deviation, and the worker stores
+`is_adherent = (value = 0)`. See {doc}`tables`.
 
 Autoregulation:
 
 ```sh
-curl -sS "$BASE/patient_autoregulation?encounter_id=eq.16507&select=metric,prx_min,cprx_min,cox_min,raw" \
+curl -sS "$BASE/patient_autoregulation?patient_id=eq.%2316968&select=mode,optimal_pressure,inferior_limit,superior_limit,raw" \
   -H "apikey: $ANON_KEY"
 ```
 
@@ -123,10 +133,12 @@ Signup requires email confirmation. Confirmation links land in **Mailpit**
 ## Websocket
 
 ```sh
-wss://<host>/realtime/v1/websocket?apikey=$ANON_KEY&vsn=1.0.0
+ws://<host>/realtime/v1/websocket?apikey=$ANON_KEY&vsn=1.0.0
 ```
 
-Only `/realtime/v1/websocket` is routed; any other `/realtime/v1/` path returns
+The stack serves plain HTTP today, so the scheme is `ws://`. Use `wss://` once
+TLS is configured (see {doc}`../deployment` § TLS). Only
+`/realtime/v1/websocket` is routed; any other `/realtime/v1/` path returns
 404. The route carries no timeout, so sockets are long-lived.
 
 ## Internal worker API

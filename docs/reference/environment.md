@@ -49,6 +49,11 @@ invalidates every issued token.
 expiry. They are structurally valid and meaningless to any other deployment,
 because they are signed with this instance's `JWT_SECRET`.
 
+`PUBLIC_URL` defaults to `http://localhost:8080` when generated. It drives every
+GoTrue redirect, so with the default the confirmation and recovery links in
+emails point at `localhost:8080`, not at the hostname clinicians use. Set it to
+the real URL and recreate `auth` if those links must work on another machine.
+
 ## ICCA source (`../optibrain/.env`)
 
 | Variable | Purpose |
@@ -60,7 +65,7 @@ because they are signed with this instance's `JWT_SECRET`.
 | `DB_PASSWORD` | password |
 
 ```ini
-DB_HOST=spxp-app05.sainte-justinee.intranet
+DB_HOST=spxp-app05.sainte-justine.intranet
 DB_PORT=5432
 DB_NAME=cathydb
 DB_USER=<read-only>

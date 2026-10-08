@@ -114,7 +114,7 @@ flowchart LR
     end
 
     subgraph cache["Local cache &mdash; rebuilt from source"]
-        V[("patient_vitals<br/>101k rows")]
+        V[("patient_vitals<br/>~106k rows")]
         M[("patient_medications")]
         C[("patient_clinical_info")]
         P[("patients")]
@@ -147,7 +147,7 @@ flowchart LR
     classDef s fill:#e8f0fe,stroke:#4a6fa5
     classDef d fill:#eaf7ea,stroke:#4c8c4a
     classDef e fill:#fff0f0,stroke:#b04a4a
-    class S,s
+    class S s
     class VAL,AUTO d
     class OBJ,VIEW,LOG,USR e
 ```
@@ -159,11 +159,12 @@ accounts permanently. See {doc}`backup-restore`.
 
 ### Why the cache is smaller than the source
 
-`patient_vitals` holds roughly 101k rows against 3.69M upstream monitor rows for
-the same 60 patients over three days. The worker reduces monitor channels to a
-**median per minute for 24 hours** and a **median per hour back to three days**.
-Raw-resolution data is retained only for ICP and cerebral-oximetry patients,
-where autoregulation analysis needs sample-level fidelity.
+`patient_vitals` holds roughly 106k rows against 3.69M upstream monitor rows for
+the same patients over three days (measured 2026-09-30). The worker reduces
+monitor channels to a **median per minute for 24 hours** and a **median per hour
+back to three days**. Raw-resolution data is retained only for ICP and
+cerebral-oximetry patients, where autoregulation analysis needs sample-level
+fidelity.
 
 ## Sequence: a full patient sync
 
@@ -183,7 +184,7 @@ sequenceDiagram
 
     CRON->>Q: census census()
     Q->>ICCA: ptcensus + d_encounter + weight
-    Note over Q,ICCA: Bounded; returns 0 rows if the<br/>known ptcensus outage is active<br/>&mdash; the cache is retained, not emptied
+    Note over Q,ICCA: Bounded, returns 0 rows if the<br/>known ptcensus outage is active<br/>— the cache is retained, not emptied
     ICCA-->>Q: 59 encounters
 
     loop each encounter
@@ -281,7 +282,7 @@ sequenceDiagram
     alt missing or invalid
         E-->>C: 401 Invalid API key
     else valid, plus a user JWT
-        E->>E: inject authorization: Bearer &lt;jwt&gt;
+        E->>E: inject authorization: Bearer JWT
         E->>R: forward
         R->>P: query with RLS context
         P-->>R: rows
@@ -363,12 +364,12 @@ The host has 11 GiB RAM, 4 CPUs and no swap. Every container carries a
 | `realtime` | 640 MiB | |
 | `studio`, `meta` | 384 MiB each | |
 | `auth`, `rest` | 192 MiB each | |
-| `envoy`, `web`, `docs` | 96 MiB each | |
+| `envoy`, `web`, `docs`, `mailpit` | 96 MiB each | |
 
-Measured stack idle ≈ 1.1 GiB; full 60-patient sync peaks ≈ 1.2 GiB across all
+Measured stack idle ≈ 1.1–1.7 GiB; full 60-patient sync peaks ≈ 1.2 GiB across all
 containers. Because there is no swap, exceeding a limit results in an OOM kill
 of that container rather than system-wide slowdown — see
-{doc}`operations` § When a container is OOM-killed.
+{doc}`services/observability` § A container is restarting.
 
 ## Related pages
 

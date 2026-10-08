@@ -47,7 +47,6 @@ The worker translates this into `patient_validity` as `is_adherent = (value = 0)
 | `HemoglobineData` | haemoglobin |
 | `PlaquettesData` | platelets |
 | `INRData` | coagulation |
-| `PlasmaData`, `concentre_plaquettaire` | transfusion thresholds |
 | `NutritionData` | feeding |
 | `PAMData` | arterial pressure |
 | `PVCData` | central venous pressure |
@@ -183,5 +182,5 @@ empty results volume as a fault — check `patient_validity` instead.
 
 - {doc}`services/optibrain` — container-level detail
 - {doc}`services/sync-worker` — the orchestrator
-- {doc}`deployment` § Configure Optibrain
+- {doc}`deployment` § 2. Configure Optibrain
 - {doc}`reference/tables` — where results are stored

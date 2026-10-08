@@ -49,7 +49,8 @@ and `DNS_NODES` is `''`, which disables clustering — appropriate for one host.
 misconfigured after the first boot, the fix is to apply the file manually:
 
 ```sh
-sh scripts/stack.sh exec -T db psql -U postgres -d postgres -f /migrations/99-realtime.sql
+sh scripts/stack.sh exec -T db psql -U postgres -d postgres \
+  -f /docker-entrypoint-initdb.d/migrations/99-realtime.sql
 ```
 :::
 
