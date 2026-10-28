@@ -122,7 +122,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         >
           <img src={brainIcon} alt="brain" className="h-5 w-5" style={{ filter: getColorFilter(patient.brainScore) }} />
           <span className={`text-xs font-semibold ${getColor(patient.brainScore)}`}>
-            {patient.brainScore || 0}
+            {patient.brainScore ?? "—"}
           </span>
         </div>
 
@@ -133,7 +133,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         >
           <HeartIcon className={`h-5 w-5 ${getColor(patient.heartScore)}`} />
           <span className={`text-xs font-semibold ${getColor(patient.heartScore)}`}>
-            {patient.heartScore || 0}
+            {patient.heartScore ?? "—"}
           </span>
         </div>
 
@@ -144,7 +144,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         >
           <img src={lungsIcon} alt="lungs" className="h-5 w-5" style={{ filter: getColorFilter(patient.lungsScore) }} />
           <span className={`text-xs font-semibold ${getColor(patient.lungsScore)}`}>
-            {patient.lungsScore || 0}
+            {patient.lungsScore ?? "—"}
           </span>
         </div>
       </div>

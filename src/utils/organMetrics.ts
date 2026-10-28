@@ -4,218 +4,6 @@ import {
   type PatientFileData,
 } from '@/services/patientFileData.service';
 
-export const brainMetrics = [
-  {
-    label: 'PIC',
-    value: 15,
-    unit: 'mmHg',
-    min: 0,
-    max: 30,
-    targetMin: 7,
-    targetMax: 15,
-    trend: 'down',
-    change: -2,
-    organ: 'brain'
-  },
-  {
-    label: 'PPC',
-    value: 65,
-    unit: 'mmHg',
-    min: 30,
-    max: 90,
-    targetMin: 50,
-    targetMax: 70,
-    trend: 'up',
-    change: 3,
-    organ: 'brain'
-  },
-  {
-    label: 'Glasgow (GCS)',
-    value: 3,
-    unit: '',
-    min: 3,
-    max: 15,
-    targetMin: 13,
-    targetMax: 15,
-    trend: 'stable',
-    change: 0,
-    organ: 'brain'
-  },
-  {
-    label: 'PaCO2',
-    value: 38,
-    unit: 'mmHg',
-    min: 25,
-    max: 55,
-    targetMin: 35,
-    targetMax: 45,
-    trend: 'down',
-    change: -1,
-    organ: 'brain'
-  }
-];
-
-export const heartMetrics = [
-  {
-    label: 'Cardiac Output',
-    value: 4.5,
-    unit: 'L/min',
-    min: 2,
-    max: 10,
-    targetMin: 4,
-    targetMax: 8,
-    trend: 'up',
-    change: 0.3,
-    organ: 'heart'
-  },
-  {
-    label: 'Cardiac Index',
-    value: 3.2,
-    unit: 'L/min/m²',
-    min: 1.5,
-    max: 5,
-    targetMin: 2.5,
-    targetMax: 4.0,
-    trend: 'up',
-    change: 0.2,
-    organ: 'heart'
-  },
-  {
-    label: 'CVP',
-    value: 8,
-    unit: 'mmHg',
-    min: 0,
-    max: 15,
-    targetMin: 2,
-    targetMax: 8,
-    trend: 'stable',
-    change: 0,
-    organ: 'heart'
-  },
-  {
-    label: 'SVR',
-    value: 1200,
-    unit: 'dynes/sec/cm⁻⁵',
-    min: 500,
-    max: 1600,
-    targetMin: 800,
-    targetMax: 1200,
-    trend: 'down',
-    change: -50,
-    organ: 'heart'
-  },
-  {
-    label: 'Lactate',
-    value: 1.2,
-    unit: 'mmol/L',
-    min: 0,
-    max: 4,
-    targetMin: 0,
-    targetMax: 2,
-    trend: 'down',
-    change: -0.3,
-    organ: 'heart'
-  },
-  {
-    label: 'ScvO2',
-    value: 72,
-    unit: '%',
-    min: 50,
-    max: 85,
-    targetMin: 65,
-    targetMax: 75,
-    trend: 'up',
-    change: 2,
-    organ: 'heart'
-  }
-];
-
-export const lungMetrics = [
-  {
-    label: 'PaO2',
-    value: 95,
-    unit: 'mmHg',
-    min: 60,
-    max: 120,
-    targetMin: 80,
-    targetMax: 100,
-    organ: 'lungs'
-  },
-  {
-    label: 'PaCO2',
-    value: 38,
-    unit: 'mmHg',
-    min: 25,
-    max: 55,
-    targetMin: 35,
-    targetMax: 45,
-    organ: 'lungs'
-  },
-  {
-    label: 'pH',
-    value: 7.38,
-    unit: '',
-    min: 7.2,
-    max: 7.6,
-    targetMin: 7.35,
-    targetMax: 7.45,
-    organ: 'lungs'
-  },
-  {
-    label: 'FiO2',
-    value: 40,
-    unit: '%',
-    min: 21,
-    max: 100,
-    targetMin: 21,
-    targetMax: 30,
-    organ: 'lungs'
-  },
-  {
-    label: 'P/F Ratio',
-    value: 238,
-    unit: '',
-    min: 100,
-    max: 500,
-    targetMin: 300,
-    targetMax: 500,
-    organ: 'lungs'
-  },
-  {
-    label: 'SpO2',
-    value: 98,
-    unit: '%',
-    min: 85,
-    max: 100,
-    targetMin: 94,
-    targetMax: 100,
-    organ: 'lungs'
-  }
-];
-
-interface Metric {
-  label: string;
-  value: number;
-  unit: string;
-  min: number;
-  max: number;
-  targetMin: number;
-  targetMax: number;
-  trend?: string;
-  change?: number;
-  organ: string;
-}
-
-interface ProblematicIndicator {
-  icon: string;
-  label: string;
-  current: string;
-  target: string;
-  trend: 'up' | 'down' | 'stable';
-  status: 'critical' | 'warning';
-  organ: string;
-}
-
 /**
  * Monitoring indicators are built from the cached record for the selected
  * patient. There is no static fallback: an unmeasured indicator is reported as
@@ -261,6 +49,8 @@ const HEART_TARGETS: TargetSpec[] = [
   { label: 'ScvO2', variableKey: 'Variable_SvO2', unit: '%', target: '> 70%', min: 30, max: 100, organ: 'heart' },
 ];
 
+type MedicationRow = { drugname?: string; charttime?: string; valeur?: string };
+
 /** Latest drug dose recorded in each class, e.g. "Noradrenaline 0.15". */
 function latestMedication(
   patientFileData: PatientFileData | null,
@@ -270,12 +60,13 @@ function latestMedication(
   if (!patientFileData) return null;
   const rows = patientFileData[classKey];
   if (!Array.isArray(rows) || rows.length === 0) return null;
+  const medicationRows = rows as MedicationRow[];
   const matching = drugName
-    ? rows.filter((row: any) => String(row.drugname || '').toLowerCase().includes(drugName.toLowerCase()))
-    : rows;
+    ? medicationRows.filter((row) => String(row.drugname || '').toLowerCase().includes(drugName.toLowerCase()))
+    : medicationRows;
   if (matching.length === 0) return null;
   const ordered = [...matching].sort(
-    (a: any, b: any) => new Date(b.charttime).getTime() - new Date(a.charttime).getTime(),
+    (a, b) => new Date(b.charttime ?? 0).getTime() - new Date(a.charttime ?? 0).getTime(),
   );
   const dose = ordered[0]?.valeur;
   const name = ordered[0]?.drugname;
@@ -385,48 +176,3 @@ export function heartMonitoringTargetsOf(patientFileData: PatientFileData | null
 export function lungMonitoringTargetsOf(): MonitoringIndicator[] {
   return [];
 }
-
-/**
- * Indicators that are genuinely out of window for this patient. Unmeasured
- * targets are excluded: absence of data is not a clinical abnormality.
- */
-export const getProblematicIndicators = (patientFileData: PatientFileData | null = null): ProblematicIndicator[] => {
-  const allMonitoringTargets = [
-    ...brainMonitoringTargetsOf(patientFileData),
-    ...heartMonitoringTargetsOf(patientFileData),
-    ...lungMonitoringTargetsOf(),
-  ];
-
-  const problematic: ProblematicIndicator[] = [];
-
-  allMonitoringTargets.forEach((target) => {
-    if (target.status !== 'warning' && target.status !== 'critical') return;
-    const currentValue =
-      typeof target.value === 'number' ? `${target.value}${target.unit || ''}` : target.value ?? '—';
-
-    problematic.push({
-      icon: target.organ === 'brain' ? 'Brain' : target.organ === 'heart' ? 'Heart' : 'Lungs',
-      label: target.label,
-      current: currentValue,
-      target: target.target,
-      trend: (target.trend as 'up' | 'down' | 'stable') || 'stable',
-      status: target.status === 'critical' ? 'critical' : 'warning',
-      organ: target.organ,
-    });
-  });
-
-  return problematic;
-};
-
-export const getOrganIcon = (organ: string) => {
-  switch (organ) {
-    case 'brain':
-      return 'Brain';
-    case 'heart':
-      return 'Heart';
-    case 'lungs':
-      return 'Lungs';
-    default:
-      return 'Activity';
-  }
-};

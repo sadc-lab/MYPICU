@@ -52,7 +52,7 @@ const OrganBadge = ({ organ, score, patientId }: { organ: 'brain' | 'heart' | 'l
         ) : (
           <img src={kidneyIcon} alt="kidney" className="h-5 w-5" style={{ filter: getScoreColorFilter(score) }} />
         )}
-        <span className={`font-semibold ${textColor}`}>{score ?? 0}</span>
+        <span className={`font-semibold ${textColor}`}>{score ?? "—"}</span>
         <span aria-hidden="true" className={`ml-0.5 h-2 w-2 rounded-full border ${borderColor} bg-transparent`} />
       </Badge>
     </button>

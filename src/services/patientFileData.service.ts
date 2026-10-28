@@ -473,7 +473,7 @@ export function getLatestValidityStatus(
   validityData: ValidityData | null,
   firstNHours: number = 24,
 ): "normal" | "warning" | "critical" | "unknown" {
-  if (!validityData) return "normal";
+  if (!validityData) return "unknown";
 
   const hourKeys = Object.keys(validityData)
     .filter((k) => k.startsWith("H"))
@@ -506,8 +506,8 @@ export function getMonitoringInterventionsStatus(
 ): Array<{
   key: string;
   label: string;
-  status: "normal" | "warning" | "critical";
-  adherencePercentage: number;
+  status: "normal" | "warning" | "critical" | "unknown";
+  adherencePercentage: number | null;
 }> {
   const mappings: Array<{ key: keyof typeof VALIDITY_DATA_KEYS; label: string }> = [
     { key: "Opioides", label: "Opioide" },
@@ -523,14 +523,13 @@ export function getMonitoringInterventionsStatus(
   return mappings.map(({ key, label }) => {
     const validityKey = VALIDITY_DATA_KEYS[key];
     const validityData = getValidityData(patientData, validityKey);
-    const { percentage } = calculateValidityAdherence(validityData, hoursBack);
-    const status = getAdherenceStatus(percentage);
+    const { percentage, hasData } = calculateValidityAdherence(validityData, hoursBack);
 
     return {
       key,
       label,
-      status,
-      adherencePercentage: percentage,
+      status: hasData ? getAdherenceStatus(percentage) : "unknown",
+      adherencePercentage: hasData ? percentage : null,
     };
   });
 }

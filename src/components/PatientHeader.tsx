@@ -17,7 +17,7 @@ interface PatientHeaderProps {
 export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const patientId = searchParams.get("patient") || "#25";
+  const patientId = searchParams.get("patient");
   const { data: patient, isLoading } = usePatient(patientId);
   const { reminders: dailyReminders } = useDailyReminders(patientId);
   const [showReminders, setShowReminders] = useState(false);

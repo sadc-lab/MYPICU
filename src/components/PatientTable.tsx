@@ -176,7 +176,7 @@ export const PatientTable = ({ patients, pedName, averagePelod, showTitle = true
           className={`bg-muted text-foreground border ${borderColor} text-xs gap-1 transition-all duration-150 hover:-translate-y-[1px]`}
         >
           {iconNode}
-          <span className={`font-semibold ${textColor}`}>{score ?? 0}</span>
+          <span className={`font-semibold ${textColor}`}>{score ?? "—"}</span>
           <span
             aria-hidden="true"
             className={`ml-0.5 h-2 w-2 rounded-full border ${borderColor} bg-transparent`}

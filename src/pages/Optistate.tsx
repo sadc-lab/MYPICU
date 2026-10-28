@@ -79,18 +79,22 @@ interface ModuleSummary {
 const Optistate = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const patientId = searchParams.get('patient') || '#25';
+  const patientId = searchParams.get('patient');
   const { data: patient, isLoading } = usePatient(patientId);
-  const { overrides, getOverride, setOverride, clearOverride } = usePatientCustomView(patientId);
+  const { overrides, getOverride, setOverride, clearOverride } = usePatientCustomView(patientId ?? '');
   const { previousVisitAt } = useLastViewed(patientId);
 
   // Vraies données cérébrales, quand elles existent, pour une comparaison
   // avant/maintenant honnête dans "Assembler les modules" — les autres
   // organes restent sur les données statiques de démo (aucune série réelle
   // à comparer pour eux aujourd'hui).
-  const hasFileData = hasPatientFileData(patientId);
+  const hasFileData = patientId ? hasPatientFileData(patientId) : false;
   const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
   useEffect(() => {
+    if (!patientId) {
+      setPatientFileData(null);
+      return;
+    }
     if (hasFileData) {
       loadPatientFileData(patientId).then(setPatientFileData);
     } else {
@@ -120,7 +124,13 @@ const Optistate = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p>{isLoading ? 'Chargement...' : 'Patient non trouvé'}</p>
+          <p>
+            {isLoading
+              ? 'Chargement...'
+              : patientId
+                ? 'Patient non trouvé'
+                : 'Sélectionnez un patient pour ouvrir Optistate.'}
+          </p>
         </div>
       </div>
     );

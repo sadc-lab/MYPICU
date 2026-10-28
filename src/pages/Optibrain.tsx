@@ -30,7 +30,6 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea, Brush } from "recharts";
-import { brainMetrics as importedBrainMetrics } from "@/utils/organMetrics";
 import { KpiCircle } from "@/components/KpiCircle";
 import { useTimeRange } from "@/hooks/useTimeRange";
 import { getStatusHexColor } from "@/utils/colorUtils";
@@ -77,9 +76,19 @@ import { CriticalChangesBanner } from "@/components/CriticalChangesBanner";
 // "Relations cliniques" retiré pour le moment — src/ontology/ reste intact
 // (getRelatedNodes, getOntologyNodeByVariableKey) pour le remettre facilement.
 
+type BrainMetric = {
+  label: string;
+  value: number | null;
+  unit: string;
+  min: number;
+  max: number;
+  targetMin: number;
+  targetMax: number;
+};
+
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
-  const patientId = searchParams.get("patient") || "#25";
+  const patientId = searchParams.get("patient");
   const metricParam = searchParams.get("metric");
   const { data: patient, isLoading: patientLoading } = usePatient(patientId);
   const { previousVisitAt } = useLastViewed(patientId);
@@ -114,7 +123,7 @@ const Optibrain = () => {
   // Patient file data state
   const [patientFileData, setPatientFileData] = useState<PatientFileData | null>(null);
   const [fileDataLoading, setFileDataLoading] = useState(false);
-  const hasFileData = hasPatientFileData(patientId);
+  const hasFileData = patientId ? hasPatientFileData(patientId) : false;
 
   // Autoregulation data state for optimal PPC
   // Which correlation the module produced. PRx is the default reading when a
@@ -235,6 +244,10 @@ const Optibrain = () => {
 
   // Load patient file data
   useEffect(() => {
+    if (!patientId) {
+      setPatientFileData(null);
+      return;
+    }
     if (hasFileData) {
       setFileDataLoading(true);
       loadPatientFileData(patientId)
@@ -252,6 +265,13 @@ const Optibrain = () => {
   // was unavailable for anyone not named in that list. The module is now the
   // single source; a patient it has not analysed is shown as not assessed.
   useEffect(() => {
+    if (!patientId) {
+      setOptimalPPCResult({
+        optimalPPC: null, lowerLimit: null, upperLimit: null,
+        prxScore: null, timestamp: null, hasData: false,
+      });
+      return;
+    }
     let cancelled = false;
     loadPatientAutoregulation(patientId)
       .then((results) => {
@@ -529,7 +549,9 @@ const Optibrain = () => {
     return Math.round(totalPercentage / targetsWithData.length);
   }, [monitoringTargets]);
 
-  const nonAdherentCount = monitoringTargets.filter((t) => t.status !== null && t.status !== "normal").length;
+  const nonAdherentCount = monitoringTargets.filter(
+    (t) => t.status === "warning" || t.status === "critical",
+  ).length;
 
   // Get real PIC, PPC, PAM and PACO2 values from patient file data
   const realBrainValues = useMemo(() => {
@@ -578,40 +600,49 @@ const Optibrain = () => {
     };
   }, [patientFileData]);
 
-  const showPatientNotFound = !patient && !patientLoading;
+  const showPatientNotFound = !patientId || (!patient && !patientLoading);
 
-  // Override brainMetrics with real data when available
-  const brainMetrics = useMemo(() => {
-    return importedBrainMetrics.map((metric) => {
-      if (metric.label === "PIC" && realBrainValues.pic !== null) {
-        return {
-          ...metric,
-          value: Math.round(realBrainValues.pic * 10) / 10,
-        };
-      }
-      if (metric.label === "PPC" && realBrainValues.ppc !== null) {
-        return {
-          ...metric,
-          value: Math.round(realBrainValues.ppc * 10) / 10,
-        };
-      }
-      if (metric.label === "PaCO2" && realBrainValues.paco2 !== null) {
-        return {
-          ...metric,
-          value: Math.round(realBrainValues.paco2 * 10) / 10,
-        };
-      }
-      // Use patient-specific GCS value. A null score means "not charted" and
-      // must fall through to the unknown state; `!== undefined` let null
-      // through, which rendered as a real value of 0 (Glasgow down 0).
-      if (metric.label === "Glasgow (GCS)" && typeof patient?.gcs === "number") {
-        return {
-          ...metric,
-          value: patient.gcs,
-        };
-      }
-      return metric;
-    });
+  // Every value comes from a real reading; an absent channel stays null and is
+  // rendered as unmeasured rather than borrowing a plausible constant.
+  const brainMetrics = useMemo<BrainMetric[]>(() => {
+    return [
+      {
+        label: "PIC",
+        value: realBrainValues.pic === null ? null : Math.round(realBrainValues.pic * 10) / 10,
+        unit: "mmHg",
+        min: 0,
+        max: 30,
+        targetMin: 7,
+        targetMax: 15,
+      },
+      {
+        label: "PPC",
+        value: realBrainValues.ppc === null ? null : Math.round(realBrainValues.ppc * 10) / 10,
+        unit: "mmHg",
+        min: 30,
+        max: 90,
+        targetMin: 50,
+        targetMax: 70,
+      },
+      {
+        label: "Glasgow (GCS)",
+        value: typeof patient?.gcs === "number" ? patient.gcs : null,
+        unit: "",
+        min: 3,
+        max: 15,
+        targetMin: 13,
+        targetMax: 15,
+      },
+      {
+        label: "PaCO2",
+        value: realBrainValues.paco2 === null ? null : Math.round(realBrainValues.paco2 * 10) / 10,
+        unit: "mmHg",
+        min: 25,
+        max: 55,
+        targetMin: 35,
+        targetMax: 45,
+      },
+    ];
   }, [realBrainValues.pic, realBrainValues.ppc, realBrainValues.paco2, patient?.gcs]);
 
   // Get PIC status based on value (target < 20 mmHg)
@@ -1086,7 +1117,9 @@ const Optibrain = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p className="text-foreground">Patient non trouvé</p>
+          <p className="text-foreground">
+            {patientId ? "Patient non trouvé" : "Sélectionnez un patient pour ouvrir Optibrain."}
+          </p>
         </div>
       </div>
     );
@@ -1120,8 +1153,12 @@ const Optibrain = () => {
               return groups.map((group) => {
                 const groupMetrics = brainMetrics.filter(m => group.metricLabels.includes(m.label));
                 if (groupMetrics.length === 0) return null;
-                const offTarget = groupMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax));
+                const measuredMetrics = groupMetrics.filter(
+                  (m): m is BrainMetric & { value: number } => m.value !== null,
+                );
+                const offTarget = measuredMetrics.filter(m => !isInRange(m.value, m.targetMin, m.targetMax));
                 const abnormal = offTarget.length;
+                const unmeasured = groupMetrics.length - measuredMetrics.length;
                 const isOpen = brainGroupsOpen[group.title] ?? false;
 
                 // Synthèse contextualisée : liste les paramètres hors cible avec direction
@@ -1147,12 +1184,15 @@ const Optibrain = () => {
                 const COMPACT_LIMIT = 2;
                 const compactItems = offTargetSorted.slice(0, COMPACT_LIMIT).map(renderItem);
                 const remaining = offTargetSorted.length - compactItems.length;
-                const compactSummary = abnormal === 0
-                  ? "Tous les paramètres dans les cibles"
-                  : compactItems.join(" · ") + (remaining > 0 ? ` · +${remaining}` : "");
-                const fullSummary = abnormal === 0
-                  ? "Tous les paramètres dans les cibles"
-                  : offTargetSorted.map(renderItem).join(" · ");
+                const unmeasuredLabel = unmeasured > 0
+                  ? `${unmeasured} non mesuré${unmeasured > 1 ? "s" : ""}`
+                  : "";
+                const compactSummary = measuredMetrics.length === 0
+                  ? "Aucune mesure disponible"
+                  : (abnormal === 0
+                      ? "Tous les paramètres mesurés dans les cibles"
+                      : compactItems.join(" · ") + (remaining > 0 ? ` · +${remaining}` : ""))
+                    + (unmeasuredLabel ? ` · ${unmeasuredLabel}` : "");
 
                 return (
                   <Card key={group.title} className="bg-card shadow-sm">
@@ -1163,7 +1203,16 @@ const Optibrain = () => {
                     >
                       <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors gap-3">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <KpiCircle count={abnormal} groupLabel={group.title} />
+                          {measuredMetrics.length === 0 ? (
+                            <div
+                              className="rounded-full flex h-9 w-9 items-center justify-center border-2 border-border bg-muted font-bold text-muted-foreground shrink-0"
+                              aria-label="Aucune mesure disponible"
+                            >
+                              —
+                            </div>
+                          ) : (
+                            <KpiCircle count={abnormal} groupLabel={group.title} />
+                          )}
                           <div className="text-left min-w-0 flex-1">
                             <div className="text-base font-semibold text-foreground">{group.title}</div>
                             <TooltipProvider delayDuration={150}>
@@ -1209,21 +1258,38 @@ const Optibrain = () => {
                       <CardContent className="pt-4 border-t">
                         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
                           {groupMetrics.map((metric, index) => {
-                            const inRange = isInRange(metric.value, metric.targetMin, metric.targetMax);
-                            const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
+                            const measured = metric.value !== null;
+                            const inRange = measured && isInRange(metric.value, metric.targetMin, metric.targetMax);
+                            const valueColor = !measured
+                              ? "text-muted-foreground"
+                              : inRange
+                                ? "text-muted-foreground"
+                                : "text-status-critical";
                             return (
                               <div key={index} className="flex flex-col items-center">
                                 <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
                                 <div className="flex items-center gap-2 mb-3">
-                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
+                                  <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>
+                                    {measured ? metric.value : "—"}
+                                  </div>
+                                  {measured && metric.unit && (
+                                    <span className="text-xs text-muted-foreground">{metric.unit}</span>
+                                  )}
                                 </div>
-                                <MetricRangeBar
-                                  value={metric.value}
-                                  min={metric.min}
-                                  max={metric.max}
-                                  targetMin={metric.targetMin}
-                                  targetMax={metric.targetMax}
-                                />
+                                {!measured && (
+                                  <div className="text-xs text-muted-foreground mb-2">non mesuré</div>
+                                )}
+                                {measured ? (
+                                  <MetricRangeBar
+                                    value={metric.value}
+                                    min={metric.min}
+                                    max={metric.max}
+                                    targetMin={metric.targetMin}
+                                    targetMax={metric.targetMax}
+                                  />
+                                ) : (
+                                  <div className="text-xs text-muted-foreground">Cible {formatVal(metric.targetMin)}–{formatVal(metric.targetMax)}{metric.unit ? ` ${metric.unit}` : ""}</div>
+                                )}
                               </div>
                             );
                           })}

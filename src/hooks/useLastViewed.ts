@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
  * Lit l'ancienne valeur (la référence pour le diff), puis l'écrase avec
  * l'heure actuelle pour la prochaine visite.
  */
-export function useLastViewed(patientId: string) {
+export function useLastViewed(patientId: string | null) {
   const { user } = useAuth();
   const [previousVisitAt, setPreviousVisitAt] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
