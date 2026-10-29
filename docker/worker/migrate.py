@@ -33,7 +33,7 @@ with psycopg.connect(os.environ['LOCAL_DSN'], autocommit=True) as db:
             db.execute(body)
             db.execute('INSERT INTO local_migrations.applied (name, checksum) VALUES (%s,%s)', (path.name, checksum))
         print('Applied', path.name, flush=True)
-    db.execute(sql.SQL('ALTER ROLE optibrain_sync PASSWORD {}').format(sql.Literal(os.environ['SYNC_PASSWORD'])))
+    db.execute(sql.SQL('ALTER ROLE sync_worker PASSWORD {}').format(sql.Literal(os.environ['SYNC_PASSWORD'])))
     headers = {'Authorization': 'Bearer ' + os.environ['SERVICE_ROLE_KEY']}
     with httpx.Client(base_url='http://auth:9999', headers=headers, timeout=30) as client:
         for role, wards in [('manager', ['pedA', 'pedB']), ('worker', ['pedA'])]:

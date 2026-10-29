@@ -2,10 +2,12 @@
 title: Sync worker
 ---
 
-# Sync worker (`optibrain-sync`)
+# Sync worker (`sync-worker`)
 
-The component that owns every number in the application. It extracts clinical
-data from the ICCA source, writes the local cache, and orchestrates Optibrain.
+The shared runtime for clinical-data synchronization. It extracts and normalizes
+the common ICCA dataset, writes the local cache, and dispatches enabled module
+runners. OptiBrain is the first registered module; later modules can consume the
+same harvest and persist their own derived results.
 
 ```{contents}
 :local:
@@ -16,33 +18,42 @@ data from the ICCA source, writes the local cache, and orchestrates Optibrain.
 
 | | |
 |---|---|
-| Compose service | `optibrain-sync` |
+| Compose service | `sync-worker` |
 | Image | `mypicu-worker:local`, built from `docker/worker/` |
 | HTTP port | 8001, internal only |
-| Database role | `optibrain_sync` — not a RLS bypass role |
+| Database role | `sync_worker` — retains the worker's existing BYPASSRLS privilege |
 | Memory limit | 1 GiB |
 
 ## Environment
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `LOCAL_DSN` | — | DSN as `optibrain_sync` |
+| `LOCAL_DSN` | — | DSN as `sync_worker` |
 | `SYNC_INTERVAL_SECONDS` | 900 | cycle period (floor of 30) |
 | `PATIENT_RETENTION_DAYS` | 3 | coarse monitor window |
 | `SOURCE_TIMEZONE` | `America/Montreal` | naive-source correction |
 | `ICCA_QUERY_CONCURRENCY` | 4 | parallel source queries |
+| `SYNC_MODULES` | `optibrain` | comma-separated registered module runners |
 | `OPTIBRAIN_URL` | `http://optibrain:8000` | indicator module |
 | `OPTIBRAIN_AR_URL` | `http://optibrain-autoreg:8000` | autoregulation module |
 | `OPTIBRAIN_TOKEN` | = `SYNC_TOKEN` | shared secret |
 
-The worker sends request-scoped channel records to OptiBrain over the internal
-API. No shared input or results volume is required.
+`modules.py` defines the batch preparation/persistence contract and validates
+the configured module list. Modules receive one normalized harvest. Preparation
+including remote computation happens before the transaction; cache and module
+results are then persisted atomically. Module-specific background tasks use a
+separate scheduled hook. The worker sends request-scoped channel records to
+OptiBrain over the internal API. No shared input or results volume is required.
+`integration.module_sync_state` tracks readiness for each module/patient pair,
+so adding a module triggers its first run even if the shared cache is fresh.
 
 ## Module layout
 
 | File | Responsibility |
 |---|---|
 | `worker.py` | scheduler, FastAPI control endpoints, cache orchestration |
+| `modules.py` | module registry and prepared-batch contract |
+| `optibrain_module.py` | OptiBrain adapter and independent autoregulation task |
 | `queries.py` | every ICCA SQL query, all time-bounded |
 | `cache.py` | in-memory accumulation and atomic replacement |
 | `census.sql` | census, weight, GCS, date of birth |
@@ -64,11 +75,12 @@ refresh_census()
 harvest()  ── queries.py, per patient, bounded windows
    │
    ▼
-sync_batch() ── ONE transaction
+sync_batch() ── shared harvest → enabled module preparation
    │   TRUNCATE + rewrite patients, patient_vitals,
-   │   patient_medications, patient_clinical_info
+   │   patient_medications, patient_clinical_info,
+   │   and registered module results in ONE transaction
    ▼
-export_indicators() ──▶ optibrain  ──▶ rewrite patient_validity
+optibrain.prepare_batch() ──▶ optibrain ──▶ rewrite patient_validity
    │
    ▼ (detached, only if ar_busy is free)
 autoregulation_cycle() ──▶ optibrain-autoreg ──▶ upsert patient_autoregulation
@@ -178,10 +190,10 @@ Internal, protected by `Authorization: Bearer $SYNC_TOKEN`.
 
 ```sh
 # trigger a cycle
-sh scripts/stack.sh exec -T optibrain-sync python -m sync
+sh scripts/stack.sh exec -T sync-worker python -m sync
 
 # one patient
-sh scripts/stack.sh exec -T optibrain-sync python -m sync 16507
+sh scripts/stack.sh exec -T sync-worker python -m sync 16507
 ```
 
 ## Preflight
@@ -191,18 +203,18 @@ reads, before the first sync. Fifteen tables are verified. A missing grant fails
 fast with a clear message instead of surfacing as an empty result set.
 
 ```sh
-sh scripts/stack.sh exec -T optibrain-sync python preflight.py
+sh scripts/stack.sh exec -T sync-worker python preflight.py
 ```
 
 ## Tests
 
 ```sh
-sh scripts/stack.sh exec -T optibrain-sync python -m unittest \
+sh scripts/stack.sh exec -T sync-worker python -m unittest \
   test_cache test_sync test_optibrain_export test_autoregulation
 ```
 
-45 tests. They cover cache merging, pupil parsing, census behaviour,
-transaction rollback, CSV contract shape and 0/1 validity translation.
+Worker tests cover cache merging, pupil parsing, census behaviour, transaction
+rollback, module selection, CSV contract shape and 0/1 validity translation.
 
 ## Troubleshooting
 
@@ -211,7 +223,7 @@ transaction rollback, CSV contract shape and 0/1 validity translation.
 | Cycle takes minutes, not ~49 s | a query lost its time bound | check `queries.py` for the window |
 | Zero patients, cache still populated | source census outage | expected; wait for the source |
 | `patient_validity` empty | Optibrain unreachable | `sh scripts/stack.sh logs optibrain` |
-| Autoregulation never runs | `ar_busy` held by a dead fit | restart `optibrain-sync` |
+| Autoregulation never runs | `ar_busy` held by a dead fit | restart `sync-worker` |
 | `statement timeout` in logs | source is slow | lower concurrency or raise the timeout |
 | OOM-killed | exceeded 1 GiB | reduce `PATIENT_RETENTION_DAYS` |
 

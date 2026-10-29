@@ -83,7 +83,7 @@ try:
     db.execute('INSERT INTO public.patient_view_log(user_id,patient_id) VALUES(%s,%s)', (manager_id,IDS[0]))
     db.execute("INSERT INTO public.patient_objectives(patient_id,organ,type,content) VALUES(%s,'brain','objective','Test')", (IDS[0],))
     db.execute("INSERT INTO public.patient_custom_view(patient_id,module,indicator_label,action) VALUES(%s,'optibrain','PIC','pin')", (IDS[0],))
-    db = psycopg.connect(os.environ['LOCAL_DSN'], user='optibrain_sync', password=os.environ['SYNC_PASSWORD'],
+    db = psycopg.connect(os.environ['LOCAL_DSN'], user='sync_worker', password=os.environ['SYNC_PASSWORD'],
         autocommit=True, row_factory=dict_row)
     harvest = {'vitals': [(IDS[0], 'Variable_PIC', '2026-01-01T12:00:00', 12)],
                'medications': [], 'pupils': [], 'notes': []}

@@ -27,5 +27,6 @@ dist-ssr
 
 # Secrets d'environnement (ne jamais versionner)
 .env
+.env.icca
 .env.local
 .env.*.local

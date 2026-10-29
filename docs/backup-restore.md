@@ -100,34 +100,31 @@ mypicu-20261001-1430.dump.gz
 
 ### Backing up configuration too
 
-The database alone is not enough to rebuild the stack. Also capture both
-repositories' configuration. Run `tar` from the **parent** directory: GNU tar
-silently strips a leading `../` from member names, so archiving
-`../optibrain/.env` from inside `MYPICU/` would store it as `optibrain/.env`
-and restore it in the wrong place.
+The database alone is not enough to rebuild the stack. Also capture the
+application configuration and shared source credentials.
 
 ```sh
 cd /home/applications
 STAMP=$(date +%Y%m%d-%H%M)
 tar czf "MYPICU/backups/config-$STAMP.tar.gz" \
   MYPICU/.env.stack.local \
+  MYPICU/.env.icca \
   MYPICU/docker/compose.local.yml \
   MYPICU/docker/envoy/envoy.yaml \
-  MYPICU/supabase/migrations/ \
-  optibrain/.env
+  MYPICU/supabase/migrations/
 chmod 600 "MYPICU/backups/config-$STAMP.tar.gz"
 ls -lh "MYPICU/backups/config-$STAMP.tar.gz"
 ```
 
-Confirm the Optibrain credentials made it in:
+Confirm the source credentials made it in:
 
 ```sh
 tar tzf "MYPICU/backups/config-$STAMP.tar.gz"
-# expect: MYPICU/.env.stack.local, MYPICU/docker/..., optibrain/.env
+# expect: MYPICU/.env.stack.local, MYPICU/.env.icca, MYPICU/docker/...
 ```
 
 :::{warning}
-That tarball contains the database password and both API keys. `chmod 600` it
+That tarball contains database passwords and API keys. `chmod 600` it
 and store it as carefully as the database dump.
 :::
 
@@ -174,7 +171,7 @@ Then bring up the rest:
 
 ```sh
 sh scripts/stack.sh up -d --wait --wait-timeout 300
-sh scripts/stack.sh exec -T optibrain-sync python -m sync   # repopulate the cache
+sh scripts/stack.sh exec -T sync-worker python -m sync   # repopulate the cache
 ```
 
 The restore brings back accounts and objectives immediately. The sync cycle
@@ -212,7 +209,7 @@ git clone <optibrain-url> /home/applications/optibrain
 
 cd /home/applications
 cp /path/to/config-20261001-1430.tar.gz .
-tar xzf config-20261001-1430.tar.gz    # MYPICU/.env.stack.local …, optibrain/.env
+tar xzf config-20261001-1430.tar.gz    # MYPICU/.env.stack.local, MYPICU/.env.icca, …
 
 cd MYPICU
 sh scripts/local-up.sh                 # start; a fresh DB is created
@@ -220,7 +217,7 @@ zcat backups/mypicu-20261001-1430.dump.gz \
   | sh scripts/stack.sh exec -T db pg_restore -U postgres -d postgres \
       --no-owner --no-privileges
 
-sh scripts/stack.sh exec -T optibrain-sync python -m sync
+sh scripts/stack.sh exec -T sync-worker python -m sync
 ```
 
 The configuration tarball is extracted from `/home/applications` for the same
@@ -234,7 +231,7 @@ sequenceDiagram
     participant O as Operator
     participant DC as docker compose
     participant DB as db
-    participant SY as optibrain-sync
+    participant SY as sync-worker
 
     O->>DC: sh scripts/stack.sh ps
     DC-->>O: which services are down / unhealthy
@@ -278,7 +275,7 @@ sh scripts/stack.sh exec -T db psql -U postgres -d postgres -c \
   "select count(*) from patients;"
 
 # 5. source access is intact
-sh scripts/stack.sh exec -T optibrain-sync python preflight.py
+sh scripts/stack.sh exec -T sync-worker python preflight.py
 
 # 6. the app answers
 curl -sS -o /dev/null -w '%{http_code}\n' http://localhost/documentation/

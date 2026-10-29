@@ -64,7 +64,7 @@ Run once, on an empty data directory:
 
 | File | Effect |
 |---|---|
-| `docker/db/roles.sql` | creates `anon`, `authenticated`, `authenticator`, `service_role`, `supabase_admin`, `optibrain_sync` |
+| `docker/db/90_local.sql` | creates the initial `optibrain_sync` role; the general-worker migration renames it to `sync_worker` |
 | `docker/db/realtime.sql` | realtime tenant + publication setup |
 
 :::{warning}
@@ -83,6 +83,7 @@ database. See {doc}`../operations` § Database initialization.
 | `realtime` | message broadcasts |
 | `storage` | file storage (unused in v1) |
 | `local_migrations` | applied-migration ledger |
+| `integration` | source census mapping, shared sync status, and per-module status |
 | `vault` | secret storage (unused in v1) |
 
 ## Tables in `public`
@@ -130,8 +131,9 @@ Data authorisation is enforced in Postgres, not in Envoy.
 - RLS proves the **user** is entitled to the **rows**, using the JWT claims
   (`role`, `email`) and `user_wards`.
 
-A service-role key bypasses RLS. The worker connects as `optibrain_sync`, which
-is deliberately not a bypass role — it can write its own tables and nothing else.
+A service-role key bypasses RLS. The worker connects as `sync_worker`, a dedicated service login with the existing `BYPASSRLS`
+privilege required to maintain the cross-ward cache. It is not the Supabase
+`service_role` and does not expose credentials to the browser.
 
 ## Common queries
 

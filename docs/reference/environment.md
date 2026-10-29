@@ -17,7 +17,7 @@ wrong.
 | Source | Purpose |
 |---|---|
 | `.env.stack.local` | generated once by `scripts/local-env.py`, mode `0600` |
-| `../optibrain/.env` | ICCA source credentials, hand-written |
+| `.env.icca` | shared ICCA source credentials, hand-written |
 | Shell / `.env` | optional overrides |
 
 ```sh
@@ -39,8 +39,8 @@ invalidates every issued token.
 | `SERVICE_ROLE_KEY` | JWT, role `service_role` | **bypasses RLS** |
 | `SECRET_KEY_BASE` | realtime | 48 bytes |
 | `PG_META_CRYPTO_KEY` | Studio | 32 bytes |
-| `SYNC_PASSWORD` | `optibrain_sync` role | |
-| `SYNC_TOKEN` | worker ↔ Optibrain | also the worker HTTP token |
+| `SYNC_PASSWORD` | `sync_worker` role | |
+| `SYNC_TOKEN` | worker ↔ module services | also the worker HTTP token |
 | `DEV_USER_PASSWORD` | seeded account | |
 | `SYNC_INTERVAL_SECONDS` | cycle period | default `900` |
 | `PATIENT_RETENTION_DAYS` | coarse window | default `3` |
@@ -54,7 +54,7 @@ GoTrue redirect, so with the default the confirmation and recovery links in
 emails point at `localhost:8080`, not at the hostname clinicians use. Set it to
 the real URL and recreate `auth` if those links must work on another machine.
 
-## ICCA source (`../optibrain/.env`)
+## ICCA source (`.env.icca`)
 
 | Variable | Purpose |
 |---|---|
@@ -83,6 +83,7 @@ Read from the shell or `.env`, defaulting as shown.
 | `SUPABASE_API_URL` | *empty* | leave empty; the client derives it from the page origin |
 | `ICCA_QUERY_CONCURRENCY` | `4` | parallel source queries; lower it if the source is slow |
 | `SYNC_INTERVAL_SECONDS` | `900` | floor of 30 enforced in code |
+| `SYNC_MODULES` | `optibrain` | comma-separated registered module runners |
 | `PATIENT_RETENTION_DAYS` | `3` | lowering it reduces memory pressure |
 
 ## Per-service variables
@@ -134,13 +135,14 @@ Tuning flags are in the compose `command`, not the environment:
 | Variable | Value | Notes |
 |---|---|---|
 | `DB_MAX_CONCURRENT_QUERIES` | `ICCA_QUERY_CONCURRENCY` | |
-| — | from `../optibrain/.env` | ICCA credentials |
+| — | from `.env.icca` | shared read-only ICCA credentials |
 
-### `optibrain-sync`
+### `sync-worker`
 
 | Variable | Default | Notes |
 |---|---|---|
-| `LOCAL_DSN` | `optibrain_sync@db` | **not** a RLS bypass role |
+| `LOCAL_DSN` | `sync_worker@db` | dedicated service login; retains BYPASSRLS for cache maintenance |
+| `SYNC_MODULES` | `optibrain` | registered module runners to enable |
 | `SOURCE_TIMEZONE` | `America/Montreal` | corrects naive source timestamps |
 | `OPTIBRAIN_URL` | `http://optibrain:8000` | |
 | `OPTIBRAIN_AR_URL` | `http://optibrain-autoreg:8000` | |

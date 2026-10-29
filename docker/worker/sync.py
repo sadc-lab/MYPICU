@@ -1,4 +1,4 @@
-"""docker compose exec optibrain-sync python -m sync [#encounterid]"""
+"""docker compose exec sync-worker python -m sync [#encounterid]"""
 import os
 import sys
 import httpx

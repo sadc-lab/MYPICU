@@ -13,7 +13,7 @@ Docker stack rewrite. They are kept for historical reference only and are
 | `BACKEND_INTEGRATION.pre-local-stack.md` | predates the batched ICCA extraction, the validity tables and autoregulation |
 
 All three were last touched in **November–December 2025** and mention none of
-the concepts the system has since gained: `optibrain-sync`, `patient_validity`,
+the concepts the system has since gained: `sync-worker`, `patient_validity`,
 `patient_autoregulation`, Envoy, or RLS scoping by ward.
 
 ## Current documentation

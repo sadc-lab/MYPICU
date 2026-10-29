@@ -27,8 +27,9 @@ cd /home/applications/MYPICU
 sh scripts/local-up.sh
 ```
 
-Requires Docker Engine 24+ with Compose v2, and the Optibrain repository cloned
-as a sibling at `../optibrain` with a `.env` holding read-only ICCA credentials.
+Requires Docker Engine 24+ with Compose v2, the Optibrain repository cloned
+as a sibling at `../optibrain`, and a root `.env.icca` holding read-only ICCA
+credentials.
 
 | Service | URL |
 |---|---|
@@ -51,7 +52,7 @@ MYPICU/
 │   ├── docs/                Sphinx container (Dockerfile, nginx.conf)
 │   ├── envoy/               gateway template
 │   ├── frontend/            SPA image
-│   ├── worker/              ICCA extraction + orchestration
+│   ├── worker/              shared sync runtime + registered module runners
 │   └── browser/             Playwright end-to-end checks
 ├── docs/                    documentation sources (also the Sphinx source)
 │   ├── services/            one page per container
@@ -68,9 +69,9 @@ Everything Docker-related is under `docker/`. There is one Compose file.
 
 ```sh
 sh scripts/stack.sh ps                      # status of every service
-sh scripts/stack.sh logs -f optibrain-sync  # follow a service
-sh scripts/stack.sh up -d --build           # rebuild and apply changes
-sh scripts/stack.sh exec -T optibrain-sync python -m sync   # force a sync cycle
+sh scripts/stack.sh logs -f sync-worker  # follow a service
+sh scripts/stack.sh up -d --build --remove-orphans # rebuild and apply changes
+sh scripts/stack.sh exec -T sync-worker python -m sync   # force a sync cycle
 ```
 
 `scripts/stack.sh` is a thin wrapper that pins the project directory, the env
@@ -94,7 +95,7 @@ over measured values. A missing measurement renders `—`, never a substitute.
 
 ```sh
 # worker
-sh scripts/stack.sh exec -T optibrain-sync python -m unittest \
+sh scripts/stack.sh exec -T sync-worker python -m unittest \
   test_cache test_sync test_optibrain_export test_autoregulation
 
 # browser (Playwright container)

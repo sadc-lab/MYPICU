@@ -46,7 +46,7 @@ flowchart TB
         end
 
         subgraph compute["Computation"]
-            SYNC["optibrain-sync (worker)<br/>ICCA extraction + orchestration"]
+            SYNC["sync-worker<br/>shared extraction + module orchestration"]
             OB["optibrain<br/>19-indicator validity matrices"]
             AR["optibrain-autoreg<br/>PRx / COx fits"]
         end
@@ -90,6 +90,25 @@ flowchart TB
     class STUDIO,MAIL,META tool
 ```
 
+## Sync runtime and module boundary
+
+`sync-worker` owns the shared census, bounded ICCA extraction, normalized
+harvest, cache transaction, scheduling, and authenticated control API. It
+dispatches the same harvest to the enabled runners listed by `SYNC_MODULES`;
+OptiBrain is the first runner. Each runner prepares module-specific output
+before the database transaction and persists it within the transaction that
+replaces the shared cache. Module-specific long-running work is exposed through
+an independent scheduled hook so it does not block the common refresh.
+`integration.module_sync_state` records freshness per module and patient.
+
+To add a module, add a `*_module.py` adapter exporting a matching `MODULE`
+contract, give it the shared normalized harvest (or add a source-specific fetch
+behind the same runtime), and add its name to `SYNC_MODULES`. Unknown or
+duplicate names fail explicitly at worker startup.
+The deployment must also configure the module's service dependencies and
+credentials; those remain module-specific rather than becoming core worker
+configuration.
+
 ## Network and trust boundaries
 
 Everything sits on one Compose network, `mypicu-local`. There is no host network
@@ -98,8 +117,8 @@ usage and no cloud egress.
 | From | To | Purpose |
 |---|---|---|
 | `envoy` | `web`, `auth`, `rest`, `realtime`, `docs` | The only ingress path |
-| `optibrain-sync` | `cathydb` | Read-only extraction, statement timeout enforced |
-| `optibrain-sync` | `optibrain`, `optibrain-autoreg` | CSV in, results out |
+| `sync-worker` | `cathydb` | Read-only extraction, statement timeout enforced |
+| `sync-worker` | `optibrain`, `optibrain-autoreg` | CSV in, results out |
 | `studio`, `mailpit` | — | Published on `127.0.0.1` only; not reachable off-host |
 
 **Exposed to the network:** port 80 (Envoy). Everything else is loopback or
@@ -173,7 +192,7 @@ This is the path taken every cycle. It is the most important flow in the system.
 ```{mermaid}
 sequenceDiagram
     autonumber
-    participant CRON as Scheduler<br/>(optibrain-sync)
+    participant CRON as Scheduler<br/>(sync-worker)
     participant Q as queries.py
     participant ICCA as cathydb
     participant C as cache.py
@@ -360,7 +379,7 @@ The host has 11 GiB RAM, 4 CPUs and no swap. Every container carries a
 | `db` | 2 GiB | `shared_buffers` 1 GB, `effective_cache_size` 8 GB |
 | `optibrain-autoreg` | 3 GiB | peak measured 1.2 GiB on a 2 h window |
 | `optibrain` | 1 GiB | indicator matrices |
-| `optibrain-sync` | 1 GiB | worker |
+| `sync-worker` | 1 GiB | worker |
 | `realtime` | 640 MiB | |
 | `studio`, `meta` | 384 MiB each | |
 | `auth`, `rest` | 192 MiB each | |

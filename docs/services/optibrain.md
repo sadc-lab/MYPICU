@@ -35,8 +35,8 @@ into two instances for three reasons:
 
 ## Configuration
 
-Both read `../optibrain/.env` via `env_file`, which must contain the ICCA
-credentials:
+Both read MYPICU's `.env.icca` via `env_file`, which contains the ICCA
+credentials shared with `sync-worker`:
 
 ```ini
 DB_HOST=...
@@ -49,7 +49,7 @@ DB_PASSWORD=...
 Both then apply `DB_MAX_CONCURRENT_QUERIES` from `ICCA_QUERY_CONCURRENCY`
 (default 4).
 
-`scripts/local-up.sh` refuses to start the stack if `../optibrain/.env` is
+`scripts/local-up.sh` refuses to start the stack if `.env.icca` is
 missing, because the failure would otherwise surface much later as an empty
 result set.
 
@@ -101,7 +101,7 @@ translates this into `patient_validity`, one row per indicator per hourly window
 ```{mermaid}
 sequenceDiagram
     autonumber
-    participant W as optibrain-sync
+    participant W as sync-worker
     participant O as optibrain
     participant P as db
 

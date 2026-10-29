@@ -288,7 +288,7 @@ services:
     image: mypicu-optibrain:local
     build: ../optibrain
     restart: unless-stopped
-    env_file: ../optibrain/.env
+    env_file: .env.icca
     environment:
       DB_MAX_CONCURRENT_QUERIES: ${ICCA_QUERY_CONCURRENCY:-4}
     networks: [default]
@@ -307,7 +307,7 @@ services:
     image: mypicu-optibrain:local
     build: ../optibrain
     restart: unless-stopped
-    env_file: ../optibrain/.env
+    env_file: .env.icca
     environment:
       DB_MAX_CONCURRENT_QUERIES: ${ICCA_QUERY_CONCURRENCY:-4}
     networks: [default]
@@ -317,16 +317,17 @@ services:
       timeout: 10s
       retries: 5
 
-  optibrain-sync:
+  sync-worker:
     <<: *worker
     restart: unless-stopped
     depends_on:
       db-migrate: {condition: service_completed_successfully}
       optibrain: {condition: service_healthy}
-    env_file: ../optibrain/.env
+    env_file: .env.icca
     environment:
-      LOCAL_DSN: postgresql://optibrain_sync:${SYNC_PASSWORD}@db:5432/postgres
+      LOCAL_DSN: postgresql://sync_worker:${SYNC_PASSWORD}@db:5432/postgres
       SYNC_TOKEN: ${SYNC_TOKEN}
+      SYNC_MODULES: ${SYNC_MODULES:-optibrain}
       SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-900}
       PATIENT_RETENTION_DAYS: ${PATIENT_RETENTION_DAYS:-3}
       SOURCE_TIMEZONE: America/Montreal

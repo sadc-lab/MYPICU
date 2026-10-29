@@ -143,7 +143,7 @@ TLS is configured (see {doc}`../deployment` § TLS). Only
 
 ## Internal worker API
 
-Port 8001 on `optibrain-sync`, **not** published. Requires
+Port 8001 on `sync-worker`, **not** published. Requires
 `Authorization: Bearer $SYNC_TOKEN`.
 
 | Endpoint | Purpose |
@@ -153,8 +153,8 @@ Port 8001 on `optibrain-sync`, **not** published. Requires
 | `POST /sync/{encounterid}` | sync one patient |
 
 ```sh
-sh scripts/stack.sh exec -T optibrain-sync python -m sync          # full cycle
-sh scripts/stack.sh exec -T optibrain-sync python -m sync 16507    # one patient
+sh scripts/stack.sh exec -T sync-worker python -m sync          # full cycle
+sh scripts/stack.sh exec -T sync-worker python -m sync 16507    # one patient
 ```
 
 ## Optibrain API

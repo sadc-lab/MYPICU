@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 
 import optibrain_export as export
-import worker
+import optibrain_module
 
 
 def harvest(**overrides):
@@ -128,29 +128,29 @@ class AutoregPayloadTests(unittest.TestCase):
 
 class ValidityTranslationTests(unittest.TestCase):
     def test_zero_is_adherent_and_one_is_a_deviation(self):
-        rows = worker.validity_rows(
+        rows = optibrain_module.validity_rows(
             {'matrices_rt_PICData_validite': [{'id_patient': 1, 'H0': 0, 'H1': 1}]},
             ['#1'])
         self.assertEqual(rows, [('#1', 'PICData', 0, True), ('#1', 'PICData', 1, False)])
 
     def test_nested_per_patient_matrices_are_ignored(self):
-        rows = worker.validity_rows(
+        rows = optibrain_module.validity_rows(
             {'matrices_pp_1': [{'indicateur': 'PICData', 'H0': 0}]},
             ['#1'])
         self.assertEqual(rows, [])
 
     def test_failures_block_is_not_treated_as_a_matrix(self):
-        rows = worker.validity_rows({'failures': {'1': 'ValueError'}}, ['#1'])
+        rows = optibrain_module.validity_rows({'failures': {'1': 'ValueError'}}, ['#1'])
         self.assertEqual(rows, [])
 
     def test_response_for_another_encounter_is_rejected(self):
         with self.assertRaises(ValueError):
-            worker.validity_rows(
+            optibrain_module.validity_rows(
                 {'matrices_rt_PICData_validite': [{'id_patient': 99, 'H0': 0}]}, ['#1'])
 
     def test_unknown_validity_value_is_rejected(self):
         with self.assertRaises(ValueError):
-            worker.validity_rows(
+            optibrain_module.validity_rows(
                 {'matrices_rt_PICData_validite': [{'id_patient': 1, 'H0': None}]}, ['#1'])
 
 

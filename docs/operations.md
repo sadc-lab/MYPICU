@@ -10,7 +10,7 @@ Requirements: Docker Engine, Compose v2+, Python 3 on the host, and the sibling
 `../optibrain` checkout on `fix/ward-batch-extraction`. MYPICU's deployment
 branch is `local-docker-stack`, created from `MVP1`.
 
-Create `../optibrain/.env` (not committed) with:
+Create `.env.icca` (not committed) with:
 
 ```ini
 DB_HOST=spxp-app05.sainte-justine.intranet
@@ -94,7 +94,7 @@ Browser -> Envoy :80 (all interfaces) / :8080 (loopback) -> web
                       -> realtime -> local Supabase PostgreSQL
 Studio -> postgres-meta -> local Supabase PostgreSQL
 
-optibrain-sync -> ICCA readonly, one batched pass per source table
+sync-worker -> ICCA readonly, one batched pass per source table
               -> optibrain (adherence) -> local Supabase PostgreSQL
               -> optibrain-autoreg (autoregulation, background)
 ```
@@ -139,7 +139,7 @@ ceilings, not reservations: the stack idles at about 1.1-1.7 GiB.
 | `db` | 2 GiB | 287 MiB |
 | `optibrain-autoreg` | 3 GiB | 152 MiB idle; 1.2 GiB peak while fitting a curve |
 | `optibrain` | 1 GiB | 183 MiB |
-| `optibrain-sync` | 1 GiB | 156 MiB |
+| `sync-worker` | 1 GiB | 156 MiB |
 | `realtime` | 640 MiB | 221 MiB |
 | `studio`, `meta` | 384 MiB each | 218 / 115 MiB |
 | `auth`, `rest` | 192 MiB each | 10 / 54 MiB |
@@ -165,7 +165,7 @@ happens at a time.
 1. `docker/db/00_baseline.sql`: missing patients and autoreg study tables.
 2. Existing `supabase/migrations/*.sql`, in order, unchanged.
 3. `docker/db/90_local.sql`: remove the 14 demo rows, enable patient Realtime,
-   add cache indexes and a restricted `optibrain_sync` database role.
+   add cache indexes and a restricted `sync_worker` database role.
 4. `91_retention_cascades.sql`: repair missing patient-delete cascades in the
    existing objectives, custom-view, and view-log migrations.
 5. Create the two local users and ward assignments through Auth and SQL.
@@ -328,11 +328,11 @@ environment without printing secrets:
 
 ```sh
 sh scripts/stack.sh ps
-sh scripts/stack.sh logs --tail=100 optibrain-sync
-sh scripts/stack.sh exec optibrain-sync python preflight.py
-sh scripts/stack.sh exec optibrain-sync python -m sync          # census + all current patients
-sh scripts/stack.sh exec optibrain-sync python -m sync '#12345' # census + this current encounter
-sh scripts/stack.sh exec optibrain-sync python -c "import httpx; print(httpx.get('http://localhost:8001/health').json())"
+sh scripts/stack.sh logs --tail=100 sync-worker
+sh scripts/stack.sh exec sync-worker python preflight.py
+sh scripts/stack.sh exec sync-worker python -m sync          # census + all current patients
+sh scripts/stack.sh exec sync-worker python -m sync '#12345' # census + this current encounter
+sh scripts/stack.sh exec sync-worker python -c "import httpx; print(httpx.get('http://localhost:8001/health').json())"
 sh scripts/stack.sh down                                     # preserves local DB volumes
 ```
 
@@ -346,6 +346,7 @@ In `.env.stack.local`, optionally configure:
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `SYNC_INTERVAL_SECONDS` | 900 | Delay between completed cycles (minimum 30 seconds) |
+| `SYNC_MODULES` | `optibrain` | Comma-separated registered module runners |
 | `PATIENT_RETENTION_DAYS` | 3 | Discharge retention |
 | `ICCA_QUERY_CONCURRENCY` | 4 | Maximum simultaneous source passes |
 
@@ -354,12 +355,12 @@ use the `readonly` schema and read-only transactions; they never create/modify
 tables in cathydb. `preflight.py` reports permissions and connection limit without
 printing patient details.
 
-After editing `../optibrain/.env`:
+After editing `.env.icca`:
 
 ```sh
-sh scripts/stack.sh up -d --force-recreate optibrain-sync
-sh scripts/stack.sh exec optibrain-sync python preflight.py
-sh scripts/stack.sh exec optibrain-sync python -m sync
+sh scripts/stack.sh up -d --force-recreate sync-worker optibrain optibrain-autoreg
+sh scripts/stack.sh exec sync-worker python preflight.py
+sh scripts/stack.sh exec sync-worker python -m sync
 ```
 
 Inspect freshness in Studio's SQL editor:
@@ -439,7 +440,7 @@ for an 85,819-row snapshot. Reading its first 1,000 vital rows through authentic
 REST took 2.33 seconds including gateway/REST processing; an authenticated SQL
 index-scan check took about 26 ms. These operations return different data volumes,
 so these timings are not a like-for-like end-to-end speedup measurement.
-Long-stay records can take several minutes to compute. Use `integration.sync_state`
+Long-stay records can take several minutes to compute. Use `integration.sync_state` and `integration.module_sync_state`
 to inspect the ongoing first fill and distinguish complete snapshots from encounters
 awaiting clinical inputs. Open census rows are treated as open even if old, matching
 the source rule described above.

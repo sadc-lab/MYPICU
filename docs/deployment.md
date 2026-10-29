@@ -69,12 +69,16 @@ git clone <optibrain-url> optibrain
 cd MYPICU
 ```
 
-### 2. Configure Optibrain
+### 2. Configure the ICCA source
 
-Optibrain reads the ICCA credentials from its own `.env`.
+The shared sync runtime and computation containers read ICCA credentials from
+MYPICU's ignored `.env.icca` file.
+
+On an existing installation, copy the existing read-only source settings once:
+`cp ../optibrain/.env .env.icca`, then confirm the permissions remain `0600`.
 
 ```sh
-cat > ../optibrain/.env <<'EOF'
+cat > .env.icca <<'EOF'
 DB_HOST=<icca-host>
 DB_PORT=5432
 DB_NAME=<database>
@@ -85,22 +89,12 @@ EOF
 
 Requirements:
 
-- The credentials must be **read-only**. The module sets
+- The credentials must be **read-only**. The source connection sets
   `search_path=readonly,public` and must never write to the source.
-- `chmod 600 ../optibrain/.env` — it contains a database password.
+- `chmod 600 .env.icca` — it contains a database password.
 
-Verify access before continuing:
-
-```sh
-cd ../optibrain
-python -c "
-import os, psycopg2
-c=psycopg2.connect(host=os.environ['DB_HOST'],port=os.environ['DB_PORT'],
-                   dbname=os.environ['DB_NAME'],user=os.environ['DB_USER'],
-                   password=os.environ['DB_PASSWORD'])
-print('connected')
-"
-```
+The worker's source preflight checks connectivity and grants during startup;
+the deployment verification in step 4 runs it explicitly.
 
 ### 3. Generate secrets and start
 
@@ -126,7 +120,7 @@ Generated in `.env.stack.local`:
 | `JWT_SECRET` | shared by `auth`, `rest`, `realtime` — **must be identical across all three** |
 | `ANON_KEY` | HS256 JWT, browser-visible |
 | `SERVICE_ROLE_KEY` | HS256 JWT, bypasses RLS |
-| `SYNC_PASSWORD` | `optibrain_sync` role |
+| `SYNC_PASSWORD` | `sync_worker` role |
 | `SYNC_TOKEN` | worker ↔ Optibrain shared secret |
 | `SECRET_KEY_BASE` | realtime |
 | `PG_META_CRYPTO_KEY` | Studio |
@@ -142,7 +136,7 @@ chmod 600 .env.stack.local
 
 ```sh
 sh scripts/stack.sh ps                       # every service (healthy)
-sh scripts/stack.sh exec -T optibrain-sync python preflight.py
+sh scripts/stack.sh exec -T sync-worker python preflight.py
 curl -sS -o /dev/null -w '%{http_code}\n' http://localhost/documentation/
 curl -sS -o /dev/null -w '%{http_code}\n' http://localhost:8080/
 ```
@@ -151,7 +145,7 @@ Preflight must report all fifteen source tables accessible. The first sync runs
 on a 900 s interval; to run it immediately:
 
 ```sh
-sh scripts/stack.sh exec -T optibrain-sync python -m sync
+sh scripts/stack.sh exec -T sync-worker python -m sync
 ```
 
 Expect roughly 60 patients, ~108k cache rows (patients + vitals + medications +
@@ -177,8 +171,8 @@ db (healthy)
           └──▶ db-migrate  (exit 0)
                   ├──▶ rest (healthy)
                   ├──▶ realtime (healthy)
-                  └──▶ optibrain-sync
-  └──▶ optibrain (healthy) ──▶ optibrain-sync
+                  └──▶ sync-worker
+  └──▶ optibrain (healthy) ──▶ sync-worker
 
 gateway-init (exit 0) ──▶ envoy (healthy) ──▶ studio
 web (healthy) ──────────────────────────────▶ envoy
@@ -188,6 +182,11 @@ web (healthy) ──────────────────────
 downstream of it never start. That is deliberate: Envoy must not serve an
 unrendered template containing unsubstituted key placeholders, and `rest` must
 not serve an unmigrated schema.
+
+The worker service is named `sync-worker`. The next database migration renames
+the prior `optibrain_sync` role while preserving its existing grants, and
+`scripts/local-up.sh` removes the old Compose container to avoid running two
+schedulers after upgrade.
 
 ## Port 80
 
@@ -322,7 +321,7 @@ Take a backup first. See {doc}`backup-restore`.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `local-up.sh` exits immediately | missing `../optibrain/.env` | see § Configure Optibrain |
+| `local-up.sh` exits immediately | missing `.env.icca` | see § Configure the ICCA source |
 | `db-migrate` exits non-zero | checksum mismatch | see {doc}`services/database` |
 | `envoy` never starts | `gateway-init` failed | `logs gateway-init` |
 | port 80 will not bind | rootless Docker | see § Port 80 |

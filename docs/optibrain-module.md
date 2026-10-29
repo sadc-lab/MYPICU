@@ -192,5 +192,5 @@ different units.
 
 - {doc}`services/optibrain` — container-level detail
 - {doc}`services/sync-worker` — the orchestrator
-- {doc}`deployment` § 2. Configure Optibrain
+- {doc}`deployment` § 2. Configure the ICCA source
 - {doc}`reference/tables` — where results are stored

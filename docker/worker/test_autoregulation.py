@@ -1,7 +1,7 @@
 import unittest
 
 import optibrain_export as export
-import worker
+import optibrain_module as worker
 
 
 def series(patient, counts):

@@ -15,7 +15,7 @@ How to tell what the stack is doing, and how to find out what went wrong.
 
 ```sh
 sh scripts/stack.sh ps                    # status of every service
-sh scripts/stack.sh logs -f optibrain-sync # follow one service
+sh scripts/stack.sh logs -f sync-worker # follow one service
 sh scripts/stack.sh top                    # live CPU and memory
 sh scripts/stack.sh stats --no-stream      # one-shot resource snapshot
 ```
@@ -42,7 +42,7 @@ one service or the whole stack.
 | `docs` | `wget --spider /documentation/` | Sphinx output present |
 | `optibrain` | `GET /docs` | module listening |
 | `optibrain-autoreg` | `GET /docs` | module listening |
-| `optibrain-sync` | `GET :8001/health` | worker up |
+| `sync-worker` | `GET :8001/health` | worker up |
 
 `db-migrate` and `gateway-init` are **one-shot**: they are correct when they have
 exited `0`. `compose ps` will not show them running.
@@ -74,7 +74,7 @@ sh scripts/stack.sh logs envoy | grep -v '/health'
 Service logs:
 
 ```sh
-sh scripts/stack.sh logs --tail 200 optibrain-sync   # extraction failures
+sh scripts/stack.sh logs --tail 200 sync-worker   # extraction failures
 sh scripts/stack.sh logs --tail 200 optibrain        # matrix computation
 sh scripts/stack.sh logs --tail 200 db                # SQL errors
 ```
@@ -111,7 +111,7 @@ docker exec mypicu-local-db-1 free -h
 ### The app loads but shows no patients
 
 ```sh
-sh scripts/stack.sh logs --tail 50 optibrain-sync     # did the last cycle run?
+sh scripts/stack.sh logs --tail 50 sync-worker     # did the last cycle run?
 sh scripts/stack.sh exec -T db psql -U postgres -d postgres -c \
   "select count(*) from patients;"
 ```
@@ -142,8 +142,8 @@ That user has no ward assignment. See {doc}`authentication` § Ward assignment.
 ```sh
 sh scripts/stack.sh ps                        # restart count / status
 docker inspect --format '{{.RestartCount}} {{.State.OOMKilled}}' \
-  mypicu-local-optibrain-sync-1
-docker logs --tail 100 mypicu-local-optibrain-sync-1
+  mypicu-local-sync-worker-1
+docker logs --tail 100 mypicu-local-sync-worker-1
 ```
 
 `OOMKilled: true` means the memory limit was hit.
