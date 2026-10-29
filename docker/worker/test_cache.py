@@ -70,6 +70,44 @@ class BatchMappingTests(unittest.TestCase):
         ])
         self.assertIn('rSO2-1', rows.call_args.args[2][2])
 
+    @patch('queries._rows', return_value=[(17065, datetime(2026, 10, 28, 12), 'PPC', 64.0)])
+    def test_ppc_monitor_channel_maps_to_frontend_key(self, rows):
+        mapped = queries.monitor(None, [17065], datetime(2026, 10, 27), datetime(2026, 10, 25))
+
+        self.assertEqual(mapped, [
+            ('#17065', 'Variable_PPC', datetime(2026, 10, 28, 12), 64.0),
+        ])
+        self.assertIn('PPC', rows.call_args.args[2][2])
+
+    def test_merge_art_preserves_each_arterial_pressure_timestamp(self):
+        first = datetime(2026, 10, 28, 12)
+        second = datetime(2026, 10, 28, 12, 1)
+
+        merged = queries.merge_art([
+            ('#1', 'Variable_PAM_ART', first, 72.0),
+            ('#1', 'Variable_PAM_ART', second, 74.0),
+        ])
+
+        self.assertEqual(merged, [
+            ('#1', 'Variable_PAM', first, 72.0),
+            ('#1', 'Variable_PAM', second, 74.0),
+        ])
+
+    def test_merge_art_prefers_line_at_matching_time_and_keeps_cuff_fallback(self):
+        first = datetime(2026, 10, 28, 12)
+        second = datetime(2026, 10, 28, 12, 1)
+
+        merged = queries.merge_art([
+            ('#1', 'Variable_PAM', first, 60.0),
+            ('#1', 'Variable_PAM_ART', first, 72.0),
+            ('#2', 'Variable_PAM', second, 65.0),
+        ])
+
+        self.assertEqual(
+            {(patient, timestamp): value for patient, _, timestamp, value in merged},
+            {('#1', first): 72.0, ('#2', second): 65.0},
+        )
+
     def test_non_numeric_vitals_are_dropped_rather_than_written_as_null(self):
         rows = vitals_rows(harvest(vitals=[('#1', 'Variable_x', '2026-01-01', 'impossible')]))
         self.assertEqual(rows, [])

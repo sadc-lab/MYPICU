@@ -32,6 +32,7 @@ MONITOR = [
     ('PAm', 'Variable_PAM'),
     ('ARTm', 'Variable_PAM_ART'),
     ('PICm', 'Variable_PIC'),
+    ('PPC', 'Variable_PPC'),
     ('PICd', 'Variable_PIC_d'),
     ('PICs', 'Variable_PIC_s'),
     ('PVCm', 'Variable_PVC'),
@@ -143,19 +144,19 @@ def monitor(conn, patients, fine_since, coarse_since):
 
 
 def merge_art(series):
-    """Fold invasive arterial-line pressure into the single blood-pressure key."""
-    merged, invasive = [], {}
+    """Fold arterial-line pressure into PAM, preferring it per patient and time."""
+    merged, pressures = [], {}
     for patient_id, key, charttime, value in series:
-        if key == 'Variable_PAM_ART':
-            slot = (patient_id, key.replace('_ART', ''))
-            current = invasive.get(slot)
-            # Prefer the most recent arterial-line reading for each minute.
-            if current is None or charttime > current[0]:
-                invasive[slot] = (charttime, value)
+        if key in ('Variable_PAM', 'Variable_PAM_ART'):
+            slot = (patient_id, charttime)
+            current = pressures.get(slot)
+            priority = int(key == 'Variable_PAM_ART')
+            if current is None or priority >= current[0]:
+                pressures[slot] = (priority, value)
         else:
             merged.append((patient_id, key, charttime, value))
-    for (patient_id, key), (charttime, value) in invasive.items():
-        merged.append((patient_id, key, charttime, value))
+    for (patient_id, charttime), (_, value) in pressures.items():
+        merged.append((patient_id, 'Variable_PAM', charttime, value))
     return merged
 
 
