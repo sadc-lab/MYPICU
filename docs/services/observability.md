@@ -129,8 +129,9 @@ sh scripts/stack.sh exec -T db psql -U postgres -d postgres -c \
   "select count(*) from patient_validity;"
 ```
 
-Almost always the module. Confirm it is healthy and check its
-`optibrain-results` volume.
+Almost always the module. Confirm it is healthy, inspect its logs, and check
+the persisted `patient_validity` rows; OptiBrain returns matrices through its
+API and does not use a results volume.
 
 ### A user is signed in but sees nothing
 

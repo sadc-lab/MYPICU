@@ -89,40 +89,35 @@ currently tracked patient. COx remains available for patients with NIRS plus PAM
 
 ## Data contract
 
-### Indicator batch — 23 CSV files
+### Indicator batch — request-scoped JSON
 
-Written by `docker/worker/optibrain_export.py` into `optibrain-data`:
+`docker/worker/optibrain_export.py` adapts harvested rows into 23 channel
+arrays and sends them in the `/indicateurs` request. Empty channels are
+included explicitly. The request includes the patient list and schema version;
+OptiBrain rejects rows for other encounters.
 
-- one file per monitored channel (`Variable_FC`, `Variable_PAM`, `Variable_PIC`, …)
-- bootstrap inputs: `Variable_age`, `premiere_frequence_cardiaque`, `noadmsip`
-- derived or denormalised variants the indicators filter on
-
-### Autoregulation batch — 7 CSV files
-
-Written into `optibrain-ar-data`, with `_autoreg` suffixes:
+Autoregulation sends seven request-scoped channel arrays:
 
 `Variable_PIC_autoreg`, `Variable_PPC_autoreg`, `Variable_PAM_autoreg`,
 `Variable_NIRS_autoreg`, `Variable_fc_autoreg`, `Variable_spo2_autoreg`,
 `Variable_licox_autoreg`.
 
-### Provenance manifest
+### Request provenance
 
-Every batch carries a manifest recording, per patient, the encounter id and
-whether the row is synthetic.
-
-Without it a file left over from a previous batch could be attributed to the
-wrong patient. This was the defect that made multi-patient ward extraction
-unsafe before the fix; the manifest is what makes it safe now.
+The patient set and raw rows are carried together in each API request.
+OptiBrain rejects rows for encounters outside that request, so there is no
+shared-directory manifest that can become stale or be overwritten mid-batch.
 
 ### Separation of duty
 
-| | Files | Reading |
-|---|---|---|
-| Worker writes | CSVs + manifest | — |
-| Module reads | same path | `skip_fetch=true`, so it uses the supplied files rather than re-querying ICCA |
+| Component | Responsibility |
+|---|---|
+| Worker | batched ICCA extraction, source normalization, and request serialization |
+| OptiBrain | clinical indicator and autoregulation calculations |
+| Worker | persists returned matrices and autoregulation results in the MYPICU database |
 
-`skip_fetch` is explicit. Without it the module would fetch from the source
-itself, duplicating extraction and defeating the worker's batching.
+The patient set and raw rows are carried together in each API request. This
+avoids duplicate extraction and the shared-volume race.
 
 ## Reliability contract
 
@@ -130,20 +125,20 @@ Enforced on the `../optibrain` side:
 
 | Requirement | Why |
 |---|---|
-| Provenance manifest | prevents cross-patient attribution |
-| Explicit `skip_fetch` | a missing DOB skips PPC only, not the whole run |
+| Request-bound patient set | rejects cross-patient rows |
+| Versioned JSON channel schema | makes omitted channels and incompatible payloads explicit |
+| Missing DOB handling | a missing DOB skips PPC only, not the whole run |
 | Per-patient error isolation | one bad patient cannot fail the batch |
 | `IN (...)` batching | no per-patient round trip |
 | Native `ARTm` matching | pressures must not be mis-paired |
 | Bounded autoregulation SQL | time windows, not open-ended scans |
 | `search_path=readonly,public` | the module must not modify the source |
 | Connection closing, `to_thread` | no pool exhaustion |
-| CSV memoisation | avoids O(N²) reads |
-| Semicolon separator | the pandas default is wrong for these files |
+| In-memory batch processing | avoids repeated parse and disk staging |
 | `pandas<3`, `httpx` | pinned for compatibility |
 
 **Single worker is mandatory** per instance: the pipeline uses process-global
-state and a shared results directory. Running two would corrupt it.
+state. Running multiple workers in one container could corrupt its configuration.
 
 ## Why two instances
 
@@ -152,13 +147,13 @@ optibrain                optibrain-autoreg
   ├─ 20 indicators         ├─ PRx / COx fits
   ├─ ~seconds/patient     ├─ ~35 min/patient
   ├─ 1 GiB limit          ├─ 3 GiB limit
-  └─ optibrain-data       └─ optibrain-ar-data   (private)
+  └─ JSON request          └─ JSON request
 ```
 
 The pipeline serialises requests behind one lock. A 35-minute fit in the same
 instance would stall indicator extraction and delay the validity write the UI
-depends on. Private input volumes also stop a long fit from reading channels the
-worker is halfway through rewriting.
+depends on. Request-scoped inputs provide a stable batch snapshot without
+shared input volumes.
 
 ## Performance
 
@@ -171,12 +166,27 @@ worker is halfway through rewriting.
 The worker guards autoregulation with `ar_busy`, so at most one fit runs at a
 time and the sync cycle is never blocked.
 
-## A note on the results volume
+## Results
 
-`optibrain-results` is frequently **empty** between runs even though
-`patient_validity` is populated. The worker reads the matrix files and the module
-does not retain them; the authoritative copy is in the database. Do not treat an
-empty results volume as a fault — check `patient_validity` instead.
+OptiBrain returns matrices and autoregulation tables directly in its API
+responses. The worker persists them to `patient_validity` and
+`patient_autoregulation`; the MYPICU deployment does not mount results volumes.
+
+On the patient page, available monitor channels—including NIRS
+(`Variable_rSO2`) and PAM—can be selected in the monitoring chart alongside
+the clinical-target indicators. When present in `patient_vitals`, the chart
+offers channels such as heart rate, respiratory rate, SpO₂, and systolic and
+diastolic PIC as well. The **Optimisation cérébrale** detail dialog pairs the
+stored PRx result with PIC/PPC or the COx result with NIRS/PAM. It selects a
+result only when both of its required channels are present and its optimum and
+limits are complete. If both pairs have usable results, PRx is preferred.
+
+The dialog plots the signal and pressure on separate scales. Its shaded
+autoregulation window and current inside/below/above status apply only to the
+pressure channel: PPC for PRx, or PAM for COx. Missing channels and incomplete
+windows are identified without inventing limits. These windows are not drawn
+on the general multi-indicator chart, which can combine measurements with
+different units.
 
 ## Related
 

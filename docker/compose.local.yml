@@ -20,7 +20,6 @@ x-memory: &memory
 
 x-worker: &worker
   image: mypicu-worker:local
-  build: ./docker/worker
   mem_limit: *mem_worker
 
 services:
@@ -92,6 +91,7 @@ services:
 
   db-migrate:
     <<: *worker
+    build: ./docker/worker
     depends_on:
       auth: {condition: service_healthy}
     command: [python, migrate.py]
@@ -280,10 +280,9 @@ services:
       timeout: 5s
       retries: 10
 
-  # Clinical computation service. Reads the raw CSVs the sync worker writes
-  # into the shared volume and produces the hourly adherence matrices and
-  # brain autoregulation results. Single worker is mandatory: the pipeline
-  # uses process-global state and a shared results directory.
+  # Clinical computation service. Receives request-scoped channel records from
+  # the sync worker and returns hourly adherence matrices. Single worker is
+  # mandatory because autoregulation uses process-global configuration.
   optibrain:
     mem_limit: *mem_module
     image: mypicu-optibrain:local
@@ -292,9 +291,6 @@ services:
     env_file: ../optibrain/.env
     environment:
       DB_MAX_CONCURRENT_QUERIES: ${ICCA_QUERY_CONCURRENCY:-4}
-    volumes:
-      - optibrain-data:/app/donnees
-      - optibrain-results:/app/results
     networks: [default]
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs', timeout=5)"]
@@ -305,9 +301,7 @@ services:
   # Autoregulation runs in its own instance. The pipeline keeps module-global
   # configuration and serialises every request behind one lock, so a 35-minute
   # fit would otherwise stall the indicator extraction that the sync cycle
-  # depends on. It gets a private results volume and a private input volume so
-  # a long analysis cannot read channels the worker is halfway through
-  # rewriting.
+  # depends on. Its request carries a consistent, immutable input snapshot.
   optibrain-autoreg:
     mem_limit: *mem_autoreg
     image: mypicu-optibrain:local
@@ -316,9 +310,6 @@ services:
     env_file: ../optibrain/.env
     environment:
       DB_MAX_CONCURRENT_QUERIES: ${ICCA_QUERY_CONCURRENCY:-4}
-    volumes:
-      - optibrain-ar-data:/app/donnees
-      - optibrain-ar-results:/app/results
     networks: [default]
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs', timeout=5)"]
@@ -340,16 +331,9 @@ services:
       PATIENT_RETENTION_DAYS: ${PATIENT_RETENTION_DAYS:-3}
       SOURCE_TIMEZONE: America/Montreal
       ICCA_QUERY_CONCURRENCY: ${ICCA_QUERY_CONCURRENCY:-4}
-      # Same volume, same path on both sides, so the CSVs written here are the
-      # ones the module reads.
-      OPTIBRAIN_EXPORT_DIR: /optibrain/donnees
-      OPTIBRAIN_AR_EXPORT_DIR: /optibrain-ar/donnees
       OPTIBRAIN_URL: http://optibrain:8000
       OPTIBRAIN_AR_URL: http://optibrain-autoreg:8000
       OPTIBRAIN_TOKEN: ${SYNC_TOKEN}
-    volumes:
-      - optibrain-data:/optibrain/donnees
-      - optibrain-ar-data:/optibrain-ar/donnees
     networks: [default]
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=5)"]
@@ -361,7 +345,3 @@ volumes:
   db-data:
   db-config:
   envoy-config:
-  optibrain-data:
-  optibrain-results:
-  optibrain-ar-data:
-  optibrain-ar-results:

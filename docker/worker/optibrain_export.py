@@ -1,30 +1,29 @@
-"""Render the harvested rows into the CSV contract OptiBrain reads.
+"""Render harvested rows into OptiBrain's request contracts.
 
-OptiBrain's indicator pipeline consumes one CSV per channel from a fixed
-directory, with column names fixed per file. Rather than have it query ICCA
-again -- which costs about 59s of unbounded scans per cycle -- this module
-writes those files from the rows the worker already harvested.
+OptiBrain receives these channel records directly over its internal API.
+Rather than have it query ICCA again -- which costs about 59s of unbounded
+scans per cycle -- this module adapts rows the worker already harvested.
 
 The contract is not uniform, and that is deliberate on OptiBrain's side:
 
-* the patient column is ``noadmsip`` in most files and ``encounterid`` in
+* the patient column is ``noadmsip`` in most channels and ``encounterid`` in
   others, and the reader filters on whichever one it expects;
-* ``Variable_premiere_frequence_cardiaque.csv`` and ``Variable_age.csv`` are
-  bootstrap files: the first supplies the origin of the 96-hour timeline and
+* ``Variable_premiere_frequence_cardiaque`` and ``Variable_age`` are
+  bootstrap channels: the first supplies the origin of the 96-hour timeline and
   the second the age band used by the PPC target. Neither is an indicator;
-* several files carry extra columns the indicators filter on, for example
+* several channels carry extra columns the indicators filter on, for example
   ``drugname`` for antiepileptics and ``longlabel`` for nutrition.
 
-Every file is written, even when empty. OptiBrain checks for the presence of
-all of them and an absent file is indistinguishable from a failed fetch.
+Each channel is present in the payload even when it has no rows. The
+OptiBrain-side input validator uses the complete channel set to distinguish an
+empty channel from an omitted or malformed request.
 """
 from datetime import datetime
-import json
-import os
-from pathlib import Path
+from decimal import Decimal
+import math
 
-# Columns per file, in the order OptiBrain's readers expect them. The patient
-# column differs between files, which is why it is part of the contract rather
+# Columns per channel, in the order OptiBrain's readers expect them. The patient
+# column differs between channels, which is why it is part of the contract rather
 # than a convention.
 CONTRACT = {
     'Variable_premiere_frequence_cardiaque': ['encounterid', 'intime'],
@@ -52,8 +51,8 @@ CONTRACT = {
     'Variable_anti_epileptique': ['noadmsip', 'charttime', 'drugname'],
 }
 
-# Harvested variable_key -> OptiBrain file, where the names differ.
-# Harvested variable_key -> OptiBrain file. Only the names that differ need to
+# Harvested variable_key -> OptiBrain channel, where the names differ.
+# Harvested variable_key -> OptiBrain channel. Only the names that differ need to
 # appear; the rest are identical on both sides. Deriving the identity entries
 # from CONTRACT keeps the two lists from drifting apart.
 KEY_MAP = {name: name for name in CONTRACT}
@@ -75,43 +74,18 @@ def _stamp(value):
     return '' if value is None else str(value)
 
 
-def _escape(value):
-    """OptiBrain reads these with a ';' separator, so a ';' in a value would
-    shift every following column. Nutrition labels and clinical notes are free
-    text and do contain punctuation."""
-    if value is None:
-        return ''
-    # Numeric columns arrive as int or float depending on their source.
-    # Render whole values without a trailing ".0" so the same measurement does
-    # not change shape depending on which table it came from.
-    if isinstance(value, bool):
-        return str(value)
-    if isinstance(value, float) and value.is_integer():
-        return str(int(value))
-    return str(value).replace(';', ',').replace('\n', ' ').replace('\r', ' ')
+def _json_value(value):
+    if isinstance(value, Decimal):
+        value = float(value)
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    return str(value)
 
 
-def _write(path: Path, header, rows):
-    lines = [';'.join(header)]
-    lines.extend(';'.join(_escape(cell) for cell in row) for row in rows)
-    # A temporary file then rename keeps OptiBrain from reading a half-written
-    # file if it is called while this is being produced.
-    temporary = path.with_suffix('.csv.tmp')
-    temporary.write_text('\n'.join(lines) + '\n', encoding='utf-8')
-    temporary.replace(path)
-
-
-def build(harvest, demographics, directory, patients=(), fetched_at=None):
-    """Write every contract file, then record which patients they describe.
-
-    The manifest is what lets OptiBrain accept these files instead of querying
-    ICCA itself. Without it the module treats the CSVs as unprovenanced and
-    overwrites them with its own fetch.
-    """
-    directory = Path(directory)
-    directory.mkdir(parents=True, exist_ok=True)
-    written = {}
-
+def build_payload(harvest, demographics):
+    """Return all indicator channels as JSON-compatible column records."""
     series: dict[str, list] = {name: [] for name in CONTRACT}
     for patient_id, key, charttime, value in harvest.get('vitals', []):
         target = KEY_MAP.get(key)
@@ -155,18 +129,18 @@ def build(harvest, demographics, directory, patients=(), fetched_at=None):
             series[key].append((patient_id.lstrip('#'), _stamp(charttime), diameter))
 
     for patient_id, kind, drugname, charttime, dose in harvest.get('medications', []):
-        file = 'Variable_' + kind
-        if file not in series:
+        channel = 'Variable_' + kind
+        if channel not in series:
             # Inotropes and vasopressors have no indicator in this pipeline;
             # they are carried for the dashboard rather than for adherence.
             continue
-        if file == 'Variable_anti_epileptique':
+        if channel == 'Variable_anti_epileptique':
             # This indicator only checks that a drug was given, by name.
-            series[file].append((patient_id.lstrip('#'), _stamp(charttime), drugname))
+            series[channel].append((patient_id.lstrip('#'), _stamp(charttime), drugname))
         else:
             # Opioid and sedative indicators look at the infusion rate and
             # ignore entries that are not one.
-            series[file].append(
+            series[channel].append(
                 (patient_id.lstrip('#'), _stamp(charttime), 'debit', dose, drugname))
 
     # Three indicators treat a recent transfusion or feed as evidence that a
@@ -182,23 +156,14 @@ def build(harvest, demographics, directory, patients=(), fetched_at=None):
     for patient_id, charttime, label in transfers.get('nutrition', []):
         series['Variable_nutrition'].append((patient_id.lstrip('#'), _stamp(charttime), label))
 
-    for name, header in CONTRACT.items():
-        rows = series.get(name, [])
-        _write(directory / f'{name}.csv', header, rows)
-        written[name] = len(rows)
+    return {
+        name: [
+            {column: _json_value(value) for column, value in zip(header, row)}
+            for row in series[name]
+        ]
+        for name, header in CONTRACT.items()
+    }
 
-    if patients:
-        manifest_path = directory / '_manifest.json'
-        try:
-            manifest = json.loads(manifest_path.read_text())
-        except (OSError, ValueError):
-            manifest = {}
-        manifest['iquatrace'] = {
-            'patients': sorted(int(str(p).removeprefix('#')) for p in patients),
-            'fetched_at': fetched_at or datetime.now().isoformat(timespec='seconds'),
-        }
-        manifest_path.write_text(json.dumps(manifest, indent=2))
-    return written
 
 # ----------------------------------------------------------------------
 # Autoregulation channels
@@ -219,42 +184,32 @@ AUTOREG_CONTRACT = {
 }
 
 
-def build_autoreg(series, directory, patients, fetched_at=None):
-    """Write the autoregulation channels and record their provenance.
-
-    Returns {channel: row count} so the caller can see which signals exist for
-    this ward before asking for an analysis, rather than discovering it from a
-    result full of nulls.
-    """
-    directory = Path(directory)
-    directory.mkdir(parents=True, exist_ok=True)
-    written = {}
+def build_autoreg_payload(series, patients):
+    """Return autoregulation channels as JSON-compatible column records."""
+    payload = {}
+    wanted = (
+        {str(int(str(patient).removeprefix('#'))) for patient in patients}
+        if patients else None
+    )
     for name, header in AUTOREG_CONTRACT.items():
         channel = header[-1]
         # The arterial line and the cuff measure the same quantity. This cohort
         # is monitored on the line, which is the more accurate source.
         if channel == 'PAM':
-            matched = [(p, _stamp(t), v) for p, c, t, v in series if c == 'PAM']
-            if not matched:
-                matched = [(p, _stamp(t), v) for p, c, t, v in series if c == 'PAM_cuff']
+            arterial = [(p, _stamp(t), v) for p, c, t, v in series if c == 'PAM']
+            arterial_patients = {p for p, _, _ in arterial}
+            cuff = [(p, _stamp(t), v) for p, c, t, v in series
+                    if c == 'PAM_cuff' and p not in arterial_patients]
+            matched = arterial + cuff
         else:
             matched = [(p, _stamp(t), v) for p, c, t, v in series if c == channel]
         # The encounter id is written bare. The module filters each channel on
         # the integer, so a '#'-prefixed value silently matches nothing and
         # every analysis comes back empty.
-        rows = [(_encounter(p), stamp, value) for p, stamp, value in matched]
-        _write(directory / f'{name}.csv', header, rows)
-        written[channel] = len(rows)
-
-    if patients:
-        manifest_path = directory / '_manifest.json'
-        try:
-            manifest = json.loads(manifest_path.read_text())
-        except (OSError, ValueError):
-            manifest = {}
-        manifest['autoreg'] = {
-            'patients': sorted(int(str(p).removeprefix('#')) for p in patients),
-            'fetched_at': fetched_at or datetime.now().isoformat(timespec='seconds'),
-        }
-        manifest_path.write_text(json.dumps(manifest, indent=2))
-    return written
+        rows = [(_encounter(p), stamp, value) for p, stamp, value in matched
+                if wanted is None or _encounter(p) in wanted]
+        payload[name] = [
+            {column: _json_value(value) for column, value in zip(header, row)}
+            for row in rows
+        ]
+    return payload

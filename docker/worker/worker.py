@@ -27,13 +27,6 @@ INTERVAL = max(30, int(os.getenv('SYNC_INTERVAL_SECONDS', '900')))
 LOCK = 726402
 busy = asyncio.Lock()
 
-# Directory shared with the OptiBrain container. Both sides mount it at the
-# same path so the CSVs this worker writes are the ones OptiBrain reads.
-EXPORT_DIR = os.getenv('OPTIBRAIN_EXPORT_DIR', '/optibrain/donnees')
-# Autoregulation gets its own instance, input volume and endpoint: a single fit
-# takes around half an hour and would otherwise hold the module's request lock
-# while the sync cycle waits for it.
-AR_EXPORT_DIR = os.getenv('OPTIBRAIN_AR_EXPORT_DIR', '/optibrain-ar/donnees')
 OPTIBRAIN_URL = os.getenv('OPTIBRAIN_URL', 'http://optibrain:8000')
 AR_URL = os.getenv('OPTIBRAIN_AR_URL', 'http://optibrain-autoreg:8000')
 OPTIBRAIN_TOKEN = os.getenv('OPTIBRAIN_TOKEN', '')
@@ -43,8 +36,8 @@ ar_busy = asyncio.Lock()
 
 def current_patients():
     with local() as db:
-        return [row['patient_id'] for row in db.execute(
-            'SELECT patient_id FROM public.patients')]
+        return [row['id'] for row in db.execute(
+            'SELECT id FROM public.patients')]
 
 
 def local():
@@ -138,16 +131,13 @@ def demographics(db, patients):
     }
 
 
-def request_indicators(patients, url, token):
-    """Ask OptiBrain for the hourly adherence matrices.
-
-    OptiBrain reads the CSVs this module just wrote and computes validity from
-    them; `skip_fetch` stops it querying ICCA a second time.
-    """
+def request_indicators(patients, url, token, indicator_data):
+    """Ask OptiBrain for hourly adherence matrices from this harvested batch."""
     ids = sorted(int(p.removeprefix('#')) for p in patients)
     with httpx.Client(timeout=httpx.Timeout(900, connect=10)) as client:
         response = client.post(f'{url}/indicateurs',
-                              json={'patients': ids, 'skip_fetch': True},
+                              json={'patients': ids, 'schema_version': 1,
+                                    'indicator_data': indicator_data},
                               headers={'Authorization': f'Bearer {token}'})
         response.raise_for_status()
         return response.json()
@@ -202,28 +192,34 @@ def autoregulation_candidates(series, patients):
     A patient without the required channels is skipped rather than sent for an
     analysis that can only return nulls.
     """
-    counts = {}
-    for patient_id, channel, _t, _v in series:
-        counts.setdefault(patient_id, {}).setdefault(channel, 0)
-        counts[patient_id][channel] += 1
+    def enough(patient_id: str, channel: str) -> bool:
+        times = [t for p, c, t, _v in series if p == patient_id and c == channel]
+        if len(times) < AUTOREG_MIN_SAMPLES:
+            return False
+        start = min(times)
+        end = max(times)
+        seconds = end - start
+        if hasattr(seconds, 'total_seconds'):
+            seconds = seconds.total_seconds()
+        return seconds >= AUTOREG_MIN_HOURS * 3600
 
     prx, cox = [], []
     for patient_id in patients:
-        channels = counts.get(patient_id, {})
-        enough = lambda name: channels.get(name, 0) >= AUTOREG_MIN_SAMPLES
-        if enough('PIC') and enough('PPC'):
+        if enough(patient_id, 'PIC') and enough(patient_id, 'PPC'):
             prx.append(patient_id)
-        if enough('NIRS') and enough('PAM'):
+        if enough(patient_id, 'NIRS') and (
+                enough(patient_id, 'PAM') or enough(patient_id, 'PAM_cuff')):
             cox.append(patient_id)
     return {'prx': prx, 'cox': cox}
 
 
-def request_autoregulation(patients, mode, url, token):
+def request_autoregulation(patients, mode, url, token, autoreg_data):
     route = '/autoregulation_ppc_optimale' if mode == 'prx' else '/autoregulation_nirs'
     ids = sorted(int(p.removeprefix('#')) for p in patients)
     with httpx.Client(timeout=httpx.Timeout(1800, connect=10)) as client:
         response = client.post(f'{url}{route}',
-                               json={'patients': ids, 'skip_fetch': True},
+                               json={'patients': ids, 'schema_version': 1,
+                                     'autoreg_data': autoreg_data},
                                headers={'Authorization': f'Bearer {token}'})
         response.raise_for_status()
         return response.json()
@@ -239,7 +235,10 @@ def autoregulation_rows(payload, mode, computed_at=None):
     """
     rows = []
     for encounter, tables in (payload or {}).items():
-        recap = next((t for name, t in tables.items() if name.endswith('_AR_3min')), None)
+        recap = next(
+            (t for name, t in tables.items() if name.endswith('_AR_3min') or name.endswith('_AR_3min_Fisher')),
+            None,
+        )
         wide = next((t for name, t in tables.items() if 'Full_AR_Table' in name), None)
         if not recap:
             continue
@@ -271,7 +270,7 @@ def autoregulation_rows(payload, mode, computed_at=None):
             'PIC' if mode == 'prx' else 'NIRS1',
             int(number('Horodate_count') or 0) or None,
             computed_at,
-            Jsonb(wide[-1] if wide else None),
+            Jsonb(wide if wide else None),
         ))
     return rows
 
@@ -283,7 +282,7 @@ def store_autoregulation(db, rows):
         db.execute('''INSERT INTO public.patient_autoregulation
             (patient_id, mode, optimal_pressure, inferior_limit, superior_limit,
              min_index, pressure_variable, signal_variable, sample_count, computed_at, raw)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,now(),%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,COALESCE(%s, now()),%s)
             ON CONFLICT (patient_id, mode) DO UPDATE SET
                 optimal_pressure=excluded.optimal_pressure,
                 inferior_limit=excluded.inferior_limit,
@@ -349,7 +348,6 @@ def refresh_autoregulation(db, patients):
     with queries.connect(os.environ) as conn:
         series = queries.autoreg_series(conn, [int(p.removeprefix('#')) for p in patients], since)
 
-    optibrain_export.build_autoreg(series, AR_EXPORT_DIR, patients)
     candidates = autoregulation_candidates(series, patients)
 
     # Patients already holding a result that is still current are left alone.
@@ -358,14 +356,16 @@ def refresh_autoregulation(db, patients):
            WHERE computed_at > now() - (%s * interval '1 minute')""", (15,))}
 
     stored = 0
-    with db.transaction():
-        for mode, eligible in candidates.items():
-            todo = [p for p in eligible if p not in fresh]
-            if not todo:
-                continue
-            payload = request_autoregulation(todo, mode, AR_URL, OPTIBRAIN_TOKEN)
+    for mode, eligible in candidates.items():
+        todo = [p for p in eligible if p not in fresh]
+        if not todo:
+            continue
+        autoreg_data = optibrain_export.build_autoreg_payload(series, todo)
+        payload = request_autoregulation(
+            todo, mode, AR_URL, OPTIBRAIN_TOKEN, autoreg_data)
+        with db.transaction():
             stored += store_autoregulation(db, autoregulation_rows(payload, mode))
-            log.info('Autoregulation (%s) recomputed for %d patient(s)', mode, len(todo))
+        log.info('Autoregulation (%s) recomputed for %d patient(s)', mode, len(todo))
     if not any(candidates.values()):
         log.info('No patient has both intracranial and arterial monitoring; autoregulation skipped')
     return stored
@@ -387,8 +387,10 @@ def sync_batch(db, patients):
                'WHERE patient_id = ANY(%s)', (patients,))
     try:
         harvest = queries.harvest(patients, os.environ)
-        optibrain_export.build(harvest, demographics(db, patients), EXPORT_DIR, patients)
-        indicators = request_indicators(patients, OPTIBRAIN_URL, OPTIBRAIN_TOKEN)
+        indicator_data = optibrain_export.build_payload(
+            harvest, demographics(db, patients))
+        indicators = request_indicators(
+            patients, OPTIBRAIN_URL, OPTIBRAIN_TOKEN, indicator_data)
         validity = validity_rows(indicators, patients)
         failures = indicators.get('failures') or {}
 

@@ -1,8 +1,7 @@
+import json
 import unittest
 from datetime import datetime
-from pathlib import Path
-import json
-import tempfile
+from decimal import Decimal
 
 import optibrain_export as export
 import worker
@@ -15,98 +14,116 @@ def harvest(**overrides):
     return base
 
 
-class ExportContractTests(unittest.TestCase):
-    def setUp(self):
-        self.directory = Path(tempfile.mkdtemp())
-
-    def build(self, data, patients=('#1',), demographics=None):
-        demographics = demographics or {
+class IndicatorPayloadTests(unittest.TestCase):
+    def demographics(self):
+        return {
             'intime': {'1': datetime(2026, 9, 29, 20, 29)},
             'dateofbirth': {'1': datetime(2019, 3, 1)},
         }
-        return export.build(data, demographics, self.directory, patients)
 
-    def read(self, name):
-        return (self.directory / f'{name}.csv').read_text().splitlines()
+    def test_every_channel_is_present_even_when_empty(self):
+        payload = export.build_payload(harvest(), self.demographics())
+        self.assertEqual(set(payload), set(export.CONTRACT))
+        self.assertTrue(all(isinstance(records, list) for records in payload.values()))
+        self.assertTrue(all(not records for name, records in payload.items()
+                            if name not in {'Variable_age',
+                                            'Variable_premiere_frequence_cardiaque'}))
 
-    def test_every_contract_file_is_written_even_when_empty(self):
-        """OptiBrain checks for the presence of all of them; a missing file
-        is indistinguishable from a failed fetch."""
-        written = self.build(harvest())
-        self.assertEqual(sorted(written), sorted(export.CONTRACT))
-        self.assertEqual(self.read('Variable_plasma'),
-                         ['noadmsip;charttime;plasma'])
+    def test_measurement_and_bootstrap_rows_match_the_input_schema(self):
+        payload = export.build_payload(
+            harvest(vitals=[
+                ('#1', 'Variable_FC', datetime(2026, 9, 29, 20, 29), 110.0),
+                ('#1', 'Variable_PIC', datetime(2026, 9, 29, 20, 30), Decimal('17.0')),
+            ]),
+            self.demographics(),
+        )
+        self.assertEqual(payload['Variable_PIC'], [{
+            'noadmsip': '1', 'charttime': '2026-09-29 20:30:00', 'valeur': 17.0,
+        }])
+        self.assertEqual(payload['Variable_age'], [
+            {'noadmsip': '1', 'dateofbirth': '2019-03-01'},
+        ])
+        self.assertEqual(payload['Variable_premiere_frequence_cardiaque'], [
+            {'encounterid': '1', 'intime': '2026-09-29 20:29:00'},
+        ])
+        json.dumps(payload, allow_nan=False)
 
-    def test_columns_match_the_contract(self):
-        self.build(harvest(vitals=[('#1', 'Variable_PIC', datetime(2026, 9, 29, 20, 30), 17.0)]))
-        self.assertEqual(self.read('Variable_PIC'),
-                         ['noadmsip;charttime;valeur', '1;2026-09-29 20:30:00;17'])
-        # The patient column is `encounterid` in some files and `noadmsip` in
-        # others; each reader filters on the one it expects.
-        self.assertEqual(self.read('Variable_culot_globulaire')[0],
-                         'encounterid;charttime;valeur')
+    def test_missing_birth_date_produces_an_empty_age_channel(self):
+        payload = export.build_payload(
+            harvest(),
+            {'intime': {'1': None}, 'dateofbirth': {}},
+        )
+        self.assertEqual(payload['Variable_age'], [])
 
-    def test_bootstrap_files_carry_timeline_and_age(self):
-        self.build(harvest(vitals=[('#1', 'Variable_FC', datetime(2026, 9, 29, 20, 29), 110.0)]))
-        # Origin of the 96-hour window, and the age band for the PPC target.
-        self.assertEqual(self.read('Variable_age')[1], '1;2019-03-01')
-        self.assertEqual(self.read('Variable_premiere_frequence_cardiaque')[1],
-                         '1;2026-09-29 20:29:00')
+    def test_pupils_use_numeric_diameter_and_medications_keep_fields(self):
+        payload = export.build_payload(
+            harvest(
+                pupils=[('#1', 'Variable_pupille_droite',
+                         datetime(2026, 9, 29, 21, 0), '3 mm RB', 'RB')],
+                vitals=[('#1', 'Variable_pupille_droite',
+                         datetime(2026, 9, 29, 21, 0), 3.0)],
+                medications=[
+                    ('#1', 'opioides', 'Morphine;hydromorphone',
+                     datetime(2026, 9, 29, 21, 0), '2 mL/h'),
+                    ('#1', 'anti_epileptique', 'Levetiracetam',
+                     datetime(2026, 9, 29, 21, 0), '500 mg'),
+                ],
+            ),
+            self.demographics(),
+        )
+        self.assertEqual(payload['Variable_pupille_droite'][0]['valeur'], 3.0)
+        self.assertEqual(payload['Variable_opioides'][0], {
+            'noadmsip': '1', 'charttime': '2026-09-29 21:00:00',
+            'variable': 'debit', 'valeur': '2 mL/h',
+            'drugname': 'Morphine;hydromorphone',
+        })
+        self.assertEqual(payload['Variable_anti_epileptique'][0]['drugname'],
+                         'Levetiracetam')
+        json.dumps(payload, allow_nan=False)
 
-    def test_missing_birth_date_yields_no_age_row(self):
-        self.build(harvest(), demographics={'intime': {'1': None}, 'dateofbirth': {}})
-        # An empty age file fails every patient in the ward at the PPC stage.
-        self.assertEqual(len(self.read('Variable_age')), 1)
+    def test_transfusions_and_nutrition_are_included(self):
+        payload = export.build_payload(
+            harvest(transfusions={
+                'plasma': [('#1', datetime(2026, 9, 29, 21, 0), 'Plasma frais')],
+                'red_cells': [('#1', datetime(2026, 9, 29, 21, 0), 'Culot globulaire')],
+                'platelets': [('#1', datetime(2026, 9, 29, 21, 0), 'Plaquettes')],
+                'nutrition': [('#1', datetime(2026, 9, 29, 21, 0), 'Alimentation entérale')],
+            }),
+            self.demographics(),
+        )
+        self.assertEqual(payload['Variable_plasma'][0]['plasma'], 'Plasma frais')
+        self.assertEqual(payload['Variable_culot_globulaire'][0]['encounterid'], '1')
+        self.assertEqual(payload['Variable_concentre_plaquettaire'][0]['valeur'],
+                         'Plaquettes')
+        self.assertEqual(payload['Variable_nutrition'][0]['longlabel'],
+                         'Alimentation entérale')
 
-    def test_pupil_uses_the_numeric_diameter(self):
-        self.build(harvest(
-            pupils=[('#1', 'Variable_pupille_droite', datetime(2026, 9, 29, 21, 0), '3 mm RB', 'RB')],
-            vitals=[('#1', 'Variable_pupille_droite', datetime(2026, 9, 29, 21, 0), 3.0)]))
-        self.assertEqual(self.read('Variable_pupille_droite')[1], '1;2026-09-29 21:00:00;3')
 
-    def test_medications_are_labelled_as_infusion_rates(self):
-        self.build(harvest(medications=[
-            ('#1', 'opioides', 'Morphine', datetime(2026, 9, 29, 21, 0), '2 mL/h'),
-            ('#1', 'anti_epileptique', 'Levetiracetam', datetime(2026, 9, 29, 21, 0), '500 mg'),
-        ]))
-        # The opioid and sedative indicators filter on variable='debit'.
-        self.assertEqual(self.read('Variable_opioides')[1],
-                         '1;2026-09-29 21:00:00;debit;2 mL/h;Morphine')
-        # The antiepileptic indicator only checks that a drug was given.
-        self.assertEqual(self.read('Variable_anti_epileptique')[1],
-                         '1;2026-09-29 21:00:00;Levetiracetam')
+class AutoregPayloadTests(unittest.TestCase):
+    def test_all_channels_are_present_and_only_requested_patients_are_sent(self):
+        series = [
+            ('#1', 'PIC', datetime(2026, 9, 29, 20, 30), Decimal('17.0')),
+            ('#2', 'PIC', datetime(2026, 9, 29, 20, 30), Decimal('18.0')),
+        ]
+        payload = export.build_autoreg_payload(series, ['#1'])
+        self.assertEqual(set(payload), set(export.AUTOREG_CONTRACT))
+        self.assertEqual(payload['Variable_PIC_autoreg'], [{
+            'noadmsip': '1', 'horodate': '2026-09-29 20:30:00', 'PIC': 17.0,
+        }])
+        self.assertTrue(all(not records for name, records in payload.items()
+                            if name != 'Variable_PIC_autoreg'))
+        json.dumps(payload, allow_nan=False)
 
-    def test_semicolons_are_neutralised(self):
-        """Files are read with a ';' separator, so a ';' in a value would shift
-        every following column into the wrong field."""
-        self.build(harvest(medications=[
-            ('#1', 'opioides', 'Morphine;hydromorphone', datetime(2026, 9, 29, 21, 0), '2')]))
-        row = self.read('Variable_opioides')[1]
-        self.assertEqual(len(row.split(';')), 5)
-        self.assertIn('Morphine,hydromorphone', row)
-
-    def test_transfusions_and_nutrition_are_exported(self):
-        self.build(harvest(transfusions={
-            'plasma': [('#1', datetime(2026, 9, 29, 21, 0), 'Plasma frais')],
-            'red_cells': [('#1', datetime(2026, 9, 29, 21, 0), 'Culot globulaire')],
-            'platelets': [('#1', datetime(2026, 9, 29, 21, 0), 'Plaquettes')],
-            'nutrition': [('#1', datetime(2026, 9, 29, 21, 0), 'Alimentation entérale')],
-        }))
-        self.assertEqual(len(self.read('Variable_plasma')), 2)
-        self.assertEqual(len(self.read('Variable_culot_globulaire')), 2)
-        self.assertEqual(len(self.read('Variable_concentre_plaquettaire')), 2)
-        self.assertEqual(len(self.read('Variable_nutrition')), 2)
-
-    def test_manifest_records_the_patient_set(self):
-        self.build(harvest(), patients=('#2', '#1'))
-        manifest = json.loads((self.directory / '_manifest.json').read_text())
-        # OptiBrain compares this set to decide whether its CSVs are current.
-        self.assertEqual(manifest['iquatrace']['patients'], [1, 2])
-
-    def test_manifest_preserves_other_registries(self):
-        self.build(harvest())
-        self.assertNotIn('autoreg',
-                         json.loads((self.directory / '_manifest.json').read_text()))
+    def test_pressure_prefers_arterial_line_and_falls_back_to_cuff_per_patient(self):
+        series = [
+            ('#1', 'PAM_cuff', 0, 60.0),
+            ('#1', 'PAM', 0, 72.0),
+            ('#2', 'PAM_cuff', 0, 65.0),
+        ]
+        payload = export.build_autoreg_payload(series, ['#1', '#2'])
+        values = {row['noadmsip']: row['PAM']
+                  for row in payload['Variable_PAM_autoreg']}
+        self.assertEqual(values, {'1': 72.0, '2': 65.0})
 
 
 class ValidityTranslationTests(unittest.TestCase):

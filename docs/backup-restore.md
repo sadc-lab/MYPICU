@@ -133,16 +133,10 @@ and store it as carefully as the database dump.
 
 ### What you do not need to back up
 
-| Volume | Why not |
+| Data | Why not |
 |---|---|
-| `optibrain-data` | rewritten from the source each cycle |
-| `optibrain-ar-data` | rewritten from the source each cycle |
-| `optibrain-results` | recomputed; validity regenerates in one cycle |
-| `optibrain-ar-results` | recomputed, but at ~35 min/patient — restore from the DB instead |
+| OptiBrain input/results | request-scoped API data is transient; authoritative results are in the database |
 | `envoy-config` | rendered from the template on every boot |
-
-If you want belt-and-braces on the autoregulation *raw curves* without restoring
-the database, copy `optibrain-ar-results` — but understand it can be large.
 
 ## Restoring
 

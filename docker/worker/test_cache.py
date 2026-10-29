@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime
+from unittest.mock import patch
 
 from cache import clinical_rows, datasets, instant, medication_rows, numeric, vitals_rows
 import queries
@@ -59,6 +60,15 @@ class BatchMappingTests(unittest.TestCase):
         self.assertEqual(medication_rows(harvest(medications=[
             ('#1', 'inotropes_vasopresseurs', 'Noradrenaline', '2026-01-01', '0.15')]))[0][1],
             'inotropes_vasopresseurs')
+
+    @patch('queries._rows', return_value=[(16997, datetime(2026, 10, 28, 12), 'rSO2-1', 68.5)])
+    def test_nirs_monitor_channel_maps_to_frontend_rso2_key(self, rows):
+        mapped = queries.monitor(None, [16997], datetime(2026, 10, 27), datetime(2026, 10, 25))
+
+        self.assertEqual(mapped, [
+            ('#16997', 'Variable_rSO2', datetime(2026, 10, 28, 12), 68.5),
+        ])
+        self.assertIn('rSO2-1', rows.call_args.args[2][2])
 
     def test_non_numeric_vitals_are_dropped_rather_than_written_as_null(self):
         rows = vitals_rows(harvest(vitals=[('#1', 'Variable_x', '2026-01-01', 'impossible')]))

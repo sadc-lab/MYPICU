@@ -85,7 +85,7 @@ Common `variable_key` values:
 | `CO2fe` | end-tidal CO₂ | `icca_htr` `CO2fe` |
 | `PICm` / `PICd` / `PICs` | intracranial pressure mean / max / min | `icca_htr` |
 | `PVCm` | central venous pressure | `icca_htr` `PVCm` |
-| `rSO%` | cerebral oxygen saturation | `icca_htr` `rSO%` |
+| `Variable_rSO2` | cerebral oxygen saturation (NIRS) | `icca_htr` `rSO2-1` |
 | `lactate`, `hemoglobine`, … | labs | `ptlabresult` (`valuenumber`) |
 | blood gas channels | pH, PaO₂, PaCO₂ | `blood_gas` |
 | pupil channels | diameter + laterality/reactivity | parsed from `ptassessment` |

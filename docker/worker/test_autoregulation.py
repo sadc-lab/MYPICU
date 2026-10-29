@@ -8,7 +8,7 @@ def series(patient, counts):
     """counts: {channel: number of samples}"""
     rows = []
     for channel, count in counts.items():
-        rows.extend((patient, channel, i, 1.0) for i in range(count))
+        rows.extend((patient, channel, i * 100, 1.0) for i in range(count))
     return rows
 
 
@@ -43,6 +43,11 @@ class CandidateTests(unittest.TestCase):
             series('#1', {'NIRS': 400, 'FC': 400}), ['#1'])
         self.assertEqual(candidates['cox'], [])
 
+    def test_cuff_pressure_can_enable_cox(self):
+        candidates = worker.autoregulation_candidates(
+            series('#1', {'NIRS': 400, 'PAM_cuff': 400}), ['#1'])
+        self.assertEqual(candidates['cox'], ['#1'])
+
     def test_a_scattered_trace_is_not_sent_for_analysis(self):
         # A handful of samples fits no reliable curve; returning one would look
         # like a computed result rather than an absence of data.
@@ -54,6 +59,13 @@ class CandidateTests(unittest.TestCase):
         candidates = worker.autoregulation_candidates(series('#1', {'FC': 900}), ['#1', '#2'])
         self.assertEqual(candidates, {'prx': [], 'cox': []})
 
+    def test_short_monitoring_window_is_not_eligible(self):
+        rows = []
+        for channel in ('PIC', 'PPC'):
+            rows.extend(('#1', channel, t, 1.0) for t in range(120))
+        candidates = worker.autoregulation_candidates(rows, ['#1'])
+        self.assertEqual(candidates['prx'], [])
+
 
 class ResultTranslationTests(unittest.TestCase):
     RECAP = {'Horodate': '2026-01-01 12:00:00', 'Global_Optimal_PPC': 65.0,
@@ -61,7 +73,7 @@ class ResultTranslationTests(unittest.TestCase):
              'PRx': 0.18}
 
     def test_headline_figures_are_taken_from_the_recap(self):
-        payload = {16927: {'P16927_AR_3min': [self.RECAP],
+        payload = {16927: {'P16927_AR_3min_Fisher': [self.RECAP],
                            'P16927_Full_AR_Table_3min_Fisher': [{'PIC': 12.0}]}}
         rows = worker.autoregulation_rows(payload, 'prx')
         self.assertEqual(len(rows), 1)
@@ -73,7 +85,7 @@ class ResultTranslationTests(unittest.TestCase):
         # No reliable plateau leaves the optimum null. Storing it would show a
         # value the clinician reads as "not yet calculated".
         recap = dict(self.RECAP, Global_Optimal_PPC=None)
-        payload = {16927: {'P16927_AR_3min': [recap]}}
+        payload = {16927: {'P16927_AR_3min_Fisher': [recap]}}
         self.assertEqual(worker.autoregulation_rows(payload, 'prx'), [])
 
     def test_missing_recap_is_skipped(self):
@@ -87,41 +99,57 @@ class ResultTranslationTests(unittest.TestCase):
         self.assertEqual(rows[0][6:8], ('PAM', 'NIRS1'))
 
     def test_one_failing_patient_does_not_hide_the_others(self):
-        payload = {16927: {'P16927_AR_3min': [self.RECAP]},
-                   16930: {'P16930_AR_3min': [dict(self.RECAP, Global_Optimal_PPC=None)]}}
+        payload = {16927: {'P16927_AR_3min_Fisher': [self.RECAP]},
+                   16930: {'P16930_AR_3min_Fisher': [dict(self.RECAP, Global_Optimal_PPC=None)]}}
         rows = worker.autoregulation_rows(payload, 'prx')
         self.assertEqual([r[0] for r in rows], ['#16927'])
 
 
-class AutoregExportTests(unittest.TestCase):
-    def setUp(self):
-        import tempfile
-        from pathlib import Path
-        self.directory = Path(tempfile.mkdtemp())
+class ResultPersistenceTests(unittest.TestCase):
+    def test_insert_parameters_match_autoregulation_row(self):
+        class RecordingDB:
+            query = None
+            params = None
 
-    def test_every_channel_is_written(self):
-        written = export.build_autoreg(series('#1', {'PIC': 3, 'PAM': 3}),
-                                       self.directory, ['#1'])
-        self.assertEqual(sorted(written), sorted(export.AUTOREG_CONTRACT and written.keys()))
-        for name in export.AUTOREG_CONTRACT:
-            self.assertTrue((self.directory / f'{name}.csv').exists())
+            def execute(self, query, params):
+                self.query = query
+                self.params = params
+
+        payload = {16927: {'P16927_AR_3min_Fisher': [ResultTranslationTests.RECAP]}}
+        row = worker.autoregulation_rows(payload, 'prx')[0]
+        db = RecordingDB()
+
+        self.assertEqual(worker.store_autoregulation(db, [row]), 1)
+        self.assertEqual(db.query.count('%s'), len(db.params))
+        self.assertEqual(db.params[9], None)
+
+
+class AutoregExportTests(unittest.TestCase):
+    def test_every_channel_is_present_even_when_empty(self):
+        payload = export.build_autoreg_payload([], ['#1'])
+        self.assertEqual(set(payload), set(export.AUTOREG_CONTRACT))
+        self.assertTrue(all(not records for records in payload.values()))
 
     def test_arterial_line_is_preferred_over_the_cuff(self):
         rows = [('#1', 'PAM_cuff', 0, 60.0), ('#1', 'PAM', 0, 72.0)]
-        export.build_autoreg(rows, self.directory, ['#1'])
-        body = (self.directory / 'Variable_PAM_autoreg.csv').read_text()
-        self.assertIn(';72', body)
-        self.assertNotIn(';60', body)
+        payload = export.build_autoreg_payload(rows, ['#1'])
+        self.assertEqual(payload['Variable_PAM_autoreg'], [
+            {'noadmsip': '1', 'horodate': '0', 'PAM': 72.0},
+        ])
 
     def test_cuff_is_used_when_no_line_is_monitored(self):
-        export.build_autoreg([('#1', 'PAM_cuff', 0, 60.0)], self.directory, ['#1'])
-        self.assertIn(';60', (self.directory / 'Variable_PAM_autoreg.csv').read_text())
+        payload = export.build_autoreg_payload(
+            [('#1', 'PAM_cuff', 0, 60.0)], ['#1'])
+        self.assertEqual(payload['Variable_PAM_autoreg'], [
+            {'noadmsip': '1', 'horodate': '0', 'PAM': 60.0},
+        ])
 
-    def test_manifest_records_the_patient_set_for_this_registry(self):
-        import json
-        export.build_autoreg(series('#1', {'PIC': 3}), self.directory, ['#2', '#1'])
-        manifest = json.loads((self.directory / '_manifest.json').read_text())
-        self.assertEqual(manifest['autoreg']['patients'], [1, 2])
+    def test_payload_is_limited_to_requested_patients(self):
+        payload = export.build_autoreg_payload(
+            [('#1', 'PIC', 0, 12.0), ('#2', 'PIC', 0, 13.0)], ['#2'])
+        self.assertEqual(payload['Variable_PIC_autoreg'], [
+            {'noadmsip': '2', 'horodate': '0', 'PIC': 13.0},
+        ])
 
 
 if __name__ == '__main__':

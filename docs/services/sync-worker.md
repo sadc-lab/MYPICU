@@ -33,12 +33,10 @@ data from the ICCA source, writes the local cache, and orchestrates Optibrain.
 | `ICCA_QUERY_CONCURRENCY` | 4 | parallel source queries |
 | `OPTIBRAIN_URL` | `http://optibrain:8000` | indicator module |
 | `OPTIBRAIN_AR_URL` | `http://optibrain-autoreg:8000` | autoregulation module |
-| `OPTIBRAIN_EXPORT_DIR` | `/optibrain/donnees` | must equal the module's input path |
-| `OPTIBRAIN_AR_EXPORT_DIR` | `/optibrain-ar/donnees` | private autoregulation input |
 | `OPTIBRAIN_TOKEN` | = `SYNC_TOKEN` | shared secret |
 
-The export directories are mounted at the **same paths** on both sides so the
-CSVs the worker writes are exactly the ones the modules read.
+The worker sends request-scoped channel records to OptiBrain over the internal
+API. No shared input or results volume is required.
 
 ## Module layout
 
@@ -48,7 +46,7 @@ CSVs the worker writes are exactly the ones the modules read.
 | `queries.py` | every ICCA SQL query, all time-bounded |
 | `cache.py` | in-memory accumulation and atomic replacement |
 | `census.sql` | census, weight, GCS, date of birth |
-| `optibrain_export.py` | writes the 23 + 7 CSV contract and manifests |
+| `optibrain_export.py` | serializes the 23 + 7 request-scoped channel contract |
 | `preflight.py` | verifies source-table permissions before the first sync |
 | `migrate.py` | migration runner (also used by `db-migrate`) |
 | `verify.py` | local integration smoke test: login, gateway keys, ward RLS, cache writes, census rules, Realtime, signup mail |
@@ -104,7 +102,7 @@ unbounded query on this schema saturates the 4 available CPUs.
 | EtCO₂ | `icca_htr` `CO2fe` |
 | PIC mean/max/min | `icca_htr` `PICm` / `PICd` / `PICs` |
 | PVC | `icca_htr` `PVCm` |
-| rSO₂ (NIRS) | `icca_htr` `rSO%` |
+| rSO₂ (NIRS) | `icca_htr` `rSO2-1` |
 | Labs | `ptlabresult`, preferring `valuenumber` |
 | Blood gases | `blood_gas` |
 | GCS | `ptassessment` `attributeid=53122` |

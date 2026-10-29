@@ -27,7 +27,7 @@ class SyncBatchTests(unittest.TestCase):
     """The harvest is now one batch for the whole ward, not one call per patient."""
 
     @patch('worker.request_indicators', return_value={'matrices_rt_PICData_validite': [{'id_patient': 1, 'H0': 0}]})
-    @patch('worker.optibrain_export.build', return_value={})
+    @patch('worker.optibrain_export.build_payload', return_value={})
     @patch('worker.refresh_autoregulation', return_value=0)
     @patch('worker.demographics', return_value={'intime': {}, 'dateofbirth': {}})
     @patch('worker.local')
@@ -46,7 +46,7 @@ class SyncBatchTests(unittest.TestCase):
         cache.assert_called_once()
 
     @patch('worker.request_indicators', return_value={})
-    @patch('worker.optibrain_export.build', return_value={})
+    @patch('worker.optibrain_export.build_payload', return_value={})
     @patch('worker.refresh_autoregulation', return_value=0)
     @patch('worker.demographics', return_value={'intime': {}, 'dateofbirth': {}})
     @patch('worker.local')
@@ -65,7 +65,7 @@ class SyncBatchTests(unittest.TestCase):
         self.assertEqual(sorted(harvest.call_args.args[0]), ['#1', '#2'])
 
     @patch('worker.request_indicators', return_value={})
-    @patch('worker.optibrain_export.build', return_value={})
+    @patch('worker.optibrain_export.build_payload', return_value={})
     @patch('worker.refresh_autoregulation', return_value=0)
     @patch('worker.demographics', return_value={'intime': {}, 'dateofbirth': {}})
     @patch('worker.local')
@@ -78,7 +78,7 @@ class SyncBatchTests(unittest.TestCase):
         harvest.assert_not_called()
 
     @patch('worker.request_indicators', return_value={})
-    @patch('worker.optibrain_export.build', return_value={})
+    @patch('worker.optibrain_export.build_payload', return_value={})
     @patch('worker.refresh_autoregulation', return_value=0)
     @patch('worker.demographics', return_value={'intime': {}, 'dateofbirth': {}})
     @patch('worker.local')

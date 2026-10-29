@@ -35,7 +35,7 @@ MONITOR = [
     ('PICd', 'Variable_PIC_d'),
     ('PICs', 'Variable_PIC_s'),
     ('PVCm', 'Variable_PVC'),
-    ('rSO%', 'Variable_rSO2'),
+    ('rSO2-1', 'Variable_rSO2'),
 ]
 
 # Laboratory channels. valuenumber is used throughout: terseform is text with
@@ -367,7 +367,7 @@ def autoreg_series(conn, patients, since):
         ('PPC', 'PPC'),
         ('ARTm', 'PAM'),
         ('PAm', 'PAM_cuff'),
-        ('rSO2%-1', 'NIRS'),
+        ('rSO2-1', 'NIRS'),
         ('rSO%', 'Licox'),
         ('FC', 'FC'),
         ('spo2', 'SpO2'),

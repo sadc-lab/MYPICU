@@ -144,8 +144,6 @@ Tuning flags are in the compose `command`, not the environment:
 | `SOURCE_TIMEZONE` | `America/Montreal` | corrects naive source timestamps |
 | `OPTIBRAIN_URL` | `http://optibrain:8000` | |
 | `OPTIBRAIN_AR_URL` | `http://optibrain-autoreg:8000` | |
-| `OPTIBRAIN_EXPORT_DIR` | `/optibrain/donnees` | must match the module's input path |
-| `OPTIBRAIN_AR_EXPORT_DIR` | `/optibrain-ar/donnees` | private to autoregulation |
 
 ### `envoy`
 

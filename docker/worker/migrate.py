@@ -11,7 +11,16 @@ with psycopg.connect(os.environ['LOCAL_DSN'], autocommit=True) as db:
     db.execute('CREATE SCHEMA IF NOT EXISTS local_migrations')
     db.execute('REVOKE ALL ON SCHEMA local_migrations FROM PUBLIC, anon, authenticated')
     db.execute('CREATE TABLE IF NOT EXISTS local_migrations.applied (name text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz DEFAULT now())')
-    files = [Path('/db/00_baseline.sql'), *sorted(Path('/migrations').glob('*.sql')), *sorted(Path('/db').glob('9*.sql'))]
+    supabase_migrations = sorted(Path('/migrations').glob('*.sql'))
+    local_setup = Path('/db/90_local.sql')
+    local_setup_boundary = '20261001120000_patient_map_dateofbirth.sql'
+    files = [
+        Path('/db/00_baseline.sql'),
+        *(path for path in supabase_migrations if path.name < local_setup_boundary),
+        local_setup,
+        *(path for path in supabase_migrations if path.name >= local_setup_boundary),
+        *sorted(Path('/db').glob('91*.sql')),
+    ]
     for path in files:
         body = path.read_text()
         checksum = hashlib.sha256(body.encode()).hexdigest()

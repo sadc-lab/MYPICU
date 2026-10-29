@@ -76,10 +76,10 @@ flowchart TB
     RT --> PG
     SYNC -->|"read"| ICCA
     SYNC --> PG
-    SYNC -->|"CSV + manifest<br/>optibrain-data"| OB
-    SYNC -->|"CSV + manifest<br/>optibrain-ar-data"| AR
-    OB -->|"matrices<br/>optibrain-results"| SYNC
-    AR -->|"raw curves<br/>optibrain-ar-results"| SYNC
+    SYNC -->|"request-scoped channel JSON"| OB
+    SYNC -->|"request-scoped channel JSON"| AR
+    OB -->|"matrices in API response"| SYNC
+    AR -->|"raw tables in API response"| SYNC
 
     classDef src fill:#e8f0fe,stroke:#4a6fa5
     classDef store fill:#fff4e5,stroke:#c07d2b
@@ -199,16 +199,16 @@ sequenceDiagram
     Note over Q,PG: Single transaction: a failure leaves<br/>the previous cache fully intact
 
     CRON->>EXP: export_indicators()
-    EXP->>OB: POST /run (23 CSVs + manifest)
+    EXP->>OB: POST /indicateurs (versioned channel data)
     OB->>OB: compute 19 validity matrices
-    OB-->>EXP: matrices on optibrain-results
+    OB-->>EXP: matrices in JSON response
     EXP->>PG: rewrite patient_validity (0/1)
 
     opt not already computing, and eligible signals
         CRON->>EXPORT: export_autoreg()
-        EXP->>AR: POST /run (7 CSVs + manifest)
+        EXP->>AR: POST autoregulation (versioned channel data)
         Note over AR: ~35 min, 30 window combinations
-        AR-->>EXPORT: raw curves on optibrain-ar-results
+        AR-->>EXPORT: raw tables in JSON response
         EXP->>PG: upsert patient_autoregulation
     end
 ```

@@ -19,8 +19,7 @@ Built from the separate repository at `../optibrain`.
 | Purpose | 19-indicator adherence matrices | PRx / COx fits |
 | Runtime | ~seconds per patient | ~35 min per patient |
 | Memory limit | 1 GiB | 3 GiB |
-| Input volume | `optibrain-data` | `optibrain-ar-data` |
-| Output volume | `optibrain-results` | `optibrain-ar-results` |
+| Input/output | Request-scoped JSON API | Request-scoped JSON API |
 | Called by | every sync cycle | only when signals qualify |
 
 Both run `mypicu-optibrain:local` from the same Dockerfile. They are separated
@@ -31,8 +30,8 @@ into two instances for three reasons:
    extraction and delay the validity write the UI depends on.
 2. **Memory.** The fit peaks near 1.2 GiB; the indicator pass needs almost none.
    A shared instance would have to carry the higher ceiling for everything.
-3. **File isolation.** Private input volumes mean a long analysis cannot read
-   channels the worker is halfway through rewriting.
+3. **Input isolation.** Each analysis receives an immutable snapshot in its
+   request; no shared files can be read halfway through a rewrite.
 
 ## Configuration
 
@@ -56,18 +55,10 @@ result set.
 
 ## Input contract
 
-The worker writes CSVs plus a provenance manifest into the shared input volume.
-The module reads them.
-
-**Indicators — 23 CSV files.** Each parameter is one file.
-
-**Autoregulation — 7 CSV files:** PIC, PPC, ART/PAM, NIRS, plus the
-per-encounter index files.
-
-Each batch is accompanied by a **manifest** recording, per patient, the encounter
-id and whether the row is synthetic. Without it, a file left over from a previous
-batch could be attributed to the wrong patient — the fix that made multi-patient
-ward extraction safe.
+The worker sends versioned JSON in each request: `indicator_data` contains 23
+channel arrays, while `autoreg_data` contains seven autoregulation channels.
+OptiBrain validates that every row belongs to the request's patient set. Results
+return in the HTTP response and are persisted by the worker.
 
 ## Reliability requirements
 
@@ -75,20 +66,20 @@ The Optibrain side of the contract is enforced in `../optibrain`:
 
 | Requirement | Why |
 |---|---|
-| Provenance manifest per batch | prevents cross-patient attribution |
-| Explicit `skip_fetch` | a patient with no DOB skips PPC only, not the whole run |
+| Request-bound patient set | rejects cross-patient rows |
+| Versioned channel schema | rejects omitted channels and incompatible payloads |
+| Missing-DOB handling | a patient with no DOB skips PPC only, not the whole run |
 | Per-patient error isolation | one bad patient cannot fail the batch |
 | Multi-patient SQL via `IN (...)` | no per-patient round trip |
 | Native `ARTm` matching | the module must not mis-pair pressures |
 | Bounded autoregulation queries | time windows, not open-ended |
 | Explicit `search_path=readonly,public` | reads a schema it must not modify |
 | Connection closing, `to_thread` | no pool exhaustion under load |
-| CSV memoisation | avoids O(N²) file reads |
-| Semicolon separator handling | pandas default is wrong for these files |
+| In-memory batch processing | avoids repeated parse and disk staging |
 | `pandas<3`, `httpx` | pinned for compatibility |
 
 A single worker is **mandatory** per instance: the pipeline uses process-global
-state and a shared results directory.
+configuration.
 
 ## Health
 
@@ -114,9 +105,9 @@ sequenceDiagram
     participant O as optibrain
     participant P as db
 
-    W->>O: POST /run (23 CSVs + manifest)
+    W->>O: POST /indicateurs (versioned channel data)
     Note over O: 19 indicators, failures isolated per patient
-    O-->>W: matrices on optibrain-results
+    O-->>W: matrices in JSON response
     W->>W: 0 = adherent → percent adherence
     W->>P: rewrite patient_validity atomically
     Note over P: ~22.5k rows, 19 indicators × 96 windows
@@ -146,6 +137,34 @@ Stored rows carry the headline values (`mode` — `PRx` or `COx`,
 `pressure_variable`, `signal_variable`, `sample_count`) **and** the raw curve in
 `raw`, so the chart renders the module's own output rather than a browser
 reconstruction.
+
+### Frontend monitoring chart
+
+The Optibrain patient page lets clinicians select up to three available
+monitoring series in the monitoring chart. Alongside the clinical-target
+indicators, the choices include the other harvested monitor channels, such as
+heart rate, respiratory rate, SpO₂, PIC systolic/diastolic, PAM, and NIRS
+(`Variable_rSO2`). These series come from the patient's cached `patient_vitals`
+data; a channel is offered only when it has charted values. In the selector,
+NIRS is labeled **NIRS (rSO₂)** and its percent unit represents regional
+cerebral oxygen saturation.
+
+The **Optimisation cérébrale** detail dialog shows the stored OptiBrain
+autoregulation result together with its required signal pair. PRx is eligible
+only when PIC and PPC are available; COx is eligible only when NIRS and PAM
+are available. If both pairs and results are eligible, PRx is preferred. In
+the COx dialog the signal plot is labeled **NIRS (rSO₂)** and the paired
+pressure plot is labeled PAM.
+
+The dialog plots the associated signal and pressure separately so their
+different units do not share an axis. The optimal window is drawn only on the
+pressure plot: PPC for PRx, or PAM for COx. The current pressure is classified
+as inside, below, or above the computed window. A missing pair or incomplete
+window is reported explicitly; the frontend does not manufacture fallback
+limits or recompute them. In the main monitoring plot, selecting PPC (PRx) or
+PAM (COx) also shows the corresponding computed window as a blue shaded band
+behind that pressure curve. **Zones cibles** toggles the band with the other
+target zones.
 
 ## Troubleshooting
 

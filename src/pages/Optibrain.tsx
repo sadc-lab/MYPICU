@@ -59,13 +59,17 @@ import { ChartTimeRangeProvider } from "@/contexts/ChartTimeRangeContext";
 import { ChartZoomControls } from "@/components/ChartZoomControls";
 import { BRUSH_TOUCH_WIDTH, renderWideTouchTraveller } from "@/lib/chartBrushTraveller";
 import {
-  getPPCStatusVsOptimal,
   type OptimalPPCResult,
 } from "@/services/autoregulation.service";
 import {
   loadAutoregulation as loadPatientAutoregulation,
-  pickPrimary,
 } from "@/services/patientAutoregulation.service";
+import {
+  getWindowPosition,
+  hasAutoregulationInputs,
+  hasAutoregulationWindow,
+  pickAutoregulationWindow,
+} from "@/services/autoregulationWindow";
 import { AutoregulationChart } from "@/components/AutoregulationChart";
 import { TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
@@ -125,18 +129,10 @@ const Optibrain = () => {
   const [fileDataLoading, setFileDataLoading] = useState(false);
   const hasFileData = patientId ? hasPatientFileData(patientId) : false;
 
-  // Autoregulation data state for optimal PPC
-  // Which correlation the module produced. PRx is the default reading when a
-  // patient has neither, so the tile keeps its usual meaning.
-  const [autoregMode, setAutoregMode] = useState<"prx" | "cox">("prx");
-  const [optimalPPCResult, setOptimalPPCResult] = useState<OptimalPPCResult>({
-    optimalPPC: null,
-    lowerLimit: null,
-    upperLimit: null,
-    prxScore: null,
-    timestamp: null,
-    hasData: false,
-  });
+  // Autoregulation data produced by the OptiBrain module.
+  const [autoregulationResults, setAutoregulationResults] = useState<
+    Awaited<ReturnType<typeof loadPatientAutoregulation>>
+  >([]);
 
   // ===== Fonctions utilitaires pour la synchronisation =====
 
@@ -266,34 +262,20 @@ const Optibrain = () => {
   // single source; a patient it has not analysed is shown as not assessed.
   useEffect(() => {
     if (!patientId) {
-      setOptimalPPCResult({
-        optimalPPC: null, lowerLimit: null, upperLimit: null,
-        prxScore: null, timestamp: null, hasData: false,
-      });
+      setAutoregulationResults([]);
       return;
     }
     let cancelled = false;
+    setAutoregulationResults([]);
     loadPatientAutoregulation(patientId)
       .then((results) => {
         if (cancelled) return;
-        const primary = pickPrimary(results);
-        setAutoregMode(primary?.mode ?? "prx");
-        setOptimalPPCResult({
-          optimalPPC: primary?.optimalPressure ?? null,
-          lowerLimit: primary?.inferiorLimit ?? null,
-          upperLimit: primary?.superiorLimit ?? null,
-          prxScore: primary?.minIndex ?? null,
-          timestamp: primary?.computedAt ?? null,
-          hasData: Boolean(primary?.optimalPressure != null),
-        });
+        setAutoregulationResults(results);
       })
       .catch(() => {
-        if (!cancelled) {
-          setOptimalPPCResult({
-            optimalPPC: null, lowerLimit: null, upperLimit: null,
-            prxScore: null, timestamp: null, hasData: false,
-          });
-        }
+        if (cancelled) return;
+        setAutoregulationResults([]);
+        toast.error("Impossible de charger les résultats d'autorégulation.");
       });
     return () => { cancelled = true; };
   }, [patientId]);
@@ -600,6 +582,64 @@ const Optibrain = () => {
     };
   }, [patientFileData]);
 
+  const availableAutoregulationVariables = useMemo(
+    () => {
+      if (!patientFileData) return [];
+      const requiredChannels = [
+        "Variable_PIC",
+        "Variable_PPC",
+        "Variable_rSO2",
+        "Variable_PAM",
+      ];
+      const availableVariables = new Set(getAvailableVariables(patientFileData));
+      return requiredChannels.filter(
+        (variable) =>
+          availableVariables.has(variable)
+          && getAllTimeSeriesData(patientFileData, variable, 24, true).length > 0,
+      );
+    },
+    [patientFileData],
+  );
+  const activeAutoregulationResult = useMemo(
+    () => pickAutoregulationWindow(autoregulationResults, availableAutoregulationVariables),
+    [autoregulationResults, availableAutoregulationVariables],
+  );
+  const autoregMode = activeAutoregulationResult?.mode
+    ?? (hasAutoregulationInputs("prx", availableAutoregulationVariables)
+      ? "prx"
+      : hasAutoregulationInputs("cox", availableAutoregulationVariables)
+        ? "cox"
+        : autoregulationResults[0]?.mode ?? "prx");
+  const autoregPressureVariable = autoregMode === "prx" ? "Variable_PPC" : "Variable_PAM";
+  const autoregSignalVariable = autoregMode === "prx" ? "Variable_PIC" : "Variable_rSO2";
+  const autoregPressureSeries = useMemo(
+    () => patientFileData
+      ? getAllTimeSeriesData(patientFileData, autoregPressureVariable, 24, true)
+      : [],
+    [patientFileData, autoregPressureVariable],
+  );
+  const autoregSignalSeries = useMemo(
+    () => patientFileData
+      ? getAllTimeSeriesData(patientFileData, autoregSignalVariable, 24, true)
+      : [],
+    [patientFileData, autoregSignalVariable],
+  );
+  const autoregPressureCurrent = patientFileData
+    ? getLatestValue(patientFileData, autoregPressureVariable)?.value ?? null
+    : null;
+  const autoregPressurePosition = getWindowPosition(
+    autoregPressureCurrent,
+    activeAutoregulationResult,
+  );
+  const optimalPPCResult = useMemo<OptimalPPCResult>(() => ({
+    optimalPPC: activeAutoregulationResult?.optimalPressure ?? null,
+    lowerLimit: activeAutoregulationResult?.inferiorLimit ?? null,
+    upperLimit: activeAutoregulationResult?.superiorLimit ?? null,
+    prxScore: activeAutoregulationResult?.minIndex ?? null,
+    timestamp: activeAutoregulationResult?.computedAt ?? null,
+    hasData: activeAutoregulationResult !== null,
+  }), [activeAutoregulationResult]);
+
   const showPatientNotFound = !patientId || (!patient && !patientLoading);
 
   // Every value comes from a real reading; an absent channel stays null and is
@@ -868,31 +908,27 @@ const Optibrain = () => {
         ? `${Math.round(optimalPPCResult.optimalPPC)}`
         : "--",
       unit: "mmHg",
-      status: (() => {
-        if (!optimalPPCResult.hasData || optimalPPCResult.prxScore === null) return "normal";
-        if (optimalPPCResult.prxScore >= 0.5) return "critical";
-        if (optimalPPCResult.prxScore >= 0.3) return "warning";
-        return "normal";
-      })(),
+      status: autoregPressurePosition === "below" || autoregPressurePosition === "above"
+        ? "critical"
+        : "normal",
       hasDetails: true,
       dialogKey: "autoreg-detail",
       description: optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
         ? `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
-        : autoregMode === "cox" ? "PAM optimale individuelle" : "PPC optimale individuelle",
-      criticalLabel: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
-        ? optimalPPCResult.prxScore < 0.3
-          ? "Autorégulation intacte"
-          : optimalPPCResult.prxScore < 0.5
-            ? "Autorégulation altérée"
-            : "Autorégulation absente"
-        : null,
-      criticalColor: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
-        ? optimalPPCResult.prxScore < 0.3
-          ? "text-status-normal"
-          : optimalPPCResult.prxScore < 0.5
-            ? "text-status-warning"
-            : "text-status-critical"
-        : "text-muted-foreground",
+        : hasAutoregulationInputs(autoregMode, availableAutoregulationVariables)
+          ? "Fenêtre en attente du calcul OptiBrain"
+          : `Paire ${autoregMode === "prx" ? "PIC + PPC" : "NIRS + PAM"} requise`,
+      criticalLabel: ({
+        inside: "Pression dans la fenêtre",
+        below: "Pression sous la fenêtre",
+        above: "Pression au-dessus de la fenêtre",
+        unavailable: "Pression actuelle indisponible",
+      })[autoregPressurePosition],
+      criticalColor: autoregPressurePosition === "inside"
+        ? "text-status-normal"
+        : autoregPressurePosition === "unavailable"
+          ? "text-muted-foreground"
+          : "text-status-critical",
     },
     {
       label: autoregMode === "cox" ? "COx minimum" : "PRx minimum",
@@ -961,7 +997,12 @@ const Optibrain = () => {
       Variable_PIC: "PIC",
       Variable_PPC: "PPC",
       Variable_PAM: "PAM",
+      Variable_FR: "FR",
+      Variable_SPO2: "SpO2",
+      Variable_PIC_d: "PIC diastolique",
+      Variable_PIC_s: "PIC systolique",
       Variable_PVC: "PVC",
+      Variable_rSO2: "NIRS (rSO₂)",
       Variable_temperature: "Température",
       Variable_ETCO2: "ETCO2",
       Variable_paco2: "PaCO2",
@@ -987,6 +1028,46 @@ const Optibrain = () => {
 
     return result;
   }, [patientFileData, timeRange]);
+
+  const chartIndicators = useMemo(() => {
+    const clinicalByLabel = new Map(clinicalIndicators.map((indicator) => [indicator.label, indicator]));
+    const units: Record<string, string> = {
+      FC: "bpm",
+      FR: "/min",
+      PIC: "mmHg",
+      PPC: "mmHg",
+      PAM: "mmHg",
+      "PIC diastolique": "mmHg",
+      "PIC systolique": "mmHg",
+      PVC: "mmHg",
+      "NIRS (rSO₂)": "%",
+      SpO2: "%",
+      Température: "°C",
+      ETCO2: "mmHg",
+      PaCO2: "mmHg",
+      Tête: "°",
+      Glycémie: "mmol/L",
+      INR: "",
+      Plaquettes: "G/L",
+      Hémoglobine: "g/L",
+    };
+    const labels = [...new Set([
+      ...clinicalIndicators.map((indicator) => indicator.label),
+      ...Object.keys(realTimeSeriesData ?? {}),
+    ])];
+
+    return labels.map((label) => {
+      const clinical = clinicalByLabel.get(label);
+      const unit = clinical?.target.match(/[a-zA-Z°%/]+$/)?.[0] ?? units[label] ?? "";
+      return {
+        label,
+        target: clinical?.target ?? `Monitorage · ${unit}`,
+        unit,
+        adherencePercentage: clinical?.adherencePercentage ?? null,
+        isClinical: clinical !== undefined,
+      };
+    });
+  }, [clinicalIndicators, realTimeSeriesData]);
 
   // Chart data - utiliser UNIQUEMENT les données réelles
   const chartData = useMemo(() => {
@@ -1050,7 +1131,6 @@ const Optibrain = () => {
   // même module) — choisir une période ici la garde active en rouvrant le pop-up.
   const monitoringTimeWindow = useSharedTimeWindow(chartData, (d: any) => d.timestamp);
   const [monitoringEditing, setMonitoringEditing] = useState(false);
-
   // Échelle Y auto pour le graphique de monitorage (plusieurs indicateurs
   // sélectionnables, unités mélangées — l'auto-échelle suit la sélection et
   // la plage de temps visible).
@@ -1062,9 +1142,25 @@ const Optibrain = () => {
         if (typeof v === "number") values.push(v);
       }
     }
+    const pressureIndicator = autoregMode === "prx" ? "PPC" : "PAM";
+    if (
+      selectedIndicators.includes(pressureIndicator)
+      && hasAutoregulationWindow(activeAutoregulationResult)
+    ) {
+      values.push(
+        activeAutoregulationResult.inferiorLimit,
+        activeAutoregulationResult.superiorLimit,
+        activeAutoregulationResult.optimalPressure,
+      );
+    }
     if (values.length === 0) return [0, 100];
     return [Math.floor(Math.min(...values) / 5) * 5, Math.ceil(Math.max(...values) / 5) * 5];
-  }, [monitoringTimeWindow.visibleData, selectedIndicators]);
+  }, [
+    monitoringTimeWindow.visibleData,
+    selectedIndicators,
+    autoregMode,
+    activeAutoregulationResult,
+  ]);
   const monitoringZoom = useYAxisZoom(monitoringAutoYDomain);
 
   // Déterminer quels indicateurs ont des données rares (pour afficher des points au lieu de lignes)
@@ -1449,10 +1545,16 @@ const Optibrain = () => {
             {/* Détail partagé : n'importe lequel des 4 KPI ci-dessus ouvre ce
                 même pop-up plutôt que d'empiler les graphiques sur la page. */}
             <Dialog open={openDialog === "autoreg-detail"} onOpenChange={(open) => !open && setOpenDialog(null)}>
-              <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Optimisation cérébrale</DialogTitle>
                 </DialogHeader>
+                <AutoregulationChart
+                  mode={autoregMode}
+                  result={activeAutoregulationResult}
+                  signalSeries={autoregSignalSeries}
+                  pressureSeries={autoregPressureSeries}
+                />
                 {(() => {
                   const formatDur = (mins: number) =>
                     mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? (mins % 60).toString().padStart(2, '0') : ''}` : `${mins} min`;
@@ -1497,14 +1599,16 @@ const Optibrain = () => {
                   );
 
                   const pamLabel = autoregMode === "cox" ? "PAM" : "PPC";
-                  const pamCurrent = autoregMode === "cox" ? realBrainValues.pam : realBrainValues.ppc;
-                  const autoregStatus = !optimalPPCResult.hasData || optimalPPCResult.prxScore === null
+                  const pamCurrent = autoregPressureCurrent;
+                  const autoregStatus = !optimalPPCResult.hasData
                     ? null
-                    : optimalPPCResult.prxScore < 0.3
-                      ? { label: "Autorégulation intacte", tone: "normal" as const }
-                      : optimalPPCResult.prxScore < 0.5
-                        ? { label: "Autorégulation altérée", tone: "warning" as const }
-                        : { label: "Autorégulation absente", tone: "critical" as const };
+                    : autoregPressurePosition === "inside"
+                      ? { label: "Pression dans la fenêtre", tone: "normal" as const }
+                      : autoregPressurePosition === "below"
+                        ? { label: "Pression sous la fenêtre", tone: "warning" as const }
+                        : autoregPressurePosition === "above"
+                          ? { label: "Pression au-dessus de la fenêtre", tone: "warning" as const }
+                          : null;
                   const toneClass = { normal: "text-status-normal", warning: "text-status-warning", critical: "text-status-critical" };
                   const toneBg = { normal: "bg-status-normal/5 border-status-normal/20", warning: "bg-status-warning/5 border-status-warning/20", critical: "bg-status-critical/5 border-status-critical/20" };
 
@@ -1526,27 +1630,36 @@ const Optibrain = () => {
                         </div>
                         {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null ? (
                           <>
-                            <MetricRangeBar
-                              value={pamCurrent ?? optimalPPCResult.optimalPPC}
-                              min={Math.min(40, (optimalPPCResult.lowerLimit ?? 50) - 15)}
-                              max={Math.max(110, (optimalPPCResult.upperLimit ?? 80) + 15)}
-                              targetMin={optimalPPCResult.lowerLimit ?? optimalPPCResult.optimalPPC - 5}
-                              targetMax={optimalPPCResult.upperLimit ?? optimalPPCResult.optimalPPC + 5}
-                              unit="mmHg"
-                              showValuePointer
-                              valueSize="lg"
-                              maxWidth="100%"
-                            />
+                            {pamCurrent !== null
+                              && optimalPPCResult.lowerLimit !== null
+                              && optimalPPCResult.upperLimit !== null && (
+                                <MetricRangeBar
+                                  value={pamCurrent}
+                                  min={Math.min(40, optimalPPCResult.lowerLimit - 15)}
+                                  max={Math.max(110, optimalPPCResult.upperLimit + 15)}
+                                  targetMin={optimalPPCResult.lowerLimit}
+                                  targetMax={optimalPPCResult.upperLimit}
+                                  unit="mmHg"
+                                  showValuePointer
+                                  valueSize="lg"
+                                  maxWidth="100%"
+                                />
+                              )}
                             <p className="text-xs text-muted-foreground mt-2">
                               {pamLabel} optimale <span className="font-semibold text-foreground">{Math.round(optimalPPCResult.optimalPPC)} mmHg</span>
                               {optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null && (
-                                <> · zone {Math.round(optimalPPCResult.lowerLimit)}–{Math.round(optimalPPCResult.upperLimit)} mmHg</>
+                                <> · fenêtre {Math.round(optimalPPCResult.lowerLimit)}–{Math.round(optimalPPCResult.upperLimit)} mmHg</>
                               )}
+                              {pamCurrent !== null
+                                ? <> · actuel {pamCurrent.toFixed(1)} mmHg</>
+                                : <> · pression actuelle indisponible</>}
                               {autoregStatus && <> · <span className={`font-medium ${toneClass[autoregStatus.tone]}`}>{autoregStatus.label}</span></>}
                             </p>
                           </>
                         ) : (
-                          <p className="text-xs text-muted-foreground italic">Données d'autorégulation en cours de calcul.</p>
+                          <p className="text-xs text-muted-foreground italic">
+                            Aucune fenêtre fiable disponible pour {autoregMode === "prx" ? "PIC + PPC" : "NIRS + PAM"}.
+                          </p>
                         )}
                       </div>
 
@@ -1747,15 +1860,19 @@ const Optibrain = () => {
                     </Badge>
                   )}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Sélectionnez « NIRS (rSO₂) » pour tracer la saturation régionale cérébrale en oxygène (%).
+                  Si une fenêtre COx est disponible, sélectionnez aussi PAM pour voir sa plage bleue derrière la courbe.
+                </p>
               </CardHeader>
               <CardContent className="px-3 sm:px-6">
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 pb-4">
-                    {clinicalIndicators.map((indicator, index) => {
+                    {chartIndicators.map((indicator, index) => {
                       const isSelected = selectedIndicators.includes(indicator.label);
                       const chartColor = isSelected ? getIndicatorColor(indicator.label) : null;
                       // Pastille de couleur d'adhérence: vert doux (≥90%), orange (80-89%), rouge (<80%), gris (sans données)
                       const adherenceDotColor =
-                        indicator.adherencePercentage === null
+                        !indicator.isClinical || indicator.adherencePercentage === null
                           ? "bg-status-inactive/40"
                           : indicator.adherencePercentage >= 90
                             ? "bg-status-normal"
@@ -1796,7 +1913,9 @@ const Optibrain = () => {
                                 <div className={`w-3 h-3 rounded-full mt-1 ${adherenceDotColor} cursor-help`}></div>
                               </TooltipTrigger>
                               <TooltipContent side="top" className="text-xs max-w-48">
-                                {indicator.adherencePercentage !== null 
+                                {!indicator.isClinical
+                                  ? "Série de monitorage (sans cible d'adhérence)"
+                                  : indicator.adherencePercentage !== null
                                   ? (
                                     <div>
                                       <div className="font-semibold">{indicator.adherencePercentage}% adhérence</div>
@@ -1839,10 +1958,31 @@ const Optibrain = () => {
                       <div className="flex-1 min-h-0">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData}>
+                          {showTargetZones
+                            && selectedIndicators.includes(autoregMode === "prx" ? "PPC" : "PAM")
+                            && hasAutoregulationWindow(activeAutoregulationResult) && (
+                              <ReferenceArea
+                                y1={activeAutoregulationResult.inferiorLimit}
+                                y2={activeAutoregulationResult.superiorLimit}
+                                label={{
+                                  value: `${autoregMode === "prx" ? "PRx" : "COx"} · ${autoregMode === "prx" ? "PPC" : "PAM"} ${Math.round(activeAutoregulationResult.inferiorLimit)}–${Math.round(activeAutoregulationResult.superiorLimit)} mmHg`,
+                                  position: "insideTop",
+                                  fontSize: 10,
+                                }}
+                                fill="#60a5fa"
+                                fillOpacity={0.14}
+                                stroke="#3b82f6"
+                                strokeOpacity={0.45}
+                              />
+                            )}
                           {/* Zones cibles en arrière-plan */}
                           {showTargetZones && selectedIndicators.map((label) => {
-                            const indicator = clinicalIndicators.find((i) => i.label === label);
+                            const indicator = chartIndicators.find((i) => i.label === label);
                             if (!indicator) return null;
+                            if (
+                              label === (autoregMode === "prx" ? "PPC" : "PAM")
+                              && hasAutoregulationWindow(activeAutoregulationResult)
+                            ) return null;
                             const target = parseTargetRange(indicator.target);
                             if (target.min === -Infinity && target.max === Infinity) return null;
                             const color = getIndicatorColor(label);
@@ -1890,8 +2030,8 @@ const Optibrain = () => {
                             labelStyle={{ fontWeight: 600, marginBottom: 8 }}
                             formatter={(value: number, name: string) => {
                               const color = getIndicatorColor(name);
-                              const indicator = clinicalIndicators.find((i) => i.label === name);
-                              const unit = indicator?.target.match(/[a-zA-Z°%/]+$/)?.[0] || "";
+                              const indicator = chartIndicators.find((i) => i.label === name);
+                              const unit = indicator?.unit || "";
                               return [
                                 <span key={name} style={{ color, fontWeight: 600 }}>
                                   {name}: {value.toFixed(1)} {unit}
