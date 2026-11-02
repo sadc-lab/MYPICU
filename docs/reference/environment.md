@@ -16,8 +16,7 @@ wrong.
 
 | Source | Purpose |
 |---|---|
-| `.env.stack.local` | generated once by `scripts/local-env.py`, mode `0600` |
-| `.env.icca` | shared ICCA source credentials, hand-written |
+| `.env.stack.local` | generated once by `scripts/local-env.py`; also holds ICCA source settings, mode `0600` |
 | Shell / `.env` | optional overrides |
 
 ```sh
@@ -54,7 +53,7 @@ GoTrue redirect, so with the default the confirmation and recovery links in
 emails point at `localhost:8080`, not at the hostname clinicians use. Set it to
 the real URL and recreate `auth` if those links must work on another machine.
 
-## ICCA source (`.env.icca`)
+## ICCA source (`.env.stack.local`)
 
 | Variable | Purpose |
 |---|---|
@@ -72,7 +71,8 @@ DB_USER=<read-only>
 DB_PASSWORD=<password>
 ```
 
-`chmod 600` this file. `scripts/local-up.sh` refuses to start without it.
+`chmod 600` this file. `scripts/local-up.sh` refuses to start when these
+settings are missing.
 
 ## Optional overrides
 
@@ -135,7 +135,7 @@ Tuning flags are in the compose `command`, not the environment:
 | Variable | Value | Notes |
 |---|---|---|
 | `DB_MAX_CONCURRENT_QUERIES` | `ICCA_QUERY_CONCURRENCY` | |
-| — | from `.env.icca` | shared read-only ICCA credentials |
+| — | from `.env.stack.local` | shared read-only ICCA credentials |
 
 ### `sync-worker`
 

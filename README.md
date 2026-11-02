@@ -28,8 +28,8 @@ sh scripts/local-up.sh
 ```
 
 Requires Docker Engine 24+ with Compose v2, the Optibrain repository cloned
-as a sibling at `../optibrain`, and a root `.env.icca` holding read-only ICCA
-credentials.
+as a sibling at `../optibrain`, and read-only ICCA credentials in
+`.env.stack.local`.
 
 | Service | URL |
 |---|---|

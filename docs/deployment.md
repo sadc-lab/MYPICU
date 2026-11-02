@@ -72,13 +72,15 @@ cd MYPICU
 ### 2. Configure the ICCA source
 
 The shared sync runtime and computation containers read ICCA credentials from
-MYPICU's ignored `.env.icca` file.
+MYPICU's ignored `.env.stack.local` file, the same file used for Compose
+interpolation.
 
-On an existing installation, copy the existing read-only source settings once:
-`cp ../optibrain/.env .env.icca`, then confirm the permissions remain `0600`.
+On an existing installation, append the existing read-only source settings
+from `../optibrain/.env` to `.env.stack.local`; do not overwrite the generated
+stack secrets.
 
 ```sh
-cat > .env.icca <<'EOF'
+cat >> .env.stack.local <<'EOF'
 DB_HOST=<icca-host>
 DB_PORT=5432
 DB_NAME=<database>
@@ -91,7 +93,7 @@ Requirements:
 
 - The credentials must be **read-only**. The source connection sets
   `search_path=readonly,public` and must never write to the source.
-- `chmod 600 .env.icca` — it contains a database password.
+- `chmod 600 .env.stack.local` — it contains stack secrets and a database password.
 
 The worker's source preflight checks connectivity and grants during startup;
 the deployment verification in step 4 runs it explicitly.
@@ -321,7 +323,7 @@ Take a backup first. See {doc}`backup-restore`.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `local-up.sh` exits immediately | missing `.env.icca` | see § Configure the ICCA source |
+| `local-up.sh` exits immediately | missing ICCA settings in `.env.stack.local` | see § Configure the ICCA source |
 | `db-migrate` exits non-zero | checksum mismatch | see {doc}`services/database` |
 | `envoy` never starts | `gateway-init` failed | `logs gateway-init` |
 | port 80 will not bind | rootless Docker | see § Port 80 |

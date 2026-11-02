@@ -108,7 +108,6 @@ cd /home/applications
 STAMP=$(date +%Y%m%d-%H%M)
 tar czf "MYPICU/backups/config-$STAMP.tar.gz" \
   MYPICU/.env.stack.local \
-  MYPICU/.env.icca \
   MYPICU/docker/compose.local.yml \
   MYPICU/docker/envoy/envoy.yaml \
   MYPICU/supabase/migrations/
@@ -120,7 +119,7 @@ Confirm the source credentials made it in:
 
 ```sh
 tar tzf "MYPICU/backups/config-$STAMP.tar.gz"
-# expect: MYPICU/.env.stack.local, MYPICU/.env.icca, MYPICU/docker/...
+# expect: MYPICU/.env.stack.local, MYPICU/docker/...
 ```
 
 :::{warning}
@@ -209,7 +208,7 @@ git clone <optibrain-url> /home/applications/optibrain
 
 cd /home/applications
 cp /path/to/config-20261001-1430.tar.gz .
-tar xzf config-20261001-1430.tar.gz    # MYPICU/.env.stack.local, MYPICU/.env.icca, …
+tar xzf config-20261001-1430.tar.gz    # MYPICU/.env.stack.local, MYPICU/docker/..., …
 
 cd MYPICU
 sh scripts/local-up.sh                 # start; a fresh DB is created

@@ -118,7 +118,7 @@ def request_autoregulation(patients, mode, autoreg_data):
 
 
 def autoregulation_rows(payload, mode, computed_at=None):
-    """Translate OptiBrain recap and full-table records for the local store."""
+    """Translate OptiBrain recap rows, including their time-varying global window."""
     rows = []
     for encounter, tables in (payload or {}).items():
         recap = next(
@@ -128,11 +128,30 @@ def autoregulation_rows(payload, mode, computed_at=None):
         wide = next((t for name, t in tables.items() if 'Full_AR_Table' in name), None)
         if not recap:
             continue
-        last = recap[-1]
-
+        if all(row.get('Horodate') is not None for row in recap):
+            timestamped_recap = recap
+        else:
+            if wide is None or len(wide) != len(recap):
+                log.error('Cannot align autoregulation recap timestamps for encounter %s', encounter)
+                continue
+            timestamped_recap = [
+                {**row, 'Horodate': row.get('Horodate') or wide_row.get('Horodate')}
+                for row, wide_row in zip(recap, wide)
+                if row.get('Horodate') is not None or wide_row.get('Horodate') is not None
+            ]
+            if len(timestamped_recap) != len(recap):
+                log.warning('Dropped %d autoregulation rows without timestamps for encounter %s',
+                            len(recap) - len(timestamped_recap), encounter)
+            if not timestamped_recap:
+                log.error('Autoregulation table has no timestamps for encounter %s', encounter)
+                continue
         def number(*names):
             for name in names:
-                value = last.get(name)
+                value = None
+                for record in reversed(timestamped_recap):
+                    value = record.get(name)
+                    if value is not None:
+                        break
                 if value is not None:
                     try:
                         return float(value)
@@ -154,7 +173,7 @@ def autoregulation_rows(payload, mode, computed_at=None):
             'PIC' if mode == 'prx' else 'NIRS1',
             int(number('Horodate_count') or 0) or None,
             computed_at,
-            Jsonb(wide if wide else None),
+            Jsonb(timestamped_recap),
         ))
     return rows
 

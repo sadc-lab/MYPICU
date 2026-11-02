@@ -73,13 +73,41 @@ class ResultTranslationTests(unittest.TestCase):
              'PRx': 0.18}
 
     def test_headline_figures_are_taken_from_the_recap(self):
-        payload = {16927: {'P16927_AR_3min_Fisher': [self.RECAP],
-                           'P16927_Full_AR_Table_3min_Fisher': [{'PIC': 12.0}]}}
+        later = dict(self.RECAP, Horodate='2026-01-01 12:03:00',
+                     Global_Optimal_PPC=67.0, Global_Inferior_Limit=52.0,
+                     Global_Superior_Limit=77.0)
+        recap = [dict(self.RECAP, Horodate=None), dict(later, Horodate=None)]
+        payload = {16927: {'P16927_AR_3min_Fisher': recap,
+                           'P16927_Full_AR_Table_3min_Fisher': [
+                               {'Horodate': '2026-01-01 12:00:00', 'PIC': 12.0},
+                               {'Horodate': '2026-01-01 12:03:00', 'PIC': 13.0},
+                           ]}}
         rows = worker.autoregulation_rows(payload, 'prx')
         self.assertEqual(len(rows), 1)
         patient, mode, optimal, inferior, superior, index = rows[0][:6]
         self.assertEqual((patient, mode), ('#16927', 'prx'))
-        self.assertEqual((optimal, inferior, superior, index), (65.0, 50.0, 75.0, 0.18))
+        self.assertEqual((optimal, inferior, superior, index), (67.0, 52.0, 77.0, 0.18))
+        self.assertEqual(
+            rows[0][10].obj,
+            [dict(self.RECAP, Horodate='2026-01-01 12:00:00'),
+             dict(later, Horodate='2026-01-01 12:03:00')],
+        )
+
+    def test_missing_timestamp_alignment_skips_the_result(self):
+        payload = {16927: {'P16927_AR_3min_Fisher': [dict(self.RECAP, Horodate=None)],
+                           'P16927_Full_AR_Table_3min_Fisher': []}}
+        self.assertEqual(worker.autoregulation_rows(payload, 'prx'), [])
+
+    def test_partial_timestamp_alignment_keeps_valid_rows(self):
+        invalid_time = dict(self.RECAP, Horodate=None, Global_Optimal_PPC=None)
+        payload = {16927: {'P16927_AR_3min_Fisher': [invalid_time, self.RECAP],
+                           'P16927_Full_AR_Table_3min_Fisher': [
+                               {'Horodate': None},
+                               {'Horodate': '2026-01-01 12:03:00'},
+                           ]}}
+        rows = worker.autoregulation_rows(payload, 'prx')
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0][10].obj, [self.RECAP])
 
     def test_a_result_without_an_optimum_is_not_recorded(self):
         # No reliable plateau leaves the optimum null. Storing it would show a
@@ -87,6 +115,19 @@ class ResultTranslationTests(unittest.TestCase):
         recap = dict(self.RECAP, Global_Optimal_PPC=None)
         payload = {16927: {'P16927_AR_3min_Fisher': [recap]}}
         self.assertEqual(worker.autoregulation_rows(payload, 'prx'), [])
+
+    def test_latest_reliable_window_is_retained_when_final_row_has_no_optimum(self):
+        invalid = dict(self.RECAP, Horodate=None, Global_Optimal_PPC=None,
+                       Global_Inferior_Limit=None, Global_Superior_Limit=None)
+        payload = {16927: {'P16927_AR_3min_Fisher': [self.RECAP, invalid],
+                           'P16927_Full_AR_Table_3min_Fisher': [
+                               {'Horodate': self.RECAP['Horodate']},
+                               {'Horodate': '2026-01-01 12:03:00'},
+                           ]}}
+        rows = worker.autoregulation_rows(payload, 'prx')
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0][2:5], (65.0, 50.0, 75.0))
+        self.assertEqual(rows[0][10].obj[1]['Global_Inferior_Limit'], None)
 
     def test_missing_recap_is_skipped(self):
         payload = {16927: {'P16927_Full_AR_Table_3min_Fisher': [{'PIC': 12.0}]}}

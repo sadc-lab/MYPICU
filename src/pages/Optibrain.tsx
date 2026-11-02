@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea, Brush } from "recharts";
+import { Area, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea, Brush } from "recharts";
 import { KpiCircle } from "@/components/KpiCircle";
 import { useTimeRange } from "@/hooks/useTimeRange";
 import { getStatusHexColor } from "@/utils/colorUtils";
@@ -70,6 +70,10 @@ import {
   hasAutoregulationWindow,
   pickAutoregulationWindow,
 } from "@/services/autoregulationWindow";
+import {
+  getAutoregulationWindowAt,
+  getAutoregulationWindowSeries,
+} from "@/services/autoregulationWindowSeries";
 import { AutoregulationChart } from "@/components/AutoregulationChart";
 import { TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
@@ -88,6 +92,16 @@ type BrainMetric = {
   max: number;
   targetMin: number;
   targetMax: number;
+};
+
+type MonitoringChartPoint = {
+  time: string;
+  timestamp: number;
+  autoregulationInferiorLimit: number | null;
+  autoregulationSuperiorLimit: number | null;
+  autoregulationOptimalPressure: number | null;
+  autoregulationWindowBand: [number, number] | null;
+  [key: string]: string | number | number[] | null;
 };
 
 const Optibrain = () => {
@@ -604,6 +618,17 @@ const Optibrain = () => {
     () => pickAutoregulationWindow(autoregulationResults, availableAutoregulationVariables),
     [autoregulationResults, availableAutoregulationVariables],
   );
+  const autoregulationWindowSeries = useMemo(
+    () => getAutoregulationWindowSeries(activeAutoregulationResult),
+    [activeAutoregulationResult],
+  );
+  const hasDynamicAutoregulationWindow = autoregulationWindowSeries.some(
+    (point) =>
+      point.inferiorLimit !== null
+      && point.superiorLimit !== null
+      && point.inferiorLimit <= point.superiorLimit,
+  );
+  const hasSummaryAutoregulationWindow = hasAutoregulationWindow(activeAutoregulationResult);
   const autoregMode = activeAutoregulationResult?.mode
     ?? (hasAutoregulationInputs("prx", availableAutoregulationVariables)
       ? "prx"
@@ -1089,13 +1114,20 @@ const Optibrain = () => {
     if (sortedTimestamps.length === 0) return [];
 
     // Créer les points de données
-    return sortedTimestamps.map((timestamp) => {
+    return sortedTimestamps.map((timestamp): MonitoringChartPoint => {
       const time = new Date(timestamp);
       const timeStr = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+      const autoregulationWindow = getAutoregulationWindowAt(autoregulationWindowSeries, timestamp);
 
-      const dataPoint: any = {
+      const dataPoint: MonitoringChartPoint = {
         time: timeStr,
         timestamp,
+        autoregulationInferiorLimit: autoregulationWindow?.inferiorLimit ?? null,
+        autoregulationSuperiorLimit: autoregulationWindow?.superiorLimit ?? null,
+        autoregulationOptimalPressure: autoregulationWindow?.optimalPressure ?? null,
+        autoregulationWindowBand: autoregulationWindow
+          ? [autoregulationWindow.inferiorLimit, autoregulationWindow.superiorLimit]
+          : null,
       };
 
       // Pour chaque indicateur, trouver la valeur exacte ou la plus proche
@@ -1125,11 +1157,11 @@ const Optibrain = () => {
 
       return dataPoint;
     });
-  }, [realTimeSeriesData]);
+  }, [realTimeSeriesData, autoregulationWindowSeries]);
 
   // Plage de temps partagée avec le pop-up d'autorégulation (même patient,
   // même module) — choisir une période ici la garde active en rouvrant le pop-up.
-  const monitoringTimeWindow = useSharedTimeWindow(chartData, (d: any) => d.timestamp);
+  const monitoringTimeWindow = useSharedTimeWindow(chartData, (d) => d.timestamp);
   const [monitoringEditing, setMonitoringEditing] = useState(false);
   // Échelle Y auto pour le graphique de monitorage (plusieurs indicateurs
   // sélectionnables, unités mélangées — l'auto-échelle suit la sélection et
@@ -1138,20 +1170,26 @@ const Optibrain = () => {
     const values: number[] = [];
     for (const point of monitoringTimeWindow.visibleData) {
       for (const label of selectedIndicators) {
-        const v = (point as any)[label];
+        const v = point[label];
         if (typeof v === "number") values.push(v);
       }
     }
     const pressureIndicator = autoregMode === "prx" ? "PPC" : "PAM";
-    if (
-      selectedIndicators.includes(pressureIndicator)
-      && hasAutoregulationWindow(activeAutoregulationResult)
-    ) {
-      values.push(
-        activeAutoregulationResult.inferiorLimit,
-        activeAutoregulationResult.superiorLimit,
-        activeAutoregulationResult.optimalPressure,
-      );
+    if (selectedIndicators.includes(pressureIndicator)) {
+      for (const point of monitoringTimeWindow.visibleData) {
+        values.push(
+          point.autoregulationInferiorLimit,
+          point.autoregulationSuperiorLimit,
+          point.autoregulationOptimalPressure,
+        );
+      }
+      if (!hasDynamicAutoregulationWindow && hasSummaryAutoregulationWindow) {
+        values.push(
+          activeAutoregulationResult.inferiorLimit,
+          activeAutoregulationResult.superiorLimit,
+          activeAutoregulationResult.optimalPressure,
+        );
+      }
     }
     if (values.length === 0) return [0, 100];
     return [Math.floor(Math.min(...values) / 5) * 5, Math.ceil(Math.max(...values) / 5) * 5];
@@ -1160,6 +1198,8 @@ const Optibrain = () => {
     selectedIndicators,
     autoregMode,
     activeAutoregulationResult,
+    hasDynamicAutoregulationWindow,
+    hasSummaryAutoregulationWindow,
   ]);
   const monitoringZoom = useYAxisZoom(monitoringAutoYDomain);
 
@@ -1957,23 +1997,69 @@ const Optibrain = () => {
                       />
                       <div className="flex-1 min-h-0">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData}>
+                        <ComposedChart data={chartData}>
                           {showTargetZones
                             && selectedIndicators.includes(autoregMode === "prx" ? "PPC" : "PAM")
-                            && hasAutoregulationWindow(activeAutoregulationResult) && (
-                              <ReferenceArea
-                                y1={activeAutoregulationResult.inferiorLimit}
-                                y2={activeAutoregulationResult.superiorLimit}
-                                label={{
-                                  value: `${autoregMode === "prx" ? "PRx" : "COx"} · ${autoregMode === "prx" ? "PPC" : "PAM"} ${Math.round(activeAutoregulationResult.inferiorLimit)}–${Math.round(activeAutoregulationResult.superiorLimit)} mmHg`,
-                                  position: "insideTop",
-                                  fontSize: 10,
-                                }}
-                                fill="#60a5fa"
-                                fillOpacity={0.14}
-                                stroke="#3b82f6"
-                                strokeOpacity={0.45}
-                              />
+                            && (hasDynamicAutoregulationWindow
+                              || hasSummaryAutoregulationWindow) && (
+                              hasDynamicAutoregulationWindow ? (
+                                <>
+                                  <Area
+                                    type="stepAfter"
+                                    dataKey="autoregulationWindowBand"
+                                    isRange
+                                    fill="#60a5fa"
+                                    fillOpacity={0.14}
+                                    stroke="none"
+                                    connectNulls={false}
+                                    isAnimationActive={false}
+                                    name={`${autoregMode === "prx" ? "PRx · PPC" : "COx · PAM"} fenêtre`}
+                                  />
+                                  <Line
+                                    type="stepAfter"
+                                    dataKey="autoregulationInferiorLimit"
+                                    name="LLA"
+                                    stroke="#3b82f6"
+                                    strokeDasharray="4 3"
+                                    dot={false}
+                                    connectNulls={false}
+                                    isAnimationActive={false}
+                                  />
+                                  <Line
+                                    type="stepAfter"
+                                    dataKey="autoregulationSuperiorLimit"
+                                    name="ULA"
+                                    stroke="#3b82f6"
+                                    strokeDasharray="4 3"
+                                    dot={false}
+                                    connectNulls={false}
+                                    isAnimationActive={false}
+                                  />
+                                  <Line
+                                    type="stepAfter"
+                                    dataKey="autoregulationOptimalPressure"
+                                    name="Optimum"
+                                    stroke="#2563eb"
+                                    dot={false}
+                                    connectNulls={false}
+                                    isAnimationActive={false}
+                                  />
+                                </>
+                              ) : (
+                                <ReferenceArea
+                                  y1={activeAutoregulationResult.inferiorLimit}
+                                  y2={activeAutoregulationResult.superiorLimit}
+                                  label={{
+                                    value: `${autoregMode === "prx" ? "PRx" : "COx"} · ${autoregMode === "prx" ? "PPC" : "PAM"} ${Math.round(activeAutoregulationResult.inferiorLimit)}–${Math.round(activeAutoregulationResult.superiorLimit)} mmHg`,
+                                    position: "insideTop",
+                                    fontSize: 10,
+                                  }}
+                                  fill="#60a5fa"
+                                  fillOpacity={0.14}
+                                  stroke="#3b82f6"
+                                  strokeOpacity={0.45}
+                                />
+                              )
                             )}
                           {/* Zones cibles en arrière-plan */}
                           {showTargetZones && selectedIndicators.map((label) => {
@@ -1981,7 +2067,10 @@ const Optibrain = () => {
                             if (!indicator) return null;
                             if (
                               label === (autoregMode === "prx" ? "PPC" : "PAM")
-                              && hasAutoregulationWindow(activeAutoregulationResult)
+                              && (
+                                hasDynamicAutoregulationWindow
+                                || hasSummaryAutoregulationWindow
+                              )
                             ) return null;
                             const target = parseTargetRange(indicator.target);
                             if (target.min === -Infinity && target.max === Infinity) return null;
@@ -2028,13 +2117,17 @@ const Optibrain = () => {
                               color: "hsl(var(--popover-foreground))",
                             }}
                             labelStyle={{ fontWeight: 600, marginBottom: 8 }}
-                            formatter={(value: number, name: string) => {
-                              const color = getIndicatorColor(name);
-                              const indicator = chartIndicators.find((i) => i.label === name);
+                            formatter={(value, name) => {
+                              const label = String(name);
+                              const color = getIndicatorColor(label);
+                              const indicator = chartIndicators.find((i) => i.label === label);
                               const unit = indicator?.unit || "";
+                              const formattedValue = Array.isArray(value)
+                                ? value.map((part) => Number(part).toFixed(1)).join("–")
+                                : Number(value).toFixed(1);
                               return [
-                                <span key={name} style={{ color, fontWeight: 600 }}>
-                                  {name}: {value.toFixed(1)} {unit}
+                                <span key={label} style={{ color, fontWeight: 600 }}>
+                                  {label}: {formattedValue} {unit || (label === "LLA" || label === "ULA" || label === "Optimum" ? "mmHg" : "")}
                                 </span>,
                                 null
                               ];
@@ -2094,7 +2187,7 @@ const Optibrain = () => {
                               onChange={monitoringTimeWindow.onBrushChange}
                             />
                           )}
-                        </LineChart>
+                        </ComposedChart>
                       </ResponsiveContainer>
                       </div>
                     </div>

@@ -1,8 +1,7 @@
 FROM node:22.19.0-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci && npm install --prefix /opt/xlsx --no-save xlsx@0.18.5 \
-    && ln -s /opt/xlsx/node_modules/xlsx node_modules/xlsx
+RUN npm ci
 COPY . .
 ARG ANON_KEY
 ARG SUPABASE_API_URL

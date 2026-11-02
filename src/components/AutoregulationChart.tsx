@@ -1,7 +1,8 @@
 import {
+  Area,
   CartesianGrid,
+  ComposedChart,
   Line,
-  LineChart,
   ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
@@ -12,6 +13,10 @@ import {
 import type { TimeSeriesDataPoint } from "@/services/patientFileData.service";
 import type { AutoregulationResult } from "@/services/patientAutoregulation.service";
 import { getWindowPosition, hasAutoregulationWindow } from "@/services/autoregulationWindow";
+import {
+  getAutoregulationWindowAt,
+  getAutoregulationWindowSeries,
+} from "@/services/autoregulationWindowSeries";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -25,6 +30,10 @@ interface AutoregulationChartProps {
 interface ChartPoint {
   timestamp: number;
   value: number;
+  inferiorLimit?: number | null;
+  superiorLimit?: number | null;
+  optimalPressure?: number | null;
+  windowBand?: [number, number] | null;
 }
 
 function chartPoints(series: TimeSeriesDataPoint[]): ChartPoint[] {
@@ -35,7 +44,15 @@ function chartPoints(series: TimeSeriesDataPoint[]): ChartPoint[] {
 }
 
 function valueDomain(points: ChartPoint[], limits: number[] = []): [number, number] {
-  const values = [...points.map((point) => point.value), ...limits].filter(Number.isFinite);
+  const values = [
+    ...points.flatMap((point) => [
+      point.value,
+      point.inferiorLimit,
+      point.superiorLimit,
+      point.optimalPressure,
+    ]),
+    ...limits,
+  ].filter((value): value is number => typeof value === "number" && Number.isFinite(value));
   if (!values.length) return [0, 1];
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -52,8 +69,43 @@ export function AutoregulationChart({
   const signalLabel = mode === "prx" ? "PIC" : "NIRS (rSO₂)";
   const pressureLabel = mode === "prx" ? "PPC" : "PAM";
   const signal = chartPoints(signalSeries);
-  const pressure = chartPoints(pressureSeries);
-  const window = hasAutoregulationWindow(result) ? result : null;
+  const windowSeries = getAutoregulationWindowSeries(result);
+  const hasDynamicWindowSeries = windowSeries.some(
+    (point) =>
+      point.inferiorLimit !== null
+      && point.superiorLimit !== null
+      && point.inferiorLimit <= point.superiorLimit,
+  );
+  const pressure = chartPoints(pressureSeries).map((point) => {
+    const currentWindow = getAutoregulationWindowAt(windowSeries, point.timestamp);
+    const inferiorLimit = currentWindow?.inferiorLimit ?? null;
+    const superiorLimit = currentWindow?.superiorLimit ?? null;
+    return {
+      ...point,
+      inferiorLimit,
+      superiorLimit,
+      optimalPressure: currentWindow?.optimalPressure ?? null,
+      windowBand: inferiorLimit !== null && superiorLimit !== null
+        ? [inferiorLimit, superiorLimit] as [number, number]
+        : null,
+    };
+  });
+  const latestPressurePoint = pressure[pressure.length - 1];
+  const latestWindow = latestPressurePoint
+    ? getAutoregulationWindowAt(windowSeries, latestPressurePoint.timestamp)
+    : null;
+  const summaryWindow = hasAutoregulationWindow(result) ? result : null;
+  const window = latestWindow
+    ? {
+        mode,
+        optimalPressure: latestWindow.optimalPressure ?? result?.optimalPressure ?? null,
+        inferiorLimit: latestWindow.inferiorLimit,
+        superiorLimit: latestWindow.superiorLimit,
+      }
+    : hasDynamicWindowSeries
+      ? null
+      : summaryWindow;
+  const hasWindowBand = pressure.some((point) => point.windowBand !== null);
 
   if (signal.length === 0 || pressure.length === 0) {
     return (
@@ -64,8 +116,14 @@ export function AutoregulationChart({
     );
   }
 
-  const latestPressure = pressure[pressure.length - 1].value;
-  const position = getWindowPosition(latestPressure, window);
+  const latestPressure = latestPressurePoint.value;
+  const position = latestWindow
+    ? latestPressure < latestWindow.inferiorLimit
+      ? "below"
+      : latestPressure > latestWindow.superiorLimit
+        ? "above"
+        : "inside"
+    : getWindowPosition(latestPressure, window);
   const statusText = {
     inside: "Dans la fenêtre d'autorégulation",
     below: "Sous la limite inférieure",
@@ -90,7 +148,13 @@ export function AutoregulationChart({
             <p className="text-xs text-muted-foreground">
               Fenêtre {pressureLabel} : {Math.round(window.inferiorLimit)}–
               {Math.round(window.superiorLimit)} mmHg
-              {" · "}optimum {Math.round(window.optimalPressure)} mmHg
+              {window.optimalPressure !== null
+                ? ` · optimum ${Math.round(window.optimalPressure)} mmHg`
+                : ""}
+            </p>
+          ) : hasDynamicWindowSeries ? (
+            <p className="text-xs text-muted-foreground">
+              Fenêtre temporelle indisponible pour la dernière mesure de {pressureLabel}.
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">
@@ -111,7 +175,7 @@ export function AutoregulationChart({
         </p>
         <div className="h-48 w-full" data-testid="autoregulation-pressure-chart">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={pressure} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
+            <ComposedChart data={pressure} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis
                 dataKey="timestamp"
@@ -131,9 +195,61 @@ export function AutoregulationChart({
               />
               <Tooltip
                 labelFormatter={(value) => format(new Date(Number(value)), "dd/MM HH:mm", { locale: fr })}
-                formatter={(value: number) => [`${value.toFixed(1)} mmHg`, pressureLabel]}
+                formatter={(value, name) => {
+                  if (Array.isArray(value)) {
+                    const [lower, upper] = value.map(Number);
+                    return [`${lower.toFixed(1)}–${upper.toFixed(1)} mmHg`, String(name)];
+                  }
+                  return [`${Number(value).toFixed(1)} mmHg`, String(name)];
+                }}
               />
-              {window && (
+              {hasWindowBand ? (
+                <>
+                  <Area
+                    type="stepAfter"
+                    dataKey="windowBand"
+                    isRange
+                    fill="hsl(var(--status-normal))"
+                    fillOpacity={0.2}
+                    stroke="none"
+                    connectNulls={false}
+                    isAnimationActive={false}
+                    name="Fenêtre optimale"
+                  />
+                  <Line
+                    type="stepAfter"
+                    dataKey="inferiorLimit"
+                    name="LLA"
+                    stroke="hsl(var(--status-normal))"
+                    strokeDasharray="4 3"
+                    strokeWidth={1.5}
+                    dot={false}
+                    connectNulls={false}
+                    isAnimationActive={false}
+                  />
+                  <Line
+                    type="stepAfter"
+                    dataKey="superiorLimit"
+                    name="ULA"
+                    stroke="hsl(var(--status-normal))"
+                    strokeDasharray="4 3"
+                    strokeWidth={1.5}
+                    dot={false}
+                    connectNulls={false}
+                    isAnimationActive={false}
+                  />
+                  <Line
+                    type="stepAfter"
+                    dataKey="optimalPressure"
+                    name="Optimum"
+                    stroke="hsl(var(--status-normal))"
+                    strokeWidth={1}
+                    dot={false}
+                    connectNulls={false}
+                    isAnimationActive={false}
+                  />
+                </>
+              ) : window ? (
                 <>
                   <ReferenceArea
                     y1={window.inferiorLimit}
@@ -142,15 +258,14 @@ export function AutoregulationChart({
                     fillOpacity={0.2}
                     stroke="hsl(var(--status-normal))"
                     strokeOpacity={0.5}
-                    label={{ value: "Fenêtre optimale", position: "insideTop", fontSize: 10 }}
                   />
                   <ReferenceLine
-                    y={window.optimalPressure}
+                    y={window.optimalPressure ?? undefined}
                     stroke="hsl(var(--status-normal))"
                     strokeDasharray="4 3"
                   />
                 </>
-              )}
+              ) : null}
               <Line
                 type="monotone"
                 dataKey="value"
@@ -162,7 +277,7 @@ export function AutoregulationChart({
                 connectNulls={false}
                 isAnimationActive={false}
               />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -175,7 +290,7 @@ export function AutoregulationChart({
         </p>
         <div className="h-36 w-full" data-testid="autoregulation-signal-chart">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={signal} margin={{ top: 4, right: 12, bottom: 4, left: 0 }}>
+            <ComposedChart data={signal} margin={{ top: 4, right: 12, bottom: 4, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis
                 dataKey="timestamp"
@@ -208,7 +323,7 @@ export function AutoregulationChart({
                 connectNulls={false}
                 isAnimationActive={false}
               />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </div>

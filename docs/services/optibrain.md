@@ -35,8 +35,8 @@ into two instances for three reasons:
 
 ## Configuration
 
-Both read MYPICU's `.env.icca` via `env_file`, which contains the ICCA
-credentials shared with `sync-worker`:
+Both receive the ICCA connection settings from `.env.stack.local` through
+Compose interpolation, shared with `sync-worker`:
 
 ```ini
 DB_HOST=...
@@ -49,9 +49,9 @@ DB_PASSWORD=...
 Both then apply `DB_MAX_CONCURRENT_QUERIES` from `ICCA_QUERY_CONCURRENCY`
 (default 4).
 
-`scripts/local-up.sh` refuses to start the stack if `.env.icca` is
-missing, because the failure would otherwise surface much later as an empty
-result set.
+`scripts/local-up.sh` refuses to start the stack if ICCA settings are missing
+from `.env.stack.local`, because the failure would otherwise surface much later
+as an empty result set.
 
 ## Input contract
 

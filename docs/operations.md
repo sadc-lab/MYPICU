@@ -10,7 +10,7 @@ Requirements: Docker Engine, Compose v2+, Python 3 on the host, and the sibling
 `../optibrain` checkout on `fix/ward-batch-extraction`. MYPICU's deployment
 branch is `local-docker-stack`, created from `MVP1`.
 
-Create `.env.icca` (not committed) with:
+Add the ICCA source settings to `.env.stack.local` (not committed):
 
 ```ini
 DB_HOST=spxp-app05.sainte-justine.intranet
@@ -355,7 +355,7 @@ use the `readonly` schema and read-only transactions; they never create/modify
 tables in cathydb. `preflight.py` reports permissions and connection limit without
 printing patient details.
 
-After editing `.env.icca`:
+After editing `.env.stack.local`:
 
 ```sh
 sh scripts/stack.sh up -d --force-recreate sync-worker optibrain optibrain-autoreg
