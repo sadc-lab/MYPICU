@@ -73,7 +73,6 @@ import { TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { VitalSignsPanel } from "@/components/VitalSignsPanel";
-import { CollapsibleModuleCard, StatusIconCircle, ModuleStatus } from "@/components/CollapsibleModuleCard";
 // "Relations cliniques" retiré pour le moment — src/ontology/ reste intact
 // (getRelatedNodes, getOntologyNodeByVariableKey) pour le remettre facilement.
 // "Dernières visites" (comparaison depuis la dernière visite) retiré pour le
@@ -88,7 +87,6 @@ const Optibrain = () => {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
-  const [neuroClassExpanded, setNeuroClassExpanded] = useState(false);
   const [brainGroupsOpen, setBrainGroupsOpen] = useState<Record<string, boolean>>({
     "Pression intracrânienne et état neurologique": true,
   });
@@ -644,21 +642,6 @@ const Optibrain = () => {
     };
   }, [patientFileData, hoursForAdherence]);
 
-  // Classification cérébrale : mêmes seuils que classifyNeuroState (PIC/PPC).
-  const neuroStates: Array<{
-    label: string;
-    criteria: string;
-    status: ModuleStatus;
-    pct: number;
-  }> = [
-    { label: "Contrôlé", criteria: "PIC < 20 mmHg et PPC 50–80 mmHg", status: "normal", pct: neurologicalStateConfig.history.controlled },
-    { label: "HTIC", criteria: "PIC ≥ 20 mmHg", status: "warning", pct: neurologicalStateConfig.history.htic },
-    { label: "Ischémie", criteria: "PPC < 50 mmHg", status: "critical", pct: neurologicalStateConfig.history.ischemia },
-    { label: "HTIC + Ischémie", criteria: "PIC ≥ 20 mmHg et PPC < 50 mmHg", status: "critical", pct: neurologicalStateConfig.history.hticWithIschemia },
-    { label: "Hyperémie", criteria: "PPC > 80 mmHg avec PIC normale", status: "warning", pct: neurologicalStateConfig.history.hyperemia },
-  ];
-  const currentNeuroState = neuroStates.find((st) => st.label === neurologicalStateConfig.currentState) ?? neuroStates[0];
-
   // Calculate time spent in each PIC range from real data
   const picRangeData = useMemo(() => {
     const getHoursForPicDialog = (range: string): number => {
@@ -1087,73 +1070,6 @@ const Optibrain = () => {
         <div className="mb-6">
           <VitalSignsPanel />
         </div>
-
-        <CollapsibleModuleCard
-          className="mb-6"
-          expanded={neuroClassExpanded}
-          onToggle={() => setNeuroClassExpanded((p) => !p)}
-          headerIcon={
-            <StatusIconCircle status={neurologicalStateConfig.hasData ? currentNeuroState.status : "inactive"}>
-              <Brain className="h-6 w-6 sm:h-8 sm:w-8" />
-            </StatusIconCircle>
-          }
-          title="Classification cérébrale"
-          subtitle={
-            neurologicalStateConfig.hasData ? (
-              <>
-                État actuel :{" "}
-                <span className={cn("font-semibold", neurologicalStateConfig.currentStateColor)}>
-                  {currentNeuroState.label}
-                </span>
-                {neurologicalStateConfig.currentStateSince && ` ${neurologicalStateConfig.currentStateSince}`}
-              </>
-            ) : (
-              "Pas de données PIC/PPC"
-            )
-          }
-        >
-          <div className="space-y-2 pt-4 border-t">
-            {neuroStates.map((st) => {
-              const active = neurologicalStateConfig.hasData && st.label === currentNeuroState.label;
-              return (
-                <div
-                  key={st.label}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 border",
-                    active
-                      ? st.status === "normal"
-                        ? "border-primary/40 bg-primary/5"
-                        : st.status === "warning"
-                          ? "border-status-warning/40 bg-status-warning-bg/30"
-                          : "border-status-critical/40 bg-status-critical-bg/30"
-                      : "border-transparent bg-muted/40",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "text-sm font-semibold w-32 shrink-0",
-                      active
-                        ? st.status === "normal"
-                          ? "text-foreground"
-                          : st.status === "warning"
-                            ? "text-status-warning"
-                            : "text-status-critical"
-                        : "text-foreground",
-                    )}
-                  >
-                    {st.label}
-                  </span>
-                  <span className="text-xs sm:text-sm text-muted-foreground flex-1">{st.criteria}</span>
-                  {neurologicalStateConfig.hasData && (
-                    <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                      {st.pct}% du temps {timeRange === "stay" ? "(séjour)" : `(${timeRange})`}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </CollapsibleModuleCard>
 
         <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cérébrales..." variant="skeleton">
           <div className="space-y-4 mb-6">

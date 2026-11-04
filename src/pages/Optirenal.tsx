@@ -52,15 +52,6 @@ const PATIENT_BASE_WEIGHT_KG = 20;
 
 const lastUpdate = '14:32';
 
-const rifleStages = [
-  { letter: 'R', name: 'Risk', criteria: 'SCr ↑ ×1.5 ou DFG ↓ >25 %' },
-  { letter: 'I', name: 'Injury', criteria: 'SCr ↑ ×2 ou DFG ↓ >50 %' },
-  { letter: 'F', name: 'Failure', criteria: 'SCr ↑ ×3 ou DFG ↓ >75 %' },
-  { letter: 'L', name: 'Loss', criteria: 'Perte de fonction rénale >4 sem.' },
-  { letter: 'E', name: 'ESKD', criteria: 'Insuffisance rénale terminale >3 mois' },
-];
-const currentRifleStage = 'F';
-
 const renalGroups: RenalGroup[] = [
   {
     title: 'Bilan entrée - sortie',
@@ -148,7 +139,6 @@ const Optirenal = () => {
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [selectedRenalOptIndicators, setSelectedRenalOptIndicators] = useState<string[]>([]);
   const [optChartTimeRange, setOptChartTimeRange] = useState<string>('24h');
-  const [rifleExpanded, setRifleExpanded] = useState(false);
   const [monitoringTimeRange, setMonitoringTimeRange] = useState<string>('24h');
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
   const [showTargetZones, setShowTargetZones] = useState(true);
@@ -326,60 +316,6 @@ const Optirenal = () => {
 
       <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px] space-y-6">
         <VitalSignsPanel />
-
-        <CollapsibleModuleCard
-          expanded={rifleExpanded}
-          onToggle={() => setRifleExpanded((p) => !p)}
-          headerIcon={
-            <StatusIconCircle status="critical">
-              <span className="text-lg sm:text-xl">{currentRifleStage}</span>
-            </StatusIconCircle>
-          }
-          title="Classification RIFLE"
-          subtitle={
-            <>
-              Stade actuel :{' '}
-              <span className="font-semibold text-status-critical">
-                {rifleStages.find((s) => s.letter === currentRifleStage)?.name}
-              </span>
-            </>
-          }
-        >
-          <div className="space-y-2 pt-4 border-t">
-            {rifleStages.map((stage) => {
-              const active = stage.letter === currentRifleStage;
-              return (
-                <div
-                  key={stage.letter}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 border',
-                    active
-                      ? 'border-status-critical/40 bg-status-critical-bg/30'
-                      : 'border-transparent bg-muted/40'
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold shrink-0',
-                      active ? 'bg-status-critical text-white' : 'bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {stage.letter}
-                  </div>
-                  <span
-                    className={cn(
-                      'text-sm font-semibold',
-                      active ? 'text-status-critical' : 'text-foreground'
-                    )}
-                  >
-                    {stage.name}
-                  </span>
-                  <span className="text-xs sm:text-sm text-muted-foreground">{stage.criteria}</span>
-                </div>
-              );
-            })}
-          </div>
-        </CollapsibleModuleCard>
 
         <CollapsibleModuleCard
           expanded={optimisationExpanded}
