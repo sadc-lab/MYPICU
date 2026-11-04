@@ -11,6 +11,7 @@ import lungsIcon from "@/assets/lungs-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
 import kidneyIcon from "@/assets/kidney-icon.svg";
 import intestineIcon from "@/assets/intestine-icon.svg";
+import { getDialysisStatus } from "@/utils/renalStatus";
 
 
 const reminders = [
@@ -39,6 +40,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
 
   if (isLoading) return <div className="bg-card border-b border-border mb-4 sm:mb-6 p-4 text-center text-muted-foreground">Chargement...</div>;
   if (!patient) return null;
+
+  const dialysis = getDialysisStatus(patientId);
 
   // Inactive tabs: pale grey bg + colored border if problematic.
   // Active tab: tinted bg matching severity (low opacity for readability).
@@ -123,6 +126,17 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               <span>{patient.age}</span>
               <span>•</span>
               <span>{patient.weight}</span>
+              {dialysis && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/optirenal?patient=${encodeURIComponent(patientId)}`)}
+                  title={`Début : ${dialysis.start}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-status-critical/40 bg-status-critical-bg/30 px-2.5 py-0.5 text-xs font-semibold text-status-critical hover:bg-status-critical-bg/50 transition-colors"
+                >
+                  <span className="h-2 w-2 rounded-full bg-status-critical animate-pulse" />
+                  Dialyse en cours · {dialysis.modality} · {dialysis.duration}
+                </button>
+              )}
             </div>
             <p className="text-xs sm:text-sm text-foreground mt-2">
               <strong>Diagnostic:</strong> {patient.diagnosis}

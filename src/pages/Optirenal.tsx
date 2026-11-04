@@ -17,6 +17,7 @@ import {
 import { SelectableMetricTile, TileStatus } from '@/components/SelectableMetricTile';
 import { OptimisationChart } from '@/components/OptimisationChart';
 import { cn } from '@/lib/utils';
+import { getDialysisStatus } from '@/utils/renalStatus';
 
 const OPT_CHART_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -48,12 +49,6 @@ interface RenalGroup {
 
 // Données de démonstration, en attendant l'import des variables rénales.
 const PATIENT_BASE_WEIGHT_KG = 20;
-
-const dialysis = {
-  modality: 'CVVHDF',
-  start: '23/08 — 18:00 (J2)',
-  duration: '36 h',
-};
 
 const lastUpdate = '14:32';
 
@@ -148,6 +143,7 @@ const Optirenal = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient') || '#25';
   const { data: patient, isLoading } = usePatient(patientId);
+  const dialysis = getDialysisStatus(patientId);
 
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [selectedRenalOptIndicators, setSelectedRenalOptIndicators] = useState<string[]>([]);
@@ -404,31 +400,33 @@ const Optirenal = () => {
           title="Optimisation rénale"
           subtitle={
             <>
-              <span className="font-semibold text-status-critical">AKI — Stade F (RIFLE)</span> • Dialyse
-              en cours • Dernière MAJ : {lastUpdate}
+              <span className="font-semibold text-status-critical">AKI — Stade F (RIFLE)</span>
+              {dialysis && ' • Dialyse en cours'} • Dernière MAJ : {lastUpdate}
             </>
           }
         >
-          <div className="mt-4 rounded-lg border border-status-critical/40 bg-status-critical-bg/30 px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-3 items-center">
-            <div className="col-span-2 sm:col-span-1 flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-status-critical animate-pulse" />
-              <span className="text-sm font-semibold text-status-critical uppercase tracking-wide">
-                Dialyse en cours
-              </span>
+          {dialysis && (
+            <div className="mt-4 rounded-lg border border-status-critical/40 bg-status-critical-bg/30 px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-3 items-center">
+              <div className="col-span-2 sm:col-span-1 flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-status-critical animate-pulse" />
+                <span className="text-sm font-semibold text-status-critical uppercase tracking-wide">
+                  Dialyse en cours
+                </span>
+              </div>
+              <div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Modalité</div>
+                <div className="text-sm font-semibold text-foreground">{dialysis.modality}</div>
+              </div>
+              <div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Début</div>
+                <div className="text-sm font-semibold text-foreground">{dialysis.start}</div>
+              </div>
+              <div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Durée</div>
+                <div className="text-sm font-semibold text-foreground">{dialysis.duration}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Modalité</div>
-              <div className="text-sm font-semibold text-foreground">{dialysis.modality}</div>
-            </div>
-            <div>
-              <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Début</div>
-              <div className="text-sm font-semibold text-foreground">{dialysis.start}</div>
-            </div>
-            <div>
-              <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Durée</div>
-              <div className="text-sm font-semibold text-foreground">{dialysis.duration}</div>
-            </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6 pt-4">
             {renalOptimisationMetrics.map((metric) => (
