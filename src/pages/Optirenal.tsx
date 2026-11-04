@@ -420,13 +420,13 @@ const Optirenal = () => {
                 </div>
               </CardHeader>
               <CardContent className="px-3 sm:px-6">
-                <div className="space-y-4 pb-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 pb-4">
                   {renalGroups.map((group) => (
-                    <div key={group.title}>
-                      <div className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                    <div key={group.title} className="rounded-lg border border-border p-3">
+                      <div className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                         {group.title}
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {group.metrics.map((metric) => {
                           const isSelected = selectedIndicators.includes(metric.label);
                           return (
