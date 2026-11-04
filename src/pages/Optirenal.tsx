@@ -1,21 +1,18 @@
 import { useSearchParams } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
+import { toast } from 'sonner';
 import { Header } from '@/components/Header';
 import { PatientHeader } from '@/components/PatientHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePatient } from '@/hooks/usePatients';
-import { HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DataLoadingOverlay } from '@/components/DataLoadingOverlay';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
-import { MetricRangeBar } from '@/components/MetricRangeBar';
 import kidneyIcon from '@/assets/kidney-icon.svg';
 import { TimeWindowSelector, TimeWindowValue } from '@/components/ui/TimeWindowSelector';
 import {
   CollapsibleModuleCard,
   StatusIconCircle,
-  CountCircle,
-  ModuleStatus,
 } from '@/components/CollapsibleModuleCard';
 import { SelectableMetricTile, TileStatus } from '@/components/SelectableMetricTile';
 import { OptimisationChart } from '@/components/OptimisationChart';
@@ -130,49 +127,22 @@ const renalGroups: RenalGroup[] = [
   },
 ];
 
-const groupStatus = (metrics: RenalMetric[]): ModuleStatus => {
-  if (metrics.some((m) => m.status === 'critical')) return 'critical';
-  if (metrics.some((m) => m.status === 'warning')) return 'warning';
-  return 'inactive';
+// Même palette que le monitorage d'Optibrain (une seule teinte bleue).
+const MONITORING_COLORS = ['#1e3a8a', '#93c5fd', '#2563eb', '#60a5fa', '#1d4ed8', '#3b82f6'];
+
+const STATUS_DOT: Record<TileStatus, string> = {
+  normal: 'bg-status-normal',
+  warning: 'bg-status-warning',
+  critical: 'bg-status-critical',
 };
 
-const RenalMetricTile = ({ metric }: { metric: RenalMetric }) => (
-  <div className="flex flex-col items-center">
-    <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide text-center">
-      {metric.label}
-      {metric.help && (
-        <Tooltip delayDuration={200}>
-          <TooltipTrigger asChild>
-            <HelpCircle className="h-3.5 w-3.5 cursor-help" />
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-xs max-w-60 normal-case">
-            {metric.help}
-          </TooltipContent>
-        </Tooltip>
-      )}
-    </div>
-    <div className="flex items-baseline gap-1 mb-2">
-      <div className={cn('text-2xl sm:text-4xl font-bold', STATUS_TEXT[metric.status])}>
-        {metric.displayValue ?? metric.value}
-      </div>
-      <div className="text-[10px] text-muted-foreground">{metric.unit}</div>
-    </div>
-    {metric.range && (
-      <MetricRangeBar
-        value={metric.value}
-        min={metric.range.min}
-        max={metric.range.max}
-        targetMin={metric.range.targetMin}
-        targetMax={metric.range.targetMax}
-      />
-    )}
-    {(metric.reference || metric.note) && (
-      <div className="text-[10px] sm:text-xs text-muted-foreground mt-2 text-center">
-        {metric.reference ?? metric.note}
-      </div>
-    )}
-  </div>
-);
+const STATUS_LABEL: Record<TileStatus, string> = {
+  normal: 'Dans la cible',
+  warning: 'À surveiller',
+  critical: 'Hors cible',
+};
+
+const allMonitoringMetrics = renalGroups.flatMap((g) => g.metrics);
 
 const Optirenal = () => {
   const [searchParams] = useSearchParams();
@@ -182,13 +152,11 @@ const Optirenal = () => {
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
   const [selectedRenalOptIndicators, setSelectedRenalOptIndicators] = useState<string[]>([]);
   const [optChartTimeRange, setOptChartTimeRange] = useState<string>('24h');
-  const [groupsOpen, setGroupsOpen] = useState<Record<string, boolean>>({
-    'Bilan entrée - sortie': true,
-    'Diurèse': true,
-    'Marqueurs de filtration': true,
-    'Électrolytes': true,
-    'Classification RIFLE': false,
-  });
+  const [rifleExpanded, setRifleExpanded] = useState(false);
+  const [monitoringTimeRange, setMonitoringTimeRange] = useState<string>('24h');
+  const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
+  const [showTargetZones, setShowTargetZones] = useState(true);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   const showPatientNotFound = !patient && !isLoading;
 
@@ -280,8 +248,56 @@ const Optirenal = () => {
     });
   }, [optChartTimeRange, selectedRenalOptIndicators]);
 
-  const toggleGroup = (title: string) =>
-    setGroupsOpen((prev) => ({ ...prev, [title]: !prev[title] }));
+  const getIndicatorColor = (label: string) => {
+    const index = selectedIndicators.indexOf(label);
+    if (index === -1) return '#9ca3af';
+    return MONITORING_COLORS[index % MONITORING_COLORS.length];
+  };
+
+  const toggleIndicator = (label: string) => {
+    setSelectedIndicators((prev) => {
+      if (prev.includes(label)) return prev.filter((l) => l !== label);
+      if (prev.length >= 3) {
+        toast.warning('Maximum 3 indicateurs', {
+          description: 'Désélectionnez un indicateur pour en ajouter un nouveau.',
+        });
+        return prev;
+      }
+      return [...prev, label];
+    });
+    setTimeout(() => {
+      chartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
+  // Séries de démonstration : chaque indicateur évolue vers sa valeur actuelle.
+  const monitoringChartData = useMemo(() => {
+    if (selectedIndicators.length === 0) return [];
+    const hoursMap: Record<string, number> = { '24h': 24, stay: 96 };
+    const hours = hoursMap[monitoringTimeRange] || 24;
+    const points = Math.min(hours * 4, 200);
+    const now = Date.now();
+
+    return Array.from({ length: points }, (_, i) => {
+      const timestamp = now - (points - 1 - i) * ((hours * 3600000) / points);
+      const time = new Date(timestamp);
+      const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time
+        .getMinutes()
+        .toString()
+        .padStart(2, '0')}`;
+      const progress = i / (points - 1);
+
+      const dataPoint: Record<string, string | number> = { time: timeStr, timestamp };
+      selectedIndicators.forEach((label) => {
+        const metric = allMonitoringMetrics.find((m) => m.label === label);
+        if (!metric) return;
+        const drift = metric.value * (0.85 + 0.15 * progress);
+        const noise = (Math.random() - 0.5) * Math.abs(metric.value) * 0.06;
+        dataPoint[label] = Math.round((drift + noise) * 100) / 100;
+      });
+      return dataPoint;
+    });
+  }, [monitoringTimeRange, selectedIndicators]);
 
   if (isLoading) {
     return (
@@ -314,6 +330,60 @@ const Optirenal = () => {
 
       <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px] space-y-6">
         <VitalSignsPanel />
+
+        <CollapsibleModuleCard
+          expanded={rifleExpanded}
+          onToggle={() => setRifleExpanded((p) => !p)}
+          headerIcon={
+            <StatusIconCircle status="critical">
+              <span className="text-lg sm:text-xl">{currentRifleStage}</span>
+            </StatusIconCircle>
+          }
+          title="Classification RIFLE"
+          subtitle={
+            <>
+              Stade actuel :{' '}
+              <span className="font-semibold text-status-critical">
+                {rifleStages.find((s) => s.letter === currentRifleStage)?.name}
+              </span>
+            </>
+          }
+        >
+          <div className="space-y-2 pt-4 border-t">
+            {rifleStages.map((stage) => {
+              const active = stage.letter === currentRifleStage;
+              return (
+                <div
+                  key={stage.letter}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 border',
+                    active
+                      ? 'border-status-critical/40 bg-status-critical-bg/30'
+                      : 'border-transparent bg-muted/40'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold shrink-0',
+                      active ? 'bg-status-critical text-white' : 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {stage.letter}
+                  </div>
+                  <span
+                    className={cn(
+                      'text-sm font-semibold',
+                      active ? 'text-status-critical' : 'text-foreground'
+                    )}
+                  >
+                    {stage.name}
+                  </span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">{stage.criteria}</span>
+                </div>
+              );
+            })}
+          </div>
+        </CollapsibleModuleCard>
 
         <CollapsibleModuleCard
           expanded={optimisationExpanded}
@@ -407,96 +477,110 @@ const Optirenal = () => {
 
         <Card className="bg-card shadow-sm">
           <CardHeader className="px-4 sm:px-6">
-            <CardTitle className="text-base sm:text-lg">Monitorage rénal</CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <CardTitle className="text-base sm:text-lg">
+                Monitorage {monitoringTimeRange === 'stay' ? 'sur le séjour' : `sur ${monitoringTimeRange}`}
+              </CardTitle>
+              <TimeWindowSelector
+                value={monitoringTimeRange as TimeWindowValue}
+                onChange={(v) => setMonitoringTimeRange(v)}
+                includeStay={true}
+                size="sm"
+              />
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {renalGroups.map((group) => {
-              const abnormal = group.metrics.filter((m) => m.status !== 'normal').length;
-              return (
-                <CollapsibleModuleCard
-                  key={group.title}
-                  variant="nested"
-                  expanded={groupsOpen[group.title] ?? false}
-                  onToggle={() => toggleGroup(group.title)}
-                  headerIcon={
-                    <CountCircle
-                      count={abnormal}
-                      total={group.metrics.length}
-                      status={groupStatus(group.metrics)}
+          <CardContent>
+            <Card ref={chartRef} className="border-2 border-border">
+              <CardHeader className="px-3 sm:px-6">
+                <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                  <CardTitle className="text-sm sm:text-lg">
+                    {monitoringTimeRange === 'stay'
+                      ? 'Monitorage des cibles recommandées (Séjour)'
+                      : `Monitorage des cibles recommandées (${monitoringTimeRange.toUpperCase()})`}
+                  </CardTitle>
+                  <label className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showTargetZones}
+                      onChange={(e) => setShowTargetZones(e.target.checked)}
+                      className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-border text-primary focus:ring-primary"
                     />
-                  }
-                  title={group.title}
-                  subtitle={
-                    abnormal === 0
-                      ? 'Tous les paramètres dans les cibles'
-                      : `${abnormal} paramètre${abnormal > 1 ? 's' : ''} hors cible`
-                  }
-                  contentClassName="px-3 sm:px-6 pb-4"
-                >
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 sm:gap-8 pt-4 border-t">
-                    {group.metrics.map((metric) => (
-                      <RenalMetricTile key={metric.label} metric={metric} />
-                    ))}
-                  </div>
-                </CollapsibleModuleCard>
-              );
-            })}
-
-            <CollapsibleModuleCard
-              variant="nested"
-              expanded={groupsOpen['Classification RIFLE'] ?? false}
-              onToggle={() => toggleGroup('Classification RIFLE')}
-              headerIcon={
-                <StatusIconCircle status="critical">
-                  <span className="text-lg sm:text-xl">{currentRifleStage}</span>
-                </StatusIconCircle>
-              }
-              title="Classification RIFLE"
-              subtitle={
-                <>
-                  Stade actuel :{' '}
-                  <span className="font-semibold text-status-critical">
-                    {rifleStages.find((s) => s.letter === currentRifleStage)?.name}
-                  </span>
-                </>
-              }
-              contentClassName="px-3 sm:px-6 pb-4"
-            >
-              <div className="space-y-2 pt-4 border-t">
-                {rifleStages.map((stage) => {
-                  const active = stage.letter === currentRifleStage;
-                  return (
-                    <div
-                      key={stage.letter}
-                      className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2 border',
-                        active
-                          ? 'border-status-critical/40 bg-status-critical-bg/30'
-                          : 'border-transparent bg-muted/40'
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          'w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold shrink-0',
-                          active ? 'bg-status-critical text-white' : 'bg-muted text-muted-foreground'
-                        )}
-                      >
-                        {stage.letter}
+                    <span className="hidden sm:inline">Zones cibles</span>
+                    <span className="sm:hidden">Cibles</span>
+                  </label>
+                </div>
+              </CardHeader>
+              <CardContent className="px-3 sm:px-6">
+                <div className="space-y-4 pb-4">
+                  {renalGroups.map((group) => (
+                    <div key={group.title}>
+                      <div className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                        {group.title}
                       </div>
-                      <span
-                        className={cn(
-                          'text-sm font-semibold',
-                          active ? 'text-status-critical' : 'text-foreground'
-                        )}
-                      >
-                        {stage.name}
-                      </span>
-                      <span className="text-xs sm:text-sm text-muted-foreground">{stage.criteria}</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4">
+                        {group.metrics.map((metric) => {
+                          const isSelected = selectedIndicators.includes(metric.label);
+                          return (
+                            <div
+                              key={metric.label}
+                              className={cn(
+                                'flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-all border-2',
+                                isSelected ? 'bg-card shadow-sm' : 'border-transparent hover:bg-muted/50'
+                              )}
+                              style={isSelected ? { borderColor: getIndicatorColor(metric.label) } : undefined}
+                              onClick={() => toggleIndicator(metric.label)}
+                            >
+                              <Tooltip delayDuration={200}>
+                                <TooltipTrigger asChild>
+                                  <div className={cn('w-3 h-3 rounded-full mt-1 shrink-0 cursor-help', STATUS_DOT[metric.status])} />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs max-w-60">
+                                  <div className="font-semibold">{STATUS_LABEL[metric.status]}</div>
+                                  {metric.help && <div className="text-muted-foreground mt-1">{metric.help}</div>}
+                                </TooltipContent>
+                              </Tooltip>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground">
+                                  {metric.label} :{' '}
+                                  <span className={STATUS_TEXT[metric.status]}>
+                                    {metric.displayValue ?? metric.value}
+                                  </span>{' '}
+                                  <span className="text-xs text-muted-foreground">{metric.unit}</span>
+                                </p>
+                                <p className="text-xs text-muted-foreground">{metric.reference ?? metric.note}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            </CollapsibleModuleCard>
+                  ))}
+                </div>
+
+                <div className={selectedIndicators.length === 0 ? 'h-24 sm:h-32' : ''}>
+                  {selectedIndicators.length === 0 ? (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-muted-foreground text-xs sm:text-base text-center px-2">
+                        Sélectionnez des indicateurs ci-dessus pour afficher leur évolution
+                      </p>
+                    </div>
+                  ) : (
+                    <OptimisationChart
+                      data={monitoringChartData}
+                      series={selectedIndicators.map((label) => {
+                        const range = allMonitoringMetrics.find((m) => m.label === label)?.range;
+                        return {
+                          label,
+                          color: getIndicatorColor(label),
+                          targetZone:
+                            showTargetZones && range ? { min: range.targetMin, max: range.targetMax } : undefined,
+                        };
+                      })}
+                    />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </CardContent>
         </Card>
       </main>
