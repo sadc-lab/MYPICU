@@ -1,5 +1,6 @@
 import { Patient, PatientQueryParams, PatientResponse } from '@/types/patient.types';
 import { supabase } from '@/integrations/supabase/client';
+import { getTemporaryPatientProfile } from '@/services/temporaryPatient.service';
 
 /**
  * Patient Service
@@ -77,6 +78,7 @@ class PatientService {
    * Fetch a single patient by ID
    */
   async getPatientById(id: string): Promise<Patient | null> {
+    if (id.startsWith("demo-")) return getTemporaryPatientProfile(id);
     const { data, error } = await supabase.from('patients').select('*').eq('id', id).maybeSingle();
     if (error) throw error;
     return data ? transformDbPatient(data) : null;

@@ -95,6 +95,21 @@ class SyncBatchTests(unittest.TestCase):
         self.assertEqual(run_sync()['status'], 'completed')
         self.assertEqual(sorted(harvest.call_args.args[0]), ['#1', '#2'])
 
+    @patch('optibrain_module.request_indicators')
+    @patch('worker.queries.harvest')
+    @patch('worker.local')
+    @patch('worker.refresh_census', return_value=['#1'])
+    def test_restart_with_fresh_patients_skips_empty_batch(self, census, local, harvest, indicators):
+        local.return_value.__enter__.return_value.execute.side_effect = census_mock(['#1'])
+
+        result = run_sync(force=False)
+
+        self.assertEqual(result, {
+            'status': 'completed', 'current_patients': 1, 'refreshed': 0,
+        })
+        harvest.assert_not_called()
+        indicators.assert_not_called()
+
     @patch('optibrain_module.request_indicators', return_value={})
     @patch('optibrain_module.optibrain_export.build_payload', return_value={})
     @patch('worker.demographics', return_value={'intime': {}, 'dateofbirth': {}})

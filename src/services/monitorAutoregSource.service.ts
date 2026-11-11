@@ -36,7 +36,7 @@ export interface MonitorAutoregSource {
   csv: string;
   /** Traceable name recorded alongside the results. */
   fileName: string;
-  /** Buckets holding both PIC and PAM — the pairs PRx can be computed from. */
+  /** Buckets holding PIC and PPC (measured or derived) for PRx computation. */
   pairedSamples: number;
   /** Rows read per channel, before pairing. */
   rawCounts: { pic: number; pam: number; ppc: number };
@@ -126,8 +126,8 @@ const round1 = (v: number) => Math.round(v * 10) / 10;
 
 /**
  * Assembles the patient's PIC/PAM/PPC monitoring series into CSV text for the
- * autoregulation analysis. Returns null when the patient has no bucket carrying
- * both PIC and PAM, i.e. nothing a PRx could ever be computed from.
+ * autoregulation analysis. Returns null when the patient has neither paired
+ * PIC/PPC nor PIC/PAM from which PPC can be derived.
  *
  * Reads are subject to the ward-based RLS: an unauthenticated caller, or one
  * without access to this patient's ward, simply sees no rows.
@@ -148,9 +148,9 @@ export async function loadAutoregSourceFromVitals(
   const pam = bucketMeans(pamChannel.points);
   const ppc = bucketMeans(ppcChannel.points);
 
-  // PRx correlates PIC with PAM: a bucket missing either one is unusable.
+  // Prefer measured PPC; PAM can supply PPC = PAM − PIC when the monitor lacks PPC.
   const buckets = Array.from(pic.keys())
-    .filter((t) => pam.has(t))
+    .filter((t) => ppc.has(t) || pam.has(t))
     .sort((a, b) => a - b);
 
   if (buckets.length === 0) return null;
@@ -159,14 +159,12 @@ export async function loadAutoregSourceFromVitals(
   const lines = ["Horodate,PIC,PAM,PPC"];
   for (const t of buckets) {
     const picValue = pic.get(t) as number;
-    const pamValue = pam.get(t) as number;
     let ppcValue = ppc.get(t);
     if (ppcValue === undefined) {
-      // PPC = PAM − PIC. Needed because the PRx curve bins on the PPC axis, and
-      // some patients are charted without a computed PPC channel.
-      ppcValue = pamValue - picValue;
+      ppcValue = (pam.get(t) as number) - picValue;
       ppcDerived = true;
     }
+    const pamValue = pam.get(t) ?? ppcValue + picValue;
     lines.push(
       `${new Date(t).toISOString()},${round1(picValue)},${round1(pamValue)},${round1(ppcValue)}`,
     );

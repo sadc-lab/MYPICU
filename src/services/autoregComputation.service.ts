@@ -1,6 +1,6 @@
 // Autoregulation computation service for the standalone /autoreg study page.
 // Parses user-uploaded CSV or JSON files and computes an autoregulation index:
-//   - PRx mode  : correlation PIC (ICP) ↔ PAM, binned by PPC  → PPC optimale
+//   - PRx mode  : correlation PIC (ICP) ↔ PPC, binned by PPC  → PPC optimale
 //   - COx mode  : correlation rSO2 (NIRS) ↔ PAM, binned by PAM → PAM optimale
 // The mode is auto-detected from the columns present in the file (NIRS → COx).
 
@@ -232,8 +232,8 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
       cause: "Aucune donnée exploitable détectée dans le fichier.",
       steps: [
         "Vérifiez que le fichier contient bien des lignes horodatées.",
-        "Formats acceptés : CSV/Excel avec en-têtes horodatées, soit NIRS + PAM (rSO₂, PAM) pour le COx, soit PIC + PAM + PPC pour le PRx ; JSON Fisher également accepté.",
-        "Assurez-vous que les colonnes de signal (rSO₂/NIRS ou PIC/PPC) et PAM ne sont pas vides.",
+        "Formats acceptés : CSV/Excel avec en-têtes horodatées, soit NIRS + PAM (rSO₂, PAM) pour le COx, soit PIC + PPC pour le PRx ; JSON Fisher également accepté.",
+        "Assurez-vous que les colonnes requises pour le mode choisi ne sont pas vides.",
       ],
     };
   }
@@ -293,10 +293,9 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
     return null;
   }
 
-  // ----- PRx mode : PIC (ICP) ↔ PAM, binned by PPC -----
+  // ----- PRx mode : PIC (ICP) ↔ PPC, binned by PPC -----
   const missing = {
     PIC: samples.filter((s) => s.pic === null).length,
-    PAM: samples.filter((s) => s.pam === null).length,
     PPC: samples.filter((s) => s.ppc === null).length,
   };
   const emptyFields = Object.entries(missing).filter(([, n]) => n === samples.length).map(([k]) => k);
@@ -304,17 +303,17 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
     return {
       cause: `Champs entièrement vides : ${emptyFields.join(', ')}.`,
       steps: [
-        "Aucun signal NIRS (rSO₂) détecté : le fichier est traité en mode PRx (PIC/PAM/PPC).",
-        "Pour le PRx, PIC, PAM et PPC doivent être présents (PPC peut être calculé si PAM et PIC le sont).",
+        "Aucun signal NIRS (rSO₂) détecté : le fichier est traité en mode PRx (PIC/PPC).",
+        "Pour le PRx, PIC et PPC doivent être présents. La PAM peut être incluse pour le graphique.",
         "Pour une analyse COx non invasive, importez plutôt un fichier avec les colonnes rSO₂ (NIRS) et PAM.",
       ],
     };
   }
 
-  const complete = samples.filter((s) => s.pic !== null && s.pam !== null && s.ppc !== null);
+  const complete = samples.filter((s) => s.pic !== null && s.ppc !== null);
   if (complete.length < REQUIRED_SAMPLES) {
     return {
-      cause: `Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent PIC, PAM et PPC exploitables.`,
+      cause: `Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent PIC et PPC exploitables.`,
       steps: [
         "Trop de valeurs manquantes : contrôlez les artefacts et les périodes de déconnexion du capteur.",
         "Réexportez le fichier sur une plage temporelle où les 3 signaux sont enregistrés simultanément.",
@@ -324,7 +323,6 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
 
   const constantFields = [
     { label: 'PIC', values: complete.map((s) => s.pic as number) },
-    { label: 'PAM', values: complete.map((s) => s.pam as number) },
     { label: 'PPC', values: complete.map((s) => s.ppc as number) },
   ].filter(({ values }) => new Set(values.map((v) => v.toFixed(3))).size < 2);
 
@@ -341,9 +339,9 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
         : `Signaux constants détectés : ${details}.`,
       steps: [
         allFlat
-          ? "Ce fichier ressemble à un export de résultats déjà calculés (ou un gabarit vide) : les canaux bruts PIC/PAM/PPC ne varient pas."
-          : "La corrélation PRx nécessite des variations physiologiques de PIC et PAM.",
-        "Pour calculer l'autorégulation, importez un enregistrement BRUT : rSO₂ + PAM (COx, non invasif) ou PIC + PAM + PPC (PRx).",
+          ? "Ce fichier ressemble à un export de résultats déjà calculés (ou un gabarit vide) : les canaux bruts PIC/PPC ne varient pas."
+          : "La corrélation PRx nécessite des variations physiologiques de PIC et PPC.",
+        "Pour calculer l'autorégulation, importez un enregistrement BRUT : rSO₂ + PAM (COx, non invasif) ou PIC + PPC (PRx).",
         "Vérifiez que les capteurs étaient connectés et non zérotés artificiellement.",
         "Évitez les périodes de sédation profonde stable où les signaux ne varient pas.",
       ],
@@ -370,8 +368,7 @@ function pearson(xs: number[], ys: number[]): number | null {
   return num / den;
 }
 
-// Compute the autoregulation index as a rolling Pearson correlation between PAM
-// and the tissue signal (PIC for PRx, rSO₂/NIRS for COx).
+// Compute PRx from PIC/PPC and COx from rSO₂/PAM.
 export function computeIndex(
   samples: RawSample[],
   windowSize = 30,
@@ -382,7 +379,7 @@ export function computeIndex(
     const xs: number[] = [];
     const ys: number[] = [];
     for (let j = i - windowSize + 1; j <= i; j++) {
-      const p = samples[j].pam;
+      const p = mode === "cox" ? samples[j].pam : samples[j].ppc;
       const c = mode === "cox" ? samples[j].nirs : samples[j].pic;
       if (p !== null && c !== null) {
         xs.push(p);
@@ -394,7 +391,7 @@ export function computeIndex(
   return out;
 }
 
-// Backward-compatible alias (PRx = correlation PIC/PAM).
+// Backward-compatible alias (PRx = correlation PIC/PPC).
 export function computePRx(samples: RawSample[], windowSize = 30): DerivedSample[] {
   return computeIndex(samples, windowSize, "prx");
 }
@@ -506,8 +503,8 @@ export function runAnalysis(samples: RawSample[], windowSize = 30, binSize = 5):
       : 0;
 
   // ---- Diagnostics for the clinical-interpretation banner ----
-  const axisOf = (s: DerivedSample) => (mode === "cox" ? s.pam : s.pic);
-  const paired = derived.filter((s) => s.prx !== null && s.pam !== null && axisOf(s) !== null);
+  const axisOf = (s: DerivedSample) => (mode === "cox" ? s.pam : s.ppc);
+  const paired = derived.filter((s) => s.prx !== null && axisOf(s) !== null);
   const usable = paired.filter((s) => {
     const a = mode === "cox" ? s.pam : s.ppc;
     return a !== null && a >= PHYS_MIN && a <= PHYS_MAX;
@@ -651,4 +648,3 @@ export function resultsToCSV(result: AutoregResult, meta: CSVMetadata = {}): str
   }
   return lines.join("\n");
 }
-

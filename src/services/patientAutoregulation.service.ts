@@ -40,6 +40,7 @@ export function pickPrimary(results: AutoregulationResult[]): AutoregulationResu
 export async function loadAutoregulation(
   patientId: string,
 ): Promise<AutoregulationResult[]> {
+  if (patientId.startsWith("demo-")) return [];
   // Patient ids are stored with their leading '#', as '#' + encounterid.
   // Stripping it matched no rows and the panel read as never assessed.
   const dbPatientId = patientId.startsWith("#") ? patientId : `#${patientId}`;

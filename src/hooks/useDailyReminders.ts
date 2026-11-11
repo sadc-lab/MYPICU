@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isTemporaryPatientId } from '@/services/temporaryPatient.service';
 
 interface DailyReminder {
   id: number;
@@ -25,7 +26,7 @@ const keys = {
 export function useDailyReminders(patientId: string | null) {
   const { data } = useQuery({
     queryKey: keys.byPatient(patientId ?? ''),
-    enabled: !!patientId,
+    enabled: !!patientId && !isTemporaryPatientId(patientId),
     staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<DailyReminder[]> => {
       const { data, error } = await supabase

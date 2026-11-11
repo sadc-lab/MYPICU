@@ -218,7 +218,9 @@ def run_sync(patient_id=None, force=True):
                 if pid not in fresh_cache or any(
                   (module.name, pid) not in fresh_modules for module in ACTIVE_MODULES)
             ]
-            refreshed = 0 if sync_batch(db, stale) is None else len(stale)
+            refreshed = 0
+            if stale:
+                refreshed = 0 if sync_batch(db, stale) is None else len(stale)
             return {'status': 'partial_error' if refreshed != len(stale) else 'completed',
                     'current_patients': len(current), 'refreshed': refreshed}
         finally:

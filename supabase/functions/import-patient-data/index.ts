@@ -20,6 +20,7 @@ const TIME_SERIES_KEYS = [
   "Variable_PIC",
   "Variable_PPC",
   "Variable_PAM",
+  "Variable_rSO2",
   "Variable_PVC",
   "Variable_temperature",
   "Variable_EtCO2",

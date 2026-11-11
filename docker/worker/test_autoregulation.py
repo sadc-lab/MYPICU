@@ -67,6 +67,20 @@ class CandidateTests(unittest.TestCase):
         self.assertEqual(candidates['prx'], [])
 
 
+class RefreshSelectionTests(unittest.TestCase):
+    def test_recent_cox_result_does_not_suppress_prx(self):
+        fresh = {('#1', 'cox')}
+
+        self.assertEqual(
+            worker.autoregulation_to_refresh(['#1'], 'prx', fresh),
+            ['#1'],
+        )
+        self.assertEqual(
+            worker.autoregulation_to_refresh(['#1'], 'cox', fresh),
+            [],
+        )
+
+
 class ResultTranslationTests(unittest.TestCase):
     RECAP = {'Horodate': '2026-01-01 12:00:00', 'Global_Optimal_PPC': 65.0,
              'Global_Inferior_Limit': 50.0, 'Global_Superior_Limit': 75.0,
@@ -109,13 +123,6 @@ class ResultTranslationTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0][10].obj, [self.RECAP])
 
-    def test_a_result_without_an_optimum_is_not_recorded(self):
-        # No reliable plateau leaves the optimum null. Storing it would show a
-        # value the clinician reads as "not yet calculated".
-        recap = dict(self.RECAP, Global_Optimal_PPC=None)
-        payload = {16927: {'P16927_AR_3min_Fisher': [recap]}}
-        self.assertEqual(worker.autoregulation_rows(payload, 'prx'), [])
-
     def test_latest_reliable_window_is_retained_when_final_row_has_no_optimum(self):
         invalid = dict(self.RECAP, Horodate=None, Global_Optimal_PPC=None,
                        Global_Inferior_Limit=None, Global_Superior_Limit=None)
@@ -129,6 +136,25 @@ class ResultTranslationTests(unittest.TestCase):
         self.assertEqual(rows[0][2:5], (65.0, 50.0, 75.0))
         self.assertEqual(rows[0][10].obj[1]['Global_Inferior_Limit'], None)
 
+    def test_summary_limits_come_from_the_same_row_as_the_optimum(self):
+        later = dict(self.RECAP, Horodate='2026-01-01 12:03:00',
+                     Global_Optimal_PPC=67.0, Global_Inferior_Limit=None,
+                     Global_Superior_Limit=78.0)
+        rows = worker.autoregulation_rows(
+            {16927: {'P16927_AR_3min_Fisher': [self.RECAP, later]}}, 'prx')
+
+        self.assertEqual(rows[0][2:5], (67.0, None, 78.0))
+
+    def test_result_without_any_optimum_keeps_the_recap(self):
+        recap = dict(self.RECAP, Global_Optimal_PPC=None,
+                     Global_Inferior_Limit=None, Global_Superior_Limit=None)
+        rows = worker.autoregulation_rows(
+            {16927: {'P16927_AR_3min_Fisher': [recap]}}, 'prx')
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0][2:5], (None, None, None))
+        self.assertEqual(rows[0][10].obj, [recap])
+
     def test_missing_recap_is_skipped(self):
         payload = {16927: {'P16927_Full_AR_Table_3min_Fisher': [{'PIC': 12.0}]}}
         self.assertEqual(worker.autoregulation_rows(payload, 'prx'), [])
@@ -139,11 +165,12 @@ class ResultTranslationTests(unittest.TestCase):
         rows = worker.autoregulation_rows(payload, 'cox')
         self.assertEqual(rows[0][6:8], ('PAM', 'NIRS1'))
 
-    def test_one_failing_patient_does_not_hide_the_others(self):
+    def test_recaps_are_kept_for_all_patients_even_without_an_optimum(self):
         payload = {16927: {'P16927_AR_3min_Fisher': [self.RECAP]},
                    16930: {'P16930_AR_3min_Fisher': [dict(self.RECAP, Global_Optimal_PPC=None)]}}
         rows = worker.autoregulation_rows(payload, 'prx')
-        self.assertEqual([r[0] for r in rows], ['#16927'])
+        self.assertEqual([r[0] for r in rows], ['#16927', '#16930'])
+        self.assertEqual(rows[1][2:5], (None, None, None))
 
 
 class ResultPersistenceTests(unittest.TestCase):

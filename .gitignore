@@ -30,3 +30,4 @@ dist-ssr
 .env.icca
 .env.local
 .env.*.local
+*.pyc

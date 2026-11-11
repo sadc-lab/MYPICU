@@ -145,6 +145,7 @@ def autoregulation_rows(payload, mode, computed_at=None):
             if not timestamped_recap:
                 log.error('Autoregulation table has no timestamps for encounter %s', encounter)
                 continue
+
         def number(*names):
             for name in names:
                 value = None
@@ -159,16 +160,29 @@ def autoregulation_rows(payload, mode, computed_at=None):
                         return None
             return None
 
-        optimal = number('Global_Optimal_PPC', 'Global_Optimal_PAM')
-        if optimal is None:
-            continue
+        optimal_column = 'Global_Optimal_PPC' if mode == 'prx' else 'Global_Optimal_PAM'
+        summary = next(
+            (record for record in reversed(timestamped_recap)
+             if record.get(optimal_column) is not None),
+            None,
+        )
+
+        def summary_number(name):
+            if summary is None:
+                return None
+            try:
+                value = summary.get(name)
+                return None if value is None else float(value)
+            except (TypeError, ValueError):
+                return None
+
         rows.append((
             '#' + str(encounter),
             mode,
-            optimal,
-            number('Global_Inferior_Limit'),
-            number('Global_Superior_Limit'),
-            number('PRx', 'COx'),
+            summary_number(optimal_column),
+            summary_number('Global_Inferior_Limit'),
+            summary_number('Global_Superior_Limit'),
+            number('PRx' if mode == 'prx' else 'COx'),
             'PPC' if mode == 'prx' else 'PAM',
             'PIC' if mode == 'prx' else 'NIRS1',
             int(number('Horodate_count') or 0) or None,
@@ -199,13 +213,20 @@ def store_autoregulation(db, rows):
             WHERE (patient_autoregulation.optimal_pressure,
                    patient_autoregulation.inferior_limit,
                    patient_autoregulation.superior_limit,
-                   patient_autoregulation.min_index)
-                  IS DISTINCT FROM (excluded.optimal_pressure,
-                                    excluded.inferior_limit,
-                                    excluded.superior_limit,
-                                    excluded.min_index)''',
-                row)
+               patient_autoregulation.min_index,
+               patient_autoregulation.raw)
+              IS DISTINCT FROM (excluded.optimal_pressure,
+                                excluded.inferior_limit,
+                                excluded.superior_limit,
+                                excluded.min_index,
+                                excluded.raw)''',
+            row)
     return len(rows)
+
+
+def autoregulation_to_refresh(eligible, mode, fresh):
+    """Keep freshness isolated by mode so COx cannot suppress a PRx pass."""
+    return [patient for patient in eligible if (patient, mode) not in fresh]
 
 
 async def scheduled_cycle(patients):
@@ -240,13 +261,13 @@ def refresh_autoregulation(db, patients):
         series = queries.autoreg_series(conn, [int(p.removeprefix('#')) for p in patients], since)
 
     candidates = autoregulation_candidates(series, patients)
-    fresh = {row['patient_id'] for row in db.execute(
-        """SELECT DISTINCT patient_id FROM public.patient_autoregulation
+    fresh = {(row['patient_id'], row['mode']) for row in db.execute(
+        """SELECT patient_id, mode FROM public.patient_autoregulation
            WHERE computed_at > now() - (%s * interval '1 minute')""", (15,))}
 
     stored = 0
     for mode, eligible in candidates.items():
-        todo = [p for p in eligible if p not in fresh]
+        todo = autoregulation_to_refresh(eligible, mode, fresh)
         if not todo:
             continue
         autoreg_data = optibrain_export.build_autoreg_payload(series, todo)

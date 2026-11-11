@@ -188,7 +188,7 @@ const nodes: OntologyNode[] = [
     kind: "derived",
     label: "PRx",
     module: "optibrain",
-    definition: "Index de réactivité pressionnelle — corrélation glissante PIC/PAM (fenêtre ~30 min).",
+    definition: "Index de réactivité pressionnelle — corrélation glissante PIC/PPC (fenêtre ~30 min).",
     thresholds: {
       unit: "index (-1 à 1)",
       normal: { max: 0.3 },
@@ -286,7 +286,7 @@ const edges: OntologyEdge[] = [
   { id: "e6", from: "ind_pam", to: "ind_ppc", kind: "determines", label: "PPC = PAM − PIC" },
   { id: "e7", from: "ind_pic", to: "ind_ppc", kind: "determines", label: "PIC ↑ ⇒ PPC ↓" },
   { id: "e8", from: "ind_pic", to: "der_prx", kind: "computed_from" },
-  { id: "e9", from: "ind_pam", to: "der_prx", kind: "computed_from", label: "corrélation glissante 30 min" },
+  { id: "e9", from: "ind_ppc", to: "der_prx", kind: "computed_from", label: "corrélation glissante 30 min" },
   { id: "e10", from: "der_prx", to: "der_ppcopt", kind: "computed_from", label: "minimum de la courbe PRx (4h)" },
   { id: "e11", from: "der_ppcopt", to: "der_zone", kind: "determines", label: "LLA / ULA autour de PPCopt" },
 

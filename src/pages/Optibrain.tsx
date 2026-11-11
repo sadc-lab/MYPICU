@@ -53,6 +53,11 @@ import {
   TimeSeriesDataPoint,
 } from "@/services/patientFileData.service";
 import { useLastViewed } from "@/hooks/useLastViewed";
+import {
+  getTemporaryPatient,
+  isTemporaryPatientId,
+} from "@/services/temporaryPatient.service";
+import { computeTemporaryAutoregulation } from "@/services/temporaryAutoregulation.service";
 import { useYAxisZoom } from "@/hooks/useYAxisZoom";
 import { useSharedTimeWindow } from "@/hooks/useSharedTimeWindow";
 import { ChartTimeRangeProvider } from "@/contexts/ChartTimeRangeContext";
@@ -107,9 +112,13 @@ type MonitoringChartPoint = {
 const Optibrain = () => {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patient");
+  const isTemporaryPatient = patientId ? isTemporaryPatientId(patientId) : false;
+  const temporaryPatient = isTemporaryPatient && patientId
+    ? getTemporaryPatient(patientId)
+    : null;
   const metricParam = searchParams.get("metric");
   const { data: patient, isLoading: patientLoading } = usePatient(patientId);
-  const { previousVisitAt } = useLastViewed(patientId);
+  const { previousVisitAt } = useLastViewed(isTemporaryPatient ? null : patientId);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [optimisationExpanded, setOptimisationExpanded] = useState(true);
@@ -281,7 +290,9 @@ const Optibrain = () => {
     }
     let cancelled = false;
     setAutoregulationResults([]);
-    loadPatientAutoregulation(patientId)
+    (isTemporaryPatient
+      ? Promise.resolve(computeTemporaryAutoregulation(patientId))
+      : loadPatientAutoregulation(patientId))
       .then((results) => {
         if (cancelled) return;
         setAutoregulationResults(results);
@@ -292,7 +303,7 @@ const Optibrain = () => {
         toast.error("Impossible de charger les résultats d'autorégulation.");
       });
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, isTemporaryPatient]);
 
   // Map time range to hours for adherence calculation
   const getHoursFromTimeRangeForAdherence = (range: string): number => {
@@ -615,7 +626,21 @@ const Optibrain = () => {
     [patientFileData],
   );
   const activeAutoregulationResult = useMemo(
-    () => pickAutoregulationWindow(autoregulationResults, availableAutoregulationVariables),
+    () => pickAutoregulationWindow(autoregulationResults, availableAutoregulationVariables)
+      ?? autoregulationResults.find((result) =>
+        hasAutoregulationInputs(result.mode, availableAutoregulationVariables)
+        && getAutoregulationWindowSeries(result).some(
+          (point) =>
+            point.inferiorLimit !== null
+            && point.superiorLimit !== null
+            && point.inferiorLimit <= point.superiorLimit,
+        ),
+      )
+      ?? autoregulationResults.find((result) =>
+        hasAutoregulationInputs(result.mode, availableAutoregulationVariables)
+        && Boolean(result.rawTable?.length),
+      )
+      ?? null,
     [autoregulationResults, availableAutoregulationVariables],
   );
   const autoregulationWindowSeries = useMemo(
@@ -1267,6 +1292,13 @@ const Optibrain = () => {
       <PatientHeader currentPage="optibrain" />
 
       <main className="container mx-auto px-4 sm:px-6 pb-8 max-w-[1600px]">
+        {isTemporaryPatient && (
+          <div className="mb-6 rounded-md border border-amber-500/50 bg-amber-50/50 px-4 py-3 text-sm dark:bg-amber-950/20">
+            {temporaryPatient?.deidentified && !temporaryPatient.synthetic
+              ? "Données réelles dé-identifiées, temporaires et en lecture seule. Pas de sauvegarde ni de synchronisation OptiBrain; ne pas utiliser pour des décisions cliniques."
+              : "Données synthétiques, temporaires et en lecture seule. Pas de sauvegarde ni de synchronisation OptiBrain; ne pas utiliser pour des décisions cliniques."}
+          </div>
+        )}
         <ChartTimeRangeProvider>
         <div className="mb-6">
           <VitalSignsPanel patientFileData={patientFileData} />

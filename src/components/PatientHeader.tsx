@@ -12,12 +12,13 @@ import stateIcon from "@/assets/stats-icon.svg";
 
 interface PatientHeaderProps {
   currentPage: "optistate" | "optibrain";
+  patientIdOverride?: string;
 }
 
-export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
+export const PatientHeader = ({ currentPage, patientIdOverride }: PatientHeaderProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const patientId = searchParams.get("patient");
+  const patientId = patientIdOverride ?? searchParams.get("patient");
   const { data: patient, isLoading } = usePatient(patientId);
   const { reminders: dailyReminders } = useDailyReminders(patientId);
   const [showReminders, setShowReminders] = useState(false);

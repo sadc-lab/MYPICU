@@ -1,6 +1,10 @@
 // Service to load full patient data from Supabase (or JSON files as fallback)
 // Patient data includes time-series vital signs, medications, and clinical data
 import { loadPatientDataFromSupabase, getAvailablePatientIdsFromSupabase } from './supabasePatientData.service';
+import {
+  getTemporaryPatient,
+  isTemporaryPatientId,
+} from './temporaryPatient.service';
 
 export interface TimeSeriesDataPoint {
   charttime: string;
@@ -74,6 +78,9 @@ export function getVariableKeyFromLabel(label: string): string {
 let knownPatientIds: string[] | null = null;
 
 export async function loadPatientFileData(patientId: string): Promise<PatientFileData | null> {
+  if (isTemporaryPatientId(patientId)) {
+    return getTemporaryPatient(patientId)?.data ?? null;
+  }
   return loadPatientDataFromSupabase(patientId);
 }
 
@@ -98,6 +105,7 @@ export async function refreshAvailablePatientIds(): Promise<string[]> {
 // Eligibility check for the legacy synchronous chart callers. Every encounter
 // may have cached data; the authenticated Supabase load determines availability.
 export function hasPatientFileData(patientId: string): boolean {
+  if (isTemporaryPatientId(patientId)) return getTemporaryPatient(patientId) !== null;
   const normalizedId = patientId.replace("#", "");
   return /^\d+$/.test(normalizedId);
 }

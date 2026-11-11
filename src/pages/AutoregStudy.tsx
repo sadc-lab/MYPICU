@@ -180,7 +180,7 @@ const AutoregStudy = () => {
       );
       if (savedCurve.length === 0 && data.optimal_ppc === null) {
         setError(
-          `Le dernier fichier enregistré (${data.file_name ?? 'sans nom'}) ne contient pas de résultat calculable. Réimportez un fichier avec des variations exploitables de PIC/PAM/PPC.`,
+          `Le dernier fichier enregistré (${data.file_name ?? 'sans nom'}) ne contient pas de résultat calculable. Réimportez un fichier avec des variations exploitables de PIC/PPC.`,
         );
         return;
       }
@@ -253,7 +253,7 @@ const AutoregStudy = () => {
   // Picking a patient prefills the pseudonym and looks for a recording, so a known
   // subject can be analysed without any manual import. Two sources are tried, in
   // order: the raw file bundled with the app, then — for patients without one —
-  // the PIC/PAM series already charted in Supabase.
+  // the PIC/PPC series already charted in Supabase.
   const selectSourcePatient = async (patientId: string) => {
     setSourcePatientId(patientId);
     setAddError(null);
@@ -703,7 +703,7 @@ const AutoregStudy = () => {
                 <CardDescription>
                   CSV, Excel (<code>.xlsx</code>) ou JSON Fisher. Deux modes détectés automatiquement :
                   <strong> COx</strong> non invasif (colonnes <code>rSO₂/NIRS, PAM</code>) ou
-                  <strong> PRx</strong> invasif (colonnes <code>PIC, PAM, PPC</code>).
+                  <strong> PRx</strong> invasif (colonnes <code>PIC, PPC</code>).
                 </CardDescription>
               </div>
               <TooltipProvider delayDuration={100}>
@@ -822,7 +822,7 @@ const AutoregStudy = () => {
                       <p className="flex items-center gap-1.5">
                         <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                         Données du moniteur trouvées : {monitorSource.pairedSamples} échantillons
-                        PIC + PAM appariés (moyenne par {monitorSource.bucketSeconds} s).
+                        PIC + PPC appariés (moyenne par {monitorSource.bucketSeconds} s).
                       </p>
                       <p className="text-muted-foreground">
                         Analyse en PRx à partir des séries enregistrées dans la base
@@ -839,8 +839,8 @@ const AutoregStudy = () => {
                   )}
                   {!probingRecording && sourcePatient && !sourceRecording && (
                     <p className="text-xs text-muted-foreground">
-                      Ni enregistrement livré avec l'application, ni série PIC + PAM exploitable dans
-                      la base pour ce patient : joignez le fichier ci-dessous.
+                      Ni enregistrement livré avec l'application, ni série PIC + PPC (ou PAM pour
+                      calculer la PPC) exploitable dans la base pour ce patient : joignez le fichier ci-dessous.
                     </p>
                   )}
                 </div>
@@ -909,7 +909,7 @@ const AutoregStudy = () => {
                 <FeatureCard
                   icon={<Brain className="h-5 w-5" />}
                   title="Index COx ou PRx"
-                  desc="Corrélation glissante rSO₂/PAM (COx, non invasif) ou PIC/PAM (PRx), fenêtre 30 échantillons."
+                  desc="Corrélation glissante rSO₂/PAM (COx, non invasif) ou PIC/PPC (PRx), fenêtre 30 échantillons."
                 />
                 <FeatureCard
                   icon={<LineChart className="h-5 w-5" />}
