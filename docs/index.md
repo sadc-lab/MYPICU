@@ -20,6 +20,7 @@ architecture
 deployment
 backup-restore
 optibrain-module
+user-guide
 ```
 
 ```{toctree}
