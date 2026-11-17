@@ -35,6 +35,7 @@ import intestineIcon from '@/assets/intestine-icon.svg';
 import { cn } from '@/lib/utils';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
 import { ModuleIndicatorDropdown } from '@/components/ModuleIndicatorDropdown';
+import { OrganClassifications } from '@/components/OrganClassifications';
 
 const MODULE_LABELS: Record<ModuleKey, string> = {
   optibrain: 'OptiBrain',
@@ -423,6 +424,8 @@ const Optistate = () => {
       <main className="container mx-auto px-6 pb-8 max-w-[1600px] space-y-6">
         {/* Vital signs presented as module-style metric cards (expanded on Optistate) */}
         <VitalSignsPanel defaultOpen />
+
+        <OrganClassifications patientId={patientId} patientFileData={patientFileData} />
 
         {/* Systèmes en alerte + Assembler les modules — un seul tout cohérent */}
         <Card className="shadow-sm">

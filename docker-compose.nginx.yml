@@ -6,6 +6,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.nginx
+      # Vite fige ces valeurs dans le bundle au moment du build : elles doivent
+      # être des arguments de build, pas des variables d'exécution (voir .env).
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
     ports:
       - "80:80"
     environment:

@@ -4,9 +4,15 @@
 //   TEAMS_APP_HOST=mypicu-chusip.vercel.app npm run teams:package
 //   npm run teams:package -- mypicu-chusip.vercel.app
 //
-// Produces teams/mypicu.zip — upload it in Teams via "Applications" ->
-// "Gérer vos applications" -> "Charger une application personnalisée", or in the
-// admin center under "Applications Teams" -> "Gérer les applications".
+// Pour le déploiement "étude seulement" (aucune route vers le tableau de bord
+// clinique) :
+//
+//   TEAMS_APP_HOST=mypicu-study.vercel.app npm run teams:package:study
+//
+// Produces teams/mypicu.zip (or teams/mypicu-study.zip) — upload it in Teams via
+// "Applications" -> "Gérer vos applications" -> "Charger une application
+// personnalisée", or in the admin center under "Applications Teams" -> "Gérer les
+// applications".
 
 import { execFileSync } from "node:child_process";
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -15,7 +21,12 @@ import { fileURLToPath } from "node:url";
 
 const teamsDir = resolve(dirname(fileURLToPath(import.meta.url)), "..", "teams");
 const buildDir = join(teamsDir, ".build");
-const outputZip = join(teamsDir, "mypicu.zip");
+
+// TEAMS_MANIFEST=study bascule vers teams/manifest.study.json et
+// teams/mypicu-study.zip (déploiement "étude seulement", sans tableau de bord).
+const variant = (process.env.TEAMS_MANIFEST ?? "").trim();
+const manifestFile = variant === "study" ? "manifest.study.json" : "manifest.json";
+const outputZip = join(teamsDir, variant === "study" ? "mypicu-study.zip" : "mypicu.zip");
 
 const host = (process.env.TEAMS_APP_HOST ?? process.argv[2] ?? "").trim();
 
@@ -35,8 +46,8 @@ if (host === "localhost" || host.startsWith("localhost:")) {
 }
 if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(host)) fail(`"${host}" ne ressemble pas à un nom de domaine.`);
 
-const manifest = readFileSync(join(teamsDir, "manifest.json"), "utf8");
-if (!manifest.includes("{{APP_HOST}}")) fail("manifest.json ne contient plus de marqueur {{APP_HOST}}.");
+const manifest = readFileSync(join(teamsDir, manifestFile), "utf8");
+if (!manifest.includes("{{APP_HOST}}")) fail(`${manifestFile} ne contient plus de marqueur {{APP_HOST}}.`);
 
 const resolved = manifest.replaceAll("{{APP_HOST}}", host);
 JSON.parse(resolved); // échouer ici plutôt que de livrer un manifeste invalide

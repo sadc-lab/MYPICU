@@ -14,6 +14,16 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Vite fige ces valeurs dans le bundle au moment du build — les passer en
+# variable d'exécution du conteneur n'aurait aucun effet. Fournir via
+# --build-arg (voir docker-compose.yml).
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ARG VITE_STUDY_ONLY=false
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+ENV VITE_STUDY_ONLY=$VITE_STUDY_ONLY
+
 # Build the application
 RUN npm run build
 
