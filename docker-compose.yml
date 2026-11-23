@@ -6,13 +6,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Vite fige ces valeurs dans le bundle au moment du build : elles doivent
+      # être des arguments de build, pas des variables d'exécution (voir .env).
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      # Supabase configuration (set these in .env file)
-      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
     restart: unless-stopped
     networks:
       - app-network

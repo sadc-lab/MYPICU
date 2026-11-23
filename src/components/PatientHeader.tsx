@@ -11,19 +11,21 @@ import lungsIcon from "@/assets/lungs-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
 import kidneyIcon from "@/assets/kidney-icon.svg";
 import intestineIcon from "@/assets/intestine-icon.svg";
+import { getDialysisStatus } from "@/utils/renalStatus";
+import { tr } from '@/i18n';
 
 
-const reminders = [
-  "Objectif de Bilan Entrée/Sortie",
-  "Prophylaxie Thrombose veineuse",
-  "Prophylaxie Ulcère de stress",
-  "Fréquence des radios",
-  "Fréquence des labos",
-  "Équipement à retirer",
-  "Limites d'alarmes et fréquence de surveillance",
-  "Mesures d'isolement",
-  "Plan de mobilisation",
-  "Transition vers traitement peros",
+const getReminders = () => [
+  tr("Objectif de Bilan Entrée/Sortie", "Fluid balance (in/out) target"),
+  tr("Prophylaxie Thrombose veineuse", "Venous thrombosis prophylaxis"),
+  tr("Prophylaxie Ulcère de stress", "Stress ulcer prophylaxis"),
+  tr("Fréquence des radios", "X-ray frequency"),
+  tr("Fréquence des labos", "Lab frequency"),
+  tr("Équipement à retirer", "Equipment to remove"),
+  tr("Limites d'alarmes et fréquence de surveillance", "Alarm limits and monitoring frequency"),
+  tr("Mesures d'isolement", "Isolation measures"),
+  tr("Plan de mobilisation", "Mobilisation plan"),
+  tr("Transition vers traitement peros", "Transition to oral treatment"),
 ];
 
 interface PatientHeaderProps {
@@ -36,9 +38,12 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   const patientId = searchParams.get("patient") || "#25";
   const { data: patient, isLoading } = usePatient(patientId);
   const [showReminders, setShowReminders] = useState(false);
+  const reminders = getReminders();
 
-  if (isLoading) return <div className="bg-card border-b border-border mb-4 sm:mb-6 p-4 text-center text-muted-foreground">Chargement...</div>;
+  if (isLoading) return <div className="bg-card border-b border-border mb-4 sm:mb-6 p-4 text-center text-muted-foreground">{tr("Chargement...", "Loading...")}</div>;
   if (!patient) return null;
+
+  const dialysis = getDialysisStatus(patientId);
 
   // Inactive tabs: pale grey bg + colored border if problematic.
   // Active tab: tinted bg matching severity (low opacity for readability).
@@ -108,8 +113,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               size="sm"
               onClick={() => navigate("/")}
               className="text-muted-foreground hover:text-foreground -ml-2 mb-1 px-2 gap-0.5"
-              title="Accueil"
-              aria-label="Accueil"
+              title={tr("Accueil", "Home")}
+              aria-label={tr("Accueil", "Home")}
               data-export-hide
             >
               <ChevronLeft className="h-3 w-3" />
@@ -123,9 +128,20 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
               <span>{patient.age}</span>
               <span>•</span>
               <span>{patient.weight}</span>
+              {dialysis && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/optirenal?patient=${encodeURIComponent(patientId)}`)}
+                  title={tr(`Début : ${dialysis.start}`, `Start: ${dialysis.start}`)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-status-critical/40 bg-status-critical-bg/30 px-2.5 py-0.5 text-xs font-semibold text-status-critical hover:bg-status-critical-bg/50 transition-colors"
+                >
+                  <span className="h-2 w-2 rounded-full bg-status-critical animate-pulse" />
+                  {tr('Dialyse en cours', 'Dialysis in progress')} · {dialysis.modality} · {dialysis.duration}
+                </button>
+              )}
             </div>
             <p className="text-xs sm:text-sm text-foreground mt-2">
-              <strong>Diagnostic:</strong> {patient.diagnosis}
+              <strong>{tr('Diagnostic:', 'Diagnosis:')}</strong> {patient.diagnosis}
             </p>
             {(patient.allergies || patient.intolerances) && (
               <div className="mt-2 space-y-1">
@@ -139,7 +155,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 {patient.intolerances && (
                   <div className="flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400">
                     <Ban className="h-3.5 w-3.5 shrink-0" />
-                    <span className="font-medium">Intolérances:</span>
+                    <span className="font-medium">{tr("Intolérances:", "Intolerances:")}</span>
                     <span>{patient.intolerances}</span>
                   </div>
                 )}
@@ -149,7 +165,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
             <Collapsible open={showReminders} onOpenChange={setShowReminders} className="mt-3">
               <CollapsibleTrigger className="flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors">
                 <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="font-medium">Rappels des objectifs quotidien({reminders.length})</span>
+                <span className="font-medium">{tr("Rappels des objectifs quotidien", "Daily goal reminders")}({reminders.length})</span>
                 <ChevronDown className={`h-4 w-4 transition-transform ${showReminders ? "rotate-180" : ""}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -167,7 +183,7 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-2 w-full lg:w-auto">
             <div className="text-left sm:text-right sm:mr-4">
-              <div className="text-xs text-muted-foreground mb-1">PELOD Score</div>
+              <div className="text-xs text-muted-foreground mb-1">{tr("Score PELOD", "PELOD score")}</div>
               <div className="text-2xl sm:text-3xl font-bold text-foreground">{patient.pelodScore}</div>
             </div>
 

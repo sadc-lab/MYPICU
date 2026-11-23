@@ -39,6 +39,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { ExportImageButton } from "@/components/ExportImageButton";
+import { tr } from '@/i18n';
 
 interface CopilotPromptGeneratorProps {
   patientId?: string;
@@ -123,13 +124,13 @@ const ORGAN_PASTILLES: Array<{
   {
     value: "cerveau",
     short: "OptiBrain",
-    full: "OptiBrain (neurologique)",
+    get full() { return tr("OptiBrain (neurologique)", "OptiBrain (neurological)"); },
     render: (active, severity) => renderSvgIcon(brainIcon, active, severity),
   },
   {
     value: "coeur",
     short: "OptiHeart",
-    full: "OptiHeart (cardiovasculaire)",
+    get full() { return tr("OptiHeart (cardiovasculaire)", "OptiHeart (cardiovascular)"); },
     render: (active, severity) => (
       <HeartIcon
         className={cn("h-6 w-6 transition-colors", heartColor(severity, active))}
@@ -139,25 +140,25 @@ const ORGAN_PASTILLES: Array<{
   {
     value: "poumons",
     short: "OptiLungs",
-    full: "OptiLungs (respiratoire)",
+    get full() { return tr("OptiLungs (respiratoire)", "OptiLungs (respiratory)"); },
     render: (active, severity) => renderSvgIcon(lungsIcon, active, severity),
   },
   {
     value: "renal",
     short: "OptiRenal",
-    full: "OptiRenal (rénal)",
+    get full() { return tr("OptiRenal (rénal)", "OptiRenal (renal)"); },
     render: (active, severity) => renderSvgIcon(kidneyIcon, active, severity),
   },
   {
     value: "gastro",
     short: "OptiGastro",
-    full: "OptiGastro (gastro-intestinal)",
+    get full() { return tr("OptiGastro (gastro-intestinal)", "OptiGastro (gastrointestinal)"); },
     render: (active, severity) => renderSvgIcon(intestineIcon, active, severity),
   },
   {
     value: "general",
     short: "OptiState",
-    full: "OptiState (global)",
+    get full() { return tr("OptiState (global)", "OptiState (overall)"); },
     render: (active, severity) => renderSvgIcon(stateIcon, active, severity),
   },
 ];
@@ -271,12 +272,12 @@ export const CopilotPromptGenerator = ({
     const ok = await copyToClipboard(generatedPrompt);
     if (ok) {
       setCopied(true);
-      toast({ title: "Copié", description: "Le prompt est dans votre presse-papiers." });
+      toast({ title: tr("Copié", "Copied"), description: tr("Le prompt est dans votre presse-papiers.", "The prompt is in your clipboard.") });
       setTimeout(() => setCopied(false), 2000);
     } else {
       toast({
-        title: "Erreur",
-        description: "Impossible de copier. Sélectionnez le texte manuellement.",
+        title: tr("Erreur", "Error"),
+        description: tr("Impossible de copier. Sélectionnez le texte manuellement.", "Unable to copy. Select the text manually."),
         variant: "destructive",
       });
     }
@@ -285,8 +286,8 @@ export const CopilotPromptGenerator = ({
   const handleGeneratePDF = async (openCopilot: boolean) => {
     if (!patientId || !selectedOrgans.length) {
       toast({
-        title: "Sélection requise",
-        description: "Choisissez au moins un module à exporter.",
+        title: tr("Sélection requise", "Selection required"),
+        description: tr("Choisissez au moins un module à exporter.", "Choose at least one module to export."),
         variant: "destructive",
       });
       return;
@@ -301,16 +302,16 @@ export const CopilotPromptGenerator = ({
       });
       if (!result) {
         toast({
-          title: "Export impossible",
-          description: "Données patient indisponibles.",
+          title: tr("Export impossible", "Export impossible"),
+          description: tr("Données patient indisponibles.", "Patient data unavailable."),
           variant: "destructive",
         });
         return;
       }
       await copyToClipboard(result.promptText);
       toast({
-        title: "Dashboard exporté",
-        description: `${result.filename} · prompt copié.`,
+        title: tr("Dashboard exporté", "Dashboard exported"),
+        description: tr(`${result.filename} · prompt copié.`, `${result.filename} · prompt copied.`),
       });
       if (openCopilot) {
         window.open(COPILOT_URL, "_blank", "noopener,noreferrer");
@@ -318,8 +319,8 @@ export const CopilotPromptGenerator = ({
     } catch (err) {
       console.error(err);
       toast({
-        title: "Erreur",
-        description: "Échec de la génération du PDF.",
+        title: tr("Erreur", "Error"),
+        description: tr("Échec de la génération du PDF.", "PDF generation failed."),
         variant: "destructive",
       });
     } finally {
@@ -335,23 +336,23 @@ export const CopilotPromptGenerator = ({
       <div className="flex items-start gap-2 px-3 py-2 bg-primary/5 border-b text-xs text-muted-foreground shrink-0">
         <Shield className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
         <p>
-          Contenus <strong>dé-identifiés</strong> (sans nom ni ID patient). Vérifiez avant
-          partage avec un assistant IA externe.
+          {tr('Contenus', 'Content is')} <strong>{tr('dé-identifiés', 'de-identified')}</strong>{' '}
+          {tr('(sans nom ni ID patient). Vérifiez avant partage avec un assistant IA externe.', '(no patient name or ID). Check before sharing with an external AI assistant.')}
         </p>
       </div>
 
       {!patientId ? (
         <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground p-6 text-center">
-          Sélectionnez un patient pour générer un export.
+          {tr('Sélectionnez un patient pour générer un export.', 'Select a patient to generate an export.')}
         </div>
       ) : loading ? (
         <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          Chargement du contexte...
+          {tr('Chargement du contexte...', 'Loading context...')}
         </div>
       ) : !context ? (
         <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground p-6 text-center">
-          Données patient indisponibles.
+          {tr('Données patient indisponibles.', 'Patient data unavailable.')}
         </div>
       ) : (
         <ScrollArea className="flex-1 min-h-0">
@@ -360,14 +361,14 @@ export const CopilotPromptGenerator = ({
             <section>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold">
-                  1. Modules à inclure
+                  {tr('1. Modules à inclure', '1. Modules to include')}
                 </h3>
                 <span className="text-xs text-muted-foreground">
                   {selectedOrgans.length}/{visiblePastilles.length}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mb-3">
-                Cliquez sur une pastille pour l'activer ou la désactiver.
+                {tr("Cliquez sur une pastille pour l'activer ou la désactiver.", 'Click a badge to turn it on or off.')}
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {visiblePastilles.map((p) => {
@@ -387,7 +388,7 @@ export const CopilotPromptGenerator = ({
                       aria-pressed={active}
                       title={
                         severity
-                          ? `${p.full} — ${severity === "critical" ? "Critique" : "À surveiller"}`
+                          ? `${p.full} — ${severity === "critical" ? tr("Critique", "Critical") : tr("À surveiller", "To watch")}`
                           : p.full
                       }
                       className={cn(
@@ -437,15 +438,15 @@ export const CopilotPromptGenerator = ({
             <section>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold">
-                  2. Prompts cliniques à inclure
+                  {tr('2. Prompts cliniques à inclure', '2. Clinical prompts to include')}
                 </h3>
                 <span className="text-xs text-muted-foreground">
-                  {selectedTemplateIds.length} sélectionné
+                  {selectedTemplateIds.length} {tr('sélectionné', 'selected')}
                   {selectedTemplateIds.length > 1 ? "s" : ""}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mb-2">
-                Optionnel — laissez vide pour un prompt d'analyse générique.
+                {tr("Optionnel — laissez vide pour un prompt d'analyse générique.", 'Optional — leave empty for a generic analysis prompt.')}
               </p>
               <div className="space-y-1.5">
                 {PROMPT_TEMPLATES.map((t) => {
@@ -483,7 +484,7 @@ export const CopilotPromptGenerator = ({
             {generatedPrompt && (
               <section>
                 <h3 className="text-sm font-semibold mb-2">
-                  3. Aperçu du prompt (modifiable)
+                  {tr('3. Aperçu du prompt (modifiable)', '3. Prompt preview (editable)')}
                 </h3>
                 <Textarea
                   value={generatedPrompt}
@@ -501,18 +502,18 @@ export const CopilotPromptGenerator = ({
                   ) : (
                     <Copy className="h-3.5 w-3.5" />
                   )}
-                  {copied ? "Prompt copié" : "Copier le prompt seul"}
+                  {copied ? tr("Prompt copié", "Prompt copied") : tr("Copier le prompt seul", "Copy prompt only")}
                 </Button>
               </section>
             )}
 
             <div className="text-xs text-muted-foreground bg-muted/50 rounded-md p-3">
-              <strong>Comment l'utiliser :</strong>
+              <strong>{tr("Comment l'utiliser :", 'How to use it:')}</strong>
               <ol className="list-decimal list-inside mt-1 space-y-0.5">
-                <li>Téléchargez le PDF (modules + prompts inclus)</li>
-                <li>Ouvrez votre agent Copilot</li>
-                <li>Glissez-déposez le PDF dans la conversation</li>
-                <li>Le prompt est déjà copié — collez-le pour démarrer</li>
+                <li>{tr('Téléchargez le PDF (modules + prompts inclus)', 'Download the PDF (modules + prompts included)')}</li>
+                <li>{tr('Ouvrez votre agent Copilot', 'Open your Copilot agent')}</li>
+                <li>{tr('Glissez-déposez le PDF dans la conversation', 'Drag and drop the PDF into the conversation')}</li>
+                <li>{tr('Le prompt est déjà copié — collez-le pour démarrer', 'The prompt is already copied — paste it to start')}</li>
               </ol>
             </div>
           </div>
@@ -534,7 +535,7 @@ export const CopilotPromptGenerator = ({
               ) : (
                 <FileDown className="h-4 w-4" />
               )}
-              Télécharger PDF
+              {tr('Télécharger PDF', 'Download PDF')}
             </Button>
             <Button
               onClick={() => handleGeneratePDF(true)}
@@ -547,7 +548,7 @@ export const CopilotPromptGenerator = ({
           </div>
           <ExportImageButton
             filenamePrefix={`mypicu_copilot_${organ ?? "patient"}`}
-            label="Exporter en image (dé-identifié)"
+            label={tr("Exporter en image (dé-identifié)", "Export as image (de-identified)")}
           />
         </div>
       )}
@@ -592,8 +593,7 @@ export const CopilotPromptGenerator = ({
               Export Copilot
             </SheetTitle>
             <SheetDescription className="text-xs">
-              Sélectionnez les modules et les questions cliniques à combiner dans un seul
-              PDF dé-identifié.
+              {tr('Sélectionnez les modules et les questions cliniques à combiner dans un seul PDF dé-identifié.', 'Select the modules and clinical questions to combine into a single de-identified PDF.')}
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 min-h-0 overflow-hidden">{body}</div>

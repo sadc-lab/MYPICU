@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { tr } from '@/i18n';
 
 export interface StudyPatient {
   id: string;
@@ -60,7 +61,7 @@ export function useStudyPatients() {
       const patient: StudyPatient = {
         id: crypto.randomUUID(),
         code,
-        label: label.trim() || `Sujet ${code}`,
+        label: label.trim() || tr(`Sujet ${code}`, `Subject ${code}`),
         createdAt: Date.now(),
       };
       const updated = [...list, patient];

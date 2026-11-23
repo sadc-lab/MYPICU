@@ -32,6 +32,8 @@ import {
   calculateValidityAdherence,
   PatientFileData,
 } from '@/services/patientFileData.service';
+import { tr } from '@/i18n';
+import { term } from '@/i18n/terms';
 
 const Optilungs = () => {
   const [searchParams] = useSearchParams();
@@ -154,11 +156,11 @@ const Optilungs = () => {
   const lungOptimisationMetrics = [
     {
       label: "État Pulmonaire",
-      displayValue: "Hypoxémie",
+      displayValue: tr("Hypoxémie", "Hypoxaemia"),
       unit: "",
       status: "critical" as const,
       selectable: true,
-      criticalLabel: "Sévère",
+      criticalLabel: tr("Sévère", "Severe"),
       criticalColor: "text-status-critical",
     },
     {
@@ -167,7 +169,7 @@ const Optilungs = () => {
       unit: "%",
       status: "warning" as const,
       selectable: true,
-      criticalLabel: "Fiabilité : 77.9%",
+      criticalLabel: tr("Fiabilité : 77.9%", "Reliability: 77.9%"),
       criticalColor: "text-muted-foreground",
     },
     {
@@ -176,7 +178,7 @@ const Optilungs = () => {
       unit: "",
       status: "critical" as const,
       selectable: true,
-      criticalLabel: "Cible > 300",
+      criticalLabel: tr("Cible > 300", "Target > 300"),
       criticalColor: "text-status-critical",
     },
     {
@@ -185,7 +187,7 @@ const Optilungs = () => {
       unit: "",
       status: "normal" as const,
       selectable: false, // Opens dialog instead
-      criticalLabel: "Voir détails",
+      criticalLabel: tr("Voir détails", "View details"),
       criticalColor: "text-muted-foreground",
       icon: true,
     },
@@ -298,7 +300,7 @@ const Optilungs = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8 space-y-4">
-          <DataLoadingOverlay isLoading={true} label="Chargement du patient..." variant="skeleton">
+          <DataLoadingOverlay isLoading={true} label={tr("Chargement du patient...", "Loading patient...")} variant="skeleton">
             <div />
           </DataLoadingOverlay>
         </div>
@@ -311,7 +313,7 @@ const Optilungs = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p className="text-foreground">Patient non trouvé</p>
+          <p className="text-foreground">{tr("Patient non trouvé", "Patient not found")}</p>
         </div>
       </div>
     );
@@ -338,10 +340,10 @@ const Optilungs = () => {
               />
             </StatusIconCircle>
           }
-          title="Optimisation pulmonaire"
+          title={tr("Optimisation pulmonaire", "Pulmonary optimisation")}
           subtitle={
             <>
-              <span className="font-semibold text-destructive">Hypoxémie sévère</span> • VAP Prediction : 75%
+              <span className="font-semibold text-destructive">{tr("Hypoxémie sévère", "Severe hypoxaemia")}</span> • {tr("Prédiction VAP", "VAP prediction")} : 75%
             </>
           }
         >
@@ -373,7 +375,7 @@ const Optilungs = () => {
           {selectedLungOptIndicators.length > 0 && (
             <div className="border-t border-border pt-4 mt-4 space-y-4">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-medium text-foreground">Évolution temporelle</div>
+                <div className="text-sm font-medium text-foreground">{tr("Évolution temporelle", "Trend over time")}</div>
                 <TimeWindowSelector
                   value={optChartTimeRange as TimeWindowValue}
                   onChange={(v) => setOptChartTimeRange(v)}
@@ -401,7 +403,7 @@ const Optilungs = () => {
           <CardHeader className="px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="text-base sm:text-lg">
-                Monitorage {timeRange === "stay" ? "sur le séjour" : `sur ${timeRange}`}
+                {tr("Monitorage", "Monitoring")} {timeRange === "stay" ? tr("sur le séjour", "over the stay") : tr(`sur ${timeRange}`, `over ${timeRange}`)}
               </CardTitle>
               <TimeWindowSelector
                 value={timeRange}
@@ -429,11 +431,11 @@ const Optilungs = () => {
                   }
                 />
               }
-              title="Indicateurs à surveiller"
+              title={tr("Indicateurs à surveiller", "Indicators to watch")}
               subtitle={
                 outOfRangeCount > 0
-                  ? `${outOfRangeCount} indicateur${outOfRangeCount > 1 ? 's' : ''} à surveiller`
-                  : 'Tous les indicateurs dans la cible'
+                  ? tr(`${outOfRangeCount} indicateur${outOfRangeCount > 1 ? 's' : ''} à surveiller`, `${outOfRangeCount} indicator${outOfRangeCount > 1 ? 's' : ''} to watch`)
+                  : tr('Tous les indicateurs dans la cible', 'All indicators on target')
               }
               contentClassName="px-3 sm:px-6 pb-4"
             >
@@ -476,17 +478,17 @@ const Optilungs = () => {
                             {indicator.adherencePercentage !== null
                               ? (
                                 <div>
-                                  <div className="font-semibold">{indicator.adherencePercentage}% adhérence</div>
-                                  <div className="text-muted-foreground mt-1">% du temps passé dans la cible recommandée</div>
+                                  <div className="font-semibold">{indicator.adherencePercentage}% {tr("adhérence", "adherence")}</div>
+                                  <div className="text-muted-foreground mt-1">{tr("% du temps passé dans la cible recommandée", "% of time spent within the recommended target")}</div>
                                 </div>
                               )
-                              : "Pas de données"
+                              : tr("Pas de données", "No data")
                             }
                           </TooltipContent>
                         </UITooltip>
                       </TooltipProvider>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">{indicator.label}</p>
+                        <p className="text-sm font-medium text-foreground">{term(indicator.label)}</p>
                         <p className="text-xs text-muted-foreground">{indicator.target}</p>
                       </div>
                     </div>
@@ -500,7 +502,7 @@ const Optilungs = () => {
               <CardHeader className="px-3 sm:px-6">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm sm:text-lg">
-                    {timeRange === "stay" ? "Monitorage (Séjour)" : `Monitorage (${timeRange.toUpperCase()})`}
+                    {timeRange === "stay" ? tr("Monitorage (Séjour)", "Monitoring (Stay)") : tr(`Monitorage (${timeRange.toUpperCase()})`, `Monitoring (${timeRange.toUpperCase()})`)}
                   </CardTitle>
                   {selectedIndicators.length > 0 && (
                     <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground">
@@ -510,7 +512,7 @@ const Optilungs = () => {
                         onChange={(e) => setShowTargetZones(e.target.checked)}
                         className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-border text-primary focus:ring-primary"
                       />
-                      Zones cibles
+                      {tr('Zones cibles', 'Target zones')}
                     </label>
                   )}
                 </div>
@@ -524,7 +526,7 @@ const Optilungs = () => {
                   {selectedIndicators.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
                       <p className="text-muted-foreground text-xs sm:text-base text-center px-2">
-                        Sélectionnez des indicateurs ci-dessus pour afficher leur évolution
+                        {tr('Sélectionnez des indicateurs ci-dessus pour afficher leur évolution', 'Select indicators above to show their trend')}
                       </p>
                     </div>
                   ) : (
@@ -570,7 +572,7 @@ const Optilungs = () => {
                               const color = getIndicatorColor(name);
                               return [
                                 <span key={name} style={{ color, fontWeight: 600 }}>
-                                  {name}: {value.toFixed(1)}
+                                  {term(name)}: {value.toFixed(1)}
                                 </span>,
                                 null
                               ];
@@ -581,7 +583,7 @@ const Optilungs = () => {
                             iconType="plainline"
                             formatter={(value: string) => (
                               <span style={{ color: getIndicatorColor(value), fontWeight: 500 }}>
-                                {value}
+                                {term(value)}
                               </span>
                             )}
                           />
@@ -623,7 +625,7 @@ const Optilungs = () => {
               <div className="border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base font-semibold text-foreground">
-                    Prédictions VAP module 1 : <span className="font-normal text-muted-foreground">dernières 48 heures</span>
+                    {tr("Prédictions VAP module 1 :", "VAP predictions module 1:")} <span className="font-normal text-muted-foreground">{tr("dernières 48 heures", "last 48 hours")}</span>
                   </h3>
                 </div>
                 
@@ -668,19 +670,19 @@ const Optilungs = () => {
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>FiO2 : <span className="font-semibold">N/A</span></span>
                     <span>PEEP : <span className="font-semibold">N/A</span></span>
-                    <span>Fiabilité : <span className="font-semibold text-status-warning">77.9%</span></span>
+                    <span>{tr("Fiabilité :", "Reliability:")} <span className="font-semibold text-status-warning">77.9%</span></span>
                   </div>
                 </div>
               </div>
 
               {/* Recommendations */}
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-foreground">Recommandations :</p>
+                <p className="text-sm font-semibold text-foreground">{tr("Recommandations :", "Recommendations:")}</p>
                 <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                  <li>Renforcer les protocoles d'hygiène respiratoire</li>
-                  <li>Revoir les niveaux de sédation</li>
-                  <li>Considérer la prophylaxie probiotique</li>
-                  <li>Surveiller les paramètres du ventilateur</li>
+                  <li>{tr("Renforcer les protocoles d'hygiène respiratoire", 'Strengthen respiratory hygiene protocols')}</li>
+                  <li>{tr('Revoir les niveaux de sédation', 'Review sedation levels')}</li>
+                  <li>{tr('Considérer la prophylaxie probiotique', 'Consider probiotic prophylaxis')}</li>
+                  <li>{tr('Surveiller les paramètres du ventilateur', 'Monitor ventilator settings')}</li>
                 </ul>
               </div>
             </div>
@@ -693,13 +695,13 @@ const Optilungs = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Gauge className="h-5 w-5 text-primary" />
-                Paramètres du Ventilateur
+                {tr('Paramètres du Ventilateur', 'Ventilator settings')}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               {ventilatorSettings.map((setting, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="text-sm text-muted-foreground">{setting.label}</span>
+                  <span className="text-sm text-muted-foreground">{term(setting.label)}</span>
                   <span className="font-semibold text-sm text-foreground">{setting.value}</span>
                 </div>
               ))}

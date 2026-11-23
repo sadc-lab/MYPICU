@@ -6,6 +6,8 @@ import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { KpiCircle } from "@/components/KpiCircle";
+import { tr } from '@/i18n';
+import { term } from '@/i18n/terms';
 
 const vitalSigns = [
   { label: "FC", value: 130, min: 60, targetMin: 80, targetMax: 120, max: 140, unit: "bpm" },
@@ -34,13 +36,13 @@ export const VitalSignsPanel = ({ defaultOpen = false }: VitalSignsPanelProps) =
         <CollapsibleTrigger className="w-full">
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors">
             <div className="flex items-center gap-2">
-              <KpiCircle count={abnormalCount} groupLabel="Signes vitaux" />
+              <KpiCircle count={abnormalCount} groupLabel={tr("Signes vitaux", "Vital signs")} />
               <div className="text-left">
-                <div className="text-base font-semibold text-foreground">Signes vitaux</div>
+                <div className="text-base font-semibold text-foreground">{tr("Signes vitaux", "Vital signs")}</div>
                 <div className="text-xs text-muted-foreground">
                   {abnormalCount === 0
-                    ? "Tous les paramètres dans les cibles"
-                    : `${abnormalCount} paramètre${abnormalCount > 1 ? "s" : ""} hors cible`}
+                    ? tr("Tous les paramètres dans les cibles", "All parameters on target")
+                    : tr(`${abnormalCount} paramètre${abnormalCount > 1 ? "s" : ""} hors cible`, `${abnormalCount} parameter${abnormalCount > 1 ? "s" : ""} off target`)}
                 </div>
               </div>
             </div>
@@ -60,7 +62,7 @@ export const VitalSignsPanel = ({ defaultOpen = false }: VitalSignsPanelProps) =
                 return (
                   <div key={index} className="flex flex-col items-center">
                     <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-                      {vital.label}
+                      {term(vital.label)}
                     </div>
                     <div className="flex items-baseline gap-1 mb-3">
                       <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>

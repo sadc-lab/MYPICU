@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Lock } from 'lucide-react';
+import { useI18n } from '@/i18n';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -14,6 +15,7 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   useEffect(() => {
     // Check if we have a recovery session from the URL hash
@@ -38,12 +40,12 @@ const ResetPassword = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error('Les mots de passe ne correspondent pas.');
+      toast.error(t('Les mots de passe ne correspondent pas.', 'Passwords do not match.'));
       return;
     }
 
     if (password.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caractères.');
+      toast.error(t('Le mot de passe doit contenir au moins 6 caractères.', 'Password must be at least 6 characters.'));
       return;
     }
 
@@ -54,11 +56,11 @@ const ResetPassword = () => {
 
       if (error) throw error;
 
-      toast.success('Mot de passe réinitialisé avec succès !');
+      toast.success(t('Mot de passe réinitialisé avec succès !', 'Password reset successfully!'));
       navigate('/auth/login');
     } catch (error: any) {
       console.error('Update password error:', error);
-      toast.error(error.message || 'Erreur lors de la réinitialisation du mot de passe.');
+      toast.error(error.message || t('Erreur lors de la réinitialisation du mot de passe.', 'Error resetting the password.'));
     } finally {
       setIsLoading(false);
     }
@@ -69,14 +71,14 @@ const ResetPassword = () => {
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Lien invalide</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">{t("Lien invalide", "Invalid link")}</CardTitle>
             <CardDescription className="text-center">
-              Ce lien de réinitialisation est invalide ou a expiré. Veuillez en demander un nouveau.
+              {t('Ce lien de réinitialisation est invalide ou a expiré. Veuillez en demander un nouveau.', 'This reset link is invalid or has expired. Please request a new one.')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button className="w-full" onClick={() => navigate('/auth/forgot-password')}>
-              Demander un nouveau lien
+              {t('Demander un nouveau lien', 'Request a new link')}
             </Button>
           </CardContent>
         </Card>
@@ -93,19 +95,19 @@ const ResetPassword = () => {
               <Lock className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-center">Nouveau mot de passe</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">{t("Nouveau mot de passe", "New password")}</CardTitle>
           <CardDescription className="text-center">
-            Choisissez un nouveau mot de passe pour votre compte
+            {t('Choisissez un nouveau mot de passe pour votre compte', 'Choose a new password for your account')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Nouveau mot de passe</Label>
+              <Label htmlFor="password">{t("Nouveau mot de passe", "New password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Au moins 6 caractères"
+                placeholder={t("Au moins 6 caractères", "At least 6 characters")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -113,11 +115,11 @@ const ResetPassword = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+              <Label htmlFor="confirmPassword">{t("Confirmer le mot de passe", "Confirm password")}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="Confirmez votre mot de passe"
+                placeholder={t("Confirmez votre mot de passe", "Confirm your password")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -125,7 +127,7 @@ const ResetPassword = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Réinitialisation...' : 'Réinitialiser le mot de passe'}
+              {isLoading ? t('Réinitialisation...', 'Resetting...') : t('Réinitialiser le mot de passe', 'Reset password')}
             </Button>
           </form>
         </CardContent>

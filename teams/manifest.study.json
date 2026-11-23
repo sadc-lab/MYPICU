@@ -1,0 +1,43 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "03f0db84-44df-4236-b752-1b07352bb588",
+  "developer": {
+    "name": "SADC Lab",
+    "websiteUrl": "https://{{APP_HOST}}",
+    "privacyUrl": "https://{{APP_HOST}}/privacy",
+    "termsOfUseUrl": "https://{{APP_HOST}}/terms"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "MYPICU — Étude",
+    "full": "MYPICU — Étude de validation de l'autorégulation cérébrale"
+  },
+  "description": {
+    "short": "Test et validation de l'outil d'autorégulation cérébrale (PRx/COx).",
+    "full": "Application de test dédiée à la validation clinique de l'outil d'autorégulation cérébrale (PRx et COx), avant son intégration au tableau de bord MYPICU. Ne donne accès à aucun autre module clinique. Usage recherche uniquement."
+  },
+  "accentColor": "#25397C",
+  "staticTabs": [
+    {
+      "entityId": "mypicu-autoreg-study",
+      "name": "Étude autorégulation",
+      "contentUrl": "https://{{APP_HOST}}/autoreg",
+      "websiteUrl": "https://{{APP_HOST}}/autoreg",
+      "scopes": ["personal"]
+    }
+  ],
+  "configurableTabs": [
+    {
+      "configurationUrl": "https://{{APP_HOST}}/teams/config",
+      "canUpdateConfiguration": true,
+      "scopes": ["team", "groupChat"]
+    }
+  ],
+  "permissions": ["identity"],
+  "validDomains": ["{{APP_HOST}}"]
+}

@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 import { cerebralOntology, getOntologyNode } from "./cerebral.ontology";
 import { OntologyEdge, OntologyNode, OntologyThresholds } from "./types";
 
@@ -42,11 +43,11 @@ export function formatThresholds(thresholds: OntologyThresholds | undefined): st
   if (!thresholds) return null;
   const parts: string[] = [];
   const normal = formatBand(thresholds.normal);
-  if (normal) parts.push(`cible ${normal}`);
+  if (normal) parts.push(`${tr('cible', 'target')} ${normal}`);
   const warning = (thresholds.warning ?? []).map(formatBand).filter(Boolean).join(" / ");
-  if (warning) parts.push(`alerte ${warning}`);
+  if (warning) parts.push(`${tr('alerte', 'warning')} ${warning}`);
   const critical = (thresholds.critical ?? []).map(formatBand).filter(Boolean).join(" / ");
-  if (critical) parts.push(`critique ${critical}`);
+  if (critical) parts.push(`${tr('critique', 'critical')} ${critical}`);
   if (parts.length === 0) return null;
   return `${thresholds.unit} · ${parts.join(" · ")}`;
 }

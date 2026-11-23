@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useSearchParams, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { TeamsHostBridge } from "@/components/TeamsHostBridge";
@@ -25,9 +25,18 @@ import WorkerSignup from "./pages/auth/WorkerSignup";
 import ImportPatientData from "./pages/admin/ImportPatientData";
 import NotFound from "./pages/NotFound";
 import AutoregStudy from "./pages/AutoregStudy";
+import StudyHome from "./pages/StudyHome";
+import { STUDY_ONLY } from "@/lib/studyMode";
+import { LanguageRoot } from "@/i18n";
 import TeamsConfig from "./pages/TeamsConfig";
 
 const queryClient = new QueryClient();
+
+// Déploiement "étude seulement" : aucune route vers le tableau de bord
+// clinique n'est enregistrée, donc un testeur ne peut pas s'y rendre même en
+// tapant l'URL directement. La protection des données patient par RLS reste
+// en place en filet de sécurité, mais ici la page n'est même pas atteignable.
+
 
 const ORGAN_MAP: Record<string, string> = {
   "/optibrain": "cerveau",
@@ -88,6 +97,11 @@ const CopilotPromptWrapper = () => {
   );
 };
 
+const ToStudyPatient = () => {
+  const location = useLocation();
+  return <Navigate to={`/${location.search}`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -95,32 +109,58 @@ const App = () => (
         <TeamsHostBridge />
         <Toaster />
         <Sonner />
+        <LanguageRoot>
         <BrowserRouter>
-          <Routes>
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/signup" element={<Signup />} />
-            <Route path="/auth/manager-signup" element={<ManagerSignup />} />
-            <Route path="/auth/worker-signup" element={<WorkerSignup />} />
-            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-            <Route path="/auth/reset-password" element={<ResetPassword />} />
-            {/* Teams ouvre cette page pour configurer un onglet de canal :
-                elle doit rester hors authentification. */}
-            <Route path="/teams/config" element={<TeamsConfig />} />
-            <Route path="/autoreg" element={<ProtectedRoute><AutoregStudy /></ProtectedRoute>} />
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/optistate" element={<ProtectedRoute><Optistate /></ProtectedRoute>} />
-            <Route path="/optibrain" element={<ProtectedRoute><Optibrain /></ProtectedRoute>} />
-            <Route path="/optiheart" element={<ProtectedRoute><Optiheart /></ProtectedRoute>} />
-            <Route path="/optilungs" element={<ProtectedRoute><Optilungs /></ProtectedRoute>} />
-            <Route path="/optirenal" element={<ProtectedRoute><Optirenal /></ProtectedRoute>} />
-            <Route path="/optigastro" element={<ProtectedRoute><Optigastro /></ProtectedRoute>} />
-            <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
-            <Route path="/admin/import" element={<ProtectedRoute><ImportPatientData /></ProtectedRoute>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <CopilotPromptWrapper />
+          {STUDY_ONLY ? (
+            <Routes>
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/reset-password" element={<ResetPassword />} />
+              {/* Teams ouvre cette page pour configurer un onglet de canal :
+                  elle doit rester hors authentification. */}
+              <Route path="/teams/config" element={<TeamsConfig />} />
+              <Route path="/" element={<ProtectedRoute><StudyHome /></ProtectedRoute>} />
+              {/* Les liens patients de la coquille (recherche, flèches de navigation)
+                  pointent vers les modules : tous ramènent à l'accueil, patient sélectionné. */}
+              {["/optistate", "/optibrain", "/optiheart", "/optilungs", "/optirenal", "/optigastro"].map((path) => (
+                <Route key={path} path={path} element={<ToStudyPatient />} />
+              ))}
+              {/* Outil d'import de fichiers de l'équipe de recherche, non lié depuis l'interface. */}
+              <Route path="/autoreg" element={<ProtectedRoute><AutoregStudy /></ProtectedRoute>} />
+              {/* Aucun autre module (Optistate, cœur, poumons, rénal, import, commentaires)
+                  n'est enregistré dans ce déploiement — inatteignable, même par URL directe. */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          ) : (
+            <>
+              <Routes>
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/signup" element={<Signup />} />
+                <Route path="/auth/manager-signup" element={<ManagerSignup />} />
+                <Route path="/auth/worker-signup" element={<WorkerSignup />} />
+                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+                <Route path="/auth/reset-password" element={<ResetPassword />} />
+                {/* Teams ouvre cette page pour configurer un onglet de canal :
+                    elle doit rester hors authentification. */}
+                <Route path="/teams/config" element={<TeamsConfig />} />
+                <Route path="/autoreg" element={<ProtectedRoute><AutoregStudy /></ProtectedRoute>} />
+                <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/optistate" element={<ProtectedRoute><Optistate /></ProtectedRoute>} />
+                <Route path="/optibrain" element={<ProtectedRoute><Optibrain /></ProtectedRoute>} />
+                <Route path="/optiheart" element={<ProtectedRoute><Optiheart /></ProtectedRoute>} />
+                <Route path="/optilungs" element={<ProtectedRoute><Optilungs /></ProtectedRoute>} />
+                <Route path="/optirenal" element={<ProtectedRoute><Optirenal /></ProtectedRoute>} />
+                <Route path="/optigastro" element={<ProtectedRoute><Optigastro /></ProtectedRoute>} />
+                <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
+                <Route path="/admin/import" element={<ProtectedRoute><ImportPatientData /></ProtectedRoute>} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <CopilotPromptWrapper />
+            </>
+          )}
         </BrowserRouter>
+        </LanguageRoot>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

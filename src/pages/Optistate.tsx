@@ -35,6 +35,9 @@ import intestineIcon from '@/assets/intestine-icon.svg';
 import { cn } from '@/lib/utils';
 import { VitalSignsPanel } from '@/components/VitalSignsPanel';
 import { ModuleIndicatorDropdown } from '@/components/ModuleIndicatorDropdown';
+import { OrganClassifications } from '@/components/OrganClassifications';
+import { tr } from '@/i18n';
+import { term } from '@/i18n/terms';
 
 const MODULE_LABELS: Record<ModuleKey, string> = {
   optibrain: 'OptiBrain',
@@ -118,7 +121,7 @@ const Optistate = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p>{isLoading ? 'Chargement...' : 'Patient non trouvé'}</p>
+          <p>{isLoading ? tr('Chargement...', 'Loading...') : tr('Patient non trouvé', 'Patient not found')}</p>
         </div>
       </div>
     );
@@ -225,11 +228,11 @@ const Optistate = () => {
       ),
       indicators: computeEffectiveIndicators('optibrain', MODULE_ALL_INDICATORS.optibrain),
       interpretation:
-        'PIC à 26 mmHg en tendance baissière mais persistante > 20 — suspicion d’HTIC réactive nécessitant un contrôle rapproché de la PPC et de la sédation.',
+        tr('PIC à 26 mmHg en tendance baissière mais persistante > 20 — suspicion d’HTIC réactive nécessitant un contrôle rapproché de la PPC et de la sédation.', 'ICP at 26 mmHg, trending down but persistently > 20 — suspected reactive ICH requiring close control of CPP and sedation.'),
       interventions: [
-        'Sédation: Hypnotique 220 mg/h, Opioide 150 mcg/h',
-        'Propofol cumulé 48h: 10.5 g (< 12 g)',
-        'Nutrition entérale en cours',
+        tr('Sédation: Hypnotique 220 mg/h, Opioide 150 mcg/h', 'Sedation: Hypnotic 220 mg/h, Opioid 150 mcg/h'),
+        tr('Propofol cumulé 48h: 10.5 g (< 12 g)', 'Cumulative propofol 48h: 10.5 g (< 12 g)'),
+        tr('Nutrition entérale en cours', 'Enteral nutrition ongoing'),
       ],
     },
     {
@@ -240,11 +243,11 @@ const Optistate = () => {
       iconNode: <HeartIcon className="h-6 w-6 text-status-critical" />,
       indicators: computeEffectiveIndicators('optiheart', MODULE_ALL_INDICATORS.optiheart),
       interpretation:
-        'Bas débit cardiaque (3.2 L/min) avec FEVG 35% — dysfonction systolique persistante malgré support inotrope. Bilan hydrique positif à surveiller.',
+        tr('Bas débit cardiaque (3.2 L/min) avec FEVG 35% — dysfonction systolique persistante malgré support inotrope. Bilan hydrique positif à surveiller.', 'Low cardiac output (3.2 L/min) with LVEF 35% — persistent systolic dysfunction despite inotropic support. Positive fluid balance to monitor.'),
       interventions: [
-        'Inotrope: Dobutamine 5 mcg/kg/min',
-        'Vasopresseur: Noradrénaline 0.15 mcg/kg/min (en sevrage)',
-        'Bilan hydrique: +500 mL sur 24h',
+        tr('Inotrope: Dobutamine 5 mcg/kg/min', 'Inotrope: Dobutamine 5 mcg/kg/min'),
+        tr('Vasopresseur: Noradrénaline 0.15 mcg/kg/min (en sevrage)', 'Vasopressor: Norepinephrine 0.15 mcg/kg/min (weaning)'),
+        tr('Bilan hydrique: +500 mL sur 24h', 'Fluid balance: +500 mL over 24h'),
       ],
     },
     {
@@ -264,8 +267,8 @@ const Optistate = () => {
         />
       ),
       indicators: computeEffectiveIndicators('optilungs', MODULE_ALL_INDICATORS.optilungs),
-      interpretation: 'Échanges gazeux dans les cibles. Surveillance standard.',
-      interventions: ['Ventilation mécanique en cours'],
+      interpretation: tr('Échanges gazeux dans les cibles. Surveillance standard.', 'Gas exchange on target. Standard monitoring.'),
+      interventions: [tr('Ventilation mécanique en cours', 'Mechanical ventilation ongoing')],
     },
     {
       key: 'optirenal',
@@ -424,11 +427,13 @@ const Optistate = () => {
         {/* Vital signs presented as module-style metric cards (expanded on Optistate) */}
         <VitalSignsPanel defaultOpen />
 
+        <OrganClassifications patientId={patientId} patientFileData={patientFileData} />
+
         {/* Systèmes en alerte + Assembler les modules — un seul tout cohérent */}
         <Card className="shadow-sm">
           <CardHeader className="border-b">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <CardTitle className="text-lg font-semibold">Systèmes en alerte</CardTitle>
+              <CardTitle className="text-lg font-semibold">{tr("Systèmes en alerte", "Systems on alert")}</CardTitle>
               <div className="flex items-center gap-2">
                 <Badge
                   variant="outline"
@@ -442,12 +447,12 @@ const Optistate = () => {
                   {matrixRows.length > 0 ? (
                     <>
                       <AlertTriangle className="h-3.5 w-3.5" />
-                      {matrixRows.length} indicateur{matrixRows.length > 1 ? 's' : ''} hors cible
+                      {tr(`${matrixRows.length} indicateur${matrixRows.length > 1 ? 's' : ''} hors cible`, `${matrixRows.length} indicator${matrixRows.length > 1 ? 's' : ''} off target`)}
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="h-3.5 w-3.5" />
-                      Dans les cibles
+                      {tr('Dans les cibles', 'On target')}
                     </>
                   )}
                 </Badge>
@@ -455,16 +460,16 @@ const Optistate = () => {
             </div>
             {hiddenEntries.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground pt-3 mt-3 border-t">
-                <span>Masqués :</span>
+                <span>{tr('Masqués :', 'Hidden:')}</span>
                 {hiddenEntries.map(({ module, label }) => (
                   <button
                     key={`${module}|${label}`}
                     type="button"
                     onClick={() => clearOverride(module, label)}
-                    title="Réafficher cet indicateur"
+                    title={tr("Réafficher cet indicateur", "Show this indicator again")}
                     className="inline-flex items-center gap-1 rounded-full border border-status-inactive/30 bg-status-inactive-bg text-status-inactive px-2 py-0.5 hover:brightness-95"
                   >
-                    {MODULE_LABELS[module]} · {label}
+                    {MODULE_LABELS[module]} · {term(label)}
                     <X className="h-3 w-3" />
                   </button>
                 ))}
@@ -475,7 +480,7 @@ const Optistate = () => {
             {/* Systèmes assemblés : pré-cochés pour ceux en alerte, ajustables librement */}
             <div>
               <div className="text-xs text-muted-foreground mb-2">
-                Systèmes assemblés — cliquez pour ajouter ou retirer
+                {tr('Systèmes assemblés — cliquez pour ajouter ou retirer', 'Combined systems — click to add or remove')}
               </div>
               <div className="flex flex-wrap gap-2">
                 {(Object.keys(MODULE_LABELS) as ModuleKey[]).map((key) => {
@@ -519,13 +524,13 @@ const Optistate = () => {
             {/* Matrice unique : indicateurs des systèmes assemblés */}
             {selectedModules.size === 0 ? (
               <p className="text-sm text-muted-foreground italic text-center py-6">
-                Sélectionnez un ou plusieurs systèmes ci-dessus pour voir leurs indicateurs.
+                {tr('Sélectionnez un ou plusieurs systèmes ci-dessus pour voir leurs indicateurs.', 'Select one or more systems above to see their indicators.')}
               </p>
             ) : matrixRows.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <CheckCircle2 className="h-8 w-8 text-status-normal mb-2" />
                 <p className="text-sm text-muted-foreground">
-                  Aucun indicateur hors cible dans les systèmes sélectionnés.
+                  {tr('Aucun indicateur hors cible dans les systèmes sélectionnés.', 'No off-target indicator in the selected systems.')}
                 </p>
               </div>
             ) : (
@@ -533,10 +538,10 @@ const Optistate = () => {
                 <table className="w-full text-sm min-w-[560px]">
                   <thead>
                     <tr className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-                      <th className="font-medium px-2 py-1.5">Indicateur</th>
-                      <th className="font-medium px-2 py-1.5">Système</th>
-                      <th className="font-medium px-2 py-1.5">Évolution</th>
-                      <th className="font-medium px-2 py-1.5">Statut</th>
+                      <th className="font-medium px-2 py-1.5">{tr("Indicateur", "Indicator")}</th>
+                      <th className="font-medium px-2 py-1.5">{tr("Système", "System")}</th>
+                      <th className="font-medium px-2 py-1.5">{tr("Évolution", "Trend")}</th>
+                      <th className="font-medium px-2 py-1.5">{tr("Statut", "Status")}</th>
                       <th className="font-medium px-2 py-1.5" />
                     </tr>
                   </thead>
@@ -549,7 +554,7 @@ const Optistate = () => {
                         <tr key={`${row.module}-${row.label}-${i}`} className={cn('border-t', accent.bg)}>
                           <td className="px-2 py-2 font-medium text-foreground">
                             {isPinned && <Pin className="inline h-3 w-3 mr-1 text-primary" />}
-                            {row.label}
+                            {term(row.label)}
                           </td>
                           <td className="px-2 py-2">
                             <button
@@ -580,14 +585,14 @@ const Optistate = () => {
                               variant="outline"
                               className={cn('text-[10px] px-1.5 py-0', accent.bg, accent.border, accent.text)}
                             >
-                              {row.status === 'critical' ? 'Critique' : row.status === 'warning' ? 'Alerte' : 'Normal'}
+                              {row.status === 'critical' ? tr('Critique', 'Critical') : row.status === 'warning' ? tr('Alerte', 'Alert') : 'Normal'}
                             </Badge>
                           </td>
                           <td className="px-2 py-2 text-right">
                             <button
                               type="button"
-                              aria-label={`Masquer ${row.label}`}
-                              title="Masquer cet indicateur"
+                              aria-label={tr(`Masquer ${row.label}`, `Hide ${term(row.label)}`)}
+                              title={tr('Masquer cet indicateur', 'Hide this indicator')}
                               className="rounded-full p-1 hover:bg-foreground/10"
                               onClick={() => setOverride(row.module, row.label, 'hide')}
                             >
