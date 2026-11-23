@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { tr } from '@/i18n';
 
 export type TimeWindowValue = "24h" | "stay";
 
@@ -7,9 +8,9 @@ interface TimeWindowOption {
   label: string;
 }
 
-const DEFAULT_OPTIONS: TimeWindowOption[] = [
+const getDefaultOptions = (): TimeWindowOption[] => [
   { value: "24h", label: "24h" },
-  { value: "stay", label: "Séjour" },
+  { value: "stay", label: tr("Séjour", "Stay") },
 ];
 
 const WITHOUT_STAY_OPTIONS: TimeWindowOption[] = [
@@ -37,7 +38,7 @@ export function TimeWindowSelector({
   variant = "default",
   className,
 }: TimeWindowSelectorProps) {
-  const displayOptions = options || (includeStay ? DEFAULT_OPTIONS : WITHOUT_STAY_OPTIONS);
+  const displayOptions = options || (includeStay ? getDefaultOptions() : WITHOUT_STAY_OPTIONS);
 
   const sizeClasses = {
     sm: "h-7 text-xs",

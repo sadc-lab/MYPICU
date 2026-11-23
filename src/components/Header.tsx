@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, Moon, Sun, HelpCircle, Menu, X, Home, Upload, Brain } from 'lucide-react';
+import { Bell, User, Search, ChevronLeft, ChevronRight, Check, List, HelpCircle, Menu, Home, Upload, Brain } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useRef, useEffect } from 'react';
 import { getAllPatients, getPatientsForPed, Patient } from '@/utils/patientData';
@@ -23,9 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { InteractiveGuide } from '@/components/InteractiveGuide';
-import { useTheme } from 'next-themes';
+import { PreferenceToggles } from '@/components/PreferenceToggles';
+import { useI18n } from '@/i18n';
 import {
   Sheet,
   SheetContent,
@@ -47,7 +47,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -222,7 +222,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                         type="text"
                         value={mobileSearchQuery}
                         onChange={(e) => setMobileSearchQuery(e.target.value)}
-                        placeholder="Rechercher..."
+                        placeholder={t("Rechercher...", "Search...")}
                         className="pr-10 w-full"
                       />
                       <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -237,7 +237,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Home className="h-5 w-5" />
-                      <span className="font-medium">Tableau de bord</span>
+                      <span className="font-medium">{t("Tableau de bord", "Dashboard")}</span>
                     </Link>
                   </div>
                   
@@ -312,7 +312,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                 }}
                 onFocus={() => setShowDropdown(true)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                placeholder="Rechercher..."
+                placeholder={t("Rechercher...", "Search...")}
                 className="pr-10 w-[200px] bg-background"
               />
               <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
@@ -358,7 +358,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
               
               {showDropdown && searchQuery && filteredPatients.length === 0 && (
                 <div className="absolute top-full mt-1 w-full bg-popover border rounded-lg shadow-lg z-50 p-4 text-center text-muted-foreground text-sm">
-                  Aucun patient trouvé
+                  {t('Aucun patient trouvé', 'No patient found')}
                 </div>
               )}
             </div>
@@ -441,7 +441,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                       >
                         <Check className="h-4 w-4" />
                         <span className="text-xs">
-                          {getVisitStatus(currentPatientId) || 'Confirmer visite'}
+                          {getVisitStatus(currentPatientId) || t('Confirmer visite', 'Confirm visit')}
                         </span>
                       </Button>
                     </DropdownMenuTrigger>
@@ -450,25 +450,25 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                         onClick={() => confirmVisit(currentPatientId, 'Confirmed')}
                         className="cursor-pointer"
                       >
-                        Confirmer
+                        {t('Confirmer', 'Confirm')}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => confirmVisit(currentPatientId, 'Priority')}
                         className="cursor-pointer"
                       >
-                        Priorité
+                        {t('Priorité', 'Priority')}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => confirmVisit(currentPatientId, 'Leaving')}
                         className="cursor-pointer"
                       >
-                        Sortant
+                        {t('Sortant', 'Leaving')}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => confirmVisit(currentPatientId, 'To Check')}
                         className="cursor-pointer"
                       >
-                        À vérifier
+                        {t('À vérifier', 'To check')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -488,52 +488,41 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 z-50">
-                <DropdownMenuLabel>Réglages</DropdownMenuLabel>
-                <DropdownMenuItem 
-                  className="flex items-center justify-between cursor-pointer"
-                  onSelect={(e) => e.preventDefault()}
-                >
-                  <div className="flex items-center gap-2">
-                    {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                    <span>Mode sombre</span>
-                  </div>
-                  <Switch
-                    checked={theme === 'dark'}
-                    onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-                  />
-                </DropdownMenuItem>
+                <DropdownMenuLabel>{t('Réglages', 'Settings')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/admin/import" className="flex items-center gap-2">
                     <Upload className="h-4 w-4" />
-                    Import données
+                    {t('Import données', 'Import data')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/autoreg" className="flex items-center gap-2">
                     <Brain className="h-4 w-4" />
-                    Étude Optibrain
+                    {t('Étude Optibrain', 'Optibrain study')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/feedback">Commentaires</Link>
+                  <Link to="/feedback">{t("Commentaires", "Feedback")}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setShowGuide(true)}>
-                  Aide
+                  {t('Aide', 'Help')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
-                  Déconnexion
+                  {t('Déconnexion', 'Sign out')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {/* Langue et thème, juste à côté du nom (et non dans le menu). */}
+            <PreferenceToggles />
             
             <Button 
               variant="ghost" 
               size="icon" 
               className="text-muted-foreground hover:text-foreground"
               onClick={() => setShowGuide(true)}
-              title="Aide"
+              title={t("Aide", "Help")}
             >
               <HelpCircle className="h-5 w-5" />
             </Button>
@@ -548,7 +537,10 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
     <div className="border-b bg-warning/10">
       <div className="container mx-auto px-3 sm:px-6 py-1.5">
         <p className="text-[11px] sm:text-xs text-center text-foreground/80">
-          🔬 Projet de recherche clinique en cours de développement — Les données et fonctionnalités présentées sont à des fins de recherche uniquement.
+          🔬 {t(
+            'Projet de recherche clinique en cours de développement — Les données et fonctionnalités présentées sont à des fins de recherche uniquement.',
+            'Clinical research project under development — The data and features shown are for research purposes only.',
+          )}
         </p>
       </div>
     </div>

@@ -17,6 +17,8 @@ import {
 import { SelectableMetricTile, TileStatus } from '@/components/SelectableMetricTile';
 import { OptimisationChart } from '@/components/OptimisationChart';
 import { cn } from '@/lib/utils';
+import { tr } from '@/i18n';
+import { term } from '@/i18n/terms';
 
 const OPT_CHART_COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -53,7 +55,7 @@ const lastUpdate = '14:32';
 
 const renalGroups: RenalGroup[] = [
   {
-    title: 'Bilan entrée - sortie',
+    get title() { return tr('Bilan entrée - sortie', 'Intake - output balance'); },
     metrics: [
       { label: 'Entrées', value: 1850, unit: 'mL/24h', status: 'normal' },
       { label: 'Sorties', value: 920, unit: 'mL/24h', status: 'normal' },
@@ -73,7 +75,12 @@ const renalGroups: RenalGroup[] = [
         status: 'critical',
         reference: 'Réf : < 10 %',
         range: { min: 0, max: 20, targetMin: 0, targetMax: 10 },
-        help: `(Entrées − sorties cumulées) / poids de base × 100. Poids de base : ${PATIENT_BASE_WEIGHT_KG} kg.`,
+        get help() {
+          return tr(
+            `(Entrées − sorties cumulées) / poids de base × 100. Poids de base : ${PATIENT_BASE_WEIGHT_KG} kg.`,
+            `(Cumulative intake − output) / baseline weight × 100. Baseline weight: ${PATIENT_BASE_WEIGHT_KG} kg.`,
+          );
+        },
       },
       {
         label: 'Poids actuel',
@@ -85,7 +92,7 @@ const renalGroups: RenalGroup[] = [
     ],
   },
   {
-    title: 'Diurèse',
+    get title() { return tr('Diurèse', 'Urine output'); },
     metrics: [
       { label: 'Diurèse 1 h', value: 0.4, unit: 'mL/kg/h', status: 'critical', reference: 'Cible ≥ 0.5', range: { min: 0, max: 2, targetMin: 0.5, targetMax: 2 } },
       { label: 'Diurèse 3 h', value: 0.5, unit: 'mL/kg/h', status: 'warning', reference: 'Cible ≥ 0.5', range: { min: 0, max: 2, targetMin: 0.5, targetMax: 2 } },
@@ -94,7 +101,7 @@ const renalGroups: RenalGroup[] = [
     ],
   },
   {
-    title: 'Marqueurs de filtration',
+    get title() { return tr('Marqueurs de filtration', 'Filtration markers'); },
     metrics: [
       { label: 'Créatinine', value: 185, unit: 'µmol/L', status: 'critical', reference: 'Réf : 27–62', range: { min: 0, max: 250, targetMin: 27, targetMax: 62 } },
       { label: 'Urée', value: 18.2, unit: 'mmol/L', status: 'warning', reference: 'Réf : 2.5–6.5', range: { min: 0, max: 25, targetMin: 2.5, targetMax: 6.5 } },
@@ -103,7 +110,7 @@ const renalGroups: RenalGroup[] = [
     ],
   },
   {
-    title: 'Électrolytes',
+    get title() { return tr('Électrolytes', 'Electrolytes'); },
     metrics: [
       { label: 'Na+', value: 138, unit: 'mmol/L', status: 'normal', reference: 'Réf : 135–145', range: { min: 120, max: 160, targetMin: 135, targetMax: 145 } },
       { label: 'K+', value: 5.8, unit: 'mmol/L', status: 'critical', reference: 'Réf : 3.5–5.0', range: { min: 2.5, max: 7, targetMin: 3.5, targetMax: 5 } },
@@ -121,11 +128,25 @@ const STATUS_DOT: Record<TileStatus, string> = {
   critical: 'bg-status-critical',
 };
 
-const STATUS_LABEL: Record<TileStatus, string> = {
-  normal: 'Dans la cible',
-  warning: 'À surveiller',
-  critical: 'Hors cible',
-};
+const statusLabel = (status: TileStatus): string =>
+  ({
+    normal: tr('Dans la cible', 'On target'),
+    warning: tr('À surveiller', 'To watch'),
+    critical: tr('Hors cible', 'Off target'),
+  })[status];
+
+// Références et notes de démonstration : mêmes gabarits, traduits à l'affichage.
+const refText = (s?: string): string | undefined =>
+  s === undefined
+    ? s
+    : tr(
+        s,
+        s
+          .replace(/^Cible : équilibré$/, 'Target: balanced')
+          .replace(/^Réf : /, 'Ref: ')
+          .replace(/^Cible /, 'Target ')
+          .replace(/^Dernière pesée : (.+) à (.+)$/, 'Last weighing: $1 at $2'),
+      );
 
 const allMonitoringMetrics = renalGroups.flatMap((g) => g.metrics);
 
@@ -157,7 +178,7 @@ const Optirenal = () => {
       displayValue: '+930',
       unit: 'mL',
       status: 'critical',
-      criticalLabel: 'Entrées 1850 / Sorties 920',
+      criticalLabel: tr('Entrées 1850 / Sorties 920', 'Intake 1850 / Output 920'),
       criticalColor: 'text-status-critical',
     },
     {
@@ -165,7 +186,7 @@ const Optirenal = () => {
       displayValue: '12.5',
       unit: '%',
       status: 'critical',
-      criticalLabel: 'Cible < 10 %',
+      criticalLabel: tr('Cible < 10 %', 'Target < 10%'),
       criticalColor: 'text-status-critical',
     },
     {
@@ -173,7 +194,7 @@ const Optirenal = () => {
       displayValue: '0.4',
       unit: 'mL/kg/h',
       status: 'critical',
-      criticalLabel: 'Dernière heure • cible ≥ 0.5',
+      criticalLabel: tr('Dernière heure • cible ≥ 0.5', 'Last hour • target ≥ 0.5'),
       criticalColor: 'text-status-critical',
     },
     {
@@ -181,7 +202,7 @@ const Optirenal = () => {
       displayValue: '28',
       unit: 'mL/min/1.73m²',
       status: 'critical',
-      criticalLabel: 'Réf > 90',
+      criticalLabel: tr('Réf > 90', 'Ref > 90'),
       criticalColor: 'text-status-critical',
     },
   ];
@@ -243,7 +264,7 @@ const Optirenal = () => {
       if (prev.includes(label)) return prev.filter((l) => l !== label);
       if (prev.length >= 3) {
         toast.warning('Maximum 3 indicateurs', {
-          description: 'Désélectionnez un indicateur pour en ajouter un nouveau.',
+          description: tr('Désélectionnez un indicateur pour en ajouter un nouveau.', 'Deselect an indicator to add a new one.'),
         });
         return prev;
       }
@@ -288,7 +309,7 @@ const Optirenal = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8 space-y-4">
-          <DataLoadingOverlay isLoading={true} label="Chargement du patient..." variant="skeleton">
+          <DataLoadingOverlay isLoading={true} label={tr("Chargement du patient...", "Loading patient...")} variant="skeleton">
             <div />
           </DataLoadingOverlay>
         </div>
@@ -301,7 +322,7 @@ const Optirenal = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p className="text-foreground">Patient non trouvé</p>
+          <p className="text-foreground">{tr("Patient non trouvé", "Patient not found")}</p>
         </div>
       </div>
     );
@@ -331,10 +352,10 @@ const Optirenal = () => {
               />
             </StatusIconCircle>
           }
-          title="Optimisation rénale"
+          title={tr("Optimisation rénale", "Renal optimisation")}
           subtitle={
             <>
-              <span className="font-semibold text-status-critical">AKI — Stade F (RIFLE)</span> • Dernière MAJ : {lastUpdate}
+              <span className="font-semibold text-status-critical">{tr("AKI — Stade F (RIFLE)", "AKI — Stage F (RIFLE)")}</span> • {tr("Dernière MAJ :", "Last update:")} {lastUpdate}
             </>
           }
         >
@@ -363,7 +384,7 @@ const Optirenal = () => {
           {selectedRenalOptIndicators.length > 0 && (
             <div className="border-t border-border pt-4 mt-4 space-y-4">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-medium text-foreground">Évolution temporelle</div>
+                <div className="text-sm font-medium text-foreground">{tr("Évolution temporelle", "Trend over time")}</div>
                 <TimeWindowSelector
                   value={optChartTimeRange as TimeWindowValue}
                   onChange={(v) => setOptChartTimeRange(v)}
@@ -388,7 +409,7 @@ const Optirenal = () => {
           <CardHeader className="px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="text-base sm:text-lg">
-                Monitorage {monitoringTimeRange === 'stay' ? 'sur le séjour' : `sur ${monitoringTimeRange}`}
+                {tr('Monitorage', 'Monitoring')} {monitoringTimeRange === 'stay' ? tr('sur le séjour', 'over the stay') : tr(`sur ${monitoringTimeRange}`, `over ${monitoringTimeRange}`)}
               </CardTitle>
               <TimeWindowSelector
                 value={monitoringTimeRange as TimeWindowValue}
@@ -404,8 +425,8 @@ const Optirenal = () => {
                 <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                   <CardTitle className="text-sm sm:text-lg">
                     {monitoringTimeRange === 'stay'
-                      ? 'Monitorage des cibles recommandées (Séjour)'
-                      : `Monitorage des cibles recommandées (${monitoringTimeRange.toUpperCase()})`}
+                      ? tr('Monitorage des cibles recommandées (Séjour)', 'Recommended target monitoring (Stay)')
+                      : tr(`Monitorage des cibles recommandées (${monitoringTimeRange.toUpperCase()})`, `Recommended target monitoring (${monitoringTimeRange.toUpperCase()})`)}
                   </CardTitle>
                   <label className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground cursor-pointer">
                     <input
@@ -414,8 +435,8 @@ const Optirenal = () => {
                       onChange={(e) => setShowTargetZones(e.target.checked)}
                       className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-border text-primary focus:ring-primary"
                     />
-                    <span className="hidden sm:inline">Zones cibles</span>
-                    <span className="sm:hidden">Cibles</span>
+                    <span className="hidden sm:inline">{tr("Zones cibles", "Target zones")}</span>
+                    <span className="sm:hidden">{tr("Cibles", "Targets")}</span>
                   </label>
                 </div>
               </CardHeader>
@@ -444,19 +465,19 @@ const Optirenal = () => {
                                   <div className={cn('w-3 h-3 rounded-full mt-1 shrink-0 cursor-help', STATUS_DOT[metric.status])} />
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="text-xs max-w-60">
-                                  <div className="font-semibold">{STATUS_LABEL[metric.status]}</div>
+                                  <div className="font-semibold">{statusLabel(metric.status)}</div>
                                   {metric.help && <div className="text-muted-foreground mt-1">{metric.help}</div>}
                                 </TooltipContent>
                               </Tooltip>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-foreground">
-                                  {metric.label} :{' '}
+                                  {term(metric.label)} :{' '}
                                   <span className={STATUS_TEXT[metric.status]}>
                                     {metric.displayValue ?? metric.value}
                                   </span>{' '}
                                   <span className="text-xs text-muted-foreground">{metric.unit}</span>
                                 </p>
-                                <p className="text-xs text-muted-foreground">{metric.reference ?? metric.note}</p>
+                                <p className="text-xs text-muted-foreground">{refText(metric.reference ?? metric.note)}</p>
                               </div>
                             </div>
                           );
@@ -470,7 +491,7 @@ const Optirenal = () => {
                   {selectedIndicators.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
                       <p className="text-muted-foreground text-xs sm:text-base text-center px-2">
-                        Sélectionnez des indicateurs ci-dessus pour afficher leur évolution
+                        {tr('Sélectionnez des indicateurs ci-dessus pour afficher leur évolution', 'Select indicators above to show their trend')}
                       </p>
                     </div>
                   ) : (

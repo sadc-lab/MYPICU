@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, Loader2 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
+import { tr } from '@/i18n';
 
 interface ExportImageButtonProps {
   /** CSS selector of the element to capture. Defaults to `main` of the page. */
@@ -23,7 +24,7 @@ interface ExportImageButtonProps {
 export const ExportImageButton = ({
   targetSelector,
   filenamePrefix,
-  label = "Exporter en image",
+  label = tr("Exporter en image", "Export as image"),
 }: ExportImageButtonProps) => {
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +38,7 @@ export const ExportImageButton = ({
       (document.body as HTMLElement);
 
     if (!node) {
-      toast.error("Impossible de localiser le contenu à exporter");
+      toast.error(tr("Impossible de localiser le contenu à exporter", "Unable to locate the content to export"));
       setLoading(false);
       return;
     }
@@ -74,10 +75,10 @@ export const ExportImageButton = ({
       link.href = dataUrl;
       link.click();
 
-      toast.success("Image exportée (sans nom patient)");
+      toast.success(tr("Image exportée (sans nom patient)", "Image exported (without patient name)"));
     } catch (err) {
       console.error("[ExportImageButton] failed:", err);
-      toast.error("Échec de l'export image");
+      toast.error(tr("Échec de l'export image", "Image export failed"));
     } finally {
       hiddenEls.forEach((el, i) => {
         el.style.visibility = previousVisibility[i];

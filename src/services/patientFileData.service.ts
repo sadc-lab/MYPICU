@@ -1,6 +1,7 @@
 // Service to load full patient data from Supabase (or JSON files as fallback)
 // Patient data includes time-series vital signs, medications, and clinical data
 import { loadPatientDataFromSupabase, checkPatientExistsInSupabase, getAvailablePatientIdsFromSupabase } from './supabasePatientData.service';
+import { tr } from '@/i18n';
 
 export interface TimeSeriesDataPoint {
   charttime: string;
@@ -735,9 +736,9 @@ export function computeNeurologicalState(
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
     if (diffHours > 0) {
-      currentStateSince = `depuis ${diffHours}h${diffMins > 0 ? String(diffMins).padStart(2, '0') : ''}`;
+      currentStateSince = `${tr('depuis', 'for')} ${diffHours}h${diffMins > 0 ? String(diffMins).padStart(2, '0') : ''}`;
     } else {
-      currentStateSince = `depuis ${diffMins}min`;
+      currentStateSince = `${tr('depuis', 'for')} ${diffMins}min`;
     }
   }
 

@@ -9,10 +9,12 @@ import { useRealtimePatients } from '@/hooks/useRealtimePatients';
 import { Patient } from '@/types/patient.types';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { useI18n } from '@/i18n';
 
 const Dashboard = () => {
   const [selectedPed, setSelectedPed] = useState<'A' | 'B' | 'C'>('A');
   const [showTourOrganizer, setShowTourOrganizer] = useState(false);
+  const { t } = useI18n();
   
   // Enable real-time subscriptions
   useRealtimePatients();
@@ -45,18 +47,18 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-[1600px]">
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
           <Button variant="outline" className="h-10 bg-muted text-sm sm:text-base">
-            Accès TVL
+            {t('Accès TVL', 'TVL access')}
           </Button>
           
           <Button variant="outline" className="h-10 bg-muted border-2 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base" onClick={() => setShowTourOrganizer(true)} data-guide="organize-tour">
-            Organiser tournée <ChevronRight className="ml-2 h-4 w-4" />
+            {t('Organiser tournée', 'Organize rounds')} <ChevronRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
 
         <div className="space-y-6">
           <div>
             <div className="flex items-center gap-1 mb-3">
-              <h2 className="text-lg sm:text-xl font-medium text-primary">Liste des patients -</h2>
+              <h2 className="text-lg sm:text-xl font-medium text-primary">{t("Liste des patients -", "Patient list -")}</h2>
               <Select value={selectedPed} onValueChange={value => setSelectedPed(value as 'A' | 'B' | 'C')}>
                 <SelectTrigger className="w-auto border-0 bg-transparent text-primary h-auto p-0 text-lg sm:text-xl font-medium hover:opacity-80 focus:ring-0 gap-1">
                   <SelectValue />
@@ -74,8 +76,8 @@ const Dashboard = () => {
               <PatientTable patients={displayedPatients} pedName={`PED ${selectedPed}`} averagePelod={averagePelod} showTitle={false} />
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border rounded-lg bg-card">
-                <p className="text-lg font-medium">Aucun patient dans cette unité</p>
-                <p className="text-sm mt-1">Il n'y a actuellement aucun patient en PED {selectedPed}.</p>
+                <p className="text-lg font-medium">{t("Aucun patient dans cette unité", "No patients in this unit")}</p>
+                <p className="text-sm mt-1">{t("Il n'y a actuellement aucun patient en PED", 'There are currently no patients in PED')} {selectedPed}.</p>
               </div>
             )}
           </div>

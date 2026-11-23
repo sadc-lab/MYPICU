@@ -7,6 +7,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { tr } from '@/i18n';
+import { term } from '@/i18n/terms';
 
 interface ModuleIndicatorDropdownProps {
   moduleLabel: string;
@@ -36,8 +38,8 @@ export const ModuleIndicatorDropdown = ({
         <button
           type="button"
           className="flex items-center justify-center h-full px-2 hover:bg-foreground/10 transition-colors shrink-0"
-          title={`Ajouter un indicateur ${moduleLabel}`}
-          aria-label={`Ajouter un indicateur ${moduleLabel}`}
+          title={tr(`Ajouter un indicateur ${moduleLabel}`, `Add a ${moduleLabel} indicator`)}
+          aria-label={tr(`Ajouter un indicateur ${moduleLabel}`, `Add a ${moduleLabel} indicator`)}
         >
           <Plus className="h-3.5 w-3.5" />
         </button>
@@ -46,13 +48,13 @@ export const ModuleIndicatorDropdown = ({
         <DropdownMenuLabel>{moduleLabel}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {indicators.length === 0 ? (
-          <DropdownMenuItem disabled>Aucun indicateur disponible pour ce module</DropdownMenuItem>
+          <DropdownMenuItem disabled>{tr("Aucun indicateur disponible pour ce module", "No indicator available for this module")}</DropdownMenuItem>
         ) : available.length === 0 ? (
-          <DropdownMenuItem disabled>Tous déjà affichés</DropdownMenuItem>
+          <DropdownMenuItem disabled>{tr("Tous déjà affichés", "All already shown")}</DropdownMenuItem>
         ) : (
           available.map((ind) => (
             <DropdownMenuItem key={ind.label} onSelect={() => onPick(ind.label)}>
-              <span className="flex-1">{ind.label}</span>
+              <span className="flex-1">{term(ind.label)}</span>
               {(ind.target || ind.unit) && (
                 <span className="text-xs text-muted-foreground ml-2">{ind.target ?? ind.unit}</span>
               )}

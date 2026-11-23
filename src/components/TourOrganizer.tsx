@@ -33,6 +33,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { tr } from '@/i18n';
 
 interface TourOrganizerProps {
   open: boolean;
@@ -88,7 +89,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors ${
+      className={`flex items-center gap-3 p-3 bg-muted/50 rounded-lg border border-border hover:bg-muted transition-colors ${
         isDragging ? 'opacity-50 shadow-lg' : ''
       }`}
     >
@@ -97,15 +98,15 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         {...listeners}
         className="cursor-grab active:cursor-grabbing touch-none"
       >
-        <GripVertical className="h-5 w-5 text-gray-400 flex-shrink-0" />
+        <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
       </div>
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="font-semibold text-red-500">{patient.id}</span>
-          <span className="font-medium text-gray-900">{patient.name}</span>
+          <span className="font-medium text-foreground">{patient.name}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>{patient.age}</span>
           <span>•</span>
           <span>{patient.weight}</span>
@@ -118,7 +119,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         <div 
           className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.brainScore)} cursor-pointer hover:opacity-80 transition-opacity`}
           onClick={(e) => handleOrganClick(e, 'brain')}
-          title="Voir détails du cerveau"
+          title={tr("Voir détails du cerveau", "View brain details")}
         >
           <img src={brainIcon} alt="brain" className="h-5 w-5" style={{ filter: getColorFilter(patient.brainScore) }} />
           <span className={`text-xs font-semibold ${getColor(patient.brainScore)}`}>
@@ -129,7 +130,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         <div 
           className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.heartScore)} cursor-pointer hover:opacity-80 transition-opacity`}
           onClick={(e) => handleOrganClick(e, 'heart')}
-          title="Voir détails du cœur"
+          title={tr("Voir détails du cœur", "View heart details")}
         >
           <HeartIcon className={`h-5 w-5 ${getColor(patient.heartScore)}`} />
           <span className={`text-xs font-semibold ${getColor(patient.heartScore)}`}>
@@ -140,7 +141,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
         <div 
           className={`flex items-center gap-1 px-2 py-1 rounded ${getBgColor(patient.lungsScore)} cursor-pointer hover:opacity-80 transition-opacity`}
           onClick={(e) => handleOrganClick(e, 'lungs')}
-          title="Voir détails des poumons"
+          title={tr("Voir détails des poumons", "View lung details")}
         >
           <img src={lungsIcon} alt="lungs" className="h-5 w-5" style={{ filter: getColorFilter(patient.lungsScore) }} />
           <span className={`text-xs font-semibold ${getColor(patient.lungsScore)}`}>
@@ -155,7 +156,7 @@ const SortablePatientItem = ({ patient, getPelodColor, navigate }: SortablePatie
 
       {patient.tour && (
         <Badge variant="destructive" className="text-xs">
-          Priorité
+          {tr('Priorité', 'Priority')}
         </Badge>
       )}
     </div>
@@ -200,11 +201,11 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-white">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-background">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Organiser la tournée - {pedName}</DialogTitle>
+          <DialogTitle className="text-xl font-bold">{tr("Organiser la tournée", "Organize rounds")} - {pedName}</DialogTitle>
           <DialogDescription>
-            Glissez et déposez les patients pour réorganiser l'ordre de votre tournée.
+            {tr("Glissez et déposez les patients pour réorganiser l'ordre de votre tournée.", 'Drag and drop patients to reorder your rounds.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -231,16 +232,16 @@ export const TourOrganizer = ({ open, onOpenChange, patients, pedName }: TourOrg
         </DndContext>
 
         <div className="flex justify-between items-center pt-4 border-t">
-          <p className="text-sm text-gray-600">
-            {orderedPatients.length} patient{orderedPatients.length !== 1 ? 's' : ''} dans la tournée
+          <p className="text-sm text-muted-foreground">
+            {orderedPatients.length} patient{orderedPatients.length !== 1 ? 's' : ''} {tr('dans la tournée', 'in the rounds')}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Annuler
+              {tr('Annuler', 'Cancel')}
             </Button>
             <Button onClick={handleStartTour} className="gap-2">
               <Play className="h-4 w-4" />
-              Démarrer la tournée
+              {tr('Démarrer la tournée', 'Start rounds')}
             </Button>
           </div>
         </div>

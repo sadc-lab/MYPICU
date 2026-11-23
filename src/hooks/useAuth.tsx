@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { tr } from '@/i18n';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -49,14 +50,14 @@ export const useAuth = () => {
       if (error) throw error;
 
       if (data.user) {
-        toast.success('Account created successfully! Please check your email to verify your account.');
+        toast.success(tr('Compte créé ! Vérifiez vos courriels pour confirmer votre compte.', 'Account created successfully! Please check your email to verify your account.'));
         navigate('/auth/login');
       }
 
       return { error: null };
     } catch (error: any) {
       console.error('Sign up error:', error);
-      toast.error(error.message || 'Failed to create account');
+      toast.error(error.message || tr('Impossible de créer le compte', 'Failed to create account'));
       return { error };
     }
   };
@@ -71,14 +72,14 @@ export const useAuth = () => {
       if (error) throw error;
 
       if (data.session) {
-        toast.success('Successfully logged in!');
+        toast.success(tr('Connexion réussie !', 'Successfully logged in!'));
         navigate('/');
       }
 
       return { error: null };
     } catch (error: any) {
       console.error('Sign in error:', error);
-      toast.error(error.message || 'Failed to log in');
+      toast.error(error.message || tr('Échec de la connexion', 'Failed to log in'));
       return { error };
     }
   };
@@ -88,12 +89,12 @@ export const useAuth = () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      toast.success('Successfully logged out');
+      toast.success(tr('Déconnexion réussie', 'Successfully logged out'));
       navigate('/auth/login');
       return { error: null };
     } catch (error: any) {
       console.error('Sign out error:', error);
-      toast.error(error.message || 'Failed to log out');
+      toast.error(error.message || tr('Échec de la déconnexion', 'Failed to log out'));
       return { error };
     }
   };

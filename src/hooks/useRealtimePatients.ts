@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { patientKeys } from './usePatients';
 import { toast } from 'sonner';
+import { tr } from '@/i18n';
 
 /**
  * Hook to subscribe to real-time patient updates from Supabase
@@ -32,18 +33,18 @@ export function useRealtimePatients() {
           // Show toast notification based on event type
           switch (payload.eventType) {
             case 'INSERT':
-              toast.info('Nouveau patient ajouté', {
-                description: `Patient ${(payload.new as any)?.name || 'inconnu'} ajouté`,
+              toast.info(tr('Nouveau patient ajouté', 'New patient added'), {
+                description: tr(`Patient ${(payload.new as any)?.name || 'inconnu'} ajouté`, `Patient ${(payload.new as any)?.name || 'unknown'} added`),
               });
               break;
             case 'UPDATE':
-              toast.info('Données patient mises à jour', {
-                description: `Patient ${(payload.new as any)?.name || 'inconnu'} modifié`,
+              toast.info(tr('Données patient mises à jour', 'Patient data updated'), {
+                description: tr(`Patient ${(payload.new as any)?.name || 'inconnu'} modifié`, `Patient ${(payload.new as any)?.name || 'unknown'} updated`),
               });
               break;
             case 'DELETE':
-              toast.info('Patient supprimé', {
-                description: `Patient ${(payload.old as any)?.name || 'inconnu'} retiré`,
+              toast.info(tr('Patient supprimé', 'Patient removed'), {
+                description: tr(`Patient ${(payload.old as any)?.name || 'inconnu'} retiré`, `Patient ${(payload.old as any)?.name || 'unknown'} removed`),
               });
               break;
           }
@@ -94,8 +95,8 @@ export function useRealtimePatient(patientId: string | null) {
           // Also invalidate lists that might include this patient
           queryClient.invalidateQueries({ queryKey: patientKeys.lists() });
 
-          toast.info('Données cliniques mises à jour', {
-            description: 'Les données du patient ont été actualisées en temps réel',
+          toast.info(tr('Données cliniques mises à jour', 'Clinical data updated'), {
+            description: tr('Les données du patient ont été actualisées en temps réel', 'Patient data was refreshed in real time'),
           });
         }
       )

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Star } from 'lucide-react';
+import { tr } from '@/i18n';
 
 const Feedback = () => {
   const [message, setMessage] = useState('');
@@ -15,10 +16,10 @@ const Feedback = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (rating === 0) {
-      toast.error('Veuillez sélectionner une évaluation');
+      toast.error(tr('Veuillez sélectionner une évaluation', 'Please select a rating'));
       return;
     }
-    toast.success('Merci pour votre retour !');
+    toast.success(tr('Merci pour votre retour !', 'Thank you for your feedback!'));
     setMessage('');
     setRating(0);
   };
@@ -30,12 +31,12 @@ const Feedback = () => {
       <main className="container mx-auto px-4 py-8">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle className="text-2xl">Envoyez-nous vos commentaires</CardTitle>
+            <CardTitle className="text-2xl">{tr("Envoyez-nous vos commentaires", "Send us your feedback")}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label>Évaluation</Label>
+                <Label>{tr("Évaluation", "Rating")}</Label>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -64,13 +65,13 @@ const Feedback = () => {
                   id="message"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Partagez vos réflexions... (facultatif)"
+                  placeholder={tr("Partagez vos réflexions... (facultatif)", "Share your thoughts... (optional)")}
                   rows={5}
                 />
               </div>
 
               <Button type="submit" className="w-full">
-                Envoyer
+                {tr('Envoyer', 'Send')}
               </Button>
             </form>
           </CardContent>

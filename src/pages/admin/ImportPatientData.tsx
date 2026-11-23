@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Upload, CheckCircle, AlertCircle, Loader2, FileUp } from 'lucide-react';
+import { tr } from '@/i18n';
 
 interface ImportStatus {
   patientId: string;
@@ -191,7 +192,7 @@ const ImportPatientData = () => {
 
     try {
       const response = await fetch(`/data/patients/${patientId}.json`);
-      if (!response.ok) throw new Error(`Fichier JSON introuvable pour patient ${patientId}`);
+      if (!response.ok) throw new Error(tr(`Fichier JSON introuvable pour patient ${patientId}`, `JSON file not found for patient ${patientId}`));
       const data = await response.json();
 
       const result = await importPatientData(patientId, data, (updates) =>
@@ -216,7 +217,7 @@ const ImportPatientData = () => {
     for (const file of Array.from(files)) {
       const patientId = file.name.replace(/\.json$/i, '').replace(/[^0-9]/g, '');
       if (!patientId) {
-        toast.error(`Impossible d'extraire l'ID patient du fichier: ${file.name}`);
+        toast.error(tr(`Impossible d'extraire l'ID patient du fichier: ${file.name}`, `Unable to extract the patient ID from file: ${file.name}`));
         continue;
       }
 
@@ -256,7 +257,7 @@ const ImportPatientData = () => {
       }
     }
 
-    toast.success('Import des fichiers uploadés terminé');
+    toast.success(tr('Import des fichiers uploadés terminé', 'Import of uploaded files complete'));
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -266,7 +267,7 @@ const ImportPatientData = () => {
       await importStaticPatient(file);
     }
     setIsImporting(false);
-    toast.success('Import terminé');
+    toast.success(tr('Import terminé', 'Import complete'));
   };
 
   const renderCard = (s: ImportStatus, label?: string) => (
@@ -281,10 +282,10 @@ const ImportPatientData = () => {
       </CardHeader>
       <CardContent className="py-2">
         <div className="flex gap-2 flex-wrap">
-          <Badge variant="outline">Vitaux: {s.vitals}</Badge>
-          <Badge variant="outline">Médications: {s.medications}</Badge>
-          <Badge variant="outline">Validité: {s.validity}</Badge>
-          <Badge variant="outline">Clinique: {s.clinicalInfo}</Badge>
+          <Badge variant="outline">{tr("Vitaux", "Vitals")}: {s.vitals}</Badge>
+          <Badge variant="outline">{tr("Médications", "Medications")}: {s.medications}</Badge>
+          <Badge variant="outline">{tr("Validité", "Validity")}: {s.validity}</Badge>
+          <Badge variant="outline">{tr("Clinique", "Clinical")}: {s.clinicalInfo}</Badge>
         </div>
         {s.errors.length > 0 && (
           <div className="mt-2 text-xs text-destructive max-h-20 overflow-y-auto">
@@ -297,19 +298,19 @@ const ImportPatientData = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Import des données patients</h1>
+      <h1 className="text-2xl font-bold mb-6">{tr("Import des données patients", "Patient data import")}</h1>
       <p className="text-muted-foreground mb-6">
-        Importe les fichiers JSON patients dans les tables Supabase structurées.
+        {tr('Importe les fichiers JSON patients dans les tables Supabase structurées.', 'Imports patient JSON files into the structured Supabase tables.')}
       </p>
 
       {/* Upload section */}
       <Card className="mb-6">
         <CardHeader className="py-3">
-          <CardTitle className="text-base">Uploader des fichiers JSON</CardTitle>
+          <CardTitle className="text-base">{tr("Uploader des fichiers JSON", "Upload JSON files")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-3">
-            Sélectionnez un ou plusieurs fichiers JSON patients. Le numéro patient sera extrait du nom de fichier.
+            {tr('Sélectionnez un ou plusieurs fichiers JSON patients. Le numéro patient sera extrait du nom de fichier.', 'Select one or more patient JSON files. The patient number will be extracted from the file name.')}
           </p>
           <input
             ref={fileInputRef}
@@ -321,7 +322,7 @@ const ImportPatientData = () => {
           />
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isImporting}>
             <FileUp className="h-4 w-4 mr-2" />
-            Choisir des fichiers JSON
+            {tr('Choisir des fichiers JSON', 'Choose JSON files')}
           </Button>
         </CardContent>
       </Card>
@@ -329,7 +330,7 @@ const ImportPatientData = () => {
       {/* Uploaded files status */}
       {uploadedFiles.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">Fichiers uploadés</h2>
+          <h2 className="text-lg font-semibold mb-3">{tr("Fichiers uploadés", "Uploaded files")}</h2>
           <div className="space-y-4">
             {uploadedFiles.map(s => renderCard(s, s.patientId.replace('upload-', '')))}
           </div>
@@ -337,10 +338,10 @@ const ImportPatientData = () => {
       )}
 
       {/* Static files section */}
-      <h2 className="text-lg font-semibold mb-3">Fichiers statiques</h2>
+      <h2 className="text-lg font-semibold mb-3">{tr("Fichiers statiques", "Static files")}</h2>
       <Button onClick={handleImportAll} disabled={isImporting} className="mb-4">
         {isImporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-        {isImporting ? 'Import en cours...' : 'Importer tous les patients statiques'}
+        {isImporting ? tr('Import en cours...', 'Importing...') : tr('Importer tous les patients statiques', 'Import all static patients')}
       </Button>
 
       <div className="space-y-4">

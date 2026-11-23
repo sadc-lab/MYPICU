@@ -6,9 +6,10 @@ import {
   ModuleStatus,
 } from '@/components/CollapsibleModuleCard';
 import { computeNeurologicalState, PatientFileData } from '@/services/patientFileData.service';
-import { getRifleStage, rifleStages } from '@/utils/renalStatus';
+import { getRifleStage, getRifleStages } from '@/utils/renalStatus';
 import kidneyIcon from '@/assets/kidney-icon.svg';
 import { cn } from '@/lib/utils';
+import { tr } from '@/i18n';
 
 interface OrganClassificationsProps {
   patientId: string;
@@ -100,11 +101,11 @@ export const OrganClassifications = ({ patientId, patientFileData }: OrganClassi
     [patientFileData]
   );
   const neuroBaseRows: ClassRow[] = [
-    { key: 'controlled', label: 'Contrôlé', criteria: 'PIC < 20 mmHg et PPC 50–80 mmHg', status: 'normal' },
-    { key: 'htic', label: 'HTIC', criteria: 'PIC ≥ 20 mmHg', status: 'warning' },
-    { key: 'ischemia', label: 'Ischémie', criteria: 'PPC < 50 mmHg', status: 'critical' },
-    { key: 'htic_ischemia', label: 'HTIC + Ischémie', criteria: 'PIC ≥ 20 mmHg et PPC < 50 mmHg', status: 'critical' },
-    { key: 'hyperemia', label: 'Hyperémie', criteria: 'PPC > 80 mmHg avec PIC normale', status: 'warning' },
+    { key: 'controlled', label: tr('Contrôlé', 'Controlled'), criteria: tr('PIC < 20 mmHg et PPC 50–80 mmHg', 'ICP < 20 mmHg and CPP 50–80 mmHg'), status: 'normal' },
+    { key: 'htic', label: tr('HTIC', 'ICH'), criteria: tr('PIC ≥ 20 mmHg', 'ICP ≥ 20 mmHg'), status: 'warning' },
+    { key: 'ischemia', label: tr('Ischémie', 'Ischaemia'), criteria: tr('PPC < 50 mmHg', 'CPP < 50 mmHg'), status: 'critical' },
+    { key: 'htic_ischemia', label: tr('HTIC + Ischémie', 'ICH + Ischaemia'), criteria: tr('PIC ≥ 20 mmHg et PPC < 50 mmHg', 'ICP ≥ 20 mmHg and CPP < 50 mmHg'), status: 'critical' },
+    { key: 'hyperemia', label: tr('Hyperémie', 'Hyperaemia'), criteria: tr('PPC > 80 mmHg avec PIC normale', 'CPP > 80 mmHg with normal ICP'), status: 'warning' },
   ];
   const neuroRows: ClassRow[] = neuroBaseRows.map((row) => {
     if (!neuro?.hasData) return row;
@@ -115,13 +116,13 @@ export const OrganClassifications = ({ patientId, patientFileData }: OrganClassi
       htic_ischemia: neuro.history.hticWithIschemia,
       hyperemia: neuro.history.hyperemia,
     }[row.key];
-    return { ...row, extra: `${pct}% du temps (${HOURS}h)` };
+    return { ...row, extra: tr(`${pct}% du temps (${HOURS}h)`, `${pct}% of the time (${HOURS}h)`) };
   });
   const neuroActive = neuro?.hasData ? neuroRows.find((r) => r.key === neuro.currentState) ?? null : null;
 
   // Rénale : RIFLE.
   const rifle = getRifleStage(patientId);
-  const rifleRows: ClassRow[] = rifleStages.map((st) => ({
+  const rifleRows: ClassRow[] = getRifleStages().map((st) => ({
     key: st.letter,
     badge: st.letter,
     label: st.name,
@@ -148,16 +149,16 @@ export const OrganClassifications = ({ patientId, patientFileData }: OrganClassi
           <span className="text-sm sm:text-base">{(neuroActive ? 1 : 0) + (rifleActive ? 1 : 0)}</span>
         </StatusIconCircle>
       }
-      title="Classifications d'organes"
+      title={tr("Classifications d'organes", "Organ classifications")}
       subtitle={
         <>
-          Cérébral :{' '}
+          {tr('Cérébral :', 'Brain:')}{' '}
           <span className={cn('font-semibold', neuroActive ? TEXT_ACTIVE[neuroActive.status] : '')}>
-            {neuroActive ? neuroActive.label : 'pas de données'}
+            {neuroActive ? neuroActive.label : tr('pas de données', 'no data')}
           </span>
-          {' • '}Rénal :{' '}
+          {' • '}{tr('Rénal :', 'Kidney:')}{' '}
           <span className={cn('font-semibold', rifleActive ? 'text-status-critical' : '')}>
-            {rifleActive ? `RIFLE ${rifleActive.key} (${rifleActive.label})` : 'pas de données'}
+            {rifleActive ? `RIFLE ${rifleActive.key} (${rifleActive.label})` : tr('pas de données', 'no data')}
           </span>
         </>
       }
@@ -172,16 +173,16 @@ export const OrganClassifications = ({ patientId, patientFileData }: OrganClassi
               <Brain className="h-5 w-5 sm:h-6 sm:w-6" />
             </StatusIconCircle>
           }
-          title="Classification cérébrale"
+          title={tr("Classification cérébrale", "Brain classification")}
           subtitle={
             neuroActive ? (
               <>
-                État actuel :{' '}
+                {tr('État actuel :', 'Current state:')}{' '}
                 <span className={cn('font-semibold', TEXT_ACTIVE[neuroActive.status])}>{neuroActive.label}</span>
                 {neuro?.currentStateSince && ` ${neuro.currentStateSince}`}
               </>
             ) : (
-              'Pas de données PIC/PPC'
+              tr('Pas de données PIC/PPC', 'No ICP/CPP data')
             )
           }
         >
@@ -208,17 +209,17 @@ export const OrganClassifications = ({ patientId, patientFileData }: OrganClassi
               />
             </StatusIconCircle>
           }
-          title="Classification rénale (RIFLE)"
+          title={tr("Classification rénale (RIFLE)", "Kidney classification (RIFLE)")}
           subtitle={
             rifleActive ? (
               <>
-                Stade actuel :{' '}
+                {tr('Stade actuel :', 'Current stage:')}{' '}
                 <span className="font-semibold text-status-critical">
                   {rifleActive.key} — {rifleActive.label}
                 </span>
               </>
             ) : (
-              'Pas de données rénales'
+              tr('Pas de données rénales', 'No kidney data')
             )
           }
         >

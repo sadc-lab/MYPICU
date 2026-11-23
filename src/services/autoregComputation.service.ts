@@ -1,4 +1,5 @@
 // Autoregulation computation service for the standalone /autoreg study page.
+import { tr } from '@/i18n';
 // Parses user-uploaded CSV or JSON files and computes an autoregulation index:
 //   - PRx mode  : correlation PIC (ICP) ↔ PAM, binned by PPC  → PPC optimale
 //   - COx mode  : correlation rSO2 (NIRS) ↔ PAM, binned by PAM → PAM optimale
@@ -15,8 +16,8 @@ export interface ModeLabels {
 
 export function modeLabels(mode: AutoregMode): ModeLabels {
   return mode === "cox"
-    ? { index: "COx", pressure: "PAM", optimal: "PAM optimale", signal: "rSO₂" }
-    : { index: "PRx", pressure: "PPC", optimal: "PPC optimale", signal: "PIC" };
+    ? { index: "COx", pressure: tr("PAM", "MAP"), optimal: tr("PAM optimale", "Optimal MAP"), signal: "rSO₂" }
+    : { index: "PRx", pressure: tr("PPC", "CPP"), optimal: tr("PPC optimale", "Optimal CPP"), signal: tr("PIC", "ICP") };
 }
 
 export interface RawSample {
@@ -229,21 +230,21 @@ export interface ReadinessError {
 export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError | null {
   if (samples.length === 0) {
     return {
-      cause: "Aucune donnée exploitable détectée dans le fichier.",
+      cause: tr("Aucune donnée exploitable détectée dans le fichier.", "No usable data detected in the file."),
       steps: [
-        "Vérifiez que le fichier contient bien des lignes horodatées.",
-        "Formats acceptés : CSV/Excel avec en-têtes horodatées, soit NIRS + PAM (rSO₂, PAM) pour le COx, soit PIC + PAM + PPC pour le PRx ; JSON Fisher également accepté.",
-        "Assurez-vous que les colonnes de signal (rSO₂/NIRS ou PIC/PPC) et PAM ne sont pas vides.",
+        tr("Vérifiez que le fichier contient bien des lignes horodatées.", "Check that the file contains timestamped rows."),
+        tr("Formats acceptés : CSV/Excel avec en-têtes horodatées, soit NIRS + PAM (rSO₂, PAM) pour le COx, soit PIC + PAM + PPC pour le PRx ; JSON Fisher également accepté.", "Accepted formats: CSV/Excel with timestamped headers, either NIRS + MAP (rSO₂, MAP) for COx, or ICP + MAP + CPP for PRx; Fisher JSON also accepted."),
+        tr("Assurez-vous que les colonnes de signal (rSO₂/NIRS ou PIC/PPC) et PAM ne sont pas vides.", "Make sure the signal columns (rSO₂/NIRS or ICP/CPP) and MAP are not empty."),
       ],
     };
   }
 
   if (samples.length < REQUIRED_SAMPLES) {
     return {
-      cause: `Fichier insuffisant : ${samples.length} échantillon(s) détecté(s), ${REQUIRED_SAMPLES} minimum requis.`,
+      cause: tr(`Fichier insuffisant : ${samples.length} échantillon(s) détecté(s), ${REQUIRED_SAMPLES} minimum requis.`, `Insufficient file: ${samples.length} sample(s) detected, ${REQUIRED_SAMPLES} minimum required.`),
       steps: [
-        "Prolongez la période d'enregistrement (au moins 90 minutes recommandé).",
-        "Vérifiez la fréquence d'échantillonnage.",
+        tr("Prolongez la période d'enregistrement (au moins 90 minutes recommandé).", "Extend the recording period (at least 90 minutes recommended)."),
+        tr("Vérifiez la fréquence d'échantillonnage.", "Check the sampling rate."),
       ],
     };
   }
@@ -255,38 +256,38 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
     const complete = samples.filter((s) => s.nirs !== null && s.pam !== null);
     if (samples.filter((s) => s.pam !== null).length === 0) {
       return {
-        cause: "Champ entièrement vide : PAM.",
+        cause: tr("Champ entièrement vide : PAM.", "Field entirely empty: MAP."),
         steps: [
-          "Un signal NIRS (rSO₂) a été détecté mais la colonne PAM est absente ou vide.",
-          "Le COx nécessite la pression artérielle moyenne (PAM) synchrone à la rSO₂.",
-          "Vérifiez le mapping des colonnes (en-tête PAM / MAP / ABP).",
+          tr("Un signal NIRS (rSO₂) a été détecté mais la colonne PAM est absente ou vide.", "A NIRS (rSO₂) signal was detected but the MAP column is missing or empty."),
+          tr("Le COx nécessite la pression artérielle moyenne (PAM) synchrone à la rSO₂.", "COx requires mean arterial pressure (MAP) synchronous with rSO₂."),
+          tr("Vérifiez le mapping des colonnes (en-tête PAM / MAP / ABP).", "Check the column mapping (PAM / MAP / ABP header)."),
         ],
       };
     }
     if (complete.length < REQUIRED_SAMPLES) {
       return {
-        cause: `Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent rSO₂ et PAM exploitables.`,
+        cause: tr(`Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent rSO₂ et PAM exploitables.`, `Computation impossible: only ${complete.length}/${samples.length} samples contain usable rSO₂ and MAP.`),
         steps: [
-          "Trop de valeurs manquantes : contrôlez les artefacts et les périodes de déconnexion du capteur NIRS.",
-          "Réexportez une plage où rSO₂ et PAM sont enregistrés simultanément.",
+          tr("Trop de valeurs manquantes : contrôlez les artefacts et les périodes de déconnexion du capteur NIRS.", "Too many missing values: check artefacts and NIRS sensor disconnection periods."),
+          tr("Réexportez une plage où rSO₂ et PAM sont enregistrés simultanément.", "Re-export a period where rSO₂ and MAP are recorded simultaneously."),
         ],
       };
     }
     const constantFields = [
       { label: "rSO₂", values: complete.map((s) => s.nirs as number) },
-      { label: "PAM", values: complete.map((s) => s.pam as number) },
+      { label: tr("PAM", "MAP"), values: complete.map((s) => s.pam as number) },
     ].filter(({ values }) => new Set(values.map((v) => v.toFixed(3))).size < 2);
     if (constantFields.length > 0) {
       const details = constantFields
         .map(({ label, values }) => `${label} = ${values[0].toFixed(1)} (constant)`)
         .join(", ");
       return {
-        cause: `Signaux constants détectés : ${details}.`,
+        cause: tr(`Signaux constants détectés : ${details}.`, `Constant signals detected: ${details}.`),
         steps: [
-          "Ce fichier ressemble à un enregistrement sans signal brut variable (ou à un export de résultats déjà calculés).",
-          "La corrélation COx nécessite des variations physiologiques de rSO₂ et de PAM.",
-          "Vérifiez que le capteur NIRS était bien connecté (attention aux valeurs saturées à 94 %).",
-          "Réimportez un enregistrement brut où rSO₂ et PAM évoluent réellement.",
+          tr("Ce fichier ressemble à un enregistrement sans signal brut variable (ou à un export de résultats déjà calculés).", "This file looks like a recording without a varying raw signal (or an export of already computed results)."),
+          tr("La corrélation COx nécessite des variations physiologiques de rSO₂ et de PAM.", "COx correlation requires physiological variations of rSO₂ and MAP."),
+          tr("Vérifiez que le capteur NIRS était bien connecté (attention aux valeurs saturées à 94 %).", "Check that the NIRS sensor was connected (beware of values saturated at 94%)."),
+          tr("Réimportez un enregistrement brut où rSO₂ et PAM évoluent réellement.", "Re-import a raw recording where rSO₂ and MAP actually vary."),
         ],
       };
     }
@@ -299,14 +300,15 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
     PAM: samples.filter((s) => s.pam === null).length,
     PPC: samples.filter((s) => s.ppc === null).length,
   };
-  const emptyFields = Object.entries(missing).filter(([, n]) => n === samples.length).map(([k]) => k);
+  const fieldLabel: Record<string, string> = { PIC: tr('PIC', 'ICP'), PAM: tr('PAM', 'MAP'), PPC: tr('PPC', 'CPP') };
+  const emptyFields = Object.entries(missing).filter(([, n]) => n === samples.length).map(([k]) => fieldLabel[k] ?? k);
   if (emptyFields.length > 0) {
     return {
-      cause: `Champs entièrement vides : ${emptyFields.join(', ')}.`,
+      cause: tr(`Champs entièrement vides : ${emptyFields.join(', ')}.`, `Fields entirely empty: ${emptyFields.join(', ')}.`),
       steps: [
-        "Aucun signal NIRS (rSO₂) détecté : le fichier est traité en mode PRx (PIC/PAM/PPC).",
-        "Pour le PRx, PIC, PAM et PPC doivent être présents (PPC peut être calculé si PAM et PIC le sont).",
-        "Pour une analyse COx non invasive, importez plutôt un fichier avec les colonnes rSO₂ (NIRS) et PAM.",
+        tr("Aucun signal NIRS (rSO₂) détecté : le fichier est traité en mode PRx (PIC/PAM/PPC).", "No NIRS (rSO₂) signal detected: the file is processed in PRx mode (ICP/MAP/CPP)."),
+        tr("Pour le PRx, PIC, PAM et PPC doivent être présents (PPC peut être calculé si PAM et PIC le sont).", "For PRx, ICP, MAP and CPP must be present (CPP can be computed if MAP and ICP are)."),
+        tr("Pour une analyse COx non invasive, importez plutôt un fichier avec les colonnes rSO₂ (NIRS) et PAM.", "For a non-invasive COx analysis, import a file with rSO₂ (NIRS) and MAP columns instead."),
       ],
     };
   }
@@ -314,18 +316,18 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
   const complete = samples.filter((s) => s.pic !== null && s.pam !== null && s.ppc !== null);
   if (complete.length < REQUIRED_SAMPLES) {
     return {
-      cause: `Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent PIC, PAM et PPC exploitables.`,
+      cause: tr(`Calcul impossible : seulement ${complete.length}/${samples.length} échantillons contiennent PIC, PAM et PPC exploitables.`, `Computation impossible: only ${complete.length}/${samples.length} samples contain usable ICP, MAP and CPP.`),
       steps: [
-        "Trop de valeurs manquantes : contrôlez les artefacts et les périodes de déconnexion du capteur.",
-        "Réexportez le fichier sur une plage temporelle où les 3 signaux sont enregistrés simultanément.",
+        tr("Trop de valeurs manquantes : contrôlez les artefacts et les périodes de déconnexion du capteur.", "Too many missing values: check artefacts and sensor disconnection periods."),
+        tr("Réexportez le fichier sur une plage temporelle où les 3 signaux sont enregistrés simultanément.", "Re-export the file over a period where all 3 signals are recorded simultaneously."),
       ],
     };
   }
 
   const constantFields = [
-    { label: 'PIC', values: complete.map((s) => s.pic as number) },
-    { label: 'PAM', values: complete.map((s) => s.pam as number) },
-    { label: 'PPC', values: complete.map((s) => s.ppc as number) },
+    { label: tr('PIC', 'ICP'), values: complete.map((s) => s.pic as number) },
+    { label: tr('PAM', 'MAP'), values: complete.map((s) => s.pam as number) },
+    { label: tr('PPC', 'CPP'), values: complete.map((s) => s.ppc as number) },
   ].filter(({ values }) => new Set(values.map((v) => v.toFixed(3))).size < 2);
 
   if (constantFields.length > 0) {
@@ -337,15 +339,15 @@ export function describeAnalysisReadiness(samples: RawSample[]): ReadinessError 
     const allFlat = constantFields.length >= 2;
     return {
       cause: allFlat
-        ? `Fichier sans signal brut exploitable : ${details}.`
-        : `Signaux constants détectés : ${details}.`,
+        ? tr(`Fichier sans signal brut exploitable : ${details}.`, `File without a usable raw signal: ${details}.`)
+        : tr(`Signaux constants détectés : ${details}.`, `Constant signals detected: ${details}.`),
       steps: [
         allFlat
-          ? "Ce fichier ressemble à un export de résultats déjà calculés (ou un gabarit vide) : les canaux bruts PIC/PAM/PPC ne varient pas."
-          : "La corrélation PRx nécessite des variations physiologiques de PIC et PAM.",
-        "Pour calculer l'autorégulation, importez un enregistrement BRUT : rSO₂ + PAM (COx, non invasif) ou PIC + PAM + PPC (PRx).",
-        "Vérifiez que les capteurs étaient connectés et non zérotés artificiellement.",
-        "Évitez les périodes de sédation profonde stable où les signaux ne varient pas.",
+          ? tr("Ce fichier ressemble à un export de résultats déjà calculés (ou un gabarit vide) : les canaux bruts PIC/PAM/PPC ne varient pas.", "This file looks like an export of already computed results (or an empty template): the raw ICP/MAP/CPP channels do not vary.")
+          : tr("La corrélation PRx nécessite des variations physiologiques de PIC et PAM.", "PRx correlation requires physiological variations of ICP and MAP."),
+        tr("Pour calculer l'autorégulation, importez un enregistrement BRUT : rSO₂ + PAM (COx, non invasif) ou PIC + PAM + PPC (PRx).", "To compute autoregulation, import a RAW recording: rSO₂ + MAP (COx, non-invasive) or ICP + MAP + CPP (PRx)."),
+        tr("Vérifiez que les capteurs étaient connectés et non zérotés artificiellement.", "Check that the sensors were connected and not artificially zeroed."),
+        tr("Évitez les périodes de sédation profonde stable où les signaux ne varient pas.", "Avoid periods of stable deep sedation where signals do not vary."),
       ],
     };
   }
