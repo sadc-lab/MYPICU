@@ -37,13 +37,14 @@ import {
 } from '@/services/autoregComputation.service';
 import { useYAxisZoom } from '@/hooks/useYAxisZoom';
 import { ChartZoomControls } from '@/components/ChartZoomControls';
+import { tr, getLang, intlLocale } from '@/i18n';
 
 const CURVE_Y_DOMAIN: [number, number] = [-0.4, 1];
 
 export type ModeLabelSet = ReturnType<typeof modeLabels>;
 
 const formatClockTime = (t: number) =>
-  new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+  new Date(t).toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit' });
 
 export interface RollingLimitFallback {
   value: number;
@@ -152,7 +153,7 @@ export const AutoregKpiRow = ({
         unit="mmHg"
         highlight={result.plateauValid}
         muted={!result.plateauValid}
-        hint={`Pression où ${labels.index} est minimal : la cible thérapeutique estimée.`}
+        hint={tr(`Pression où ${labels.index} est minimal : la cible thérapeutique estimée.`, `Pressure where ${labels.index} is lowest: the estimated therapeutic target.`)}
       />
       <SummaryStat
         label="LLA"
@@ -160,13 +161,13 @@ export const AutoregKpiRow = ({
         unit="mmHg"
         note={
           llaFallback
-            ? `dernière fenêtre · ${formatClockTime(new Date(llaFallback.time).getTime())}`
+            ? tr(`dernière fenêtre · ${formatClockTime(new Date(llaFallback.time).getTime())}`, `latest window · ${formatClockTime(new Date(llaFallback.time).getTime())}`)
             : undefined
         }
         hint={
           llaFallback
-            ? `Aucune limite basse n'est identifiable sur l'ensemble de l'enregistrement : ${labels.index} ne repasse jamais au-dessus de ${PRX_THRESHOLD.toFixed(1)} sous l'optimum. La valeur affichée est la dernière estimation de l'analyse glissante, à titre indicatif.`
-            : `Limite basse : sous cette pression, ${labels.index} repasse au-dessus de ${PRX_THRESHOLD.toFixed(1)} (autorégulation perdue).`
+            ? tr(`Aucune limite basse n'est identifiable sur l'ensemble de l'enregistrement : ${labels.index} ne repasse jamais au-dessus de ${PRX_THRESHOLD.toFixed(1)} sous l'optimum. La valeur affichée est la dernière estimation de l'analyse glissante, à titre indicatif.`, `No lower limit is identifiable over the whole recording: ${labels.index} never rises back above ${PRX_THRESHOLD.toFixed(1)} below the optimum. The value shown is the latest rolling-analysis estimate, for guidance only.`)
+            : tr(`Limite basse : sous cette pression, ${labels.index} repasse au-dessus de ${PRX_THRESHOLD.toFixed(1)} (autorégulation perdue).`, `Lower limit: below this pressure, ${labels.index} rises back above ${PRX_THRESHOLD.toFixed(1)} (autoregulation lost).`)
         }
       />
       <SummaryStat
@@ -175,13 +176,13 @@ export const AutoregKpiRow = ({
         unit="mmHg"
         note={
           ulaFallback
-            ? `dernière fenêtre · ${formatClockTime(new Date(ulaFallback.time).getTime())}`
+            ? tr(`dernière fenêtre · ${formatClockTime(new Date(ulaFallback.time).getTime())}`, `latest window · ${formatClockTime(new Date(ulaFallback.time).getTime())}`)
             : undefined
         }
         hint={
           ulaFallback
-            ? `Aucune limite haute n'est identifiable sur l'ensemble de l'enregistrement : ${labels.index} ne repasse jamais au-dessus de ${PRX_THRESHOLD.toFixed(1)} au-dessus de l'optimum. La valeur affichée est la dernière estimation de l'analyse glissante, à titre indicatif.`
-            : `Limite haute : au-dessus de cette pression, ${labels.index} repasse au-dessus de ${PRX_THRESHOLD.toFixed(1)}.`
+            ? tr(`Aucune limite haute n'est identifiable sur l'ensemble de l'enregistrement : ${labels.index} ne repasse jamais au-dessus de ${PRX_THRESHOLD.toFixed(1)} au-dessus de l'optimum. La valeur affichée est la dernière estimation de l'analyse glissante, à titre indicatif.`, `No upper limit is identifiable over the whole recording: ${labels.index} never rises back above ${PRX_THRESHOLD.toFixed(1)} above the optimum. The value shown is the latest rolling-analysis estimate, for guidance only.`)
+            : tr(`Limite haute : au-dessus de cette pression, ${labels.index} repasse au-dessus de ${PRX_THRESHOLD.toFixed(1)}.`, `Upper limit: above this pressure, ${labels.index} rises back above ${PRX_THRESHOLD.toFixed(1)}.`)
         }
       />
       <SummaryStat
@@ -189,7 +190,7 @@ export const AutoregKpiRow = ({
         value={result.minPrx}
         unit=""
         digits={2}
-        hint={`Meilleure valeur de ${labels.index} atteinte. En dessous de ${PRX_THRESHOLD.toFixed(1)}, l'autorégulation est considérée préservée.`}
+        hint={tr(`Meilleure valeur de ${labels.index} atteinte. En dessous de ${PRX_THRESHOLD.toFixed(1)}, l'autorégulation est considérée préservée.`, `Best ${labels.index} value reached. Below ${PRX_THRESHOLD.toFixed(1)}, autoregulation is considered preserved.`)}
       />
     </div>
   );
@@ -214,24 +215,48 @@ export const InterpretationBanner = ({
   );
 
   const headline = !ok
-    ? "Aucun plateau d'autorégulation fiable"
+    ? tr("Aucun plateau d'autorégulation fiable", "No reliable autoregulation plateau")
     : hasRange
-      ? `Cible ${labels.pressure} : ${result.lowerLimit}–${result.upperLimit} mmHg`
-      : `${labels.optimal} estimée : ${result.optimalPPC ?? '—'} mmHg`;
+      ? tr(`Cible ${labels.pressure} : ${result.lowerLimit}–${result.upperLimit} mmHg`, `${labels.pressure} target: ${result.lowerLimit}–${result.upperLimit} mmHg`)
+      : tr(`${labels.optimal} estimée : ${result.optimalPPC ?? '—'} mmHg`, `Estimated ${labels.optimal}: ${result.optimalPPC ?? '—'} mmHg`);
 
+  const th = PRX_THRESHOLD.toFixed(1);
   const detail = !ok ? (
-    <>
-      {labels.index} reste au-dessus du seuil de {PRX_THRESHOLD.toFixed(1)} sur toute la plage
-      (minimum {min}) : l'autorégulation semble <strong>globalement altérée</strong>. La{' '}
-      {labels.optimal.toLowerCase()} affichée ci-dessous correspond seulement au bin le moins altéré
-      et n'est <strong>pas cliniquement interprétable</strong>.
-    </>
+    getLang() === 'en' ? (
+      <>
+        {labels.index} stays above the {th} threshold across the whole range (minimum {min}):
+        autoregulation appears <strong>globally impaired</strong>. The {labels.optimal.toLowerCase()} shown
+        below only corresponds to the least impaired bin and is <strong>not clinically interpretable</strong>.
+      </>
+    ) : (
+      <>
+        {labels.index} reste au-dessus du seuil de {th} sur toute la plage
+        (minimum {min}) : l'autorégulation semble <strong>globalement altérée</strong>. La{' '}
+        {labels.optimal.toLowerCase()} affichée ci-dessous correspond seulement au bin le moins altéré
+        et n'est <strong>pas cliniquement interprétable</strong>.
+      </>
+    )
   ) : hasRange ? (
+    getLang() === 'en' ? (
+      <>
+        Autoregulation preserved ({labels.index} &lt; {th}) between {result.lowerLimit} and{' '}
+        {result.upperLimit} mmHg, optimum at <strong>{result.optimalPPC} mmHg</strong> ({labels.index} = {min}).
+        Keep {labels.pressure} within this range.
+      </>
+    ) : (
+      <>
+        Autorégulation préservée ({labels.index} &lt; {th}) entre{' '}
+        {result.lowerLimit} et {result.upperLimit} mmHg, optimum à{' '}
+        <strong>{result.optimalPPC} mmHg</strong> ({labels.index} = {min}). Maintenir la{' '}
+        {labels.pressure} dans cette plage.
+      </>
+    )
+  ) : getLang() === 'en' ? (
     <>
-      Autorégulation préservée ({labels.index} &lt; {PRX_THRESHOLD.toFixed(1)}) entre{' '}
-      {result.lowerLimit} et {result.upperLimit} mmHg, optimum à{' '}
-      <strong>{result.optimalPPC} mmHg</strong> ({labels.index} = {min}). Maintenir la{' '}
-      {labels.pressure} dans cette plage.
+      Autoregulation preserved around <strong>{result.optimalPPC} mmHg</strong> ({labels.index} = {min}),
+      but the LLA/ULA limits are not identifiable over the whole recording: the recorded {labels.pressure}{' '}
+      range does not cross the threshold on both sides of the optimum.
+      {rollingLimitsShown ? ' The LLA/ULA tiles show the latest rolling-analysis estimate, for guidance only.' : ''}
     </>
   ) : (
     <>
@@ -308,7 +333,7 @@ const TargetRangeBar = ({
         <span>{min} mmHg</span>
         <span className="text-center">
           <span className="font-medium text-primary">{labels.pressure}opt {result.optimalPPC}</span>
-          {' · '}plage {result.lowerLimit}–{result.upperLimit} mmHg
+          {' · '}{tr('plage', 'range')} {result.lowerLimit}–{result.upperLimit} mmHg
         </span>
         <span>{max} mmHg</span>
       </div>
@@ -322,8 +347,10 @@ export const QualityPanel = ({ result }: { result: AutoregResult }) => {
   if (result.usableSamples <= 0) {
     return (
       <p className="text-xs text-muted-foreground">
-        Analyse restaurée depuis la base : les indicateurs de qualité du signal ne sont disponibles
-        qu'après un nouvel import du fichier brut.
+        {tr(
+          "Analyse restaurée depuis la base : les indicateurs de qualité du signal ne sont disponibles qu'après un nouvel import du fichier brut.",
+          'Analysis restored from the database: signal-quality indicators are only available after re-importing the raw file.',
+        )}
       </p>
     );
   }
@@ -339,37 +366,37 @@ export const QualityPanel = ({ result }: { result: AutoregResult }) => {
       <div className="flex items-center gap-2 mb-3">
         <TrendingDown className="h-4 w-4 text-muted-foreground" />
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Qualité du signal et interprétation
+          {tr('Qualité du signal et interprétation', 'Signal quality and interpretation')}
         </span>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <QualityStat
-          label="Données exploitables"
+          label={tr("Données exploitables", "Usable data")}
           value={`${result.pctUsable} %`}
-          sub={`${result.usableSamples} échantillons`}
+          sub={tr(`${result.usableSamples} échantillons`, `${result.usableSamples} samples`)}
           tone={tone(result.pctUsable, 90, 70)}
-          hint={`Part des paires ${labels.index}/${labels.pressure} comprises dans la fenêtre physiologique 20–150 mmHg. Le reste est écarté comme artefact (rinçage, débranchement).`}
+          hint={tr(`Part des paires ${labels.index}/${labels.pressure} comprises dans la fenêtre physiologique 20–150 mmHg. Le reste est écarté comme artefact (rinçage, débranchement).`, `Share of ${labels.index}/${labels.pressure} pairs within the 20–150 mmHg physiological window. The rest is discarded as artefact (flush, disconnection).`)}
         />
         <QualityStat
-          label={`${labels.index} moyen`}
+          label={tr(`${labels.index} moyen`, `Mean ${labels.index}`)}
           value={result.meanIndex?.toFixed(2) ?? '—'}
-          sub={`seuil ${PRX_THRESHOLD.toFixed(1)}`}
+          sub={tr(`seuil ${PRX_THRESHOLD.toFixed(1)}`, `threshold ${PRX_THRESHOLD.toFixed(1)}`)}
           tone={result.meanIndex === null ? 'neutral' : tone(result.meanIndex, 0.3, 0.5, true)}
-          hint={`Moyenne de ${labels.index} sur toute la période exploitable, toutes pressions confondues.`}
+          hint={tr(`Moyenne de ${labels.index} sur toute la période exploitable, toutes pressions confondues.`, `Mean ${labels.index} over the whole usable period, across all pressures.`)}
         />
         <QualityStat
-          label="Temps altéré"
+          label={tr("Temps altéré", "Time impaired")}
           value={`${result.pctImpaired} %`}
           sub={`${labels.index} > ${PRX_THRESHOLD.toFixed(1)}`}
           tone={tone(result.pctImpaired, 20, 50, true)}
-          hint={`Proportion du temps exploitable passée au-dessus du seuil d'altération. Un pourcentage élevé indique une autorégulation défaillante sur une grande partie de l'enregistrement.`}
+          hint={tr(`Proportion du temps exploitable passée au-dessus du seuil d'altération. Un pourcentage élevé indique une autorégulation défaillante sur une grande partie de l'enregistrement.`, `Share of usable time spent above the impairment threshold. A high percentage indicates failing autoregulation over much of the recording.`)}
         />
         <QualityStat
-          label="Bins fiables"
+          label={tr("Bins fiables", "Reliable bins")}
           value={String(result.robustBins)}
-          sub={`sur ${result.curve.length} bins`}
+          sub={tr(`sur ${result.curve.length} bins`, `of ${result.curve.length} bins`)}
           tone={tone(result.robustBins, 5, 3)}
-          hint="Nombre de paliers de pression contenant au moins 2 % des données. Seuls ces paliers servent au calcul de l'optimum et des limites."
+          hint={tr("Nombre de paliers de pression contenant au moins 2 % des données. Seuls ces paliers servent au calcul de l'optimum et des limites.", "Number of pressure bins holding at least 2% of the data. Only these bins are used to compute the optimum and the limits.")}
         />
       </div>
     </div>
@@ -453,14 +480,14 @@ const CurveTooltip = ({
         {labels.pressure} {p.ppc} mmHg
       </p>
       <p className="text-muted-foreground">
-        {labels.index} moyen : <span className="font-medium text-foreground">{p.prx.toFixed(2)}</span>
+        {tr(`${labels.index} moyen :`, `Mean ${labels.index}:`)} <span className="font-medium text-foreground">{p.prx.toFixed(2)}</span>
       </p>
-      <p className="text-muted-foreground">{p.count} échantillons</p>
+      <p className="text-muted-foreground">{p.count} {tr("échantillons", "samples")}</p>
       {p.robust === false ? (
-        <p className="text-muted-foreground italic">Peu de données — exclu du calcul</p>
+        <p className="text-muted-foreground italic">{tr("Peu de données — exclu du calcul", "Few data — excluded from computation")}</p>
       ) : (
         <p className={good ? 'text-success' : 'text-destructive'}>
-          {good ? 'Autorégulation préservée' : 'Autorégulation altérée'}
+          {good ? tr('Autorégulation préservée', 'Autoregulation preserved') : tr('Autorégulation altérée', 'Autoregulation impaired')}
         </p>
       )}
     </div>
@@ -473,24 +500,24 @@ const ChartLegend = ({ labels, result }: { labels: ModeLabelSet; result: Autoreg
       <svg width="12" height="12" aria-hidden>
         <circle cx="6" cy="6" r="4" fill="hsl(var(--primary))" />
       </svg>
-      Bin fiable (retenu pour le calcul)
+      {tr('Bin fiable (retenu pour le calcul)', 'Reliable bin (used in computation)')}
     </span>
     <span className="flex items-center gap-1.5">
       <svg width="12" height="12" aria-hidden>
         <circle cx="6" cy="6" r="3.5" fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth="1.5" />
       </svg>
-      Peu de données (&lt; 2 %) — exclu
+      {tr('Peu de données (< 2 %) — exclu', 'Few data (< 2%) — excluded')}
     </span>
     <span className="flex items-center gap-1.5">
       <svg width="16" height="12" aria-hidden>
         <line x1="0" y1="6" x2="16" y2="6" stroke="hsl(var(--destructive))" strokeWidth="1.5" strokeDasharray="4 3" />
       </svg>
-      Seuil {labels.index} = {PRX_THRESHOLD.toFixed(1)}
+      {tr('Seuil', 'Threshold')} {labels.index} = {PRX_THRESHOLD.toFixed(1)}
     </span>
     {result.lowerLimit !== null && result.upperLimit !== null && (
       <span className="flex items-center gap-1.5">
         <span className="inline-block h-3 w-4 rounded-sm bg-success/25 border border-success/50" aria-hidden />
-        Plage autorégulée (LLA–ULA)
+        {tr("Plage d'autorégulation (LLA–ULA)", "Autoregulation range (LLA–ULA)")}
       </span>
     )}
   </div>
@@ -544,7 +571,7 @@ export const AutoregCurveChart = ({
                 fill="hsl(var(--success))"
                 fillOpacity={0.1}
                 label={{
-                  value: 'Plage autorégulée',
+                  value: tr("Plage d'autorégulation", 'Autoregulation range'),
                   position: 'insideTop',
                   fontSize: 11,
                   fill: 'hsl(var(--muted-foreground))',
@@ -556,7 +583,7 @@ export const AutoregCurveChart = ({
               stroke="hsl(var(--destructive))"
               strokeDasharray="5 4"
               label={{
-                value: `Seuil ${PRX_THRESHOLD.toFixed(1)}`,
+                value: tr(`Seuil ${PRX_THRESHOLD.toFixed(1)}`, `Threshold ${PRX_THRESHOLD.toFixed(1)}`),
                 position: 'right',
                 fontSize: 10,
                 fill: 'hsl(var(--destructive))',
@@ -581,7 +608,7 @@ export const AutoregCurveChart = ({
               strokeWidth={2}
               dot={<CurveDot />}
               activeDot={{ r: 6 }}
-              name={`${labels.index} moyen`}
+              name={tr(`${labels.index} moyen`, `Mean ${labels.index}`)}
             />
             {result.optimalPPC !== null && result.minPrx !== null && (
               <ReferenceDot
@@ -615,14 +642,16 @@ export const AutoregCurveCard = ({
 }) => {
   const labels = modeLabels(result.mode);
   return (
-    <Card id={id} data-pdf-title={`Courbe d'autorégulation · ${labels.index} vs ${labels.pressure}`}>
+    <Card id={id} data-pdf-title={tr(`Courbe d'autorégulation · ${labels.index} vs ${labels.pressure}`, `Autoregulation curve · ${labels.index} vs ${labels.pressure}`)}>
       <CardHeader>
-        <CardTitle>Courbe d'autorégulation · {labels.index} vs {labels.pressure}</CardTitle>
+        <CardTitle>{tr(`Courbe d'autorégulation · ${labels.index} vs ${labels.pressure}`, `Autoregulation curve · ${labels.index} vs ${labels.pressure}`)}</CardTitle>
         <CardDescription>
-          Le creux de la courbe donne la {labels.optimal.toLowerCase()}. Sous la ligne de seuil
-          ({labels.index} &lt; {PRX_THRESHOLD.toFixed(1)}), l'autorégulation est préservée
+          {tr(
+            `Le creux de la courbe donne la ${labels.optimal.toLowerCase()}. Sous la ligne de seuil (${labels.index} < ${PRX_THRESHOLD.toFixed(1)}), l'autorégulation est préservée`,
+            `The curve's trough gives the ${labels.optimal.toLowerCase()}. Below the threshold line (${labels.index} < ${PRX_THRESHOLD.toFixed(1)}), autoregulation is preserved`,
+          )}
           {result.lowerLimit !== null && result.upperLimit !== null
-            ? ' ; la bande colorée est la plage LLA–ULA à viser.'
+            ? tr(' ; la bande colorée est la plage LLA–ULA à viser.', '; the coloured band is the LLA–ULA range to target.')
             : '.'}
         </CardDescription>
       </CardHeader>

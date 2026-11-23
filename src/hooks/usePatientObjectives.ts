@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tr } from '@/i18n';
 
 interface PatientObjective {
   id: number;
@@ -136,18 +137,18 @@ export function usePatientObjectives(patientId: string, organ: string) {
     mutationFn: (items: string[]) => saveAll(patientId, organ, 'objective', items),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast.success('Objectifs sauvegardés');
+      toast.success(tr('Objectifs sauvegardés', 'Goals saved'));
     },
-    onError: () => toast.error('Erreur lors de la sauvegarde des objectifs'),
+    onError: () => toast.error(tr('Erreur lors de la sauvegarde des objectifs', 'Error saving goals')),
   });
 
   const saveInterventions = useMutation({
     mutationFn: (items: string[]) => saveAll(patientId, organ, 'intervention', items),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast.success('Interventions sauvegardées');
+      toast.success(tr('Interventions sauvegardées', 'Interventions saved'));
     },
-    onError: () => toast.error('Erreur lors de la sauvegarde des interventions'),
+    onError: () => toast.error(tr('Erreur lors de la sauvegarde des interventions', 'Error saving interventions')),
   });
 
   return {

@@ -25,6 +25,7 @@ import WorkerSignup from "./pages/auth/WorkerSignup";
 import ImportPatientData from "./pages/admin/ImportPatientData";
 import NotFound from "./pages/NotFound";
 import AutoregStudy from "./pages/AutoregStudy";
+import { LanguageRoot } from "@/i18n";
 import TeamsConfig from "./pages/TeamsConfig";
 
 const queryClient = new QueryClient();
@@ -101,6 +102,7 @@ const App = () => (
         <TeamsHostBridge />
         <Toaster />
         <Sonner />
+        <LanguageRoot>
         <BrowserRouter>
           {STUDY_ONLY ? (
             <Routes>
@@ -145,6 +147,7 @@ const App = () => (
             </>
           )}
         </BrowserRouter>
+        </LanguageRoot>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

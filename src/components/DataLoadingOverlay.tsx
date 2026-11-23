@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { tr } from '@/i18n';
 
 interface DataLoadingOverlayProps {
   isLoading: boolean;
@@ -10,7 +11,7 @@ interface DataLoadingOverlayProps {
 
 export const DataLoadingOverlay = ({
   isLoading,
-  label = "Chargement des données...",
+  label = tr("Chargement des données...", "Loading data..."),
   variant = "overlay",
   children,
 }: DataLoadingOverlayProps) => {

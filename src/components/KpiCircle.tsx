@@ -1,5 +1,6 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { kpiCircleClass, getKpiSeverity } from "@/utils/kpiCircleStyle";
+import { tr } from '@/i18n';
 
 interface KpiCircleProps {
   /** Nombre d'éléments problématiques à afficher dans le cercle. */
@@ -30,16 +31,17 @@ export const KpiCircle = ({
 }: KpiCircleProps) => {
   const severity = getKpiSeverity(count, hasCritical);
   const plural = count > 1 ? "s" : "";
+  const itemEn = itemLabel === "indicateur" ? "indicator" : itemLabel === "paramètre" ? "parameter" : itemLabel;
   const tooltipTitle =
     count === 0
-      ? `Tous les ${itemLabel}s sont dans les cibles`
-      : `${count} ${itemLabel}${plural} hors cible dans « ${groupLabel} »`;
+      ? tr(`Tous les ${itemLabel}s sont dans les cibles`, `All ${itemEn}s are on target`)
+      : tr(`${count} ${itemLabel}${plural} hors cible dans « ${groupLabel} »`, `${count} ${itemEn}${plural} off target in “${groupLabel}”`);
   const tooltipHint =
     severity === 'normal'
-      ? "Aucune action requise — surveillance standard."
+      ? tr("Aucune action requise — surveillance standard.", "No action required — standard monitoring.")
       : severity === 'critical'
-        ? "État critique — intervention prioritaire recommandée."
-        : "État de surveillance — vérifier les valeurs hors cible.";
+        ? tr("État critique — intervention prioritaire recommandée.", "Critical state — priority intervention recommended.")
+        : tr("État de surveillance — vérifier les valeurs hors cible.", "Watch state — check off-target values.");
 
   return (
     <Tooltip delayDuration={200}>

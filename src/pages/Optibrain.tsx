@@ -1,7 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Header } from "@/components/Header";
 import { PatientHeader } from "@/components/PatientHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,6 +72,8 @@ import { TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
 import { VitalSignsPanel } from "@/components/VitalSignsPanel";
+import { tr, dateLocale } from '@/i18n';
+import { term } from '@/i18n/terms';
 // "Relations cliniques" retiré pour le moment — src/ontology/ reste intact
 // (getRelatedNodes, getOntologyNodeByVariableKey) pour le remettre facilement.
 // "Dernières visites" (comparaison depuis la dernière visite) retiré pour le
@@ -326,8 +327,8 @@ const Optibrain = () => {
     if (hours < 24) return `${hours}h`;
     const days = Math.floor(hours / 24);
     const remainingHours = hours % 24;
-    if (remainingHours === 0) return `${days}j`;
-    return `${days}j ${remainingHours}h`;
+    if (remainingHours === 0) return `${days}${tr('j', 'd')}`;
+    return `${days}${tr('j', 'd')} ${remainingHours}h`;
   };
 
   // Monitoring targets avec synchronisation des données visibles
@@ -345,41 +346,41 @@ const Optibrain = () => {
     const defaultIndicators = [
       { 
         label: "Opioide", 
-        description: opioideDuration ? `${opioideDuration.drugName || "En cours"}` : "En cours", 
+        description: opioideDuration ? `${opioideDuration.drugName || tr("En cours", "Ongoing")}` : tr("En cours", "Ongoing"), 
         target: "normal",
         contextInfo: opioideDuration 
-          ? `Sous ${opioideDuration.drugName || "opioïde"} depuis ${formatDuration(opioideDuration.hours)}`
+          ? tr(`Sous ${opioideDuration.drugName || "opioïde"} depuis ${formatDuration(opioideDuration.hours)}`, `On ${opioideDuration.drugName || "opioid"} for ${formatDuration(opioideDuration.hours)}`)
           : null
       },
       { 
         label: "Hypnotique", 
-        description: propofolDuration ? `${propofolDuration.drugName || "En cours"}` : "En cours", 
+        description: propofolDuration ? `${propofolDuration.drugName || tr("En cours", "Ongoing")}` : tr("En cours", "Ongoing"), 
         target: "normal",
         contextInfo: propofolDuration 
-          ? `Sous ${propofolDuration.drugName || "hypnotique"} depuis ${formatDuration(propofolDuration.hours)}`
+          ? tr(`Sous ${propofolDuration.drugName || "hypnotique"} depuis ${formatDuration(propofolDuration.hours)}`, `On ${propofolDuration.drugName || "hypnotic"} for ${formatDuration(propofolDuration.hours)}`)
           : null
       },
       { 
         label: "Propofol 48h", 
-        description: isOnPropofol ? (propofolDuration && propofolDuration.hours > 48 ? "> 48h" : "< 48h") : "Non administré", 
+        description: isOnPropofol ? (propofolDuration && propofolDuration.hours > 48 ? "> 48h" : "< 48h") : tr("Non administré", "Not given"), 
         target: "normal",
         contextInfo: isOnPropofol && propofolDuration
-          ? `Propofol administré depuis ${formatDuration(propofolDuration.hours)}${propofolDuration.hours > 48 ? " ⚠️" : ""}`
-          : "Pas de propofol administré"
+          ? tr(`Propofol administré depuis ${formatDuration(propofolDuration.hours)}`, `Propofol given for ${formatDuration(propofolDuration.hours)}`) + (propofolDuration.hours > 48 ? " ⚠️" : "")
+          : tr("Pas de propofol administré", "No propofol given")
       },
       { 
         label: "Anti-Epileptique", 
-        description: antiEpileptiqueDuration ? `${antiEpileptiqueDuration.drugName || "Monitorée"}` : "Monitorée", 
+        description: antiEpileptiqueDuration ? `${antiEpileptiqueDuration.drugName || tr("Monitorée", "Monitored")}` : tr("Monitorée", "Monitored"), 
         target: "normal",
         contextInfo: antiEpileptiqueDuration 
-          ? `Sous ${antiEpileptiqueDuration.drugName || "anti-épileptique"} depuis ${formatDuration(antiEpileptiqueDuration.hours)}`
+          ? tr(`Sous ${antiEpileptiqueDuration.drugName || "anti-épileptique"} depuis ${formatDuration(antiEpileptiqueDuration.hours)}`, `On ${antiEpileptiqueDuration.drugName || "anti-epileptic"} for ${formatDuration(antiEpileptiqueDuration.hours)}`)
           : null
       },
-      { label: "PIC", description: "Monitorée", target: "< 20mmHg", contextInfo: null },
-      { label: "PAM", description: "Monitorée", target: "normal", contextInfo: null },
-      { label: "PVC", description: "Monitorée", target: "normal", contextInfo: null },
-      { label: "ETCO2", description: "Monitorée", target: "normal", contextInfo: null },
-      { label: "Température", description: "Monitorée", target: "35-38°C", contextInfo: null },
+      { label: "PIC", description: tr("Monitorée", "Monitored"), target: "< 20mmHg", contextInfo: null },
+      { label: "PAM", description: tr("Monitorée", "Monitored"), target: "normal", contextInfo: null },
+      { label: "PVC", description: tr("Monitorée", "Monitored"), target: "normal", contextInfo: null },
+      { label: "ETCO2", description: tr("Monitorée", "Monitored"), target: "normal", contextInfo: null },
+      { label: "Température", description: tr("Monitorée", "Monitored"), target: "35-38°C", contextInfo: null },
     ];
 
     if (!patientFileData) {
@@ -734,10 +735,10 @@ const Optibrain = () => {
           ? { name: "HTIC", pct: hticPct }
           : null;
 
-      const topLabel = problemState ? problemState.name : neurologicalStateConfig.currentState;
+      const topLabel = term(problemState ? problemState.name : neurologicalStateConfig.currentState);
       const bigValue = problemState
         ? `${formatDuration(Math.round((problemState.pct / 100) * totalMinutes))} (${problemState.pct}%)`
-        : neurologicalStateConfig.currentState;
+        : term(neurologicalStateConfig.currentState);
 
       return {
         label: "État actuel",
@@ -777,11 +778,11 @@ const Optibrain = () => {
 
       // Top = valeur PIC actuelle ; bottom (grand rouge) = durée > 20 mmHg
       const topLabel = picValue !== null
-        ? `PIC ${Math.round(picValue * 10) / 10} mmHg`
-        : "PIC --";
+        ? `${term("PIC")} ${Math.round(picValue * 10) / 10} mmHg`
+        : `${term("PIC")} --`;
       const bigValue = above20 > 0
         ? `${durationLabel} > 20 mmHg`
-        : "Dans la cible";
+        : tr("Dans la cible", "On target");
 
       return {
         label: "PIC",
@@ -814,14 +815,14 @@ const Optibrain = () => {
       hasDetails: true,
       dialogKey: "autoreg-detail",
       description: optimalPPCResult.hasData && optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null
-        ? `Zone: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
-        : isNirsBased ? "PAM optimale individuelle" : "PPC optimale individuelle",
+        ? `${tr("Plage", "Range")}: ${Math.round(optimalPPCResult.lowerLimit)}-${Math.round(optimalPPCResult.upperLimit)} mmHg`
+        : isNirsBased ? tr("PAM optimale individuelle", "Individual optimal MAP") : tr("PPC optimale individuelle", "Individual optimal CPP"),
       criticalLabel: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
         ? optimalPPCResult.prxScore < 0.3
-          ? "Autorégulation intacte"
+          ? tr("Autorégulation intacte", "Autoregulation intact")
           : optimalPPCResult.prxScore < 0.5
-            ? "Autorégulation altérée"
-            : "Autorégulation absente"
+            ? tr("Autorégulation altérée", "Autoregulation impaired")
+            : tr("Autorégulation absente", "Autoregulation absent")
         : null,
       criticalColor: optimalPPCResult.hasData && optimalPPCResult.prxScore !== null
         ? optimalPPCResult.prxScore < 0.3
@@ -848,7 +849,7 @@ const Optibrain = () => {
       })(),
       hasDetails: true,
       dialogKey: "autoreg-detail",
-      description: "Valeur de l'indice au minimum de la courbe — plus bas est meilleur.",
+      description: tr("Valeur de l'indice au minimum de la courbe — plus bas est meilleur.", "Index value at the curve minimum — lower is better."),
     },
   ];
 
@@ -1041,7 +1042,7 @@ const Optibrain = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8 space-y-4">
-          <DataLoadingOverlay isLoading={true} label="Chargement du patient..." variant="skeleton">
+          <DataLoadingOverlay isLoading={true} label={tr("Chargement du patient...", "Loading patient...")} variant="skeleton">
             <div />
           </DataLoadingOverlay>
         </div>
@@ -1054,7 +1055,7 @@ const Optibrain = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-6 py-8">
-          <p className="text-foreground">Patient non trouvé</p>
+          <p className="text-foreground">{tr("Patient non trouvé", "Patient not found")}</p>
         </div>
       </div>
     );
@@ -1071,11 +1072,11 @@ const Optibrain = () => {
           <VitalSignsPanel />
         </div>
 
-        <DataLoadingOverlay isLoading={fileDataLoading} label="Chargement des données cérébrales..." variant="skeleton">
+        <DataLoadingOverlay isLoading={fileDataLoading} label={tr("Chargement des données cérébrales...", "Loading brain data...")} variant="skeleton">
           <div className="space-y-4 mb-6">
             {(() => {
-              const groups: Array<{ title: string; metricLabels: string[] }> = [
-                { title: "Pression intracrânienne et état neurologique", metricLabels: ["PIC", "PPC", "Glasgow (GCS)", "PaCO2"] },
+              const groups: Array<{ title: string; displayTitle: string; metricLabels: string[] }> = [
+                { title: "Pression intracrânienne et état neurologique", displayTitle: tr("Pression intracrânienne et état neurologique", "Intracranial pressure and neurological state"), metricLabels: ["PIC", "PPC", "Glasgow (GCS)", "PaCO2"] },
               ];
               return groups.map((group) => {
                 const groupMetrics = brainMetrics.filter(m => group.metricLabels.includes(m.label));
@@ -1102,16 +1103,16 @@ const Optibrain = () => {
                 });
                 const renderItem = (m: typeof offTarget[number]) => {
                   const arrow = m.value > m.targetMax ? "↑" : m.value < m.targetMin ? "↓" : "";
-                  return `${m.label} ${arrow}${formatVal(m.value)}`;
+                  return `${term(m.label)} ${arrow}${formatVal(m.value)}`;
                 };
                 const COMPACT_LIMIT = 2;
                 const compactItems = offTargetSorted.slice(0, COMPACT_LIMIT).map(renderItem);
                 const remaining = offTargetSorted.length - compactItems.length;
                 const compactSummary = abnormal === 0
-                  ? "Tous les paramètres dans les cibles"
+                  ? tr("Tous les paramètres dans les cibles", "All parameters on target")
                   : compactItems.join(" · ") + (remaining > 0 ? ` · +${remaining}` : "");
                 const fullSummary = abnormal === 0
-                  ? "Tous les paramètres dans les cibles"
+                  ? tr("Tous les paramètres dans les cibles", "All parameters on target")
                   : offTargetSorted.map(renderItem).join(" · ");
 
                 return (
@@ -1123,9 +1124,9 @@ const Optibrain = () => {
                     >
                       <div className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-muted/30 transition-colors gap-3">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <KpiCircle count={abnormal} groupLabel={group.title} />
+                          <KpiCircle count={abnormal} groupLabel={group.displayTitle} />
                           <div className="text-left min-w-0 flex-1">
-                            <div className="text-base font-semibold text-foreground">{group.title}</div>
+                            <div className="text-base font-semibold text-foreground">{group.displayTitle}</div>
                             <TooltipProvider delayDuration={150}>
                               <UITooltip>
                                 <TooltipTrigger asChild>
@@ -1138,15 +1139,15 @@ const Optibrain = () => {
                                 {abnormal > 0 && (
                                   <TooltipContent side="bottom" align="start" className="p-2.5 max-w-[320px]">
                                     <div className="text-xs font-semibold text-foreground mb-1.5">
-                                      {abnormal} paramètre{abnormal > 1 ? "s" : ""} hors cible
+                                      {abnormal} {tr(`paramètre${abnormal > 1 ? "s" : ""} hors cible`, `parameter${abnormal > 1 ? "s" : ""} off target`)}
                                     </div>
                                     <div className="flex flex-col gap-1">
                                       {offTargetSorted.map(m => {
                                         const arrow = m.value > m.targetMax ? "↑" : "↓";
-                                        const target = `cible ${formatVal(m.targetMin)}–${formatVal(m.targetMax)}`;
+                                        const target = `${tr("cible", "target")} ${formatVal(m.targetMin)}–${formatVal(m.targetMax)}`;
                                         return (
                                           <div key={m.label} className="flex items-center justify-between gap-3 text-xs">
-                                            <span className="font-medium">{m.label}</span>
+                                            <span className="font-medium">{term(m.label)}</span>
                                             <span className="text-status-critical tabular-nums">
                                               {arrow}{formatVal(m.value)} <span className="text-muted-foreground font-normal">({target})</span>
                                             </span>
@@ -1173,7 +1174,7 @@ const Optibrain = () => {
                             const valueColor = inRange ? "text-muted-foreground" : "text-status-critical";
                             return (
                               <div key={index} className="flex flex-col items-center">
-                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{metric.label}</div>
+                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{term(metric.label)}</div>
                                 <div className="flex items-center gap-2 mb-3">
                                   <div className={`text-2xl sm:text-4xl font-bold ${valueColor}`}>{metric.value}</div>
                                 </div>
@@ -1201,10 +1202,10 @@ const Optibrain = () => {
           <CardHeader className="px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="text-base sm:text-lg">
-                Adhérence & Monitorage {timeRange === "stay" ? "sur le séjour" : `sur ${timeRange}`}
+                {tr("Adhérence & Monitorage", "Adherence & Monitoring")} {timeRange === "stay" ? tr("sur le séjour", "over the stay") : tr(`sur ${timeRange}`, `over ${timeRange}`)}
               </CardTitle>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">Période sélectionnée :</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">{tr("Période sélectionnée :", "Selected period:")}</span>
                 <div className="inline-flex items-center h-7 text-xs rounded-lg border border-border overflow-hidden">
                   {monitoringTimeWindow.hasRememberedRange && (
                     <span
@@ -1217,17 +1218,17 @@ const Optibrain = () => {
                       <button
                         type="button"
                         onClick={() => monitoringTimeWindow.setRangeActive(true)}
-                        title="Revenir à la plage choisie sur le graphique"
+                        title={tr("Revenir à la plage choisie sur le graphique", "Back to the range chosen on the chart")}
                         className="inline-flex items-center justify-center pl-2 pr-1 h-7 text-xs font-medium tabular-nums"
                       >
-                        {format(new Date(monitoringTimeWindow.rangeStart!), "HH:mm", { locale: fr })}
+                        {format(new Date(monitoringTimeWindow.rangeStart!), "HH:mm", { locale: dateLocale() })}
                         –
-                        {format(new Date(monitoringTimeWindow.rangeEnd!), "HH:mm", { locale: fr })}
+                        {format(new Date(monitoringTimeWindow.rangeEnd!), "HH:mm", { locale: dateLocale() })}
                       </button>
                       <button
                         type="button"
                         onClick={monitoringTimeWindow.resetRange}
-                        title="Supprimer la plage choisie"
+                        title={tr("Supprimer la plage choisie", "Clear the chosen range")}
                         className="inline-flex items-center justify-center pr-2 pl-0.5 h-7 opacity-70 hover:opacity-100"
                       >
                         <X className="h-3 w-3" />
@@ -1262,7 +1263,7 @@ const Optibrain = () => {
                         : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     }`}
                   >
-                    Séjour
+                    {tr("Séjour", "Stay")}
                   </button>
                 </div>
                 <Button
@@ -1275,12 +1276,12 @@ const Optibrain = () => {
                   {monitoringEditing ? (
                     <>
                       <Check className="h-3.5 w-3.5" />
-                      Terminer
+                      {tr("Terminer", "Done")}
                     </>
                   ) : (
                     <>
                       <Edit2 className="h-3.5 w-3.5" />
-                      Modifier le graphique
+                      {tr("Modifier le graphique", "Edit chart")}
                     </>
                   )}
                 </Button>
@@ -1321,7 +1322,7 @@ const Optibrain = () => {
                         </div>
                       ) : (
                         <div className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-center">
-                          {metric.label}
+                          {term(metric.label)}
                         </div>
                       )}
                       <div className="flex items-baseline gap-1 justify-center">
@@ -1343,7 +1344,7 @@ const Optibrain = () => {
             <Dialog open={openDialog === "autoreg-detail"} onOpenChange={(open) => !open && setOpenDialog(null)}>
               <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Optimisation cérébrale</DialogTitle>
+                  <DialogTitle>{tr("Optimisation cérébrale", "Cerebral optimisation")}</DialogTitle>
                 </DialogHeader>
                 {(() => {
                   const formatDur = (mins: number) =>
@@ -1369,7 +1370,7 @@ const Optibrain = () => {
                     <div className="space-y-1.5 mt-2.5">
                       <div className="flex h-1.5 rounded-full overflow-hidden bg-muted">
                         {segments.map(s => (
-                          <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} title={`${s.label} : ${s.pct}%`} />
+                          <div key={s.key} className={s.colorClass} style={{ width: `${s.pct}%` }} title={`${term(s.label)} : ${s.pct}%`} />
                         ))}
                       </div>
                       <div className="flex flex-wrap gap-x-3 gap-y-1">
@@ -1378,7 +1379,7 @@ const Optibrain = () => {
                           return (
                             <div key={s.key} className="flex items-center gap-1.5 text-[11px]">
                               <span className={`w-2 h-2 rounded-full ${s.colorClass} shrink-0`} />
-                              <span className="text-muted-foreground">{s.label}</span>
+                              <span className="text-muted-foreground">{term(s.label)}</span>
                               <span className="font-medium tabular-nums text-foreground">{s.pct}%</span>
                               <span className="text-muted-foreground tabular-nums">({formatDur(mins)})</span>
                             </div>
@@ -1388,15 +1389,15 @@ const Optibrain = () => {
                     </div>
                   );
 
-                  const pamLabel = isNirsBased ? "PAM" : "PPC";
+                  const pamLabel = isNirsBased ? term("PAM") : term("PPC");
                   const pamCurrent = isNirsBased ? realBrainValues.pam : realBrainValues.ppc;
                   const autoregStatus = !optimalPPCResult.hasData || optimalPPCResult.prxScore === null
                     ? null
                     : optimalPPCResult.prxScore < 0.3
-                      ? { label: "Autorégulation intacte", tone: "normal" as const }
+                      ? { label: tr("Autorégulation intacte", "Autoregulation intact"), tone: "normal" as const }
                       : optimalPPCResult.prxScore < 0.5
-                        ? { label: "Autorégulation altérée", tone: "warning" as const }
-                        : { label: "Autorégulation absente", tone: "critical" as const };
+                        ? { label: tr("Autorégulation altérée", "Autoregulation impaired"), tone: "warning" as const }
+                        : { label: tr("Autorégulation absente", "Autoregulation absent"), tone: "critical" as const };
                   const toneClass = { normal: "text-status-normal", warning: "text-status-warning", critical: "text-status-critical" };
                   const toneBg = { normal: "bg-status-normal/5 border-status-normal/20", warning: "bg-status-warning/5 border-status-warning/20", critical: "bg-status-critical/5 border-status-critical/20" };
 
@@ -1414,7 +1415,7 @@ const Optibrain = () => {
                       <div className={`rounded-lg border p-4 ${toneBg[autoregStatus?.tone ?? "normal"]}`}>
                         <div className="flex items-center gap-2 mb-1">
                           <Activity className="h-4 w-4 text-muted-foreground" />
-                          <h4 className="text-sm font-semibold text-foreground">{pamLabel} optimale — la cible à viser</h4>
+                          <h4 className="text-sm font-semibold text-foreground">{tr(`${pamLabel} optimale — la cible à viser`, `Optimal ${pamLabel} — the target to aim for`)}</h4>
                         </div>
                         {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null ? (
                           <>
@@ -1430,15 +1431,15 @@ const Optibrain = () => {
                               maxWidth="100%"
                             />
                             <p className="text-xs text-muted-foreground mt-2">
-                              {pamLabel} optimale <span className="font-semibold text-foreground">{Math.round(optimalPPCResult.optimalPPC)} mmHg</span>
+                              {tr(`${pamLabel} optimale`, `Optimal ${pamLabel}`)} <span className="font-semibold text-foreground">{Math.round(optimalPPCResult.optimalPPC)} mmHg</span>
                               {optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null && (
-                                <> · zone {Math.round(optimalPPCResult.lowerLimit)}–{Math.round(optimalPPCResult.upperLimit)} mmHg</>
+                                <> · {tr('plage', 'range')} {Math.round(optimalPPCResult.lowerLimit)}–{Math.round(optimalPPCResult.upperLimit)} mmHg</>
                               )}
                               {autoregStatus && <> · <span className={`font-medium ${toneClass[autoregStatus.tone]}`}>{autoregStatus.label}</span></>}
                             </p>
                           </>
                         ) : (
-                          <p className="text-xs text-muted-foreground italic">Données d'autorégulation en cours de calcul.</p>
+                          <p className="text-xs text-muted-foreground italic">{tr("Données d'autorégulation en cours de calcul.", 'Autoregulation data being computed.')}</p>
                         )}
                       </div>
 
@@ -1451,16 +1452,16 @@ const Optibrain = () => {
                         className={`rounded-lg border p-4 cursor-pointer transition-colors hover:brightness-95 ${toneBg[picStatusTone]}`}
                         role="button"
                         tabIndex={0}
-                        title="Voir le PIC dans le graphique de monitorage"
+                        title={tr("Voir le PIC dans le graphique de monitorage", "Show ICP in the monitoring chart")}
                         onClick={() => openIndicatorsInChart(["PIC"])}
                         onKeyDown={(e) => e.key === "Enter" && openIndicatorsInChart(["PIC"])}
                       >
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <div className="flex items-center gap-2">
                             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                            <h4 className="text-sm font-semibold text-foreground">Niveau de PIC</h4>
+                            <h4 className="text-sm font-semibold text-foreground">{tr("Niveau de PIC", "ICP level")}</h4>
                           </div>
-                          <span className="text-[10px] text-muted-foreground">Voir dans le graphique →</span>
+                          <span className="text-[10px] text-muted-foreground">{tr("Voir dans le graphique →", "View in chart →")}</span>
                         </div>
                         {realBrainValues.pic !== null ? (
                           <MetricRangeBar
@@ -1475,7 +1476,7 @@ const Optibrain = () => {
                             maxWidth="100%"
                           />
                         ) : (
-                          <p className="text-xs text-muted-foreground italic">Pas de valeur de PIC disponible.</p>
+                          <p className="text-xs text-muted-foreground italic">{tr("Pas de valeur de PIC disponible.", "No ICP value available.")}</p>
                         )}
                         {picSegments.length > 0 && renderDistribution(picSegments)}
                       </div>
@@ -1489,23 +1490,23 @@ const Optibrain = () => {
                         className={`rounded-lg border p-4 cursor-pointer transition-colors hover:brightness-95 ${toneBg[neuroTone]}`}
                         role="button"
                         tabIndex={0}
-                        title="Voir PIC et PPC dans le graphique de monitorage"
+                        title={tr("Voir PIC et PPC dans le graphique de monitorage", "Show ICP and CPP in the monitoring chart")}
                         onClick={() => openIndicatorsInChart(["PIC", "PPC"])}
                         onKeyDown={(e) => e.key === "Enter" && openIndicatorsInChart(["PIC", "PPC"])}
                       >
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <div className="flex items-center gap-2">
                             <Brain className="h-4 w-4 text-muted-foreground" />
-                            <h4 className="text-sm font-semibold text-foreground">État neurologique</h4>
+                            <h4 className="text-sm font-semibold text-foreground">{tr("État neurologique", "Neurological state")}</h4>
                           </div>
-                          <span className="text-[10px] text-muted-foreground">Voir dans le graphique →</span>
+                          <span className="text-[10px] text-muted-foreground">{tr("Voir dans le graphique →", "View in chart →")}</span>
                         </div>
                         <div className={`text-xl font-bold ${toneClass[neuroTone]}`}>
-                          {neurologicalStateConfig.currentState}
+                          {term(neurologicalStateConfig.currentState)}
                         </div>
                         {neurologicalStateConfig.currentStateSince && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Depuis {neurologicalStateConfig.currentStateSince}
+                          <p className="text-xs text-muted-foreground mt-0.5 first-letter:uppercase">
+                            {neurologicalStateConfig.currentStateSince}
                           </p>
                         )}
                         {neuroSegments.length > 0 && renderDistribution(neuroSegments)}
@@ -1527,15 +1528,15 @@ const Optibrain = () => {
                     <KpiCircle
                       count={monitoringAdherence !== null ? nonAdherentCount : 0}
                       hasCritical={monitoringAdherence !== null && nonAdherentCount >= 3}
-                      groupLabel="Monitorage et interventions"
+                      groupLabel={tr("Monitorage et interventions", "Monitoring and interventions")}
                       itemLabel="indicateur"
                     />
                     <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">Monitorage et interventions en place</h3>
+                      <h3 className="text-xs sm:text-sm font-semibold text-foreground">{tr("Monitorage et interventions en place", "Monitoring and interventions in place")}</h3>
                       <p className="text-xs text-muted-foreground mt-1">
                         {patientFileData
-                          ? `${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}${monitoringAdherence !== null ? ` · ${monitoringAdherence}% d'adhérence` : ""}`
-                          : "Pas de données disponibles"}
+                          ? tr(`${nonAdherentCount} non adhérent${nonAdherentCount > 1 ? "s" : ""}`, `${nonAdherentCount} non-adherent`) + (monitoringAdherence !== null ? tr(` · ${monitoringAdherence}% d'adhérence`, ` · ${monitoringAdherence}% adherence`) : "")
+                          : tr("Pas de données disponibles", "No data available")}
                       </p>
                     </div>
                   </div>
@@ -1582,22 +1583,22 @@ const Optibrain = () => {
                                   <div>
                                     <div className="font-semibold">{target.contextInfo}</div>
                                     {target.adherencePercentage !== null && (
-                                      <div className="text-muted-foreground mt-1">{target.adherencePercentage}% adhérence aux cibles</div>
+                                      <div className="text-muted-foreground mt-1">{target.adherencePercentage}% {tr("adhérence aux cibles", "target adherence")}</div>
                                     )}
                                   </div>
                                 ) : target.adherencePercentage !== null ? (
                                   <div>
-                                    <div className="font-semibold">{target.adherencePercentage}% adhérence</div>
-                                    <div className="text-muted-foreground mt-1">% du temps passé dans la cible recommandée</div>
+                                    <div className="font-semibold">{target.adherencePercentage}% {tr("adhérence", "adherence")}</div>
+                                    <div className="text-muted-foreground mt-1">{tr("% du temps passé dans la cible recommandée", "% of time spent within the recommended target")}</div>
                                   </div>
                                 ) : (
-                                  "Pas de données"
+                                  tr("Pas de données", "No data")
                                 )}
                               </TooltipContent>
                             </UITooltip>
                           </TooltipProvider>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">{target.label}</p>
+                            <p className="text-sm font-medium text-foreground">{term(target.label)}</p>
                             <p className="text-xs text-muted-foreground">{target.description}</p>
                           </div>
                         </div>
@@ -1617,7 +1618,7 @@ const Optibrain = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                     <CardTitle className="text-sm sm:text-lg">
-                      {timeRange === "stay" ? "Monitorage des cibles recommandées (Séjour)" : `Monitorage des cibles recommandées (${timeRange.toUpperCase()})`}
+                      {timeRange === "stay" ? tr("Monitorage des cibles recommandées (Séjour)", "Recommended target monitoring (Stay)") : tr(`Monitorage des cibles recommandées (${timeRange.toUpperCase()})`, `Recommended target monitoring (${timeRange.toUpperCase()})`)}
                     </CardTitle>
                     <label className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground cursor-pointer">
                       <input
@@ -1626,15 +1627,15 @@ const Optibrain = () => {
                         onChange={(e) => setShowTargetZones(e.target.checked)}
                         className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-border text-primary focus:ring-primary"
                       />
-                      <span className="hidden sm:inline">Zones cibles</span>
-                      <span className="sm:hidden">Cibles</span>
+                      <span className="hidden sm:inline">{tr("Zones cibles", "Target zones")}</span>
+                      <span className="sm:hidden">{tr("Cibles", "Targets")}</span>
                     </label>
                   </div>
                   {fileDataLoading && (
                     <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 self-start sm:self-auto">
                       <span className="flex items-center gap-1">
                         <Loader2 className="h-3 w-3 animate-spin" />
-                        <span className="hidden sm:inline">Chargement...</span>
+                        <span className="hidden sm:inline">{tr("Chargement...", "Loading...")}</span>
                       </span>
                     </Badge>
                   )}
@@ -1669,8 +1670,8 @@ const Optibrain = () => {
                                 return prev.filter((label) => label !== indicator.label);
                               }
                               if (prev.length >= 3) {
-                                toast.warning("Maximum 3 indicateurs", {
-                                  description: "Désélectionnez un indicateur pour en ajouter un nouveau.",
+                                toast.warning(tr("Maximum 3 indicateurs", "Maximum 3 indicators"), {
+                                  description: tr("Désélectionnez un indicateur pour en ajouter un nouveau.", "Deselect an indicator to add a new one."),
                                 });
                                 return prev;
                               }
@@ -1691,17 +1692,17 @@ const Optibrain = () => {
                                 {indicator.adherencePercentage !== null 
                                   ? (
                                     <div>
-                                      <div className="font-semibold">{indicator.adherencePercentage}% adhérence</div>
-                                      <div className="text-muted-foreground mt-1">% du temps passé dans la cible recommandée</div>
+                                      <div className="font-semibold">{indicator.adherencePercentage}% {tr("adhérence", "adherence")}</div>
+                                      <div className="text-muted-foreground mt-1">{tr("% du temps passé dans la cible recommandée", "% of time spent within the recommended target")}</div>
                                     </div>
                                   )
-                                  : "Pas de données"
+                                  : tr("Pas de données", "No data")
                                 }
                               </TooltipContent>
                             </UITooltip>
                           </TooltipProvider>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">{indicator.label}</p>
+                            <p className="text-sm font-medium text-foreground">{term(indicator.label)}</p>
                             <p className="text-xs text-muted-foreground">{indicator.target}</p>
                           </div>
                         </div>
@@ -1717,7 +1718,7 @@ const Optibrain = () => {
                   {selectedIndicators.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
                       <p className="text-muted-foreground text-xs sm:text-base text-center px-2">
-                        Sélectionnez des indicateurs ci-dessus pour afficher leur évolution
+                        {tr("Sélectionnez des indicateurs ci-dessus pour afficher leur évolution", "Select indicators above to show their trend")}
                       </p>
                     </div>
                   ) : (
@@ -1791,7 +1792,7 @@ const Optibrain = () => {
                               const unit = indicator?.target.match(/[a-zA-Z°%/]+$/)?.[0] || "";
                               return [
                                 <span key={name} style={{ color, fontWeight: 600 }}>
-                                  {name}: {value.toFixed(1)} {unit}
+                                  {term(name)}: {value.toFixed(1)} {unit}
                                 </span>,
                                 null
                               ];
@@ -1802,7 +1803,7 @@ const Optibrain = () => {
                             iconType="plainline"
                             formatter={(value: string) => (
                               <span style={{ color: getIndicatorColor(value), fontWeight: 500 }}>
-                                {value}
+                                {term(value)}
                               </span>
                             )}
                           />

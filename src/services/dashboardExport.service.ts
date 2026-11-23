@@ -1,4 +1,6 @@
 import jsPDF from "jspdf";
+import { tr, getLang, intlLocale } from "@/i18n";
+import { term } from "@/i18n/terms";
 import autoTable from "jspdf-autotable";
 import {
   DeidentifiedContext,
@@ -56,14 +58,15 @@ const ORGAN_VARIABLES: Record<string, Array<{ key: string; label: string; unit: 
   ],
 };
 
-const ORGAN_TITLES: Record<string, string> = {
-  cerveau: "OptiBrain — Module neurologique",
-  coeur: "OptiHeart — Module cardiovasculaire",
-  poumons: "OptiLungs — Module respiratoire",
-  renal: "OptiRenal — Module rénal",
-  gastro: "OptiGastro — Module gastro-intestinal",
-  general: "OptiState — Vue globale",
-};
+const organTitle = (organ: string): string | undefined =>
+  ({
+    cerveau: tr("OptiBrain — Module neurologique", "OptiBrain — Neurological module"),
+    coeur: tr("OptiHeart — Module cardiovasculaire", "OptiHeart — Cardiovascular module"),
+    poumons: tr("OptiLungs — Module respiratoire", "OptiLungs — Respiratory module"),
+    renal: tr("OptiRenal — Module rénal", "OptiRenal — Renal module"),
+    gastro: tr("OptiGastro — Module gastro-intestinal", "OptiGastro — Gastrointestinal module"),
+    general: tr("OptiState — Vue globale", "OptiState — Overall view"),
+  })[organ];
 
 interface SeriesStats {
   label: string;
@@ -136,13 +139,13 @@ export async function exportOrganDashboardPDF(
             .slice(0, 200);
           for (const p of sorted) {
             rawRows.push([
-              new Date(p.charttime).toLocaleString("fr-CA", {
+              new Date(p.charttime).toLocaleString(intlLocale(), {
                 hour: "2-digit",
                 minute: "2-digit",
                 day: "2-digit",
                 month: "2-digit",
               }),
-              v.label,
+              term(v.label),
               `${p.valeur.toFixed(1)} ${v.unit}`,
             ]);
           }
@@ -183,19 +186,33 @@ function buildDefaultDashboardPrompt(
   stats: SeriesStats[],
   hoursBack: number
 ): string {
+  const statLines = stats
+    .filter((s) => s.count > 0)
+    .map((s) =>
+      tr(
+        `- ${s.label}: dernier=${s.last}${s.unit}, moy=${s.mean}, min=${s.min}, max=${s.max} (n=${s.count})`,
+        `- ${term(s.label)}: last=${s.last}${s.unit}, mean=${s.mean}, min=${s.min}, max=${s.max} (n=${s.count})`,
+      ),
+    )
+    .join("\n");
+  if (getLang() === "en") {
+    return `**Clinical context (paediatric PICU patient, de-identified):**
+- Age: ${ctx.age}
+- Weight: ${ctx.weight}
+- Diagnosis: ${ctx.diagnosis}
+${ctx.exam ? `- Exam: ${ctx.exam}\n` : ""}
+**Dashboard data (${hoursBack}h):**
+${statLines}
+
+**Question:** Analyse this dashboard. Identify abnormalities and pathophysiological trends, and propose clinical recommendations based on PICU guidelines.`;
+  }
   return `**Contexte clinique (patient pédiatrique en USIP, dé-identifié) :**
 - Âge: ${ctx.age}
 - Poids: ${ctx.weight}
 - Diagnostic: ${ctx.diagnosis}
 ${ctx.exam ? `- Examen: ${ctx.exam}\n` : ""}
 **Données dashboard (${hoursBack}h) :**
-${stats
-  .filter((s) => s.count > 0)
-  .map(
-    (s) =>
-      `- ${s.label}: dernier=${s.last}${s.unit}, moy=${s.mean}, min=${s.min}, max=${s.max} (n=${s.count})`
-  )
-  .join("\n")}
+${statLines}
 
 **Question :** Analysez ce dashboard. Identifiez les anomalies, tendances physiopathologiques et proposez des recommandations cliniques basées sur les guidelines PICU.`;
 }
@@ -222,11 +239,11 @@ async function renderPDF(args: RenderArgs): Promise<string> {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text(ORGAN_TITLES[organ] || "Dashboard MyPICU", margin, 10);
+  doc.text(organTitle(organ) || "Dashboard MyPICU", margin, 10);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(
-    `Export clinique dé-identifié — ${new Date().toLocaleString("fr-CA")}`,
+    tr(`Export clinique dé-identifié — ${new Date().toLocaleString(intlLocale())}`, `De-identified clinical export — ${new Date().toLocaleString(intlLocale())}`),
     margin,
     16
   );
@@ -239,7 +256,7 @@ async function renderPDF(args: RenderArgs): Promise<string> {
   doc.setFontSize(8);
   doc.setFont("helvetica", "italic");
   doc.text(
-    "Document dé-identifié (sans nom ni ID patient). Vérifiez avant partage avec un assistant IA.",
+    tr("Document dé-identifié (sans nom ni ID patient). Vérifiez avant partage avec un assistant IA.", "De-identified document (no patient name or ID). Check before sharing with an AI assistant."),
     margin + 2,
     y + 6
   );
@@ -248,14 +265,14 @@ async function renderPDF(args: RenderArgs): Promise<string> {
   // Patient context
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("Contexte patient", margin, y);
+  doc.text(tr("Contexte patient", "Patient context"), margin, y);
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   const ctxLines = [
-    `Âge: ${ctx.age}    Poids: ${ctx.weight}`,
-    `Diagnostic: ${ctx.diagnosis}`,
-    ctx.exam ? `Examen: ${ctx.exam}` : "",
+    tr(`Âge: ${ctx.age}    Poids: ${ctx.weight}`, `Age: ${ctx.age}    Weight: ${ctx.weight}`),
+    tr(`Diagnostic: ${ctx.diagnosis}`, `Diagnosis: ${ctx.diagnosis}`),
+    ctx.exam ? tr(`Examen: ${ctx.exam}`, `Exam: ${ctx.exam}`) : "",
   ].filter(Boolean);
   for (const line of ctxLines) {
     doc.text(line, margin, y);
@@ -268,10 +285,10 @@ async function renderPDF(args: RenderArgs): Promise<string> {
     [
       ["PELOD-2", ctx.pelodScore],
       ["GCS", ctx.gcs],
-      ["Score cérébral", ctx.brainScore],
-      ["Score cardiaque", ctx.heartScore],
-      ["Score pulmonaire", ctx.lungsScore],
-      ["Score rénal", ctx.kidneyScore],
+      [tr("Score cérébral", "Brain score"), ctx.brainScore],
+      [tr("Score cardiaque", "Cardiac score"), ctx.heartScore],
+      [tr("Score pulmonaire", "Pulmonary score"), ctx.lungsScore],
+      [tr("Score rénal", "Renal score"), ctx.kidneyScore],
     ] as Array<[string, number | null | undefined]>
   )
     .filter(([, v]) => v != null)
@@ -280,7 +297,7 @@ async function renderPDF(args: RenderArgs): Promise<string> {
   if (scoreEntries.length) {
     autoTable(doc, {
       startY: y,
-      head: [["Score", "Valeur"]],
+      head: [["Score", tr("Valeur", "Value")]],
       body: scoreEntries,
       theme: "grid",
       styles: { fontSize: 9, cellPadding: 1.5 },
@@ -294,22 +311,22 @@ async function renderPDF(args: RenderArgs): Promise<string> {
   // Synthesis table
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text(`Synthèse des paramètres (${hoursBack}h)`, margin, y);
+  doc.text(tr(`Synthèse des paramètres (${hoursBack}h)`, `Parameter summary (${hoursBack}h)`), margin, y);
   y += 4;
   autoTable(doc, {
     startY: y,
-    head: [["Paramètre", "Dernier", "Moyenne", "Min", "Max", "N"]],
+    head: [[tr("Paramètre", "Parameter"), tr("Dernier", "Last"), tr("Moyenne", "Mean"), "Min", "Max", "N"]],
     body: stats.map((s) =>
       s.count
         ? [
-            `${s.label} (${s.unit})`,
+            `${term(s.label)} (${s.unit})`,
             String(s.last),
             String(s.mean),
             String(s.min),
             String(s.max),
             String(s.count),
           ]
-        : [`${s.label} (${s.unit})`, "—", "—", "—", "—", "0"]
+        : [`${term(s.label)} (${s.unit})`, "—", "—", "—", "—", "0"]
     ),
     theme: "striped",
     styles: { fontSize: 9, cellPadding: 1.5 },
@@ -322,7 +339,7 @@ async function renderPDF(args: RenderArgs): Promise<string> {
   if (ctx.medications.length) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text("Médicaments actifs", margin, y);
+    doc.text(tr("Médicaments actifs", "Active medications"), margin, y);
     y += 5;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
@@ -336,10 +353,10 @@ async function renderPDF(args: RenderArgs): Promise<string> {
     doc.addPage();
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text(`Données brutes (${hoursBack}h, max 200 points/paramètre)`, margin, margin);
+    doc.text(tr(`Données brutes (${hoursBack}h, max 200 points/paramètre)`, `Raw data (${hoursBack}h, max 200 points/parameter)`), margin, margin);
     autoTable(doc, {
       startY: margin + 4,
-      head: [["Heure", "Paramètre", "Valeur"]],
+      head: [[tr("Heure", "Time"), tr("Paramètre", "Parameter"), tr("Valeur", "Value")]],
       body: rawRows.slice(0, 800), // cap PDF size
       theme: "grid",
       styles: { fontSize: 7, cellPadding: 1 },
@@ -352,7 +369,7 @@ async function renderPDF(args: RenderArgs): Promise<string> {
   doc.addPage();
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("Prompt suggéré pour Copilot", margin, margin);
+  doc.text(tr("Prompt suggéré pour Copilot", "Suggested prompt for Copilot"), margin, margin);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   const promptLines = doc.splitTextToSize(promptText, pageWidth - 2 * margin);
@@ -366,7 +383,7 @@ async function renderPDF(args: RenderArgs): Promise<string> {
     doc.setFontSize(7);
     doc.setTextColor(120, 120, 120);
     doc.text(
-      `MyPICU — Dashboard dé-identifié — Page ${i}/${pageCount}`,
+      tr(`MyPICU — Dashboard dé-identifié — Page ${i}/${pageCount}`, `MyPICU — De-identified dashboard — Page ${i}/${pageCount}`),
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 6,
       { align: "center" }
@@ -383,12 +400,12 @@ export function getOrganTemplates(organ: string): PromptTemplate[] {
 }
 
 export const ORGAN_OPTIONS = [
-  { value: "cerveau", label: "OptiBrain (neurologique)" },
-  { value: "coeur", label: "OptiHeart (cardiovasculaire)" },
-  { value: "poumons", label: "OptiLungs (respiratoire)" },
-  { value: "renal", label: "OptiRenal (rénal)" },
-  { value: "gastro", label: "OptiGastro (gastro-intestinal)" },
-  { value: "general", label: "OptiState (global)" },
+  { value: "cerveau", get label() { return tr("OptiBrain (neurologique)", "OptiBrain (neurological)"); } },
+  { value: "coeur", get label() { return tr("OptiHeart (cardiovasculaire)", "OptiHeart (cardiovascular)"); } },
+  { value: "poumons", get label() { return tr("OptiLungs (respiratoire)", "OptiLungs (respiratory)"); } },
+  { value: "renal", get label() { return tr("OptiRenal (rénal)", "OptiRenal (renal)"); } },
+  { value: "gastro", get label() { return tr("OptiGastro (gastro-intestinal)", "OptiGastro (gastrointestinal)"); } },
+  { value: "general", get label() { return tr("OptiState (global)", "OptiState (overall)"); } },
 ];
 
 // ---------------- Multi-module export ----------------
@@ -438,13 +455,13 @@ export async function exportMultiDashboardPDF(
           .slice(0, 200);
         for (const p of sorted) {
           rawRows.push([
-            new Date(p.charttime).toLocaleString("fr-CA", {
+            new Date(p.charttime).toLocaleString(intlLocale(), {
               hour: "2-digit",
               minute: "2-digit",
               day: "2-digit",
               month: "2-digit",
             }),
-            v.label,
+            term(v.label),
             `${p.valeur.toFixed(1)} ${v.unit}`,
           ]);
         }
@@ -505,11 +522,11 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("Dashboard MyPICU — Export multi-modules", margin, 10);
+  doc.text(tr("Dashboard MyPICU — Export multi-modules", "MyPICU dashboard — Multi-module export"), margin, 10);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(
-    `Export clinique dé-identifié — ${new Date().toLocaleString("fr-CA")}`,
+    tr(`Export clinique dé-identifié — ${new Date().toLocaleString(intlLocale())}`, `De-identified clinical export — ${new Date().toLocaleString(intlLocale())}`),
     margin,
     16
   );
@@ -521,7 +538,7 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
   doc.setFontSize(8);
   doc.setFont("helvetica", "italic");
   doc.text(
-    "Document dé-identifié (sans nom ni ID patient). Vérifiez avant partage avec un assistant IA.",
+    tr("Document dé-identifié (sans nom ni ID patient). Vérifiez avant partage avec un assistant IA.", "De-identified document (no patient name or ID). Check before sharing with an AI assistant."),
     margin + 2,
     y + 6
   );
@@ -529,14 +546,14 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("Contexte patient", margin, y);
+  doc.text(tr("Contexte patient", "Patient context"), margin, y);
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   const ctxLines = [
-    `Âge: ${ctx.age}    Poids: ${ctx.weight}`,
-    `Diagnostic: ${ctx.diagnosis}`,
-    ctx.exam ? `Examen: ${ctx.exam}` : "",
+    tr(`Âge: ${ctx.age}    Poids: ${ctx.weight}`, `Age: ${ctx.age}    Weight: ${ctx.weight}`),
+    tr(`Diagnostic: ${ctx.diagnosis}`, `Diagnosis: ${ctx.diagnosis}`),
+    ctx.exam ? tr(`Examen: ${ctx.exam}`, `Exam: ${ctx.exam}`) : "",
   ].filter(Boolean);
   for (const line of ctxLines) {
     doc.text(line, margin, y);
@@ -548,10 +565,10 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
     [
       ["PELOD-2", ctx.pelodScore],
       ["GCS", ctx.gcs],
-      ["Score cérébral", ctx.brainScore],
-      ["Score cardiaque", ctx.heartScore],
-      ["Score pulmonaire", ctx.lungsScore],
-      ["Score rénal", ctx.kidneyScore],
+      [tr("Score cérébral", "Brain score"), ctx.brainScore],
+      [tr("Score cardiaque", "Cardiac score"), ctx.heartScore],
+      [tr("Score pulmonaire", "Pulmonary score"), ctx.lungsScore],
+      [tr("Score rénal", "Renal score"), ctx.kidneyScore],
     ] as Array<[string, number | null | undefined]>
   )
     .filter(([, v]) => v != null)
@@ -560,7 +577,7 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
   if (scoreEntries.length) {
     autoTable(doc, {
       startY: y,
-      head: [["Score", "Valeur"]],
+      head: [["Score", tr("Valeur", "Value")]],
       body: scoreEntries,
       theme: "grid",
       styles: { fontSize: 9, cellPadding: 1.5 },
@@ -574,7 +591,7 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
   if (ctx.medications.length) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text("Médicaments actifs", margin, y);
+    doc.text(tr("Médicaments actifs", "Active medications"), margin, y);
     y += 5;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
@@ -585,12 +602,12 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("Modules inclus dans cet export", margin, y);
+  doc.text(tr("Modules inclus dans cet export", "Modules included in this export"), margin, y);
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   for (const o of organs) {
-    doc.text(`• ${ORGAN_TITLES[o] || o}`, margin + 2, y);
+    doc.text(`• ${organTitle(o) || o}`, margin + 2, y);
     y += 4.5;
   }
 
@@ -600,27 +617,27 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(37, 99, 235);
-    doc.text(ORGAN_TITLES[section.organ] || section.organ, margin, margin + 2);
+    doc.text(organTitle(section.organ) || section.organ, margin, margin + 2);
     doc.setTextColor(0, 0, 0);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text(`Synthèse des paramètres (${hoursBack}h)`, margin, margin + 10);
+    doc.text(tr(`Synthèse des paramètres (${hoursBack}h)`, `Parameter summary (${hoursBack}h)`), margin, margin + 10);
 
     autoTable(doc, {
       startY: margin + 13,
-      head: [["Paramètre", "Dernier", "Moyenne", "Min", "Max", "N"]],
+      head: [[tr("Paramètre", "Parameter"), tr("Dernier", "Last"), tr("Moyenne", "Mean"), "Min", "Max", "N"]],
       body: section.stats.map((s) =>
         s.count
           ? [
-              `${s.label} (${s.unit})`,
+              `${term(s.label)} (${s.unit})`,
               String(s.last),
               String(s.mean),
               String(s.min),
               String(s.max),
               String(s.count),
             ]
-          : [`${s.label} (${s.unit})`, "—", "—", "—", "—", "0"]
+          : [`${term(s.label)} (${s.unit})`, "—", "—", "—", "—", "0"]
       ),
       theme: "striped",
       styles: { fontSize: 9, cellPadding: 1.5 },
@@ -633,10 +650,10 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
         (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.text(`Données brutes (max 200 pts/paramètre)`, margin, finalY);
+      doc.text(tr(`Données brutes (max 200 pts/paramètre)`, `Raw data (max 200 pts/parameter)`), margin, finalY);
       autoTable(doc, {
         startY: finalY + 2,
-        head: [["Heure", "Paramètre", "Valeur"]],
+        head: [[tr("Heure", "Time"), tr("Paramètre", "Parameter"), tr("Valeur", "Value")]],
         body: section.rawRows.slice(0, 600),
         theme: "grid",
         styles: { fontSize: 7, cellPadding: 1 },
@@ -653,8 +670,8 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
   doc.setTextColor(37, 99, 235);
   doc.text(
     selectedTemplates.length > 1
-      ? `${selectedTemplates.length} prompts suggérés pour Copilot`
-      : "Prompt suggéré pour Copilot",
+      ? tr(`${selectedTemplates.length} prompts suggérés pour Copilot`, `${selectedTemplates.length} suggested prompts for Copilot`)
+      : tr("Prompt suggéré pour Copilot", "Suggested prompt for Copilot"),
     margin,
     margin
   );
@@ -671,7 +688,7 @@ async function renderMultiPDF(args: RenderMultiArgs): Promise<string> {
     doc.setFontSize(7);
     doc.setTextColor(120, 120, 120);
     doc.text(
-      `MyPICU — Dashboard dé-identifié — Page ${i}/${pageCount}`,
+      tr(`MyPICU — Dashboard dé-identifié — Page ${i}/${pageCount}`, `MyPICU — De-identified dashboard — Page ${i}/${pageCount}`),
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 6,
       { align: "center" }

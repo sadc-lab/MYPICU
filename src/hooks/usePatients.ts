@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { patientService } from '@/services/patient.service';
 import { Patient, PatientQueryParams } from '@/types/patient.types';
 import { toast } from 'sonner';
+import { tr } from '@/i18n';
 
 /**
  * Query keys for React Query cache management
@@ -64,10 +65,10 @@ export function useUpdatePatient() {
       queryClient.invalidateQueries({ queryKey: patientKeys.detail(updatedPatient.id) });
       queryClient.invalidateQueries({ queryKey: patientKeys.byWard() });
       
-      toast.success('Patient updated successfully');
+      toast.success(tr('Patient mis à jour', 'Patient updated successfully'));
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update patient');
+      toast.error(error.message || tr('Échec de la mise à jour du patient', 'Failed to update patient'));
     },
   });
 }

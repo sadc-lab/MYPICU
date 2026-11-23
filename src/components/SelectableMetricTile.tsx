@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { term } from '@/i18n/terms';
 
 export type TileStatus = 'normal' | 'warning' | 'critical';
 
@@ -47,7 +48,7 @@ export const SelectableMetricTile = ({
       onClick={onClick}
     >
       <div className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide text-center">
-        {label}
+        {term(label)}
       </div>
       <div className="flex items-baseline gap-1 mb-1">
         {icon}

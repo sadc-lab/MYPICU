@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   ReferenceArea,
 } from 'recharts';
+import { term } from '@/i18n/terms';
 
 export interface OptimisationChartSeries {
   label: string;
@@ -76,12 +77,13 @@ export const OptimisationChart = ({
               color: 'hsl(var(--popover-foreground))',
             }}
             labelStyle={{ fontWeight: 600, marginBottom: 8 }}
+            formatter={(value: number | string, name: string) => [value, term(name)]}
           />
           <Legend
             wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }}
             iconType="plainline"
             formatter={(value: string) => (
-              <span style={{ color: colorFor(value), fontWeight: 500 }}>{value}</span>
+              <span style={{ color: colorFor(value), fontWeight: 500 }}>{term(value)}</span>
             )}
           />
           {series.map((s) => (

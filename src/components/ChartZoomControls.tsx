@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Pencil, ZoomIn, ZoomOut, RotateCcw, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { YAxisZoom } from "@/hooks/useYAxisZoom";
+import { tr } from '@/i18n';
 
 interface ChartZoomControlsProps {
   zoom: YAxisZoom;
@@ -57,8 +58,8 @@ export const ChartZoomControls = ({ zoom, isEditing, onToggleEditing, className,
           type="button"
           onClick={zoom.zoomOut}
           disabled={!zoom.canZoomOut}
-          title="Réduire l'échelle"
-          aria-label="Réduire l'échelle"
+          title={tr("Réduire l'échelle", "Zoom out scale")}
+          aria-label={tr("Réduire l'échelle", "Zoom out scale")}
           className="p-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
         >
           <ZoomOut className="h-3.5 w-3.5" />
@@ -67,8 +68,8 @@ export const ChartZoomControls = ({ zoom, isEditing, onToggleEditing, className,
           type="button"
           onClick={zoom.zoomIn}
           disabled={!zoom.canZoomIn}
-          title="Agrandir l'échelle"
-          aria-label="Agrandir l'échelle"
+          title={tr("Agrandir l'échelle", "Zoom in scale")}
+          aria-label={tr("Agrandir l'échelle", "Zoom in scale")}
           className="p-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
         >
           <ZoomIn className="h-3.5 w-3.5" />
@@ -77,8 +78,8 @@ export const ChartZoomControls = ({ zoom, isEditing, onToggleEditing, className,
           type="button"
           onClick={zoom.resetZoom}
           disabled={!zoom.isZoomed}
-          title="Réinitialiser l'échelle (auto)"
-          aria-label="Réinitialiser l'échelle"
+          title={tr("Réinitialiser l'échelle (auto)", "Reset scale (auto)")}
+          aria-label={tr("Réinitialiser l'échelle", "Reset scale")}
           className="p-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
         >
           <RotateCcw className="h-3.5 w-3.5" />
@@ -92,14 +93,14 @@ export const ChartZoomControls = ({ zoom, isEditing, onToggleEditing, className,
             role="status"
             className="absolute -top-9 right-0 whitespace-nowrap rounded-md bg-foreground text-background text-[11px] px-2 py-1 shadow-md animate-in fade-in slide-in-from-bottom-1 z-10"
           >
-            Modifier l'échelle ou la période
+            {tr("Modifier l'échelle ou la période", 'Edit scale or period')}
           </div>
         )}
         <button
           type="button"
           onClick={onToggleEditing}
-          title={isEditing ? "Terminer la modification" : "Modifier l'échelle du graphique"}
-          aria-label={isEditing ? "Terminer la modification" : "Modifier l'échelle du graphique"}
+          title={isEditing ? tr("Terminer la modification", "Finish editing") : tr("Modifier l'échelle du graphique", "Edit chart scale")}
+          aria-label={isEditing ? tr("Terminer la modification", "Finish editing") : tr("Modifier l'échelle du graphique", "Edit chart scale")}
           aria-pressed={isEditing}
           className={cn(
             "p-1.5 rounded-md border transition-colors",
