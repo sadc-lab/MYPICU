@@ -36,6 +36,7 @@ import {
 import mypicuLogo from '@/assets/mypicu-logo.png';
 
 import React from 'react';
+import { STUDY_ONLY } from '@/lib/studyMode';
 
 interface HeaderProps {
   selectedPed?: 'A' | 'B' | 'C';
@@ -425,7 +426,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                   </Button>
                 </div>
 
-                {isOnDisplayedPatient && currentPatientId && (
+                {!STUDY_ONLY && isOnDisplayedPatient && currentPatientId && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -489,6 +490,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 z-50">
                 <DropdownMenuLabel>{t('Réglages', 'Settings')}</DropdownMenuLabel>
+                {!STUDY_ONLY && (<>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/admin/import" className="flex items-center gap-2">
@@ -508,6 +510,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
                 <DropdownMenuItem onClick={() => setShowGuide(true)}>
                   {t('Aide', 'Help')}
                 </DropdownMenuItem>
+                </>)}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
                   {t('Déconnexion', 'Sign out')}
@@ -517,6 +520,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
             {/* Langue et thème, juste à côté du nom (et non dans le menu). */}
             <PreferenceToggles />
             
+            {!STUDY_ONLY && (
             <Button 
               variant="ghost" 
               size="icon" 
@@ -526,6 +530,7 @@ export const Header = ({ selectedPed = 'A', patients: propPatients, studyNav }: 
             >
               <HelpCircle className="h-5 w-5" />
             </Button>
+            )}
             
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
               <Bell className="h-5 w-5" />

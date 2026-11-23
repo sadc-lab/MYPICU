@@ -92,6 +92,8 @@ import {
 } from '@/components/autoreg/AutoregResultViews';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tr, intlLocale } from '@/i18n';
+import { timeAxisFor } from '@/lib/chartAxes';
 
 interface PatientAnalysis {
   result: AutoregResult;
@@ -129,7 +131,7 @@ async function readFileAsText(file: File): Promise<string> {
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array' });
     const first = wb.SheetNames[0];
-    if (!first) throw new Error('Fichier Excel sans feuille.');
+    if (!first) throw new Error(tr('Fichier Excel sans feuille.', 'Excel file without a sheet.'));
     return XLSX.utils.sheet_to_csv(wb.Sheets[first]);
   }
   return await file.text();
@@ -187,7 +189,7 @@ const AutoregStudy = () => {
       );
       if (savedCurve.length === 0 && data.optimal_ppc === null) {
         setError(
-          `Le dernier fichier enregistré (${data.file_name ?? 'sans nom'}) ne contient pas de résultat calculable. Réimportez un fichier avec des variations exploitables de PIC/PAM/PPC.`,
+          tr(`Le dernier fichier enregistré (${data.file_name ?? 'sans nom'}) ne contient pas de résultat calculable. Réimportez un fichier avec des variations exploitables de PIC/PAM/PPC.`, `The last saved file (${data.file_name ?? 'unnamed'}) contains no computable result. Re-import a file with usable ICP/MAP/CPP variations.`),
         );
         return;
       }
@@ -290,7 +292,7 @@ const AutoregStudy = () => {
       // the failure is surfaced rather than swallowed as "no data available".
       console.error('Recherche de données pour ce patient échouée:', e);
       setAddError(
-        "La recherche de données pour ce patient a échoué. Joignez le fichier manuellement, ou réessayez.",
+        tr("La recherche de données pour ce patient a échoué. Joignez le fichier manuellement, ou réessayez.", "Data lookup for this patient failed. Attach the file manually, or try again."),
       );
     } finally {
       setProbingRecording(false);
@@ -303,8 +305,8 @@ const AutoregStudy = () => {
     if (!fileToProcess) {
       setAddError(
         sourcePatient
-          ? "Aucun enregistrement n'est disponible pour ce patient : joignez un fichier CSV, JSON ou Excel."
-          : 'Veuillez sélectionner un fichier CSV, JSON ou Excel.',
+          ? tr("Aucun enregistrement n'est disponible pour ce patient : joignez un fichier CSV, JSON ou Excel.", 'No recording is available for this patient: attach a CSV, JSON or Excel file.')
+          : tr('Veuillez sélectionner un fichier CSV, JSON ou Excel.', 'Please select a CSV, JSON or Excel file.'),
       );
       return;
     }
@@ -337,12 +339,12 @@ const AutoregStudy = () => {
     setParsing(true);
     const target = patientOverride ?? active;
     if (!target) {
-      setError("Aucun patient sélectionné.");
+      setError(tr("Aucun patient sélectionné.", "No patient selected."));
       setParsing(false);
       return false;
     }
     try {
-      if (file.size > 25 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 25 Mo).');
+      if (file.size > 25 * 1024 * 1024) throw new Error(tr('Fichier trop volumineux (max 25 Mo).', 'File too large (max 25 MB).'));
       const text = await readFileAsText(file);
       const samples = parseAny(text);
       const readinessError = describeAnalysisReadiness(samples);
@@ -354,7 +356,7 @@ const AutoregStudy = () => {
       const analysis = runAnalysis(samples, 30, 5);
       if (analysis.curve.length === 0 || analysis.optimalPPC === null) {
         throw new Error(
-          "Calcul impossible : aucune courbe PRx/PPC exploitable n'a pu être générée avec ce fichier.",
+          tr("Calcul impossible : aucune courbe PRx/PPC exploitable n'a pu être générée avec ce fichier.", "Computation impossible: no usable PRx/CPP curve could be generated from this file."),
         );
       }
       const derived = analysis.samples;
@@ -387,17 +389,17 @@ const AutoregStudy = () => {
               rolling: rolled as any,
             });
           if (insertError) throw insertError;
-          if (!silent) toast.success('Résultats enregistrés dans la base de données');
+          if (!silent) toast.success(tr('Résultats enregistrés dans la base de données', 'Results saved to the database'));
         } else if (!silent) {
-          toast.info("Connectez-vous pour conserver les résultats dans la base.");
+          toast.info(tr("Connectez-vous pour conserver les résultats dans la base.", "Sign in to keep results in the database."));
         }
       } catch (persistErr: any) {
         console.error('Persist autoreg result error:', persistErr);
-        if (!silent) toast.error("Impossible d'enregistrer les résultats : " + (persistErr.message || 'erreur inconnue'));
+        if (!silent) toast.error(tr("Impossible d'enregistrer les résultats : ", 'Unable to save results: ') + (persistErr.message || tr('erreur inconnue', 'unknown error')));
       }
       return true;
     } catch (e: any) {
-      if (!silent) setError(e.message || 'Erreur lors du traitement du fichier.');
+      if (!silent) setError(e.message || tr('Erreur lors du traitement du fichier.', 'Error processing the file.'));
       return false;
     } finally {
       setParsing(false);
@@ -553,30 +555,30 @@ const AutoregStudy = () => {
       const L = modeLabels(result.mode);
 
       doc.setFontSize(16);
-      doc.text("Rapport d'autorégulation cérébrale", margin, 50);
+      doc.text(tr("Rapport d'autorégulation cérébrale", "Cerebral autoregulation report"), margin, 50);
       doc.setFontSize(10);
       doc.setTextColor(120);
       doc.text(
-        `Sujet : ${active?.code ?? '—'} · ${active?.label ?? ''}`,
+        tr(`Sujet : ${active?.code ?? '—'} · ${active?.label ?? ''}`, `Subject: ${active?.code ?? '—'} · ${active?.label ?? ''}`),
         margin,
         70,
       );
-      doc.text(`Fichier : ${fileName ?? '—'}`, margin, 84);
-      doc.text(`Généré le : ${now.toLocaleString('fr-CA')}`, margin, 98);
+      doc.text(tr(`Fichier : ${fileName ?? '—'}`, `File: ${fileName ?? '—'}`), margin, 84);
+      doc.text(tr(`Généré le : ${now.toLocaleString(intlLocale())}`, `Generated on: ${now.toLocaleString(intlLocale())}`), margin, 98);
       doc.setTextColor(0);
 
       autoTable(doc, {
         startY: 120,
-        head: [['Indicateur', 'Valeur']],
+        head: [[tr('Indicateur', 'Indicator'), tr('Valeur', 'Value')]],
         body: [
-          ['Index utilisé', L.index],
+          [tr('Index utilisé', 'Index used'), L.index],
           [`${L.optimal} (mmHg)`, result.optimalPPC?.toFixed(0) ?? '—'],
-          ['Limite basse LLA (mmHg)', result.lowerLimit?.toFixed(0) ?? '—'],
-          ['Limite haute ULA (mmHg)', result.upperLimit?.toFixed(0) ?? '—'],
+          [tr('Limite basse LLA (mmHg)', 'Lower limit LLA (mmHg)'), result.lowerLimit?.toFixed(0) ?? '—'],
+          [tr('Limite haute ULA (mmHg)', 'Upper limit ULA (mmHg)'), result.upperLimit?.toFixed(0) ?? '—'],
           [`${L.index} minimum`, result.minPrx?.toFixed(2) ?? '—'],
-          ['Plateau fiable', result.plateauValid ? 'Oui' : 'Non'],
-          ['Nombre d\'échantillons', String(result.sampleCount)],
-          ['Durée (h)', String(result.durationHours)],
+          [tr('Plateau fiable', 'Reliable plateau'), result.plateauValid ? tr('Oui', 'Yes') : tr('Non', 'No')],
+          [tr("Nombre d'échantillons", 'Number of samples'), String(result.sampleCount)],
+          [tr('Durée (h)', 'Duration (h)'), String(result.durationHours)],
         ],
         theme: 'striped',
         headStyles: { fillColor: [30, 64, 175] },
@@ -584,12 +586,12 @@ const AutoregStudy = () => {
 
       if (result.usableSamples > 0) {
         autoTable(doc, {
-          head: [['Qualité et interprétation', 'Valeur']],
+          head: [[tr('Qualité et interprétation', 'Quality and interpretation'), tr('Valeur', 'Value')]],
           body: [
-            ['Échantillons exploitables', `${result.usableSamples} (${result.pctUsable} %)`],
-            [`${L.index} moyen`, result.meanIndex?.toFixed(2) ?? '—'],
-            [`Temps avec ${L.index} > ${PRX_THRESHOLD.toFixed(1)}`, `${result.pctImpaired} %`],
-            ['Bins fiables (≥ 2 % des données)', String(result.robustBins)],
+            [tr('Échantillons exploitables', 'Usable samples'), `${result.usableSamples} (${result.pctUsable} %)`],
+            [tr(`${L.index} moyen`, `Mean ${L.index}`), result.meanIndex?.toFixed(2) ?? '—'],
+            [tr(`Temps avec ${L.index} > ${PRX_THRESHOLD.toFixed(1)}`, `Time with ${L.index} > ${PRX_THRESHOLD.toFixed(1)}`), `${result.pctImpaired} %`],
+            [tr('Bins fiables (≥ 2 % des données)', 'Reliable bins (≥ 2% of data)'), String(result.robustBins)],
           ],
           theme: 'striped',
           headStyles: { fillColor: [30, 64, 175] },
@@ -615,7 +617,7 @@ const AutoregStudy = () => {
         const imgHeight = (props.height * imgWidth) / props.width;
         doc.addPage();
         doc.setFontSize(12);
-        doc.text(node.dataset.pdfTitle || 'Graphique', margin, 40);
+        doc.text(node.dataset.pdfTitle || tr('Graphique', 'Chart'), margin, 40);
         doc.addImage(png, 'PNG', margin, 60, imgWidth, imgHeight);
       }
       setActiveTab(restoreTab);
@@ -623,16 +625,16 @@ const AutoregStudy = () => {
       // Curve table
       doc.addPage();
       doc.setFontSize(12);
-      doc.text(`Courbe ${L.index} vs ${L.pressure} (bins de 5 mmHg)`, margin, 40);
+      doc.text(tr(`Courbe ${L.index} vs ${L.pressure} (bins de 5 mmHg)`, `${L.index} vs ${L.pressure} curve (5 mmHg bins)`), margin, 40);
       autoTable(doc, {
         startY: 60,
-        head: [[`${L.pressure} (mmHg)`, `${L.index} moyen`, 'N échantillons', 'Fiable', 'Autorégulation']],
+        head: [[`${L.pressure} (mmHg)`, tr(`${L.index} moyen`, `Mean ${L.index}`), tr('N échantillons', 'N samples'), tr('Fiable', 'Reliable'), tr('Autorégulation', 'Autoregulation')]],
         body: result.curve.map((p) => [
           p.ppc,
           p.prx.toFixed(2),
           p.count,
-          p.robust ? 'Oui' : 'Non',
-          !p.robust ? 'Non retenu' : p.prx < PRX_THRESHOLD ? 'Préservée' : 'Altérée',
+          p.robust ? tr('Oui', 'Yes') : tr('Non', 'No'),
+          !p.robust ? tr('Non retenu', 'Excluded') : p.prx < PRX_THRESHOLD ? tr('Préservée', 'Preserved') : tr('Altérée', 'Impaired'),
         ]),
         theme: 'grid',
         headStyles: { fillColor: [30, 64, 175] },
@@ -640,23 +642,23 @@ const AutoregStudy = () => {
       });
 
       doc.save(`autoreg_${active?.code ?? 'sujet'}_${Date.now()}.pdf`);
-      toast.success('PDF généré');
+      toast.success(tr('PDF généré', 'PDF generated'));
     } catch (err: any) {
       console.error('PDF export error:', err);
-      toast.error("Échec de l'export PDF : " + (err.message || 'erreur inconnue'));
+      toast.error(tr("Échec de l'export PDF : ", 'PDF export failed: ') + (err.message || tr('erreur inconnue', 'unknown error')));
       setActiveTab(restoreTab);
     }
   };
 
 
   const formatTime = (t: number) =>
-    new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+    new Date(t).toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit' });
 
   // Shared by the full import panel and its collapsed bar.
   const errorAlert = error && (
     <Alert variant="destructive" className="mt-4">
       <AlertCircle className="h-4 w-4" />
-      <AlertTitle className="text-sm sm:text-base">Impossible de traiter le fichier</AlertTitle>
+      <AlertTitle className="text-sm sm:text-base">{tr("Impossible de traiter le fichier", "Unable to process the file")}</AlertTitle>
       <AlertDescription>
         {typeof error === 'string' ? (
           <p className="text-xs sm:text-sm whitespace-pre-line">{error}</p>
@@ -665,7 +667,7 @@ const AutoregStudy = () => {
             <p className="text-sm sm:text-base font-semibold leading-snug">{error.cause}</p>
             <div className="space-y-1">
               <p className="text-[11px] sm:text-xs font-medium text-destructive/90 uppercase tracking-wide">
-                Remédiation
+                {tr('Remédiation', 'How to fix')}
               </p>
               <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-destructive/90 leading-relaxed">
                 {error.steps.map((step, i) => (
@@ -687,42 +689,43 @@ const AutoregStudy = () => {
       <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/5 via-background to-background">
         <div className="container mx-auto max-w-5xl px-4 pt-10 sm:pt-16 pb-8 text-center">
           <Badge variant="outline" className="mb-3">
-            Étude clinique · Usage recherche uniquement
+            {tr('Étude clinique · Usage recherche uniquement', 'Clinical study · Research use only')}
           </Badge>
           <h1 className="text-3xl sm:text-5xl font-bold text-foreground tracking-tight mb-2">
-            Validation clinique de l'autorégulation cérébrale
+            {tr("Validation clinique de l'autorégulation cérébrale", 'Clinical validation of cerebral autoregulation')}
           </h1>
           <p className="max-w-2xl mx-auto text-sm sm:text-base text-muted-foreground mb-6">
-            Cet espace permet à l'équipe des soins intensifs de tester l'algorithme
-            d'autorégulation (PRx/COx) sur des données réelles avant toute intégration
-            permanente au tableau de bord Optibrain.
+            {tr(
+              "Cet espace permet à l'équipe des soins intensifs de tester l'algorithme d'autorégulation (PRx/COx) sur des données réelles avant toute intégration permanente au tableau de bord Optibrain.",
+              'This space lets the intensive care team test the autoregulation algorithm (PRx/COx) on real data before any permanent integration into the Optibrain dashboard.',
+            )}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-4xl mx-auto text-left">
             <FlowStepCard
               n={1}
-              title="Tester"
-              desc="Ajoutez un ou plusieurs patients et importez leurs données (fichier, ou enregistrement de l'unité) pour générer la courbe PRx/COx."
+              title={tr("Tester", "Test")}
+              desc={tr("Ajoutez un ou plusieurs patients et importez leurs données (fichier, ou enregistrement de l'unité) pour générer la courbe PRx/COx.", "Add one or more patients and import their data (file, or unit recording) to generate the PRx/COx curve.")}
               status={testedCount === 0 ? 'current' : 'done'}
             />
             <FlowStepCard
               n={2}
-              title="Valider en équipe"
+              title={tr("Valider en équipe", "Validate as a team")}
               desc={
                 testedCount > 0
-                  ? `${testedCount} sujet${testedCount > 1 ? 's' : ''} analysé${testedCount > 1 ? 's' : ''} dans cette session. Comparez les limites LLA/ULA obtenues à votre jugement clinique sur plusieurs patients.`
-                  : 'Comparez les limites LLA/ULA obtenues à votre jugement clinique, sur plusieurs patients, avant de conclure à la fiabilité de l’outil.'
+                  ? tr(`${testedCount} sujet${testedCount > 1 ? 's' : ''} analysé${testedCount > 1 ? 's' : ''} dans cette session. Comparez les limites LLA/ULA obtenues à votre jugement clinique sur plusieurs patients.`, `${testedCount} subject${testedCount > 1 ? 's' : ''} analysed in this session. Compare the LLA/ULA limits obtained with your clinical judgement across several patients.`)
+                  : tr('Comparez les limites LLA/ULA obtenues à votre jugement clinique, sur plusieurs patients, avant de conclure à la fiabilité de l’outil.', 'Compare the LLA/ULA limits obtained with your clinical judgement, across several patients, before concluding on the tool’s reliability.')
               }
               status={testedCount === 0 ? 'upcoming' : 'current'}
             />
             <FlowStepCard
               n={3}
-              title="Intégrer à MyPICU"
-              desc="Une fois l'équipe satisfaite des résultats, signalez-le pour que l'autorégulation soit ajoutée de façon permanente au tableau de bord Optibrain."
+              title={tr("Intégrer à MyPICU", "Integrate into MyPICU")}
+              desc={tr("Une fois l'équipe satisfaite des résultats, signalez-le pour que l'autorégulation soit ajoutée de façon permanente au tableau de bord Optibrain.", "Once the team is satisfied with the results, report it so autoregulation is permanently added to the Optibrain dashboard.")}
               status="upcoming"
               cta={
                 <Button asChild size="sm" variant="outline" className="mt-2">
-                  <Link to="/feedback">Signaler à l'équipe</Link>
+                  <Link to="/feedback">{tr("Signaler à l'équipe", "Notify the team")}</Link>
                 </Button>
               }
             />
@@ -765,8 +768,8 @@ const AutoregStudy = () => {
                     )}
                     title={
                       liveEnabled
-                        ? 'Actualisation en direct active — cliquer pour mettre en pause'
-                        : 'Actualisation en direct en pause — cliquer pour reprendre'
+                        ? tr('Actualisation en direct active — cliquer pour mettre en pause', 'Live refresh on — click to pause')
+                        : tr('Actualisation en direct en pause — cliquer pour reprendre', 'Live refresh paused — click to resume')
                     }
                   >
                     <span
@@ -775,10 +778,10 @@ const AutoregStudy = () => {
                         liveEnabled ? "bg-success animate-pulse" : "bg-muted-foreground",
                       )}
                     />
-                    {liveEnabled ? 'En direct' : 'En pause'}
+                    {liveEnabled ? tr('En direct', 'Live') : tr('En pause', 'Paused')}
                     {lastLiveUpdate && (
                       <span className="font-normal opacity-80">
-                        · {lastLiveUpdate.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        · {lastLiveUpdate.toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </span>
                     )}
                   </button>
@@ -794,7 +797,7 @@ const AutoregStudy = () => {
                     disabled={parsing}
                   >
                     <Upload className="mr-2 h-4 w-4" />
-                    {parsing ? 'Analyse…' : 'Modifier fichier'}
+                    {parsing ? tr('Analyse…', 'Analysing…') : tr('Modifier fichier', 'Change file')}
                   </Button>
                   <Button
                     variant="outline"
@@ -803,7 +806,7 @@ const AutoregStudy = () => {
                     disabled={parsing}
                   >
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Ajouter un patient
+                    {tr('Ajouter un patient', 'Add a patient')}
                   </Button>
                 </div>
               </div>
@@ -817,7 +820,7 @@ const AutoregStudy = () => {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Upload className="h-5 w-5" />
-                  Import des données
+                  {tr('Import des données', 'Data import')}
                   {active && (
                     <Badge variant="secondary" className="ml-2">
                       {active.code} · {active.label}
@@ -825,15 +828,15 @@ const AutoregStudy = () => {
                   )}
                 </CardTitle>
                 <CardDescription>
-                  CSV, Excel (<code>.xlsx</code>) ou JSON Fisher. Deux modes détectés automatiquement :
-                  <strong> COx</strong> non invasif (colonnes <code>rSO₂/NIRS, PAM</code>) ou
-                  <strong> PRx</strong> invasif (colonnes <code>PIC, PAM, PPC</code>).
+                  {tr('CSV, Excel (.xlsx) ou JSON Fisher. Deux modes détectés automatiquement :', 'CSV, Excel (.xlsx) or Fisher JSON. Two modes detected automatically:')}
+                  <strong> COx</strong> {tr('non invasif (colonnes', 'non-invasive (columns')} <code>rSO₂/NIRS, {tr('PAM', 'MAP')}</code>) {tr('ou', 'or')}
+                  <strong> PRx</strong> {tr('invasif (colonnes', 'invasive (columns')} <code>{tr('PIC, PAM, PPC', 'ICP, MAP, CPP')}</code>).
                 </CardDescription>
               </div>
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label="Étapes de validation" className="shrink-0 -mr-2 -mt-2">
+                    <Button variant="ghost" size="icon" aria-label={tr("Étapes de validation", "Validation steps")} className="shrink-0 -mr-2 -mt-2">
                       <HelpCircle className="h-5 w-5 text-muted-foreground" />
                     </Button>
                   </TooltipTrigger>
@@ -843,24 +846,24 @@ const AutoregStudy = () => {
                     className="max-w-[16rem] sm:max-w-xs p-0 bg-card border shadow-lg"
                   >
                     <div className="p-2 sm:p-3 space-y-1 sm:space-y-2">
-                      <p className="font-semibold text-xs sm:text-sm text-foreground">Étapes de validation</p>
+                      <p className="font-semibold text-xs sm:text-sm text-foreground">{tr("Étapes de validation", "Validation steps")}</p>
                       <div className="space-y-1">
                         <StepCard
                           n={1}
-                          title="Créer un sujet"
-                          desc="Ajoutez un pseudonyme via le bouton Sujet."
+                          title={tr("Créer un sujet", "Create a subject")}
+                          desc={tr("Ajoutez un pseudonyme via le bouton Sujet.", "Add a pseudonym via the Subject button.")}
                           compact
                         />
                         <StepCard
                           n={2}
-                          title="Importer les données"
-                          desc="CSV, Excel (.xlsx) ou JSON Fisher."
+                          title={tr("Importer les données", "Import data")}
+                          desc={tr("CSV, Excel (.xlsx) ou JSON Fisher.", "CSV, Excel (.xlsx) or Fisher JSON.")}
                           compact
                         />
                         <StepCard
                           n={3}
-                          title="Analyser et exporter"
-                          desc="Visualisations interactives et export CSV."
+                          title={tr("Analyser et exporter", "Analyse and export")}
+                          desc={tr("Visualisations interactives et export CSV.", "Interactive visualisations and CSV export.")}
                           compact
                         />
                       </div>
@@ -874,28 +877,30 @@ const AutoregStudy = () => {
             {!active && patients.length === 0 && (
               <Alert className="mb-4">
                 <UserPlus className="h-4 w-4" />
-                <AlertTitle>Aucun sujet</AlertTitle>
+                <AlertTitle>{tr('Aucun sujet', 'No subject')}</AlertTitle>
                 <AlertDescription>
-                  Cliquez sur <strong>Ajouter un patient</strong> pour choisir un patient de l'unité
-                  — son enregistrement est chargé automatiquement s'il existe — ou pour créer un
-                  sujet à partir de votre propre fichier CSV/JSON.
+                  {tr('Cliquez sur', 'Click')} <strong>{tr('Ajouter un patient', 'Add a patient')}</strong>{' '}
+                  {tr(
+                    "pour choisir un patient de l'unité — son enregistrement est chargé automatiquement s'il existe — ou pour créer un sujet à partir de votre propre fichier CSV/JSON.",
+                    'to choose a patient from the unit — their recording is loaded automatically if it exists — or to create a subject from your own CSV/JSON file.',
+                  )}
                 </AlertDescription>
               </Alert>
             )}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <Button onClick={() => { setAddError(null); setAddOpen(true); }} disabled={parsing}>
                 <UserPlus className="mr-2 h-4 w-4" />
-                Ajouter un patient
+                {tr('Ajouter un patient', 'Add a patient')}
               </Button>
               {active && (
                 <Button variant="outline" onClick={() => inputRef.current?.click()} disabled={parsing}>
                   <Upload className="mr-2 h-4 w-4" />
-                  {parsing ? 'Analyse…' : 'Modifier fichier'}
+                  {parsing ? tr('Analyse…', 'Analysing…') : tr('Modifier fichier', 'Change file')}
                 </Button>
               )}
               {fileName && (
                 <span className="text-sm text-muted-foreground truncate">
-                  Fichier chargé : <span className="font-medium text-foreground">{fileName}</span>
+                  {tr("Fichier chargé :", "Loaded file:")} <span className="font-medium text-foreground">{fileName}</span>
                 </span>
               )}
             </div>
@@ -908,19 +913,21 @@ const AutoregStudy = () => {
         <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { resetAddForm(); } }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Ajouter un patient</DialogTitle>
+              <DialogTitle>{tr('Ajouter un patient', 'Add a patient')}</DialogTitle>
               <DialogDescription>
-                Choisissez un patient de l'unité — son enregistrement est chargé automatiquement
-                s'il est disponible — ou créez un sujet en joignant vous-même le fichier.
+                {tr(
+                  "Choisissez un patient de l'unité — son enregistrement est chargé automatiquement s'il est disponible — ou créez un sujet en joignant vous-même le fichier.",
+                  'Choose a patient from the unit — their recording is loaded automatically if available — or create a subject by attaching the file yourself.',
+                )}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
               {unitPatients.length > 0 && (
                 <div className="space-y-2">
-                  <Label htmlFor="new-patient-source">Patient de l'unité</Label>
+                  <Label htmlFor="new-patient-source">{tr("Patient de l'unité", "Unit patient")}</Label>
                   <Select value={sourcePatientId} onValueChange={selectSourcePatient}>
                     <SelectTrigger id="new-patient-source">
-                      <SelectValue placeholder="Sélectionner un patient…" />
+                      <SelectValue placeholder={tr("Sélectionner un patient…", "Select a patient…")} />
                     </SelectTrigger>
                     <SelectContent>
                       {unitPatients.map((p) => (
@@ -932,60 +939,66 @@ const AutoregStudy = () => {
                   </Select>
                   {probingRecording && (
                     <p className="text-xs text-muted-foreground">
-                      Recherche d'un enregistrement, puis des données du moniteur…
+                      {tr("Recherche d'un enregistrement, puis des données du moniteur…", 'Looking for a recording, then monitor data…')}
                     </p>
                   )}
                   {!probingRecording && sourcePatient && sourceRecording && !monitorSource && (
                     <p className="text-xs text-success flex items-center gap-1.5">
                       <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                      Enregistrement trouvé : {sourceRecording.name} — aucun import manuel nécessaire.
+                      {tr('Enregistrement trouvé :', 'Recording found:')} {sourceRecording.name} — {tr('aucun import manuel nécessaire.', 'no manual import needed.')}
                     </p>
                   )}
                   {!probingRecording && sourcePatient && monitorSource && (
                     <div className="text-xs text-success space-y-1">
                       <p className="flex items-center gap-1.5">
                         <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                        Données du moniteur trouvées : {monitorSource.pairedSamples} échantillons
-                        PIC + PAM appariés (moyenne par {monitorSource.bucketSeconds} s).
+                        {tr(
+                          `Données du moniteur trouvées : ${monitorSource.pairedSamples} échantillons PIC + PAM appariés (moyenne par ${monitorSource.bucketSeconds} s).`,
+                          `Monitor data found: ${monitorSource.pairedSamples} paired ICP + MAP samples (averaged per ${monitorSource.bucketSeconds} s).`,
+                        )}
                       </p>
                       <p className="text-muted-foreground">
-                        Analyse en PRx à partir des séries enregistrées dans la base
-                        {monitorSource.ppcDerived ? ', PPC calculée comme PAM − PIC' : ''}. Aucune
-                        rSO₂ n'est disponible dans la base : pour un COx, joignez l'enregistrement brut.
+                        {tr('Analyse en PRx à partir des séries enregistrées dans la base', 'PRx analysis from the series stored in the database')}
+                        {monitorSource.ppcDerived ? tr(', PPC calculée comme PAM − PIC', ', CPP computed as MAP − ICP') : ''}.{' '}
+                        {tr("Aucune rSO₂ n'est disponible dans la base : pour un COx, joignez l'enregistrement brut.", 'No rSO₂ is available in the database: for COx, attach the raw recording.')}
                       </p>
                       {monitorSource.truncated && (
                         <p className="text-warning">
-                          Séries lues partiellement (séjour très long ou lecture interrompue) :
-                          l'analyse ne couvre pas la totalité du monitorage.
+                          {tr(
+                            "Séries lues partiellement (séjour très long ou lecture interrompue) : l'analyse ne couvre pas la totalité du monitorage.",
+                            'Series partially read (very long stay or interrupted read): the analysis does not cover all monitoring.',
+                          )}
                         </p>
                       )}
                     </div>
                   )}
                   {!probingRecording && sourcePatient && !sourceRecording && (
                     <p className="text-xs text-muted-foreground">
-                      Ni enregistrement livré avec l'application, ni série PIC + PAM exploitable dans
-                      la base pour ce patient : joignez le fichier ci-dessous.
+                      {tr(
+                        "Ni enregistrement livré avec l'application, ni série PIC + PAM exploitable dans la base pour ce patient : joignez le fichier ci-dessous.",
+                        'No recording shipped with the app and no usable ICP + MAP series in the database for this patient: attach the file below.',
+                      )}
                     </p>
                   )}
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="new-patient-label">Pseudonyme</Label>
+                <Label htmlFor="new-patient-label">{tr("Pseudonyme", "Pseudonym")}</Label>
                 <Input
                   id="new-patient-label"
-                  placeholder="ex. Sujet A"
+                  placeholder={tr("ex. Sujet A", "e.g. Subject A")}
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-patient-file">
-                  Fichier CSV, Excel ou JSON{' '}
+                  {tr('Fichier CSV, Excel ou JSON', 'CSV, Excel or JSON file')}{' '}
                   {monitorSource
-                    ? '(remplace les données du moniteur)'
+                    ? tr('(remplace les données du moniteur)', '(replaces monitor data)')
                     : sourceRecording
-                      ? '(remplace l’enregistrement du patient)'
+                      ? tr('(remplace l’enregistrement du patient)', '(replaces the patient’s recording)')
                       : '*'}
                 </Label>
                 <Input
@@ -996,7 +1009,7 @@ const AutoregStudy = () => {
                 />
                 {newFile && (
                   <p className="text-xs text-muted-foreground truncate">
-                    Sélectionné : <span className="font-medium text-foreground">{newFile.name}</span>
+                    {tr("Sélectionné :", "Selected:")} <span className="font-medium text-foreground">{newFile.name}</span>
                   </p>
                 )}
               </div>
@@ -1009,13 +1022,13 @@ const AutoregStudy = () => {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setAddOpen(false)} disabled={parsing}>
-                Annuler
+                {tr('Annuler', 'Cancel')}
               </Button>
               <Button
                 onClick={submitNewPatient}
                 disabled={parsing || probingRecording || (!newFile && !sourceRecording)}
               >
-                {parsing ? 'Analyse…' : 'Créer et analyser'}
+                {parsing ? tr('Analyse…', 'Analysing…') : tr('Créer et analyser', 'Create and analyse')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1026,24 +1039,26 @@ const AutoregStudy = () => {
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
               <p className="mb-6">
-                Aucune donnée. Choisissez un patient de l'unité ou importez un fichier pour lancer
-                l'analyse.
+                {tr(
+                  "Aucune donnée. Choisissez un patient de l'unité ou importez un fichier pour lancer l'analyse.",
+                  'No data. Choose a patient from the unit or import a file to start the analysis.',
+                )}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
                 <FeatureCard
                   icon={<Brain className="h-5 w-5" />}
-                  title="Index COx ou PRx"
-                  desc="Corrélation glissante rSO₂/PAM (COx, non invasif) ou PIC/PAM (PRx), fenêtre 30 échantillons."
+                  title={tr("Index COx ou PRx", "COx or PRx index")}
+                  desc={tr("Corrélation glissante rSO₂/PAM (COx, non invasif) ou PIC/PAM (PRx), fenêtre 30 échantillons.", "Rolling rSO₂/MAP (COx, non-invasive) or ICP/MAP (PRx) correlation, 30-sample window.")}
                 />
                 <FeatureCard
                   icon={<LineChart className="h-5 w-5" />}
-                  title="Courbe en U"
-                  desc="Détection automatique de la PAM/PPC optimale et des limites LLA/ULA."
+                  title={tr("Courbe en U", "U-curve")}
+                  desc={tr("Détection automatique de la PAM/PPC optimale et des limites LLA/ULA.", "Automatic detection of the optimal MAP/CPP and the LLA/ULA limits.")}
                 />
                 <FeatureCard
                   icon={<ShieldCheck className="h-5 w-5" />}
-                  title="Données locales"
-                  desc="Traitement 100% navigateur, aucune donnée transmise à un serveur."
+                  title={tr("Données locales", "Local data")}
+                  desc={tr("Traitement 100% navigateur, aucune donnée transmise à un serveur.", "100% in-browser processing, no data sent to a server.")}
                 />
               </div>
             </CardContent>
@@ -1058,21 +1073,23 @@ const AutoregStudy = () => {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <CheckCircle2 className="h-5 w-5 text-primary" />
-                      Résultats de l'analyse
+                      {tr("Résultats de l'analyse", 'Analysis results')}
                     </CardTitle>
                     <CardDescription>
-                      {result.sampleCount} échantillons · {result.durationHours} h · {labels.index} = corrélation
-                      glissante {labels.signal}/PAM (fenêtre 30 échantillons)
+                      {tr(
+                        `${result.sampleCount} échantillons · ${result.durationHours} h · ${labels.index} = corrélation glissante ${labels.signal}/PAM (fenêtre 30 échantillons)`,
+                        `${result.sampleCount} samples · ${result.durationHours} h · ${labels.index} = rolling ${labels.signal}/MAP correlation (30-sample window)`,
+                      )}
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={downloadCSV}>
                       <Download className="mr-2 h-4 w-4" />
-                      Exporter CSV
+                      {tr('Exporter CSV', 'Export CSV')}
                     </Button>
                     <Button variant="default" size="sm" onClick={downloadPDF}>
                       <FileText className="mr-2 h-4 w-4" />
-                      Exporter PDF
+                      {tr('Exporter PDF', 'Export PDF')}
                     </Button>
                   </div>
                 </div>
@@ -1094,7 +1111,7 @@ const AutoregStudy = () => {
             <ChartTimeRangeProvider>
             {rollingTimeWindow.isRangeSelected && (
               <div className="mb-3 flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Plage affichée :</span>
+                <span className="text-xs text-muted-foreground">{tr("Plage affichée :", "Displayed range:")}</span>
                 <TimeRangeBadge
                   rangeStart={rollingTimeWindow.rangeStart}
                   rangeEnd={rollingTimeWindow.rangeEnd}
@@ -1104,10 +1121,10 @@ const AutoregStudy = () => {
             )}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
               <TabsList className="w-full justify-start overflow-x-auto">
-                <TabsTrigger value="curve">Courbe</TabsTrigger>
-                {rollingChartData.length > 0 && <TabsTrigger value="rolling">Évolution</TabsTrigger>}
-                {timeSeriesChartData.length > 0 && <TabsTrigger value="signals">Signaux bruts</TabsTrigger>}
-                <TabsTrigger value="table">Tableau</TabsTrigger>
+                <TabsTrigger value="curve">{tr("Courbe", "Curve")}</TabsTrigger>
+                {rollingChartData.length > 0 && <TabsTrigger value="rolling">{tr("Évolution", "Trend")}</TabsTrigger>}
+                {timeSeriesChartData.length > 0 && <TabsTrigger value="signals">{tr("Signaux bruts", "Raw signals")}</TabsTrigger>}
+                <TabsTrigger value="table">{tr("Tableau", "Table")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="curve" className="mt-4">
@@ -1116,11 +1133,11 @@ const AutoregStudy = () => {
 
             {rollingChartData.length > 0 && (
               <TabsContent value="rolling" className="mt-4">
-              <Card id="pdf-chart-rolling" data-pdf-title={`${labels.optimal} et limites dans le temps`}>
+              <Card id="pdf-chart-rolling" data-pdf-title={tr(`${labels.optimal} et limites dans le temps`, `${labels.optimal} and limits over time`)}>
                 <CardHeader>
-                  <CardTitle>{labels.optimal} et limites dans le temps</CardTitle>
+                  <CardTitle>{tr(`${labels.optimal} et limites dans le temps`, `${labels.optimal} and limits over time`)}</CardTitle>
                   <CardDescription>
-                    Estimation glissante de {labels.pressure}opt, LLA et ULA. {labels.pressure} mesurée superposée.
+                    {tr(`Estimation glissante de ${labels.pressure}opt, LLA et ULA. ${labels.pressure} mesurée superposée.`, `Rolling estimate of ${labels.pressure}opt, LLA and ULA. Measured ${labels.pressure} overlaid.`)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1140,7 +1157,7 @@ const AutoregStudy = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart
                         data={rollingEditing ? rollingChartData : rollingTimeWindow.visibleData}
-                        margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
+                        margin={{ top: 24, right: 20, bottom: 4, left: 0 }}
                       >
                         <defs>
                           <linearGradient id="rollingZoneGradient" x1="0" y1="0" x2="0" y2="1">
@@ -1152,17 +1169,22 @@ const AutoregStudy = () => {
                         <XAxis
                           dataKey="t"
                           type="number"
-                          domain={['dataMin', 'dataMax']}
-                          tickFormatter={formatTime}
-                          tick={{ fontSize: 11 }}
+                          {...timeAxisFor(rollingEditing ? rollingChartData : rollingTimeWindow.visibleData, (d) => d.t)}
+                          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                          tickLine={false}
+                          minTickGap={12}
+                          allowDataOverflow
                         />
                         <YAxis
                           domain={rollingZoom.yDomain}
-                          label={{ value: 'mmHg', angle: -90, position: 'insideLeft' }}
-                          tick={{ fontSize: 12 }}
+                          width={40}
+                          axisLine={false}
+                          tickLine={false}
+                          label={{ value: 'mmHg', position: 'top', offset: 10, fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
                         />
                         <RechartsTooltip
-                          labelFormatter={(l) => new Date(l).toLocaleString('fr-CA')}
+                          labelFormatter={(l) => new Date(l).toLocaleString(intlLocale())}
                           contentStyle={{
                             background: 'hsl(var(--card))',
                             border: '1px solid hsl(var(--border))',
@@ -1181,7 +1203,7 @@ const AutoregStudy = () => {
                           fillOpacity={1}
                           connectNulls
                           isAnimationActive={false}
-                          name="Plage autorégulée (LLA–ULA)"
+                          name={tr("Plage d'autorégulation (LLA–ULA)", "Autoregulation range (LLA–ULA)")}
                         />
                         <Area
                           type="monotone"
@@ -1194,7 +1216,7 @@ const AutoregStudy = () => {
                           legendType="none"
                           name="_lla_mask"
                         />
-                        <Line type="monotone" isAnimationActive={false} dataKey="ppc" stroke="hsl(var(--muted-foreground))" dot={false} name={`${labels.pressure} mesurée`} />
+                        <Line type="monotone" isAnimationActive={false} dataKey="ppc" stroke="hsl(var(--muted-foreground))" dot={false} name={tr(`${labels.pressure} mesurée`, `Measured ${labels.pressure}`)} />
                         <Line type="monotone" isAnimationActive={false} dataKey="optimalPPC" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name={labels.optimal} />
                         <Line type="monotone" isAnimationActive={false} dataKey="lla" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="LLA" />
                         <Line type="monotone" isAnimationActive={false} dataKey="ula" stroke="hsl(var(--destructive))" strokeDasharray="4 3" dot={false} name="ULA" />
@@ -1222,10 +1244,10 @@ const AutoregStudy = () => {
 
             {timeSeriesChartData.length > 0 && (
             <TabsContent value="signals" className="mt-4">
-            <Card id="pdf-chart-timeseries" data-pdf-title={result.mode === 'cox' ? 'Séries temporelles rSO₂ / PAM' : 'Séries temporelles PIC / PAM / PPC'}>
+            <Card id="pdf-chart-timeseries" data-pdf-title={result.mode === 'cox' ? tr('Séries temporelles rSO₂ / PAM', 'rSO₂ / MAP time series') : tr('Séries temporelles PIC / PAM / PPC', 'ICP / MAP / CPP time series')}>
               <CardHeader>
-                <CardTitle>{result.mode === 'cox' ? 'Séries temporelles rSO₂ / PAM' : 'Séries temporelles PIC / PAM / PPC'}</CardTitle>
-                <CardDescription>Données brutes après import.</CardDescription>
+                <CardTitle>{result.mode === 'cox' ? tr('Séries temporelles rSO₂ / PAM', 'rSO₂ / MAP time series') : tr('Séries temporelles PIC / PAM / PPC', 'ICP / MAP / CPP time series')}</CardTitle>
+                <CardDescription>{tr('Données brutes après import.', 'Raw data after import.')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ChartZoomControls
@@ -1250,13 +1272,21 @@ const AutoregStudy = () => {
                       <XAxis
                         dataKey="t"
                         type="number"
-                        domain={['dataMin', 'dataMax']}
-                        tickFormatter={formatTime}
-                        tick={{ fontSize: 11 }}
+                        {...timeAxisFor(timeSeriesEditing ? timeSeriesChartData : timeSeriesTimeWindow.visibleData, (d) => d.t)}
+                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        tickLine={false}
+                        minTickGap={12}
+                        allowDataOverflow
                       />
-                      <YAxis domain={timeSeriesZoom.yDomain} tick={{ fontSize: 12 }} />
+                      <YAxis
+                        domain={timeSeriesZoom.yDomain}
+                        width={40}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                      />
                       <RechartsTooltip
-                        labelFormatter={(l) => new Date(l).toLocaleString('fr-CA')}
+                        labelFormatter={(l) => new Date(l).toLocaleString(intlLocale())}
                         contentStyle={{
                           background: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
@@ -1268,11 +1298,11 @@ const AutoregStudy = () => {
                         <Line type="monotone" isAnimationActive={false} dataKey="nirs" stroke="hsl(var(--destructive))" dot={false} name="rSO₂" />
                       ) : (
                         <>
-                          <Line type="monotone" isAnimationActive={false} dataKey="pic" stroke="hsl(var(--destructive))" dot={false} name="PIC" />
-                          <Line type="monotone" isAnimationActive={false} dataKey="ppc" stroke="hsl(142 71% 45%)" dot={false} name="PPC" />
+                          <Line type="monotone" isAnimationActive={false} dataKey="pic" stroke="hsl(var(--destructive))" dot={false} name={tr("PIC", "ICP")} />
+                          <Line type="monotone" isAnimationActive={false} dataKey="ppc" stroke="hsl(142 71% 45%)" dot={false} name={tr("PPC", "CPP")} />
                         </>
                       )}
-                      <Line type="monotone" isAnimationActive={false} dataKey="pam" stroke="hsl(var(--primary))" dot={false} name="PAM" />
+                      <Line type="monotone" isAnimationActive={false} dataKey="pam" stroke="hsl(var(--primary))" dot={false} name={tr("PAM", "MAP")} />
                       {timeSeriesEditing && (
                         <Brush
                           dataKey="t"
@@ -1298,11 +1328,12 @@ const AutoregStudy = () => {
             <TabsContent value="table" className="mt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Tableau des résultats</CardTitle>
+                <CardTitle>{tr('Tableau des résultats', 'Results table')}</CardTitle>
                 <CardDescription>
-                  {labels.index} moyen par bin de {labels.pressure} (5 mmHg). Les bins grisés reposent sur
-                  trop peu de données (&lt; 2 % de l'enregistrement) : ils sont affichés mais exclus du calcul
-                  de la {labels.optimal.toLowerCase()} et des limites.
+                  {tr(
+                    `${labels.index} moyen par bin de ${labels.pressure} (5 mmHg). Les bins grisés reposent sur trop peu de données (< 2 % de l'enregistrement) : ils sont affichés mais exclus du calcul de la ${labels.optimal.toLowerCase()} et des limites.`,
+                    `Mean ${labels.index} per ${labels.pressure} bin (5 mmHg). Greyed bins rely on too few data (< 2% of the recording): they are shown but excluded from the ${labels.optimal.toLowerCase()} and limit computation.`,
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1311,10 +1342,10 @@ const AutoregStudy = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>{labels.pressure} (mmHg)</TableHead>
-                        <TableHead>{labels.index} moyen</TableHead>
-                        <TableHead>N échantillons</TableHead>
-                        <TableHead>Fiabilité</TableHead>
-                        <TableHead>Autorégulation</TableHead>
+                        <TableHead>{tr(`${labels.index} moyen`, `Mean ${labels.index}`)}</TableHead>
+                        <TableHead>{tr('N échantillons', 'N samples')}</TableHead>
+                        <TableHead>{tr('Fiabilité', 'Reliability')}</TableHead>
+                        <TableHead>{tr('Autorégulation', 'Autoregulation')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1347,20 +1378,20 @@ const AutoregStudy = () => {
                             <TableCell>
                               <span className="text-xs">
                                 {p.robust ? (
-                                  'Fiable'
+                                  tr('Fiable', 'Reliable')
                                 ) : (
-                                  <span className="text-muted-foreground">Peu de données</span>
+                                  <span className="text-muted-foreground">{tr("Peu de données", "Few data")}</span>
                                 )}
                               </span>
                             </TableCell>
                             <TableCell>
                               {p.robust ? (
                                 <Badge variant={good ? 'default' : 'destructive'}>
-                                  {good ? 'Préservée' : 'Altérée'}
+                                  {good ? tr('Préservée', 'Preserved') : tr('Altérée', 'Impaired')}
                                 </Badge>
                               ) : (
                                 <Badge variant="outline" className="text-muted-foreground">
-                                  Non retenu
+                                  {tr('Non retenu', 'Excluded')}
                                 </Badge>
                               )}
                             </TableCell>
@@ -1379,8 +1410,10 @@ const AutoregStudy = () => {
         )}
 
         <p className="text-xs text-muted-foreground text-center mt-8">
-          Cet outil est fourni à des fins de recherche clinique. Il ne remplace pas l'évaluation
-          médicale et n'est pas un dispositif médical homologué.
+          {tr(
+            "Cet outil est fourni à des fins de recherche clinique. Il ne remplace pas l'évaluation médicale et n'est pas un dispositif médical homologué.",
+            'This tool is provided for clinical research purposes. It does not replace medical assessment and is not an approved medical device.',
+          )}
         </p>
       </main>
     </div>
@@ -1421,7 +1454,7 @@ const FlowStepCard = ({
       </span>
       <span className="font-semibold text-foreground text-sm">{title}</span>
       {status === 'current' && (
-        <Badge variant="secondary" className="ml-auto text-[10px]">En cours</Badge>
+        <Badge variant="secondary" className="ml-auto text-[10px]">{tr("En cours", "In progress")}</Badge>
       )}
     </div>
     <p className="text-xs sm:text-sm text-muted-foreground leading-snug">{desc}</p>
