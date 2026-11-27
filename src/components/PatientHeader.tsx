@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronLeft, Bell, Home, AlertTriangle, Ban } from "lucide-react";
+import { ChevronDown, ChevronLeft, Bell, Home, AlertTriangle, Ban, Pill } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { HeartIcon } from "@/components/icons/HeartIcon";
@@ -11,7 +11,7 @@ import lungsIcon from "@/assets/lungs-icon.svg";
 import stateIcon from "@/assets/stats-icon.svg";
 import kidneyIcon from "@/assets/kidney-icon.svg";
 import intestineIcon from "@/assets/intestine-icon.svg";
-import { getDialysisStatus } from "@/utils/renalStatus";
+import { getDialysisStatus, getNephrotoxicMedications } from "@/utils/renalStatus";
 import { tr } from '@/i18n';
 
 
@@ -44,6 +44,8 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
   if (!patient) return null;
 
   const dialysis = getDialysisStatus(patientId);
+  // Affichés seulement dans Optirenal, où ils guident la prise en charge rénale.
+  const nephrotoxicMeds = currentPage === "optirenal" ? getNephrotoxicMedications(patientId) : [];
 
   // Inactive tabs: pale grey bg + colored border if problematic.
   // Active tab: tinted bg matching severity (low opacity for readability).
@@ -140,6 +142,28 @@ export const PatientHeader = ({ currentPage }: PatientHeaderProps) => {
                 </button>
               )}
             </div>
+            {nephrotoxicMeds.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-2 text-xs">
+                <span className="inline-flex items-center gap-1 font-semibold text-status-warning">
+                  <Pill className="h-3.5 w-3.5 shrink-0" />
+                  {tr('Néphrotoxiques en cours :', 'Ongoing nephrotoxic drugs:')}
+                </span>
+                {nephrotoxicMeds.map((med) => (
+                  <span
+                    key={med.name}
+                    title={[
+                      med.drugClass,
+                      tr(`Début : ${med.start}`, `Start: ${med.start}`),
+                      med.note,
+                    ].filter(Boolean).join(' · ')}
+                    className="inline-flex items-center gap-1 rounded-full border border-status-warning/40 bg-status-warning-bg/30 px-2.5 py-0.5 font-semibold text-status-warning"
+                  >
+                    {med.name}
+                    {med.note && <span className="font-normal">· {med.note}</span>}
+                  </span>
+                ))}
+              </div>
+            )}
             <p className="text-xs sm:text-sm text-foreground mt-2">
               <strong>{tr('Diagnostic:', 'Diagnosis:')}</strong> {patient.diagnosis}
             </p>
