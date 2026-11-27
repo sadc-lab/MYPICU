@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -83,14 +84,14 @@ export function usePatientCustomView(patientId: string) {
     mutationFn: (vars: { module: string; label: string; action: CustomViewAction }) =>
       upsertOverride(patientId, vars.module, vars.label, vars.action),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
-    onError: () => toast.error('Erreur lors de la mise à jour de la vue personnalisée'),
+    onError: () => toast.error(tr('Erreur lors de la mise à jour de la vue personnalisée', 'Error updating the custom view')),
   });
 
   const clearOverrideMutation = useMutation({
     mutationFn: (vars: { module: string; label: string }) =>
       deleteOverride(patientId, vars.module, vars.label),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
-    onError: () => toast.error('Erreur lors de la mise à jour de la vue personnalisée'),
+    onError: () => toast.error(tr('Erreur lors de la mise à jour de la vue personnalisée', 'Error updating the custom view')),
   });
 
   return {

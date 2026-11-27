@@ -3,6 +3,7 @@ import Joyride, { Step, CallBackProps, STATUS } from 'react-joyride';
 import BrainIcon from '@/assets/brain-icon.svg';
 import HeartIcon from '@/assets/heart-mypicu.svg';
 import LungsIcon from '@/assets/lungs-icon.svg';
+import { useI18n } from '@/i18n';
 
 interface InteractiveGuideProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface InteractiveGuideProps {
 
 export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => {
   const [run, setRun] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (isOpen) {
@@ -23,8 +25,8 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: 'body',
       content: (
         <div>
-          <h2 className="text-lg font-bold mb-2">Bienvenue dans MYPICU!</h2>
-          <p>Ce guide interactif vous aidera à naviguer dans l'interface. Cliquez sur "Suivant" pour commencer.</p>
+          <h2 className="text-lg font-bold mb-2">{t("Bienvenue dans MYPICU!", "Welcome to MYPICU!")}</h2>
+          <p>{t("Ce guide interactif vous aidera à naviguer dans l'interface. Cliquez sur \"Suivant\" pour commencer.", "This interactive guide will help you navigate the interface. Click \"Next\" to begin.")}</p>
         </div>
       ),
       placement: 'center',
@@ -38,12 +40,12 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
             <img src={BrainIcon} alt="Brain" className="w-5 h-5" />
             Module OptiBrain
           </h3>
-          <p className="mb-2">Surveillance neurologique complète du patient :</p>
+          <p className="mb-2">{t("Surveillance neurologique complète du patient :", "Comprehensive neurological monitoring of the patient:")}</p>
           <ul className="list-disc list-inside text-sm space-y-1">
-            <li><strong>Pression intracrânienne (PIC)</strong> - Monitoring et alertes</li>
-            <li><strong>Pression de perfusion cérébrale optimale (PPC)</strong> - Suivi en temps réel</li>
-            <li><strong>Indicateurs</strong> - Évaluation et ajustement</li>
-            <li><strong>Lignes directrices</strong> - Analyse de l'activité cérébrale</li>
+            <li><strong>{t("Pression intracrânienne (PIC)", "Intracranial pressure (ICP)")}</strong>{t(" - Monitoring et alertes", " - Monitoring and alerts")}</li>
+            <li><strong>{t("Pression de perfusion cérébrale optimale (PPC)", "Optimal cerebral perfusion pressure (CPP)")}</strong>{t(" - Suivi en temps réel", " - Real-time tracking")}</li>
+            <li><strong>{t("Indicateurs", "Indicators")}</strong>{t(" - Évaluation et ajustement", " - Assessment and adjustment")}</li>
+            <li><strong>{t("Lignes directrices", "Guidelines")}</strong>{t(" - Analyse de l'activité cérébrale", " - Brain activity analysis")}</li>
           </ul>
         </div>
       ),
@@ -57,13 +59,13 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
             <img src={HeartIcon} alt="Heart" className="w-5 h-5" />
             Module OptiHeart
           </h3>
-          <p className="mb-2">Surveillance cardiovasculaire avancée :</p>
+          <p className="mb-2">{t("Surveillance cardiovasculaire avancée :", "Advanced cardiovascular monitoring:")}</p>
           <ul className="list-disc list-inside text-sm space-y-1">
-            <li><strong>Débit cardiaque</strong> - Mesure et évolution</li>
-            <li><strong>Pression artérielle</strong> - MAP, systolique, diastolique</li>
-            <li><strong>Bilan hydrique</strong> - Entrées/sorties</li>
-            <li><strong>Échocardiographie</strong> - Résultats et analyses</li>
-            <li><strong>Lactates</strong> - Indicateur de perfusion tissulaire</li>
+            <li><strong>{t("Débit cardiaque", "Cardiac output")}</strong>{t(" - Mesure et évolution", " - Measurement and trend")}</li>
+            <li><strong>{t("Pression artérielle", "Blood pressure")}</strong>{t(" - MAP, systolique, diastolique", " - MAP, systolic, diastolic")}</li>
+            <li><strong>{t("Bilan hydrique", "Fluid balance")}</strong>{t(" - Entrées/sorties", " - Intake/output")}</li>
+            <li><strong>{t("Échocardiographie", "Echocardiography")}</strong>{t(" - Résultats et analyses", " - Results and analyses")}</li>
+            <li><strong>Lactates</strong>{t(" - Indicateur de perfusion tissulaire", " - Tissue perfusion indicator")}</li>
           </ul>
         </div>
       ),
@@ -77,13 +79,13 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
             <img src={LungsIcon} alt="Lungs" className="w-5 h-5" />
             Module OptiLungs
           </h3>
-          <p className="mb-2">Surveillance respiratoire complète :</p>
+          <p className="mb-2">{t("Surveillance respiratoire complète :", "Comprehensive respiratory monitoring:")}</p>
           <ul className="list-disc list-inside text-sm space-y-1">
-            <li><strong>Ventilation mécanique</strong> - Paramètres et modes</li>
-            <li><strong>Gaz du sang</strong> - pH, PaO2, PaCO2, HCO3</li>
-            <li><strong>Compliance pulmonaire</strong> - Évaluation dynamique</li>
-            <li><strong>Prédiction VAP</strong> - Risque de pneumonie associée à la ventilation</li>
-            <li><strong>Sevrage respiratoire</strong> - Critères et progression</li>
+            <li><strong>{t("Ventilation mécanique", "Mechanical ventilation")}</strong>{t(" - Paramètres et modes", " - Settings and modes")}</li>
+            <li><strong>{t("Gaz du sang", "Blood gases")}</strong> - pH, PaO2, PaCO2, HCO3</li>
+            <li><strong>{t("Compliance pulmonaire", "Lung compliance")}</strong>{t(" - Évaluation dynamique", " - Dynamic assessment")}</li>
+            <li><strong>{t("Prédiction VAP", "VAP prediction")}</strong>{t(" - Risque de pneumonie associée à la ventilation", " - Ventilator-associated pneumonia risk")}</li>
+            <li><strong>{t("Sevrage respiratoire", "Ventilator weaning")}</strong>{t(" - Critères et progression", " - Criteria and progress")}</li>
           </ul>
         </div>
       ),
@@ -93,8 +95,8 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: '[data-guide="search"]',
       content: (
         <div>
-          <h3 className="font-semibold mb-2">Recherche de patients</h3>
-          <p>Utilisez cette barre pour rechercher rapidement un patient par nom, identifiant ou PED.</p>
+          <h3 className="font-semibold mb-2">{t("Recherche de patients", "Patient search")}</h3>
+          <p>{t("Utilisez cette barre pour rechercher rapidement un patient par nom, identifiant ou PED.", "Use this bar to quickly find a patient by name, ID or PED.")}</p>
         </div>
       ),
       placement: 'bottom',
@@ -103,8 +105,8 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: '[data-guide="patient-nav"]',
       content: (
         <div>
-          <h3 className="font-semibold mb-2">Navigation des patients</h3>
-          <p>Accédez aux différentes vues de monitoring : Statistiques, Cerveau, Cœur et Poumons.</p>
+          <h3 className="font-semibold mb-2">{t("Navigation des patients", "Patient navigation")}</h3>
+          <p>{t("Accédez aux différentes vues de monitoring : Statistiques, Cerveau, Cœur et Poumons.", "Access the monitoring views: Statistics, Brain, Heart and Lungs.")}</p>
         </div>
       ),
       placement: 'bottom',
@@ -113,8 +115,8 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: '[data-guide="tour-info"]',
       content: (
         <div>
-          <h3 className="font-semibold mb-2">Tournée active</h3>
-          <p>Lorsqu'une tournée est active, vous pouvez naviguer entre les patients et confirmer vos visites.</p>
+          <h3 className="font-semibold mb-2">{t("Tournée active", "Active rounds")}</h3>
+          <p>{t("Lorsqu'une tournée est active, vous pouvez naviguer entre les patients et confirmer vos visites.", "When rounds are active, you can move between patients and confirm your visits.")}</p>
         </div>
       ),
       placement: 'bottom',
@@ -123,8 +125,8 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: '[data-guide="user-menu"]',
       content: (
         <div>
-          <h3 className="font-semibold mb-2">Menu utilisateur</h3>
-          <p>Accédez à vos commentaires, à l'aide et déconnectez-vous ici.</p>
+          <h3 className="font-semibold mb-2">{t("Menu utilisateur", "User menu")}</h3>
+          <p>{t("Accédez à vos commentaires, à l'aide et déconnectez-vous ici.", "Access feedback and help, and sign out here.")}</p>
         </div>
       ),
       placement: 'bottom',
@@ -133,8 +135,8 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: '[data-guide="organize-tour"]',
       content: (
         <div>
-          <h3 className="font-semibold mb-2">Organiser une tournée</h3>
-          <p>Créez et organisez vos tournées de patients par glisser-déposer selon vos priorités.</p>
+          <h3 className="font-semibold mb-2">{t("Organiser une tournée", "Organize rounds")}</h3>
+          <p>{t("Créez et organisez vos tournées de patients par glisser-déposer selon vos priorités.", "Create and organize your patient rounds by drag and drop according to your priorities.")}</p>
         </div>
       ),
       placement: 'left',
@@ -143,8 +145,8 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: '[data-guide="patient-table"]',
       content: (
         <div>
-          <h3 className="font-semibold mb-2">Liste des patients</h3>
-          <p>Visualisez tous vos patients avec leurs informations clés, alarmes et scores PELOD.</p>
+          <h3 className="font-semibold mb-2">{t("Liste des patients", "Patient list")}</h3>
+          <p>{t("Visualisez tous vos patients avec leurs informations clés, alarmes et scores PELOD.", "View all your patients with their key information, alarms and PELOD scores.")}</p>
         </div>
       ),
       placement: 'bottom',
@@ -153,8 +155,8 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
       target: 'body',
       content: (
         <div>
-          <h2 className="text-lg font-bold mb-2">Guide terminé!</h2>
-          <p>Vous êtes maintenant prêt à utiliser myPICU. Vous pouvez relancer ce guide à tout moment depuis le menu Aide.</p>
+          <h2 className="text-lg font-bold mb-2">{t("Guide terminé!", "Guide complete!")}</h2>
+          <p>{t("Vous êtes maintenant prêt à utiliser myPICU. Vous pouvez relancer ce guide à tout moment depuis le menu Aide.", "You are now ready to use myPICU. You can restart this guide at any time from the Help menu.")}</p>
         </div>
       ),
       placement: 'center',
@@ -183,6 +185,10 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
         options: {
           primaryColor: '#2563eb',
           zIndex: 10000,
+          // Suit le thème clair / sombre.
+          backgroundColor: 'hsl(var(--popover))',
+          arrowColor: 'hsl(var(--popover))',
+          textColor: 'hsl(var(--popover-foreground))',
         },
         tooltip: {
           borderRadius: 8,
@@ -201,11 +207,11 @@ export const InteractiveGuide = ({ isOpen, onClose }: InteractiveGuideProps) => 
         },
       }}
       locale={{
-        back: 'Retour',
-        close: 'Fermer',
-        last: 'Terminer',
-        next: 'Suivant',
-        skip: 'Passer',
+        back: t('Retour', 'Back'),
+        close: t('Fermer', 'Close'),
+        last: t('Terminer', 'Finish'),
+        next: t('Suivant', 'Next'),
+        skip: t('Passer', 'Skip'),
       }}
     />
   );

@@ -10,6 +10,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { tr } from '@/i18n';
+import { term } from '@/i18n/terms';
 
 export interface IndicatorPickerCandidate {
   module: string;
@@ -35,7 +37,7 @@ export const IndicatorPicker = ({
   candidates,
   alreadyShown,
   onPick,
-  triggerLabel = "Ajouter un indicateur",
+  triggerLabel = tr("Ajouter un indicateur", "Add an indicator"),
 }: IndicatorPickerProps) => {
   const [open, setOpen] = useState(false);
 
@@ -49,9 +51,9 @@ export const IndicatorPicker = ({
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
         <Command>
-          <CommandInput placeholder="Rechercher un indicateur…" />
+          <CommandInput placeholder={tr("Rechercher un indicateur…", "Search an indicator…")} />
           <CommandList>
-            <CommandEmpty>Aucun indicateur trouvé.</CommandEmpty>
+            <CommandEmpty>{tr("Aucun indicateur trouvé.", "No indicator found.")}</CommandEmpty>
             {candidates.map((candidate) => {
               const available = candidate.indicators.filter(
                 (ind) => !alreadyShown.has(`${candidate.module}|${ind.label}`),
@@ -60,11 +62,11 @@ export const IndicatorPicker = ({
                 <CommandGroup key={candidate.module} heading={candidate.moduleLabel}>
                   {candidate.indicators.length === 0 ? (
                     <CommandItem disabled value={`${candidate.module}-empty`}>
-                      <span className="text-muted-foreground">Aucun indicateur disponible pour ce module</span>
+                      <span className="text-muted-foreground">{tr("Aucun indicateur disponible pour ce module", "No indicator available for this module")}</span>
                     </CommandItem>
                   ) : available.length === 0 ? (
                     <CommandItem disabled value={`${candidate.module}-all-shown`}>
-                      <span className="text-muted-foreground">Tous déjà affichés</span>
+                      <span className="text-muted-foreground">{tr("Tous déjà affichés", "All already shown")}</span>
                     </CommandItem>
                   ) : (
                     available.map((ind) => (
@@ -76,7 +78,7 @@ export const IndicatorPicker = ({
                           setOpen(false);
                         }}
                       >
-                        <span className="flex-1">{ind.label}</span>
+                        <span className="flex-1">{term(ind.label)}</span>
                         {(ind.target || ind.unit) && (
                           <span className="text-xs text-muted-foreground ml-2">
                             {ind.target ?? ind.unit}

@@ -8,6 +8,7 @@ import lungsIcon from '@/assets/lungs-icon.svg';
 import kidneyIcon from '@/assets/kidney-icon.svg';
 import { useTourNavigation } from '@/hooks/useTourNavigation';
 import { getScoreTextColor, getScoreColorFilter } from '@/utils/colorUtils';
+import { tr } from '@/i18n';
 
 interface PatientCardProps {
   patient: Patient;
@@ -65,10 +66,10 @@ export const PatientCard = ({ patient }: PatientCardProps) => {
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
-      case 'Priority': return 'Priorité';
-      case 'Confirmed': return 'Confirmé';
-      case 'Leaving': return 'Sortant';
-      case 'To Check': return 'À vérifier';
+      case 'Priority': return tr('Priorité', 'Priority');
+      case 'Confirmed': return tr('Confirmé', 'Confirmed');
+      case 'Leaving': return tr('Sortant', 'Leaving');
+      case 'To Check': return tr('À vérifier', 'To check');
       default: return status;
     }
   };
@@ -95,13 +96,13 @@ export const PatientCard = ({ patient }: PatientCardProps) => {
               {getStatusDisplay(visitStatus)}
             </Badge>
           ) : totalAlarms > 5 ? (
-            <Badge variant="destructive" className="text-xs">Priorité</Badge>
+            <Badge variant="destructive" className="text-xs">{tr('Priorité', 'Priority')}</Badge>
           ) : patient.tour ? (
             <Badge
               variant="secondary"
               className={`text-xs ${patient.tour === 'Priority' || patient.tour === 'Prioritaire' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-muted-foreground hover:bg-muted-foreground/90 text-status-normal-fg'}`}
             >
-              {patient.tour === 'Priority' || patient.tour === 'Prioritaire' ? 'Priorité' : patient.tour}
+              {patient.tour === 'Priority' || patient.tour === 'Prioritaire' ? tr('Priorité', 'Priority') : patient.tour}
             </Badge>
           ) : null}
         </div>
@@ -110,7 +111,7 @@ export const PatientCard = ({ patient }: PatientCardProps) => {
       {/* Middle row: PELOD + Adhérence + PICU */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
         <span>PELOD: <span className="font-medium text-foreground">{patient.pelodScore}</span></span>
-        <span>Adh: <span className="font-medium text-foreground">{patient.adherence}%</span></span>
+        <span>{tr('Adh', 'Adh')}: <span className="font-medium text-foreground">{patient.adherence}%</span></span>
         <span>#{patient.picuId.replace(/\D/g, '').padStart(2, '0')}</span>
       </div>
 
@@ -127,7 +128,7 @@ export const PatientCard = ({ patient }: PatientCardProps) => {
           {patient.intolerances && (
             <div className="flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400">
               <Ban className="h-3 w-3 shrink-0" />
-              <span className="font-medium">Intolérances:</span>
+              <span className="font-medium">{tr('Intolérances', 'Intolerances')}:</span>
               <span className="truncate">{patient.intolerances}</span>
             </div>
           )}

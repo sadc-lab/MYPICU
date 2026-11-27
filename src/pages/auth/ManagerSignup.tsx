@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { UserCog } from 'lucide-react';
+import { tr } from '@/i18n';
 
 const ManagerSignup = () => {
   const [fullName, setFullName] = useState('');
@@ -36,37 +37,37 @@ const ManagerSignup = () => {
               <UserCog className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-center">Créer un compte Gestionnaire</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">{tr("Créer un compte Gestionnaire", "Create a Manager account")}</CardTitle>
           <CardDescription className="text-center">
-            Accès complet pour gérer les équipes et les paramètres du système
+            {tr('Accès complet pour gérer les équipes et les paramètres du système', 'Full access to manage teams and system settings')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName">Nom complet</Label>
+              <Label htmlFor="fullName">{tr("Nom complet", "Full name")}</Label>
               <Input
                 id="fullName"
                 type="text"
-                placeholder="Jean Dupont"
+                placeholder={tr("Jean Dupont", "Jane Doe")}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{tr("Courriel", "Email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="vous@exemple.com"
+                placeholder={tr("vous@exemple.com", "you@example.com")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password">{tr("Mot de passe", "Password")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -77,7 +78,7 @@ const ManagerSignup = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+              <Label htmlFor="confirmPassword">{tr("Confirmer le mot de passe", "Confirm password")}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -88,13 +89,13 @@ const ManagerSignup = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Création du compte...' : 'Créer le compte Gestionnaire'}
+              {isLoading ? tr('Création du compte...', 'Creating account...') : tr('Créer le compte Gestionnaire', 'Create Manager account')}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Vous avez déjà un compte ?{' '}
+            {tr('Vous avez déjà un compte ?', 'Already have an account?')}{' '}
             <Link to="/auth/login" className="text-primary hover:underline">
-              Se connecter
+              {tr('Se connecter', 'Sign in')}
             </Link>
           </div>
         </CardContent>

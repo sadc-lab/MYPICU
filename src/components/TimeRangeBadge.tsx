@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { tr, dateLocale } from '@/i18n';
 
 interface TimeRangeBadgeProps {
   rangeStart: number | null;
@@ -18,7 +18,9 @@ interface TimeRangeBadgeProps {
 export function TimeRangeBadge({ rangeStart, rangeEnd, onReset, className }: TimeRangeBadgeProps) {
   if (rangeStart === null || rangeEnd === null) return null;
 
-  const formatT = (t: number) => format(new Date(t), "HH:mm", { locale: fr });
+  // La date n'est ajoutée que si la plage déborde sur plusieurs jours.
+  const sameDay = new Date(rangeStart).toDateString() === new Date(rangeEnd).toDateString();
+  const formatT = (t: number) => format(new Date(t), sameDay ? "HH:mm" : "dd/MM HH:mm", { locale: dateLocale() });
 
   return (
     <div
@@ -33,8 +35,8 @@ export function TimeRangeBadge({ rangeStart, rangeEnd, onReset, className }: Tim
       <button
         type="button"
         onClick={onReset}
-        title="Effacer la sélection"
-        aria-label="Effacer la sélection"
+        title={tr("Effacer la sélection", "Clear selection")}
+        aria-label={tr("Effacer la sélection", "Clear selection")}
         className="flex items-center justify-center h-6 w-6 -mr-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
       >
         <X className="h-3 w-3" />
