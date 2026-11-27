@@ -63,7 +63,7 @@ import {
   isNirsBasedPatient,
 } from "@/services/autoregulation.service";
 import { getOptimalPAMFromNirs } from "@/services/nirsAutoregulation.service";
-import { AutoregulationChart } from "@/components/AutoregulationChart";
+import { CerebralAutoregView } from "@/components/autoreg/CerebralAutoregView";
 import { TimeWindowValue } from "@/components/ui/TimeWindowSelector";
 import { DataLoadingOverlay } from "@/components/DataLoadingOverlay";
 import { MetricRangeBar } from "@/components/MetricRangeBar";
@@ -1264,7 +1264,7 @@ const Optibrain = () => {
             {/* Détail partagé : n'importe lequel des 4 KPI ci-dessus ouvre ce
                 même pop-up plutôt que d'empiler les graphiques sur la page. */}
             <Dialog open={openDialog === "autoreg-detail"} onOpenChange={(open) => !open && setOpenDialog(null)}>
-              <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+              <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{tr("Optimisation cérébrale", "Cerebral optimisation")}</DialogTitle>
                 </DialogHeader>
@@ -1333,36 +1333,10 @@ const Optibrain = () => {
 
                   return (
                     <div className="space-y-0">
-                      {/* 1. PAM/PPC optimale — le levier actionnable */}
-                      <div className={`rounded-lg border p-4 ${toneBg[autoregStatus?.tone ?? "normal"]}`}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Activity className="h-4 w-4 text-muted-foreground" />
-                          <h4 className="text-sm font-semibold text-foreground">{tr(`${pamLabel} optimale — la cible à viser`, `Optimal ${pamLabel} — the target to aim for`)}</h4>
-                        </div>
-                        {optimalPPCResult.hasData && optimalPPCResult.optimalPPC !== null ? (
-                          <>
-                            <MetricRangeBar
-                              value={pamCurrent ?? optimalPPCResult.optimalPPC}
-                              min={Math.min(40, (optimalPPCResult.lowerLimit ?? 50) - 15)}
-                              max={Math.max(110, (optimalPPCResult.upperLimit ?? 80) + 15)}
-                              targetMin={optimalPPCResult.lowerLimit ?? optimalPPCResult.optimalPPC - 5}
-                              targetMax={optimalPPCResult.upperLimit ?? optimalPPCResult.optimalPPC + 5}
-                              unit="mmHg"
-                              showValuePointer
-                              valueSize="lg"
-                              maxWidth="100%"
-                            />
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {tr(`${pamLabel} optimale`, `Optimal ${pamLabel}`)} <span className="font-semibold text-foreground">{Math.round(optimalPPCResult.optimalPPC)} mmHg</span>
-                              {optimalPPCResult.lowerLimit !== null && optimalPPCResult.upperLimit !== null && (
-                                <> · {tr('plage', 'range')} {Math.round(optimalPPCResult.lowerLimit)}–{Math.round(optimalPPCResult.upperLimit)} mmHg</>
-                              )}
-                              {autoregStatus && <> · <span className={`font-medium ${toneClass[autoregStatus.tone]}`}>{autoregStatus.label}</span></>}
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-xs text-muted-foreground italic">{tr("Données d'autorégulation en cours de calcul.", 'Autoregulation data being computed.')}</p>
-                        )}
+                      {/* 1. Autorégulation — même présentation que la vue de l'étude :
+                          verdict, plage actuelle, puis graphiques dans le temps. */}
+                      <div className="rounded-lg border p-4">
+                        <CerebralAutoregView patientId={patientId} />
                       </div>
 
                       <div className="flex justify-center py-1">
